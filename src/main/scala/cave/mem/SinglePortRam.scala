@@ -35,34 +35,39 @@
  *  SOFTWARE.
  */
 
-package cave
+package cave.mem
 
 import chisel3._
 
-class TrueDualPortRam(addrWidthA : Int, dataWidthA : Int, addrWidthB : Int, dataWidthB : Int)
-  extends BlackBox(Map(
-    "ADDR_WIDTH_A" -> addrWidthA,
-    "DATA_WIDTH_A" -> dataWidthA,
-    "ADDR_WIDTH_B" -> addrWidthB,
-    "DATA_WIDTH_B" -> dataWidthB
-  )) {
+/**
+ * Single Port RAM
+ *
+ * This blackbox module wraps a single port RAM defined using the Altera megafunction.
+ *
+ * @param addrWidth The width of the address bus
+ * @param dataWidth The width of the data bus
+ */
+class SinglePortRam(addrWidth : Int, dataWidth : Int)
+  extends BlackBox(Map("ADDR_WIDTH" -> addrWidth, "DATA_WIDTH" -> addrWidth)) {
   val io = IO(new Bundle {
-    // port A
-    val clkA = Input(Clock())
-    val csA = Input(Bool())
-    val wenA = Input(Bool())
-    val addrA = Input(UInt(addrWidthA.W))
-    val dinA = Input(Bits(dataWidthA.W))
-    val doutA = Output(Bits(dataWidthA.W))
+    /** clock */
+    val clk = Input(Clock())
 
-    // port B
-    val clkB = Input(Clock())
-    val csB = Input(Bool())
-    val wenB = Input(Bool())
-    val addrB = Input(UInt(addrWidthB.W))
-    val dinB = Input(Bits(dataWidthB.W))
-    val doutB = Output(Bits(dataWidthB.W))
+    /** chip select */
+    val cs = Input(Bool())
+
+    /** write enable */
+    val wen = Input(Bool())
+
+    /** address */
+    val addr = Input(UInt(addrWidth.W))
+
+    /** data in */
+    val din = Input(Bits(dataWidth.W))
+
+    /** data out */
+    val dout = Output(Bits(dataWidth.W))
   })
 
-  override def desiredName = "true_dual_port_ram"
+  override def desiredName = "single_port_ram"
 }

@@ -35,7 +35,7 @@
  *  SOFTWARE.
  */
 
-package cave
+package cave.mem
 
 import chisel3._
 
