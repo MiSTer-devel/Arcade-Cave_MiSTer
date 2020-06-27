@@ -1,4 +1,5 @@
 .idea
 project/target
+rtl/Cave.*
 target
 test_run_dir

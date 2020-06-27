@@ -39,26 +39,35 @@ package cave
 
 import chisel3._
 
-class FX68K extends BlackBox {
+/**
+ * Single Port RAM
+ *
+ * This blackbox module wraps a single port RAM defined using the Altera megafunction.
+ *
+ * @param addrWidth The width of the address bus
+ * @param dataWidth The width of the data bus
+ */
+class SinglePortRam(addrWidth : Int, dataWidth : Int)
+  extends BlackBox(Map("ADDR_WIDTH" -> addrWidth, "DATA_WIDTH" -> addrWidth)) {
   val io = IO(new Bundle {
-    val rst = Input(Reset())
+    /** clock */
     val clk = Input(Clock())
-    val eab = Output(UInt(23.W))
-    val iEdb = Input(Bits(16.W))
-    val oEdb = Output(Bits(16.W))
-  })
-}
 
-class CPU extends Module {
-  val io = IO(new Bundle {
-    val din = Input(UInt(8.W))
-    val dout = Output(UInt(8.W))
-    val addr = Output(UInt(23.W))
+    /** chip select */
+    val cs = Input(Bool())
+
+    /** write enable */
+    val wen = Input(Bool())
+
+    /** address */
+    val addr = Input(UInt(addrWidth.W))
+
+    /** data in */
+    val din = Input(Bits(dataWidth.W))
+
+    /** data out */
+    val dout = Output(Bits(dataWidth.W))
   })
 
-  val fx68k = Module(new FX68K)
-  fx68k.io.rst := reset
-  fx68k.io.clk := clock
-  io.addr := fx68k.io.eab
-  io.dout := fx68k.io.oEdb
+  override def desiredName = "single_port_ram"
 }

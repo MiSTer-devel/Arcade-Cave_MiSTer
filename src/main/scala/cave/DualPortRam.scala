@@ -39,26 +39,25 @@ package cave
 
 import chisel3._
 
-class FX68K extends BlackBox {
+class DualPortRam(addrWidth : Int, dataWidth : Int)
+  extends BlackBox(Map("ADDR_WIDTH" -> addrWidth, "DATA_WIDTH" -> addrWidth)) {
   val io = IO(new Bundle {
-    val rst = Input(Reset())
     val clk = Input(Clock())
-    val eab = Output(UInt(23.W))
-    val iEdb = Input(Bits(16.W))
-    val oEdb = Output(Bits(16.W))
-  })
-}
 
-class CPU extends Module {
-  val io = IO(new Bundle {
-    val din = Input(UInt(8.W))
-    val dout = Output(UInt(8.W))
-    val addr = Output(UInt(23.W))
+    // port A
+    val csA = Input(Bool())
+    val wenA = Input(Bool())
+    val addrA = Input(UInt(addrWidth.W))
+    val dinA = Input(Bits(dataWidth.W))
+    val doutA = Output(Bits(dataWidth.W))
+
+    // port B
+    val csB = Input(Bool())
+    val wenB = Input(Bool())
+    val addrB = Input(UInt(addrWidth.W))
+    val dinB = Input(Bits(dataWidth.W))
+    val doutB = Output(Bits(dataWidth.W))
   })
 
-  val fx68k = Module(new FX68K)
-  fx68k.io.rst := reset
-  fx68k.io.clk := clock
-  io.addr := fx68k.io.eab
-  io.dout := fx68k.io.oEdb
+  override def desiredName = "dual_port_ram"
 }

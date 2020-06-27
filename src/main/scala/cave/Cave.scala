@@ -38,27 +38,25 @@
 package cave
 
 import chisel3._
+import chisel3.stage.{ChiselStage, ChiselGeneratorAnnotation}
 
-class FX68K extends BlackBox {
+class Cave extends Module {
   val io = IO(new Bundle {
-    val rst = Input(Reset())
-    val clk = Input(Clock())
-    val eab = Output(UInt(23.W))
-    val iEdb = Input(Bits(16.W))
-    val oEdb = Output(Bits(16.W))
+    val din = Input(UInt(16.W))
+    val dout = Output(UInt(16.W))
   })
+
+  val cpu = Module(new CPU)
+  cpu.io.din := io.din
+
+  val workMem = Module(new SinglePortRam(addrWidth = 16, dataWidth = 16))
+  workMem.io.clk := clock
+  workMem.io.din := io.din
+  io.dout := workMem.io.dout
 }
 
-class CPU extends Module {
-  val io = IO(new Bundle {
-    val din = Input(UInt(8.W))
-    val dout = Output(UInt(8.W))
-    val addr = Output(UInt(23.W))
-  })
-
-  val fx68k = Module(new FX68K)
-  fx68k.io.rst := reset
-  fx68k.io.clk := clock
-  io.addr := fx68k.io.eab
-  io.dout := fx68k.io.oEdb
+object Cave extends App {
+  (new ChiselStage).execute(
+    Array("-X", "verilog", "--target-dir", "rtl"),
+    Seq(ChiselGeneratorAnnotation(() => new Cave())))
 }
