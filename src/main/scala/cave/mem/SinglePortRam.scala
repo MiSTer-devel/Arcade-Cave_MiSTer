@@ -40,14 +40,14 @@ package cave.mem
 import chisel3._
 
 /**
- * Single Port RAM
+ * Single-port RAM
  *
- * This blackbox module wraps a single port RAM defined using the Altera megafunction.
+ * This module wraps a single port RAM module which is defined externally.
  *
- * @param addrWidth The width of the address bus
- * @param dataWidth The width of the data bus
+ * @param addrWidth The width of the address bus.
+ * @param dataWidth The width of the data bus.
  */
-class SinglePortRam(addrWidth : Int, dataWidth : Int)
+class SinglePortRam(addrWidth: Int, dataWidth: Int)
   extends BlackBox(Map("ADDR_WIDTH" -> addrWidth, "DATA_WIDTH" -> addrWidth)) {
   val io = IO(new Bundle {
     /** clock */
@@ -59,13 +59,13 @@ class SinglePortRam(addrWidth : Int, dataWidth : Int)
     /** write enable */
     val wen = Input(Bool())
 
-    /** address */
+    /** address bus */
     val addr = Input(UInt(addrWidth.W))
 
-    /** data in */
+    /** data input */
     val din = Input(Bits(dataWidth.W))
 
-    /** data out */
+    /** data output */
     val dout = Output(Bits(dataWidth.W))
   })
 

@@ -39,26 +39,38 @@ package cave
 
 import chisel3._
 
-class FX68K extends BlackBox {
+/**
+ * M68k CPU
+ *
+ * @param addrWidth The width of the address bus
+ * @param dataWidth The width of the data bus
+ */
+class CPU(addrWidth: Int, dataWidth: Int) extends Module {
   val io = IO(new Bundle {
-    val rst = Input(Reset())
-    val clk = Input(Clock())
-    val eab = Output(UInt(23.W))
-    val iEdb = Input(Bits(16.W))
-    val oEdb = Output(Bits(16.W))
-  })
-}
+    /** address bus */
+    val addr = Output(UInt(addrWidth.W))
 
-class CPU extends Module {
-  val io = IO(new Bundle {
-    val din = Input(UInt(8.W))
-    val dout = Output(UInt(8.W))
-    val addr = Output(UInt(23.W))
+    /** data input */
+    val din = Input(Bits(dataWidth.W))
+
+    /** data output */
+    val dout = Output(Bits(dataWidth.W))
   })
+
+  class FX68K extends BlackBox {
+    val io = IO(new Bundle {
+      val rst = Input(Reset())
+      val clk = Input(Clock())
+      val eab = Output(UInt(addrWidth.W))
+      val iEdb = Input(Bits(dataWidth.W))
+      val oEdb = Output(Bits(dataWidth.W))
+    })
+  }
 
   val fx68k = Module(new FX68K)
   fx68k.io.rst := reset
   fx68k.io.clk := clock
   io.addr := fx68k.io.eab
   io.dout := fx68k.io.oEdb
+  fx68k.io.iEdb := io.din
 }

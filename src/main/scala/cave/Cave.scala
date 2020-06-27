@@ -41,19 +41,34 @@ import cave.mem.SinglePortRam
 import chisel3._
 import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
 
+/**
+ * Configuration object
+ */
+object Config {
+  val ADDR_WIDTH = 23
+  val DATA_WIDTH = 16
+}
+
+/**
+ * CAVE
+ *
+ * This is the top-level module for the CAVE arcade hardware.
+ */
 class Cave extends Module {
   val io = IO(new Bundle {
-    val din = Input(UInt(16.W))
-    val dout = Output(UInt(16.W))
+    val cpuAddr = Output(UInt(Config.ADDR_WIDTH.W))
+    val cpuData = Input(Bits(Config.DATA_WIDTH.W))
+    val cpuDataRead = Output(Bool())
+    val cpuDataValid = Input(Bool())
   })
 
-  val cpu = Module(new CPU)
-  cpu.io.din := io.din
+  val cpu = Module(new CPU(addrWidth = Config.ADDR_WIDTH, dataWidth = Config.DATA_WIDTH))
+  cpu.io.din := io.cpuData
+  io.cpuAddr := cpu.io.addr
+  io.cpuDataRead := true.B
 
-  val workMem = Module(new SinglePortRam(addrWidth = 16, dataWidth = 16))
+  val workMem = Module(new SinglePortRam(addrWidth = Config.ADDR_WIDTH, dataWidth = Config.DATA_WIDTH))
   workMem.io.clk := clock
-  workMem.io.din := io.din
-  io.dout := workMem.io.dout
 }
 
 object Cave extends App {

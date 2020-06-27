@@ -39,7 +39,7 @@ package cave.mem
 
 import chisel3._
 
-class DualPortRam(addrWidth : Int, dataWidth : Int)
+class DualPortRam(addrWidth: Int, dataWidth: Int)
   extends BlackBox(Map("ADDR_WIDTH" -> addrWidth, "DATA_WIDTH" -> addrWidth)) {
   val io = IO(new Bundle {
     val clk = Input(Clock())

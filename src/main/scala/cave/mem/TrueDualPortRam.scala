@@ -39,7 +39,7 @@ package cave.mem
 
 import chisel3._
 
-class TrueDualPortRam(addrWidthA : Int, dataWidthA : Int, addrWidthB : Int, dataWidthB : Int)
+class TrueDualPortRam(addrWidthA: Int, dataWidthA: Int, addrWidthB: Int, dataWidthB: Int)
   extends BlackBox(Map(
     "ADDR_WIDTH_A" -> addrWidthA,
     "DATA_WIDTH_A" -> dataWidthA,
