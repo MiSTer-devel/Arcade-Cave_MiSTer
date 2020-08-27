@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="sbt: edu.berkeley.cs:chiseltest_2.12:0.2.2:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/edu/berkeley/cs/chiseltest_2.12/0.2.2/chiseltest_2.12-0.2.2.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/edu/berkeley/cs/chiseltest_2.12/0.2.2/chiseltest_2.12-0.2.2-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/edu/berkeley/cs/chiseltest_2.12/0.2.2/chiseltest_2.12-0.2.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

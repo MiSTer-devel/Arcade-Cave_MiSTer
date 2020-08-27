@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="sbt: com.lihaoyi:utest_2.12:0.6.6:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/utest_2.12/0.6.6/utest_2.12-0.6.6.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/utest_2.12/0.6.6/utest_2.12-0.6.6-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/utest_2.12/0.6.6/utest_2.12-0.6.6-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

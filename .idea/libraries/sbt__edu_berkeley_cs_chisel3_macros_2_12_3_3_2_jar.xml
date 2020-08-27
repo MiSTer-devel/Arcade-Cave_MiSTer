@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="sbt: edu.berkeley.cs:chisel3-macros_2.12:3.3.2:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/edu/berkeley/cs/chisel3-macros_2.12/3.3.2/chisel3-macros_2.12-3.3.2.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/edu/berkeley/cs/chisel3-macros_2.12/3.3.2/chisel3-macros_2.12-3.3.2-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/edu/berkeley/cs/chisel3-macros_2.12/3.3.2/chisel3-macros_2.12-3.3.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
