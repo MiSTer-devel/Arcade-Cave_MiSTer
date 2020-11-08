@@ -6,14 +6,6 @@
       <set />
     </option>
     <option name="testKind" value="All in package" />
-    <option name="classBuf">
-      <list>
-        <option value="cave.util.ClockDividerTest" />
-        <option value="cave.util.EdgeDetectorTest" />
-        <option value="cave.mem.CacheMemTest" />
-        <option value="cave.gpu.VideoTimingTest" />
-      </list>
-    </option>
     <option name="searchTest" value="In single module" />
     <option name="workingDirectory" value="$PROJECT_DIR$" />
     <method v="2">

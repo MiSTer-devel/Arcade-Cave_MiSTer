@@ -37,9 +37,7 @@
 
 package cave
 
-import cave.mem.SinglePortRam
 import chisel3._
-import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
 
 /**
  * Configuration object
@@ -66,13 +64,4 @@ class Cave extends Module {
   cpu.io.din := io.cpuData
   io.cpuAddr := cpu.io.addr
   io.cpuDataRead := true.B
-
-  val workMem = Module(new SinglePortRam(addrWidth = Config.ADDR_WIDTH, dataWidth = Config.DATA_WIDTH))
-  workMem.io.clk := clock
-}
-
-object Cave extends App {
-  (new ChiselStage).execute(
-    Array("-X", "verilog", "--target-dir", "rtl"),
-    Seq(ChiselGeneratorAnnotation(() => new Cave())))
 }

@@ -35,39 +35,19 @@
  *  SOFTWARE.
  */
 
-package cave.mem
+package cave
 
 import chisel3._
+import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
 
-/**
- * Single-port RAM
- *
- * This module wraps a single port RAM module which is defined externally.
- *
- * @param addrWidth The width of the address bus.
- * @param dataWidth The width of the data bus.
- */
-class SinglePortRam(addrWidth: Int, dataWidth: Int)
-  extends BlackBox(Map("ADDR_WIDTH" -> addrWidth, "DATA_WIDTH" -> addrWidth)) {
+class Main extends Module {
   val io = IO(new Bundle {
-    /** clock */
-    val clk = Input(Clock())
-
-    /** chip select */
-    val cs = Input(Bool())
-
-    /** write enable */
-    val wen = Input(Bool())
-
-    /** address bus */
-    val addr = Input(UInt(addrWidth.W))
-
-    /** data input */
-    val din = Input(Bits(dataWidth.W))
-
-    /** data output */
-    val dout = Output(Bits(dataWidth.W))
   })
+}
 
-  override def desiredName = "single_port_ram"
+object Main extends App {
+  (new ChiselStage).execute(
+    Array("--compiler", "verilog", "--target-dir", "quartus/rtl", "--output-file", "ChiselTop"),
+    Seq(ChiselGeneratorAnnotation(() => new Main))
+  )
 }
