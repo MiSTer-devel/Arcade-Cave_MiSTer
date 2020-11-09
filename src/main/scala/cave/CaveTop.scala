@@ -127,7 +127,7 @@ class CaveTop extends Module {
   cave.io.rom_burst_done_gfx_i := io.tileRom.burstDone
 
   io.frameBuffer.addr := cave.io.frame_buffer_addr_o
-  io.frameBuffer.data := cave.io.frame_buffer_data_o
+  io.frameBuffer.din := cave.io.frame_buffer_data_o
   io.frameBuffer.wr := cave.io.frame_buffer_write_o
   io.frameBuffer.dmaStart := cave.io.frame_buffer_dma_start_o
   cave.io.frame_buffer_dma_done_i := io.frameBuffer.dmaDone

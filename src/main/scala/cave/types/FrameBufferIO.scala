@@ -37,19 +37,14 @@
 
 package cave.types
 
+import axon.mem.WriteMemIO
 import cave.Config
 import chisel3._
 
 /** Frame buffer IO */
-class FrameBufferIO extends Bundle {
+class FrameBufferIO extends WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH) {
   /** DMA start flag */
   val dmaStart = Output(Bool())
   /** DMA done flag */
   val dmaDone = Input(Bool())
-  /** Write enable */
-  val wr = Output(Bool())
-  /** Address bus */
-  val addr = Output(UInt(Config.FRAME_BUFFER_ADDR_WIDTH.W))
-  /** Data bus */
-  val data = Output(Bits(Config.FRAME_BUFFER_DATA_WIDTH.W))
 }
