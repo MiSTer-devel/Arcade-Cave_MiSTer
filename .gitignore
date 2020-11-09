@@ -1,4 +1,13 @@
 project/target
-rtl/Cave.*
+quartus/*.qws
+quartus/*.qdf
+quartus/build_id.v
+quartus/c5_pin_model_dump.txt
+quartus/db
+quartus/incremental_db
+quartus/jtag.cdf
+quartus/output_files
+quartus/rtl/ChiselTop.v
+quartus/rtl/Main.*
 target
 test_run_dir
