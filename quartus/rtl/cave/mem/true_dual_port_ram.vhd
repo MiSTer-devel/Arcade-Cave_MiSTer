@@ -50,26 +50,31 @@ entity true_dual_port_ram is
     DEPTH_B      : natural := 0
   );
   port (
-    -- port A
+    -- Port A
     clk_a  : in std_logic;
     cs_a   : in std_logic := '1';
+    wr_a   : in std_logic := '0';
+    rd_a   : in std_logic := '1';
+    ack_a  : out std_logic;
     addr_a : in unsigned(ADDR_WIDTH_A-1 downto 0);
     din_a  : in std_logic_vector(DATA_WIDTH_A-1 downto 0) := (others => '0');
     dout_a : out std_logic_vector(DATA_WIDTH_A-1 downto 0);
-    we_a   : in std_logic := '0';
 
-    -- port B
+    -- Port B
     clk_b  : in std_logic;
     cs_b   : in std_logic := '1';
+    wr_b   : in std_logic := '0';
+    rd_b   : in std_logic := '1';
+    ack_b  : out std_logic;
     addr_b : in unsigned(ADDR_WIDTH_B-1 downto 0);
     din_b  : in std_logic_vector(DATA_WIDTH_B-1 downto 0) := (others => '0');
-    dout_b : out std_logic_vector(DATA_WIDTH_B-1 downto 0);
-    we_b   : in std_logic := '0'
+    dout_b : out std_logic_vector(DATA_WIDTH_B-1 downto 0)
   );
 end true_dual_port_ram;
 
 architecture arch of true_dual_port_ram is
-  -- returns the number of words for the given depth, otherwise it defaults to the full address range
+  -- Returns the number of words for the given depth, otherwise it defaults to
+  -- the full address range
   function num_words(depth, addr_width : natural) return natural is
   begin
     if depth > 0 then
@@ -117,13 +122,31 @@ begin
     clock1    => clk_b,
     data_a    => din_a,
     data_b    => din_b,
-    wren_a    => cs_a and we_a,
-    wren_b    => cs_b and we_b,
+    rden_a    => cs_a and rd_a,
+    rden_b    => cs_b and rd_b,
+    wren_a    => cs_a and wr_a,
+    wren_b    => cs_b and wr_b,
     q_a       => q_a,
     q_b       => q_b
   );
 
-  -- output
+  -- The ACK_A signal will be asserted after a read or write operation on port A
+  process(clk_a)
+  begin
+    if rising_edge(clk_a) then
+      ack_a <= cs_a and (rd_a or wr_a);
+    end if;
+  end process;
+
+  -- The ACK_B signal will be asserted after a read or write operation on port B
+  process(clk_b)
+  begin
+    if rising_edge(clk_b) then
+      ack_b <= cs_b and (rd_b or wr_b);
+    end if;
+  end process;
+
+  -- Outputs
   dout_a <= q_a when cs_a = '1' else (others => '0');
   dout_b <= q_b when cs_b = '1' else (others => '0');
 end architecture arch;

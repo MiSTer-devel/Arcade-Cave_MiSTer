@@ -35,33 +35,19 @@
  *  SOFTWARE.
  */
 
-package cave
+package cave.types
 
+import cave.Config
 import chisel3._
 
-/**
- * Configuration object
- */
-object Config {
-  val ADDR_WIDTH = 23
-  val DATA_WIDTH = 16
-}
-
-/**
- * CAVE
- *
- * This is the top-level module for the CAVE arcade hardware.
- */
-class Cave extends Module {
-  val io = IO(new Bundle {
-    val cpuAddr = Output(UInt(Config.ADDR_WIDTH.W))
-    val cpuData = Input(Bits(Config.DATA_WIDTH.W))
-    val cpuDataRead = Output(Bool())
-    val cpuDataValid = Input(Bool())
-  })
-
-  val cpu = Module(new CPU(addrWidth = Config.ADDR_WIDTH, dataWidth = Config.DATA_WIDTH))
-  cpu.io.din := io.cpuData
-  io.cpuAddr := cpu.io.addr
-  io.cpuDataRead := true.B
+/** Program ROM IO */
+class ProgRomIO extends Bundle {
+  /** Read enable */
+  val rd = Output(Bool())
+  /** Valid flag */
+  val valid = Input(Bool())
+  /** Address bus */
+  val addr = Output(UInt(Config.PROG_ROM_ADDR_WIDTH.W))
+  /** Data bus */
+  val data = Input(Bits(Config.PROG_ROM_DATA_WIDTH.W))
 }

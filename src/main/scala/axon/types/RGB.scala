@@ -35,42 +35,65 @@
  *  SOFTWARE.
  */
 
-package cave
+package axon.types
 
 import chisel3._
 
-/**
- * M68k CPU
- *
- * @param addrWidth The width of the address bus
- * @param dataWidth The width of the data bus
+/** 
+ * Represents a RGB color. 
+ * 
+ * @param n The number of bits per color channel.
  */
-class CPU(addrWidth: Int, dataWidth: Int) extends Module {
-  val io = IO(new Bundle {
-    /** address bus */
-    val addr = Output(UInt(addrWidth.W))
+class RGB(private val n: Int = 4) extends Bundle {
+  /** Red */
+  val r = UInt(n.W)
+  /** Green */
+  val g = UInt(n.W)
+  /** Blue */
+  val b = UInt(n.W)
 
-    /** data input */
-    val din = Input(Bits(dataWidth.W))
-
-    /** data output */
-    val dout = Output(Bits(dataWidth.W))
-  })
-
-  class FX68K extends BlackBox {
-    val io = IO(new Bundle {
-      val rst = Input(Reset())
-      val clk = Input(Clock())
-      val eab = Output(UInt(addrWidth.W))
-      val iEdb = Input(Bits(dataWidth.W))
-      val oEdb = Output(Bits(dataWidth.W))
-    })
+  /** Bitwise AND operator. */
+  def &(that: RGB): RGB = {
+    RGB(this.r & that.r, this.g & that.g, this.b & that.b)
   }
 
-  val fx68k = Module(new FX68K)
-  fx68k.io.rst := reset
-  fx68k.io.clk := clock
-  io.addr := fx68k.io.eab
-  io.dout := fx68k.io.oEdb
-  fx68k.io.iEdb := io.din
+  /** Bitwise OR operator. */
+  def |(that: RGB): RGB = {
+    RGB(this.r | that.r, this.g | that.g, this.b | that.b)
+  }
+
+  /** Bitwise XOR operator. */
+  def ^(that: RGB): RGB = {
+    RGB(this.r ^ that.r, this.g ^ that.g, this.b ^ that.b)
+  }
+}
+
+object RGB {
+  /**
+   * Constructs a RGB color from a single value.
+   *
+   * @param value The value of the red, green, and blue channels.
+   */
+  def apply(value: UInt): RGB = {
+    val rgb = Wire(new RGB)
+    rgb.r := value
+    rgb.g := value
+    rgb.b := value
+    rgb
+  }
+
+  /**
+   * Constructs a RGB color from red, green, and blue values.
+   *
+   * @param r The red channel value.
+   * @param g The green channel value.
+   * @param b The blue channel value.
+   */
+  def apply(r: UInt, g: UInt, b: UInt): RGB = {
+    val rgb = Wire(new RGB)
+    rgb.r := r
+    rgb.g := g
+    rgb.b := b
+    rgb
+  }
 }
