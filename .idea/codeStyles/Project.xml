@@ -2,6 +2,10 @@
   <code_scheme name="Project" version="173">
     <ScalaCodeStyleSettings>
       <option name="MULTILINE_STRING_CLOSING_QUOTES_ON_NEW_LINE" value="true" />
+      <option name="TYPE_ANNOTATION_PUBLIC_MEMBER" value="false" />
+      <option name="TYPE_ANNOTATION_PROTECTED_MEMBER" value="false" />
+      <option name="TYPE_ANNOTATION_UNIT_TYPE" value="false" />
+      <option name="TYPE_ANNOTATION_STRUCTURAL_TYPE" value="false" />
     </ScalaCodeStyleSettings>
   </code_scheme>
 </component>
