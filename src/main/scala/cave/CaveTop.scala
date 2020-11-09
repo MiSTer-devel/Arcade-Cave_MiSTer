@@ -117,7 +117,7 @@ class CaveTop extends Module {
   io.progRom.addr := cave.io.rom_addr_68k_cache_o
   io.progRom.rd := cave.io.rom_read_68k_cache_o
   cave.io.rom_valid_68k_cache_i := io.progRom.valid
-  cave.io.rom_data_68k_cache_i := io.progRom.data
+  cave.io.rom_data_68k_cache_i := io.progRom.dout
 
   io.tileRom.addr := cave.io.rom_addr_gfx_o
   io.tileRom.tinyBurst := cave.io.tiny_burst_gfx_o

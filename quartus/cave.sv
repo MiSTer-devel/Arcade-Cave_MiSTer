@@ -433,7 +433,7 @@ Main main (
     .io_progRom_addr(rom_addr_68k_cache),
     .io_progRom_rd(rom_read_68k_cache),
     .io_progRom_valid(rom_valid_68k_cache),
-    .io_progRom_data(rom_data_68k_cache),
+    .io_progRom_dout(rom_data_68k_cache),
     // Graphics
     .io_tileRom_addr(gfx_addr),
     .io_tileRom_tinyBurst(gfx_tiny_burst),
