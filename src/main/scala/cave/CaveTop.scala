@@ -123,7 +123,7 @@ class CaveTop extends Module {
   io.tileRom.tinyBurst := cave.io.tiny_burst_gfx_o
   io.tileRom.rd := cave.io.rom_burst_read_gfx_o
   cave.io.rom_data_valid_gfx_i := io.tileRom.valid
-  cave.io.rom_data_gfx_i := io.tileRom.data
+  cave.io.rom_data_gfx_i := io.tileRom.dout
   cave.io.rom_burst_done_gfx_i := io.tileRom.burstDone
 
   io.frameBuffer.addr := cave.io.frame_buffer_addr_o
