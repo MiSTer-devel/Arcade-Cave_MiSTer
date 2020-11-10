@@ -497,16 +497,15 @@ begin
     --------------
     main_ram_1 : entity work.main_ram
         port map (
-            clk_i               => clk_68k_i,
-            enable_i            => ram_enable_s,
-            write_low_i         => high_write_strobe_s,
-            write_high_i        => low_write_strobe_s,
-            read_low_i          => read_strobe_s,
-            read_high_i         => read_strobe_s,
-            addr_i              => addr_68k_s(RAM_LOG_SIZE_C-1 downto 0),  -- There are unaligned byte accesses
-            data_i              => data_out_68k_s,
-            data_o              => ram_data_o_s,
-            ack_o               => ram_ack_s);
+            clk_i    => clk_68k_i,
+            enable_i => ram_enable_s,
+            read_i   => read_strobe_s,
+            write_i  => high_write_strobe_s or low_write_strobe_s,
+            addr_i   => addr_68k_s(RAM_LOG_SIZE_C-1 downto 0),  -- There are unaligned byte accesses
+            mask_i   => high_write_strobe_s & low_write_strobe_s,
+            data_i   => data_out_68k_s,
+            data_o   => ram_data_o_s,
+            ack_o    => ram_ack_s);
 
     -------------
     -- YMZ280b --
@@ -627,11 +626,10 @@ begin
             port map (
                 clk_68k_i    => clk_68k_i,
                 enable_i     => sprite_ram_enable_s,
-                write_low_i  => low_write_strobe_s,
-                write_high_i => high_write_strobe_s,
-                read_low_i   => read_strobe_s,
-                read_high_i  => read_strobe_s,
+                read_i       => read_strobe_s,
+                write_i      => high_write_strobe_s or low_write_strobe_s,
                 addr_i       => addr_68k_s(SPRITE_RAM_LOG_SIZE_C-1 downto 0),
+                mask_i       => high_write_strobe_s & low_write_strobe_s,
                 data_i       => data_out_68k_s,
                 data_o       => sprite_ram_data_o_s,
                 ack_o        => sprite_ram_ack_s,

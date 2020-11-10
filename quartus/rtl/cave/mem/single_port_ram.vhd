@@ -56,6 +56,9 @@ entity single_port_ram is
     -- address
     addr : in unsigned(ADDR_WIDTH-1 downto 0);
 
+    -- mask
+    mask : in std_logic_vector((DATA_WIDTH/8)-1 downto 0) := (others => '1');
+
     -- data in
     din : in std_logic_vector(DATA_WIDTH-1 downto 0) := (others => '0');
 
@@ -82,6 +85,7 @@ architecture arch of single_port_ram is
 begin
   altsyncram_component : altsyncram
   generic map (
+    byte_size                     => 8,
     clock_enable_input_a          => "BYPASS",
     clock_enable_output_a         => "BYPASS",
     intended_device_family        => "Cyclone V",
@@ -94,13 +98,14 @@ begin
     power_up_uninitialized        => "FALSE",
     read_during_write_mode_port_a => "NEW_DATA_NO_NBE_READ",
     width_a                       => DATA_WIDTH,
-    width_byteena_a               => 1,
+    width_byteena_a               => DATA_WIDTH/8,
     widthad_a                     => ADDR_WIDTH
   )
   port map (
     address_a => std_logic_vector(addr),
     clock0    => clk,
     data_a    => din,
+    byteena_a => mask,
     wren_a    => cs and we,
     q_a       => q
   );
