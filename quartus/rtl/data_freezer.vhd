@@ -60,6 +60,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity data_freezer is
+    generic (
+        WIDTH_A : natural := 8;
+        WIDTH_B : natural := 8
+    );
     port (
         -- Clocks and Resets
         slow_clk_i : in  std_logic;
@@ -67,14 +71,14 @@ entity data_freezer is
         fast_clk_i : in  std_logic;
         fast_rst_i : in  std_logic;
         -- Slow Clock interface
-        data_sc_i  : in  std_logic_vector;
+        data_sc_i  : in  std_logic_vector(WIDTH_A-1 downto 0);
         write_sc_i : in  std_logic;
-        data_sc_o  : out std_logic_vector;
+        data_sc_o  : out std_logic_vector(WIDTH_B-1 downto 0);
         valid_sc_o : out std_logic;
         -- Fast Clock interface
-        data_fc_i  : in  std_logic_vector;
+        data_fc_i  : in  std_logic_vector(WIDTH_B-1 downto 0);
         write_fc_i : in  std_logic;
-        data_fc_o  : out std_logic_vector;
+        data_fc_o  : out std_logic_vector(WIDTH_A-1 downto 0);
         valid_fc_o : out std_logic
         );
 end entity data_freezer;

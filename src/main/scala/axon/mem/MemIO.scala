@@ -47,7 +47,7 @@ abstract class MemIO private[mem](val addrWidth: Int, val dataWidth: Int) extend
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class ReadMemIO private[mem](addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
+class ReadMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
   /** Read enable */
   val rd = Output(Bool())
   /** Address bus */
@@ -68,7 +68,7 @@ object ReadMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class WriteMemIO private[mem](addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
+class WriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
   /** Write enable */
   val wr = Output(Bool())
   /** Address bus */
@@ -89,7 +89,7 @@ object WriteMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class ReadWriteMemIO private[mem](addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
+class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
   /** Read enable */
   val rd = Output(Bool())
   /** Write enable */

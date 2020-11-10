@@ -433,12 +433,12 @@ Main main (
     .io_progRom_addr(rom_addr_68k_cache),
     .io_progRom_rd(rom_read_68k_cache),
     .io_progRom_valid(rom_valid_68k_cache),
-    .io_progRom_data(rom_data_68k_cache),
+    .io_progRom_dout(rom_data_68k_cache),
     // Graphics
     .io_tileRom_addr(gfx_addr),
     .io_tileRom_tinyBurst(gfx_tiny_burst),
     .io_tileRom_rd(gfx_burst_read),
-    .io_tileRom_data(gfx_data),
+    .io_tileRom_dout(gfx_data),
     .io_tileRom_valid(gfx_data_valid),
     .io_tileRom_burstDone(gfx_burst_done),
     // Frame buffer

@@ -77,7 +77,7 @@ entity cave is
         rom_burst_done_gfx_i     : in  std_logic;
         -- Frame Buffer
         frame_buffer_addr_o      : out frame_buffer_addr_t;
-        frame_buffer_color_o     : out color_t;
+        frame_buffer_data_o      : out std_logic_vector(DDP_WORD_WIDTH-2 downto 0);
         frame_buffer_write_o     : out std_logic;
         frame_buffer_dma_start_o : out std_logic;
         frame_buffer_dma_done_i  : in  std_logic;
@@ -207,6 +207,8 @@ architecture struct of cave is
     -- No data for edge cases (will be 0 since the bus is OR'ed)
 
     signal addr_68k_32b_s           : unsigned(31 downto 0);
+
+    signal frame_buffer_color_s     : color_t;
 
 begin
 
@@ -594,10 +596,12 @@ begin
                     palette_ram_data_i       => gfx_palette_ram_data_s,
                     --
                     frame_buffer_addr_o      => frame_buffer_addr_o,
-                    frame_buffer_color_o     => frame_buffer_color_o,
+                    frame_buffer_color_o     => frame_buffer_color_s,
                     frame_buffer_write_o     => frame_buffer_write_o,
                     frame_buffer_dma_start_o => frame_buffer_dma_start_o,
                     frame_buffer_dma_done_i  => frame_buffer_dma_done_i);
+
+            frame_buffer_data_o <= frame_buffer_color_s.r & frame_buffer_color_s.g & frame_buffer_color_s.b;
 
         else generate
 
@@ -609,7 +613,7 @@ begin
             rom_burst_read_gfx_o     <= '0';
             gfx_palette_ram_addr_s   <= (others => '0');
             frame_buffer_addr_o      <= (others => '0');
-            frame_buffer_color_o     <= (others => (others => '0'));
+            frame_buffer_data_o      <= (others => '0');
             frame_buffer_write_o     <= '0';
             frame_buffer_dma_start_o <= '0';
             tiny_burst_gfx_o         <= '0';

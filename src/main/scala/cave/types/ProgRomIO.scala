@@ -38,16 +38,6 @@
 package cave.types
 
 import cave.Config
-import chisel3._
 
 /** Program ROM IO */
-class ProgRomIO extends Bundle {
-  /** Read enable */
-  val rd = Output(Bool())
-  /** Valid flag */
-  val valid = Input(Bool())
-  /** Address bus */
-  val addr = Output(UInt(Config.PROG_ROM_ADDR_WIDTH.W))
-  /** Data bus */
-  val data = Input(Bits(Config.PROG_ROM_DATA_WIDTH.W))
-}
+class ProgRomIO extends ValidReadMemIO(Config.CACHE_ADDR_WIDTH, Config.CACHE_DATA_WIDTH)

@@ -41,17 +41,9 @@ import cave.Config
 import chisel3._
 
 /** Tile ROM IO */
-class TileRomIO extends Bundle {
-  /** Read enable */
-  val rd = Output(Bool())
+class TileRomIO extends ValidReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH) {
   /** Tiny burst flag */
   val tinyBurst = Output(Bool())
-  /** Valid flag */
-  val valid = Input(Bool())
   /** Burst done flag */
   val burstDone = Input(Bool())
-  /** Address bus */
-  val addr = Output(UInt(Config.TILE_ROM_ADDR_WIDTH.W))
-  /** Data bus */
-  val data = Input(Bits(Config.TILE_ROM_DATA_WIDTH.W))
 }

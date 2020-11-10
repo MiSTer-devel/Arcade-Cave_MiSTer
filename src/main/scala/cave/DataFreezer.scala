@@ -37,38 +37,64 @@
 
 package cave
 
-import axon.gpu.VideoTimingConfig
+import cave.types.ValidReadMemIO
+import chisel3._
 
-object Config {
-  /** The system clock frequency (Hz) */
-  val CLOCK_FREQ = 96000000D
+/**
+ * Transfers data between clock domains.
+ *
+ * @param addrWidth The width of the address bus.
+ * @param dataWidth The width of the data bus.
+ */
+class DataFreezer(addrWidth: Int, dataWidth: Int) extends Module {
+  val io = IO(new Bundle {
+    /** Target clock domain */
+    val targetClock = Input(Clock())
+    /** Target reset */
+    val targetReset = Input(Reset())
+    /** Input port */
+    val in = Flipped(ValidReadMemIO(addrWidth, dataWidth))
+    /** Output port */
+    val out = ValidReadMemIO(addrWidth, dataWidth)
+  })
 
-  val SCREEN_WIDTH = 320
-  val SCREEN_HEIGHT = 240
+  class DataFreezerBlackBox extends BlackBox(Map(
+    "WIDTH_A" -> addrWidth,
+    "WIDTH_B" -> dataWidth
+  )) {
+    val io = IO(new Bundle {
+      val slow_rst_i = Input(Reset())
+      val slow_clk_i = Input(Clock())
+      val fast_rst_i = Input(Reset())
+      val fast_clk_i = Input(Clock())
+      val data_sc_i = Input(Bits(addrWidth.W))
+      val write_sc_i = Input(Bool())
+      val data_sc_o = Output(Bits(dataWidth.W))
+      val valid_sc_o = Output(Bool())
+      val data_fc_i = Input(Bits(dataWidth.W))
+      val write_fc_i = Input(Bool())
+      val data_fc_o = Output(Bits(addrWidth.W))
+      val valid_fc_o = Output(Bool())
+    })
 
-  val CACHE_ADDR_WIDTH = 20
-  val CACHE_DATA_WIDTH = 256
+    override def desiredName = "data_freezer"
+  }
 
-  val PROG_ROM_ADDR_WIDTH = 24
-  val PROG_ROM_DATA_WIDTH = 16
-  val PROG_ROM_OFFSET = 0x000000
+  val freezer = Module(new DataFreezerBlackBox)
+  freezer.io.fast_rst_i := reset
+  freezer.io.fast_clk_i := clock
+  freezer.io.slow_rst_i := io.targetReset
+  freezer.io.slow_clk_i := io.targetClock
 
-  val TILE_ROM_ADDR_WIDTH = 32
-  val TILE_ROM_DATA_WIDTH = 64
-  val TILE_ROM_OFFSET = 0x100000
+  // Slow clock domain
+  freezer.io.data_sc_i := io.in.addr
+  freezer.io.write_sc_i := io.in.rd
+  io.in.dout := freezer.io.data_sc_o
+  io.in.valid := freezer.io.valid_sc_o
 
-  val FRAME_BUFFER_ADDR_WIDTH = 17
-  val FRAME_BUFFER_DATA_WIDTH = 15
-
-  /** Video timing configuration */
-  val videoTimingConfig = VideoTimingConfig(
-    hDisplay = 320,
-    hFrontPorch = 5,
-    hRetrace = 23,
-    hBackPorch = 34,
-    vDisplay = 240,
-    vFrontPorch = 12,
-    vRetrace = 2,
-    vBackPorch = 19
-  )
+  // Fast clock domain
+  io.out.addr := freezer.io.data_fc_o
+  io.out.rd := freezer.io.valid_fc_o
+  freezer.io.data_fc_i := io.out.dout
+  freezer.io.write_fc_i := io.out.valid
 }

@@ -128,7 +128,7 @@ class Main extends Module {
   ))
   frameBuffer.io.portA.wr := RegNext(cave.io.frameBuffer.wr)
   frameBuffer.io.portA.addr := RegNext(frameBufferAddr)
-  frameBuffer.io.portA.din := RegNext(cave.io.frameBuffer.data)
+  frameBuffer.io.portA.din := RegNext(cave.io.frameBuffer.din)
   frameBuffer.io.portB.rd := true.B
   frameBuffer.io.portB.addr := io.frameBuffer.addr
 

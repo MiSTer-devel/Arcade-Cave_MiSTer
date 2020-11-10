@@ -37,38 +37,53 @@
 
 package cave
 
-import axon.gpu.VideoTimingConfig
+import cave.types.ValidReadMemIO
+import chisel3._
 
-object Config {
-  /** The system clock frequency (Hz) */
-  val CLOCK_FREQ = 96000000D
+/**
+ * A direct-mapped cache memory.
+ *
+ * @param inAddrWidth The width of the input address bus.
+ * @param inDataWidth The width of the input data bus.
+ * @param outAddrWidth The width of the output address bus.
+ * @param outDataWidth The width of the output data bus.
+ */
+class CacheMem(inAddrWidth: Int, inDataWidth: Int, outAddrWidth: Int, outDataWidth: Int) extends Module {
+  val io = IO(new Bundle {
+    /** Input port */
+    val in = Flipped(ValidReadMemIO(inAddrWidth, inDataWidth))
+    /** Output port */
+    val out = ValidReadMemIO(outAddrWidth, outDataWidth)
+  })
 
-  val SCREEN_WIDTH = 320
-  val SCREEN_HEIGHT = 240
+  class CacheMemBlackBox extends BlackBox {
+    val io = IO(new Bundle {
+      val rst_i = Input(Reset())
+      val clk_i = Input(Clock())
+      val agent_to_cache_addr_i = Input(UInt(inAddrWidth.W))
+      val agent_to_cache_read_i = Input(Bool())
+      val cache_to_agent_data_o = Output(Bits(inDataWidth.W))
+      val cache_to_agent_valid_o = Output(Bool())
+      val cache_to_memory_addr_o = Output(UInt(outAddrWidth.W))
+      val cache_to_memory_read_o = Output(Bool())
+      val memory_to_cache_data_i = Input(Bits(outDataWidth.W))
+      val memory_to_cache_valid_i = Input(Bool())
+    })
 
-  val CACHE_ADDR_WIDTH = 20
-  val CACHE_DATA_WIDTH = 256
+    override def desiredName = "cache_memory"
+  }
 
-  val PROG_ROM_ADDR_WIDTH = 24
-  val PROG_ROM_DATA_WIDTH = 16
-  val PROG_ROM_OFFSET = 0x000000
+  val cache = Module(new CacheMemBlackBox)
+  cache.io.rst_i := reset
+  cache.io.clk_i := clock
 
-  val TILE_ROM_ADDR_WIDTH = 32
-  val TILE_ROM_DATA_WIDTH = 64
-  val TILE_ROM_OFFSET = 0x100000
+  cache.io.agent_to_cache_addr_i := io.in.addr
+  cache.io.agent_to_cache_read_i := io.in.rd
+  io.in.dout := cache.io.cache_to_agent_data_o
+  io.in.valid := cache.io.cache_to_agent_valid_o
 
-  val FRAME_BUFFER_ADDR_WIDTH = 17
-  val FRAME_BUFFER_DATA_WIDTH = 15
-
-  /** Video timing configuration */
-  val videoTimingConfig = VideoTimingConfig(
-    hDisplay = 320,
-    hFrontPorch = 5,
-    hRetrace = 23,
-    hBackPorch = 34,
-    vDisplay = 240,
-    vFrontPorch = 12,
-    vRetrace = 2,
-    vBackPorch = 19
-  )
+  io.out.addr := cache.io.cache_to_memory_addr_o
+  io.out.rd := cache.io.cache_to_memory_read_o
+  cache.io.memory_to_cache_data_i := io.out.dout
+  cache.io.memory_to_cache_valid_i := io.out.valid
 }

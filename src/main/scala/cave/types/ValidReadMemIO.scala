@@ -35,40 +35,20 @@
  *  SOFTWARE.
  */
 
-package cave
+package cave.types
 
-import axon.gpu.VideoTimingConfig
+import axon.mem.{ReadMemIO, ValidIO}
 
-object Config {
-  /** The system clock frequency (Hz) */
-  val CLOCK_FREQ = 96000000D
+/**
+ * A simple flow control interface for reading from asynchronous memory.
+ *
+ * @param addrWidth The width of the address bus.
+ * @param dataWidth The width of the data bus.
+ */
+class ValidReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth, dataWidth) with ValidIO {
+  override def cloneType: this.type = new ValidReadMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
+}
 
-  val SCREEN_WIDTH = 320
-  val SCREEN_HEIGHT = 240
-
-  val CACHE_ADDR_WIDTH = 20
-  val CACHE_DATA_WIDTH = 256
-
-  val PROG_ROM_ADDR_WIDTH = 24
-  val PROG_ROM_DATA_WIDTH = 16
-  val PROG_ROM_OFFSET = 0x000000
-
-  val TILE_ROM_ADDR_WIDTH = 32
-  val TILE_ROM_DATA_WIDTH = 64
-  val TILE_ROM_OFFSET = 0x100000
-
-  val FRAME_BUFFER_ADDR_WIDTH = 17
-  val FRAME_BUFFER_DATA_WIDTH = 15
-
-  /** Video timing configuration */
-  val videoTimingConfig = VideoTimingConfig(
-    hDisplay = 320,
-    hFrontPorch = 5,
-    hRetrace = 23,
-    hBackPorch = 34,
-    vDisplay = 240,
-    vFrontPorch = 12,
-    vRetrace = 2,
-    vBackPorch = 19
-  )
+object ValidReadMemIO {
+  def apply(addrWidth: Int, dataWidth: Int) = new ValidReadMemIO(addrWidth, dataWidth)
 }
