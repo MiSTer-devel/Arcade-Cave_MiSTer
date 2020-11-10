@@ -9,7 +9,6 @@ set_global_assignment -name VERILOG_FILE rtl/ChiselTop.v
 set_global_assignment -name VHDL_FILE rtl/68k/TG68_fast.vhd
 set_global_assignment -name VHDL_FILE rtl/68k/TG68.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/cave_pkg.vhd
-set_global_assignment -name VHDL_FILE rtl/cave/cave_top.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/cave.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/gpu/graphic_processor.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/gpu/layer_pipeline.vhd
