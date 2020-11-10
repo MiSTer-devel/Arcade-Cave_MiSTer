@@ -42,36 +42,74 @@ import chisel3._
 /** M68000 CPU */
 class M68K extends Module {
   /** The width of the CPU address bus. */
-  val ADDR_WIDTH = 23
+  val ADDR_WIDTH = 24
 
   /** The width of the CPU data bus. */
   val DATA_WIDTH = 16
 
+  /** The width of the CPU interrupt priority level value. */
+  val IPL_WIDTH = 3
+
   val io = IO(new Bundle {
-    /** address bus */
+    /** Clock enable */
+    val cen = Input(Bool())
+    /** Address bus */
     val addr = Output(UInt(ADDR_WIDTH.W))
-
-    /** data input */
+    /** Data input bus */
     val din = Input(Bits(DATA_WIDTH.W))
-
-    /** data output */
+    /** Data output bus */
     val dout = Output(Bits(DATA_WIDTH.W))
+    /** Address strobe */
+    val as = Output(Bool())
+    /** Read/write */
+    val rw = Output(Bool())
+    /** Upper data strobe */
+    val uds = Output(Bool())
+    /** Lower data strobe */
+    val lds = Output(Bool())
+    /** Data transfer acknowledge */
+    val dtack = Input(Bool())
+    /** Interrupt priority level */
+    val ipl = Input(UInt(IPL_WIDTH.W))
+    /** Debug port */
+    val debug = new Bundle {
+      val pc = Output(UInt(32.W))
+      val pcw = Output(Bool())
+    }
   })
 
-  class FX68K extends BlackBox {
+  class TG68 extends BlackBox {
     val io = IO(new Bundle {
-      val rst = Input(Reset())
       val clk = Input(Clock())
-      val eab = Output(UInt(ADDR_WIDTH.W))
-      val iEdb = Input(Bits(DATA_WIDTH.W))
-      val oEdb = Output(Bits(DATA_WIDTH.W))
+      val reset = Input(Reset())
+      val clkena_in = Input(Bool())
+      val data_in = Input(Bits(DATA_WIDTH.W))
+      val IPL = Input(UInt(IPL_WIDTH.W))
+      val dtack = Input(Bool())
+      val addr = Output(UInt(ADDR_WIDTH.W))
+      val data_out = Output(Bits(DATA_WIDTH.W))
+      val as = Output(Bool())
+      val uds = Output(Bool())
+      val lds = Output(Bool())
+      val rw = Output(Bool())
+      val TG68_PC_o = Output(UInt(ADDR_WIDTH.W))
+      val TG68_PCW_o = Output(Bool())
     })
   }
 
-  val fx68k = Module(new FX68K)
-  fx68k.io.rst := reset
-  fx68k.io.clk := clock
-  io.addr := fx68k.io.eab
-  io.dout := fx68k.io.oEdb
-  fx68k.io.iEdb := io.din
+  val cpu = Module(new TG68)
+  cpu.io.clk := clock
+  cpu.io.reset := reset
+  cpu.io.clkena_in := io.cen
+  cpu.io.data_in := io.din
+  cpu.io.IPL := io.ipl
+  cpu.io.dtack := io.dtack
+  io.addr := cpu.io.addr
+  io.dout := cpu.io.data_out
+  io.as := cpu.io.as
+  io.uds := cpu.io.uds
+  io.lds := cpu.io.lds
+  io.rw := cpu.io.rw
+  io.debug.pc := cpu.io.TG68_PC_o
+  io.debug.pcw := cpu.io.TG68_PCW_o
 }
