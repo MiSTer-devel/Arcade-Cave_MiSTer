@@ -38,7 +38,6 @@
 package cave.types
 
 import cave.Config
-import chisel3._
 
 /** Program ROM IO */
-class ProgRomIO extends ValidReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH)
+class ProgRomIO extends ValidReadMemIO(Config.CACHE_ADDR_WIDTH, Config.CACHE_DATA_WIDTH)

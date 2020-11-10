@@ -65,22 +65,23 @@ class CaveTop extends Module {
     }
   })
 
-  class CaveTopBlackBox extends BlackBox {
+  class CaveBlackBox extends BlackBox {
     val io = IO(new Bundle {
-      // Clock and reset
+      // Fast clock domain
       val rst_i = Input(Reset())
+      val clk_fast_i = Input(Clock())
+      // CPU clock domain
       val rst_68k_i = Input(Reset())
-      val clk_i = Input(Clock())
       val clk_68k_i = Input(Clock())
       // Player inputs
       val player_1_i = Input(Bits())
       val player_2_i = Input(Bits())
       val pause_i = Input(Bool())
       // Program ROM
-      val rom_addr_68k_cache_o = Output(UInt(Config.PROG_ROM_ADDR_WIDTH.W))
-      val rom_read_68k_cache_o = Output(Bool())
-      val rom_valid_68k_cache_i = Input(Bool())
-      val rom_data_68k_cache_i = Input(Bits(Config.PROG_ROM_DATA_WIDTH.W))
+      val rom_addr_68k_o = Output(UInt(Config.PROG_ROM_ADDR_WIDTH.W))
+      val rom_read_68k_o = Output(Bool())
+      val rom_valid_68k_i = Input(Bool())
+      val rom_data_68k_i = Input(Bits(Config.PROG_ROM_DATA_WIDTH.W))
       // Tile ROM
       val rom_addr_gfx_o = Output(UInt(Config.TILE_ROM_ADDR_WIDTH.W))
       val tiny_burst_gfx_o = Output(Bool())
@@ -101,23 +102,46 @@ class CaveTop extends Module {
       val TG68_PCW_o = Output(Bool())
     })
 
-    override def desiredName = "cave_top"
+    override def desiredName = "cave"
   }
 
-  val cave = Module(new CaveTopBlackBox)
+  // Cache memory
+  //
+  // The cache memory runs in the CPU clock domain.
+  val cacheMem = withClockAndReset(io.cpuClock, io.cpuReset) {
+    Module(new CacheMem(
+      inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
+      inDataWidth = Config.PROG_ROM_DATA_WIDTH,
+      outAddrWidth = Config.CACHE_ADDR_WIDTH,
+      outDataWidth = Config.CACHE_DATA_WIDTH
+    ))
+  }
+
+  // Data freezer
+  val dataFreezer = Module(new DataFreezer(
+    addrWidth = Config.CACHE_ADDR_WIDTH,
+    dataWidth = Config.CACHE_DATA_WIDTH
+  ))
+  dataFreezer.io.targetClock := io.cpuClock
+  dataFreezer.io.targetReset := io.cpuReset
+  dataFreezer.io.in <> cacheMem.io.out
+  dataFreezer.io.out <> io.progRom
+
+  // Cave
+  val cave = Module(new CaveBlackBox)
   cave.io.rst_i := reset
-  cave.io.clk_i := clock
+  cave.io.clk_fast_i := clock
   cave.io.clk_68k_i := io.cpuClock
   cave.io.rst_68k_i := io.cpuReset
 
   cave.io.player_1_i := io.player.player1
-  cave.io.player_2_i := io.player.player1
+  cave.io.player_2_i := io.player.player2
   cave.io.pause_i := io.player.pause
 
-  io.progRom.addr := cave.io.rom_addr_68k_cache_o
-  io.progRom.rd := cave.io.rom_read_68k_cache_o
-  cave.io.rom_valid_68k_cache_i := io.progRom.valid
-  cave.io.rom_data_68k_cache_i := io.progRom.dout
+  cacheMem.io.in.addr := cave.io.rom_addr_68k_o
+  cacheMem.io.in.rd := cave.io.rom_read_68k_o
+  cave.io.rom_valid_68k_i := cacheMem.io.in.valid
+  cave.io.rom_data_68k_i := cacheMem.io.in.dout
 
   io.tileRom.addr := cave.io.rom_addr_gfx_o
   io.tileRom.tinyBurst := cave.io.tiny_burst_gfx_o
