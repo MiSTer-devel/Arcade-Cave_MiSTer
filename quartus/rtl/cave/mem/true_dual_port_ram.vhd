@@ -57,6 +57,7 @@ entity true_dual_port_ram is
     rd_a   : in std_logic := '1';
     ack_a  : out std_logic;
     addr_a : in unsigned(ADDR_WIDTH_A-1 downto 0);
+    mask_a : in std_logic_vector((DATA_WIDTH_A/8)-1 downto 0) := (others => '1');
     din_a  : in std_logic_vector(DATA_WIDTH_A-1 downto 0) := (others => '0');
     dout_a : out std_logic_vector(DATA_WIDTH_A-1 downto 0);
 
@@ -90,6 +91,7 @@ begin
   altsyncram_component : altsyncram
   generic map (
     address_reg_b                 => "CLOCK1",
+    byte_size                     => 8,
     clock_enable_input_a          => "BYPASS",
     clock_enable_input_b          => "BYPASS",
     clock_enable_output_a         => "BYPASS",
@@ -109,8 +111,7 @@ begin
     read_during_write_mode_port_b => "NEW_DATA_NO_NBE_READ",
     width_a                       => DATA_WIDTH_A,
     width_b                       => DATA_WIDTH_B,
-    width_byteena_a               => 1,
-    width_byteena_b               => 1,
+    width_byteena_a               => DATA_WIDTH_A/8,
     widthad_a                     => ADDR_WIDTH_A,
     widthad_b                     => ADDR_WIDTH_B,
     wrcontrol_wraddress_reg_b     => "CLOCK1"
@@ -122,6 +123,7 @@ begin
     clock1    => clk_b,
     data_a    => din_a,
     data_b    => din_b,
+    byteena_a => mask_a,
     rden_a    => cs_a and rd_a,
     rden_b    => cs_b and rd_b,
     wren_a    => cs_a and wr_a,
