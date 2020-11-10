@@ -62,7 +62,7 @@ class Main extends Module {
     /** Player port */
     val player = new PlayerIO
     /** Program ROM port */
-    val progRom = new ProgRomIO
+    val progRom = new CacheIO
     /** Tile ROM port */
     val tileRom = new TileRomIO
     /** Frame buffer port */
@@ -92,22 +92,46 @@ class Main extends Module {
   val swapReg = RegInit(false.B)
 
   // Video timing
+  //
+  // The video timing runs in the video clock domain.
   val videoTiming = withClock(io.videoClock) { Module(new VideoTiming(Config.videoTimingConfig)) }
   io.video := videoTiming.io
+
+  // Cache memory
+  //
+  // The cache memory runs in the CPU clock domain.
+  val cacheMem = withClockAndReset(io.cpuClock, io.cpuReset) {
+    Module(new CacheMem(
+      inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
+      inDataWidth = Config.PROG_ROM_DATA_WIDTH,
+      outAddrWidth = Config.CACHE_ADDR_WIDTH,
+      outDataWidth = Config.CACHE_DATA_WIDTH
+    ))
+  }
+
+  // Data freezer
+  val dataFreezer = Module(new DataFreezer(
+    addrWidth = Config.CACHE_ADDR_WIDTH,
+    dataWidth = Config.CACHE_DATA_WIDTH
+  ))
+  dataFreezer.io.targetClock := io.cpuClock
+  dataFreezer.io.targetReset := io.cpuReset
+  dataFreezer.io.in <> cacheMem.io.out
+  dataFreezer.io.out <> io.progRom
 
   // Cave
   val cave = Module(new CaveTop)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.player := io.player
-  cave.io.progRom <> io.progRom
+  cave.io.progRom <> cacheMem.io.in
   cave.io.tileRom <> io.tileRom
   cave.io.frameBuffer.dmaDone := io.frameBuffer.dmaDone
   cave.io.video := videoTiming.io
 
-  // Convert the x/y values to a linear address
+  // Convert the X and Y values to a linear address
   //
-  // TODO: Use a vec2 instead of an address.
+  // TODO: Use a Vec2 data type instead of an address.
   val frameBufferAddr = {
     val x = cave.io.frameBuffer.addr.head(log2Up(Config.SCREEN_WIDTH))
     val y = cave.io.frameBuffer.addr.tail(log2Up(Config.SCREEN_WIDTH))
@@ -145,8 +169,6 @@ class Main extends Module {
   when(Util.rising(vBlank)) { swapReg := !swapReg }
 
   // Outputs
-  io.progRom.addr := cave.io.progRom.addr + Config.PROG_ROM_OFFSET.U
-  io.tileRom.addr := cave.io.tileRom.addr + Config.TILE_ROM_OFFSET.U
   io.frameBuffer.dmaStart := cave.io.frameBuffer.dmaStart
   io.frameBuffer.data := frameBufferData
   io.frameBuffer.swap := swapReg

@@ -105,28 +105,6 @@ class CaveTop extends Module {
     override def desiredName = "cave"
   }
 
-  // Cache memory
-  //
-  // The cache memory runs in the CPU clock domain.
-  val cacheMem = withClockAndReset(io.cpuClock, io.cpuReset) {
-    Module(new CacheMem(
-      inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
-      inDataWidth = Config.PROG_ROM_DATA_WIDTH,
-      outAddrWidth = Config.CACHE_ADDR_WIDTH,
-      outDataWidth = Config.CACHE_DATA_WIDTH
-    ))
-  }
-
-  // Data freezer
-  val dataFreezer = Module(new DataFreezer(
-    addrWidth = Config.CACHE_ADDR_WIDTH,
-    dataWidth = Config.CACHE_DATA_WIDTH
-  ))
-  dataFreezer.io.targetClock := io.cpuClock
-  dataFreezer.io.targetReset := io.cpuReset
-  dataFreezer.io.in <> cacheMem.io.out
-  dataFreezer.io.out <> io.progRom
-
   // Cave
   val cave = Module(new CaveBlackBox)
   cave.io.rst_i := reset
@@ -138,12 +116,12 @@ class CaveTop extends Module {
   cave.io.player_2_i := io.player.player2
   cave.io.pause_i := io.player.pause
 
-  cacheMem.io.in.addr := cave.io.rom_addr_68k_o
-  cacheMem.io.in.rd := cave.io.rom_read_68k_o
-  cave.io.rom_valid_68k_i := cacheMem.io.in.valid
-  cave.io.rom_data_68k_i := cacheMem.io.in.dout
+  io.progRom.addr := cave.io.rom_addr_68k_o + Config.PROG_ROM_OFFSET.U
+  io.progRom.rd := cave.io.rom_read_68k_o
+  cave.io.rom_valid_68k_i := io.progRom.valid
+  cave.io.rom_data_68k_i := io.progRom.dout
 
-  io.tileRom.addr := cave.io.rom_addr_gfx_o
+  io.tileRom.addr := cave.io.rom_addr_gfx_o + Config.TILE_ROM_OFFSET.U
   io.tileRom.tinyBurst := cave.io.tiny_burst_gfx_o
   io.tileRom.rd := cave.io.rom_burst_read_gfx_o
   cave.io.rom_data_valid_gfx_i := io.tileRom.valid
