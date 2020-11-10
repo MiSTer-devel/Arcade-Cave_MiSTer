@@ -39,7 +39,7 @@ package axon.mem
 
 import chisel3._
 
-abstract class MemIO private[mem](val addrWidth: Int, val dataWidth: Int) extends Bundle
+abstract class MemIO(val addrWidth: Int, val dataWidth: Int) extends Bundle
 
 /**
  * A simple flow control interface for reading from synchronous memory.
