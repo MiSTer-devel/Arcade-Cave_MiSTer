@@ -92,6 +92,18 @@ entity cave is
         spriteRam_rd             : out std_logic;
         spriteRam_addr           : out sprite_ram_info_access_t;
         spriteRam_dout           : in  sprite_ram_line_t;
+        -- Layer 0 RAM
+        layer0Ram_rd             : out std_logic;
+        layer0Ram_addr           : out layer_ram_info_access_t;
+        layer0Ram_dout           : in  layer_ram_line_t;
+        -- Layer 1 RAM
+        layer1Ram_rd             : out std_logic;
+        layer1Ram_addr           : out layer_ram_info_access_t;
+        layer1Ram_dout           : in  layer_ram_line_t;
+        -- Layer 2 RAM
+        layer2Ram_rd             : out std_logic;
+        layer2Ram_addr           : out layer_ram_info_access_t;
+        layer2Ram_dout           : in  layer_ram_line_t;
         -- Frame Buffer
         frameBuffer_wr           : out std_logic;
         frameBuffer_addr         : out frame_buffer_addr_t;
@@ -131,21 +143,6 @@ architecture struct of cave is
     signal ymz_ram_enable_s         : std_logic;
     signal ymz_ram_ack_s            : std_logic;
     signal ymz_ram_data_o_s         : word_t;
-    -- Layer 0 RAM
-    constant LAYER_0_RAM_LOG_SIZE_C : natural := 15;  -- 32kB
-    signal layer_0_ram_enable_s     : std_logic;
-    signal layer_0_ram_ack_s        : std_logic;
-    signal layer_0_ram_data_o_s     : word_t;
-    -- Layer 1 RAM
-    constant LAYER_1_RAM_LOG_SIZE_C : natural := 15;  -- 32kB
-    signal layer_1_ram_enable_s     : std_logic;
-    signal layer_1_ram_ack_s        : std_logic;
-    signal layer_1_ram_data_o_s     : word_t;
-    -- Layer 2 RAM
-    constant LAYER_2_RAM_LOG_SIZE_C : natural := 16;  -- 64kB
-    signal layer_2_ram_enable_s     : std_logic;
-    signal layer_2_ram_ack_s        : std_logic;
-    signal layer_2_ram_data_o_s     : word_t;
     -- Video Registers (should not necessarily be ram) (write only)
     constant VIDEO_REGS_LOG_SIZE_C  : natural := 7;   -- 128B
     signal video_regs_enable_s      : std_logic;
@@ -215,6 +212,9 @@ begin
     end process;
 
     spriteRam_rd <= '1';
+    layer0Ram_rd <= '1';
+    layer1Ram_rd <= '1';
+    layer2Ram_rd <= '1';
     frameBuffer_mask <= "11";
 
     -------------------
@@ -294,9 +294,6 @@ begin
 
     -- This is an OR'ed bus
     memory_bus_ack_s <= ymz_ram_ack_s     or
-                        layer_0_ram_ack_s or
-                        layer_1_ram_ack_s or
-                        layer_2_ram_ack_s or
                         video_regs_ack_s  or
                         irq_cause_ack_s   or
                         v_ctrl_0_ack_s    or
@@ -313,9 +310,6 @@ begin
 
     -- "OR" everything together to create the "OR'ed" bus
     memory_bus_data_s <= ymz_ram_data_o_s     or
-                         layer_0_ram_data_o_s or
-                         layer_1_ram_data_o_s or
-                         layer_2_ram_data_o_s or
                          irq_cause_data_o_s   or
                          v_ctrl_0_data_o_s    or
                          v_ctrl_1_data_o_s    or
@@ -356,15 +350,6 @@ begin
 
     -- YMZ RAM              0x300000 - 0x300003
     ymz_ram_enable_s     <= '1' when addr_68k_s(31 downto YMZ_RAM_LOG_SIZE_C) = x"0030000" & "00" else
-                            '0';
-    -- Layer 0 RAM          0x500000 - 0x507fff
-    layer_0_ram_enable_s <= '1' when addr_68k_s(31 downto LAYER_0_RAM_LOG_SIZE_C) = x"0050" & "0" else
-                            '0';
-    -- Layer 1 RAM          0x600000 - 0x607fff
-    layer_1_ram_enable_s <= '1' when addr_68k_s(31 downto LAYER_1_RAM_LOG_SIZE_C) = x"0060" & "0" else
-                            '0';
-    -- Layer 2 RAM          0x700000 - 0x70ffff
-    layer_2_ram_enable_s <= '1' when addr_68k_s(31 downto LAYER_2_RAM_LOG_SIZE_C) = x"0070" else
                             '0';
     -- Video Registers (should not necessarily be ram) (maybe remove read/write
     -- check redundancy).   0x800000 - 0x80007f
@@ -443,12 +428,6 @@ begin
         signal generate_frame_s         : std_logic;
         signal buffer_select_s          : std_logic;
         -- Layer signals
-        signal gfx_layer_0_ram_addr_s   : layer_ram_info_access_t;
-        signal gfx_layer_1_ram_addr_s   : layer_ram_info_access_t;
-        signal gfx_layer_2_ram_addr_s   : layer_ram_info_access_t;
-        signal gfx_layer_0_ram_info_s   : layer_ram_line_t;
-        signal gfx_layer_1_ram_info_s   : layer_ram_line_t;
-        signal gfx_layer_2_ram_info_s   : layer_ram_line_t;
         signal gfx_vctrl_0_reg_s        : layer_info_line_t;
         signal gfx_vctrl_1_reg_s        : layer_info_line_t;
         signal gfx_vctrl_2_reg_s        : layer_info_line_t;
@@ -475,14 +454,14 @@ begin
                     sprite_ram_addr_o        => spriteRam_addr,
                     sprite_ram_info_i        => spriteRam_dout,
                     --
-                    layer_0_ram_addr_o       => gfx_layer_0_ram_addr_s,
-                    layer_0_ram_info_i       => gfx_layer_0_ram_info_s,
+                    layer_0_ram_addr_o       => layer0Ram_addr,
+                    layer_0_ram_info_i       => layer0Ram_dout,
                     --
-                    layer_1_ram_addr_o       => gfx_layer_1_ram_addr_s,
-                    layer_1_ram_info_i       => gfx_layer_1_ram_info_s,
+                    layer_1_ram_addr_o       => layer1Ram_addr,
+                    layer_1_ram_info_i       => layer1Ram_dout,
                     --
-                    layer_2_ram_addr_o       => gfx_layer_2_ram_addr_s,
-                    layer_2_ram_info_i       => gfx_layer_2_ram_info_s,
+                    layer_2_ram_addr_o       => layer2Ram_addr,
+                    layer_2_ram_info_i       => layer2Ram_dout,
                     --
                     vctrl_reg_0_i            => gfx_vctrl_0_reg_s,
                     vctrl_reg_1_i            => gfx_vctrl_1_reg_s,
@@ -509,9 +488,9 @@ begin
         else generate
 
             spriteRam_addr           <= (others => '0');
-            gfx_layer_0_ram_addr_s   <= (others => '0');
-            gfx_layer_1_ram_addr_s   <= (others => '0');
-            gfx_layer_2_ram_addr_s   <= (others => '0');
+            layer0Ram_addr           <= (others => '0');
+            layer1Ram_addr           <= (others => '0');
+            layer2Ram_addr           <= (others => '0');
             tileRom_addr             <= (others => '0');
             tileRom_rd               <= '0';
             gfx_palette_ram_addr_s   <= (others => '0');
@@ -522,78 +501,6 @@ begin
             tileRom_tinyBurst        <= '0';
 
         end generate graphic_processor_generate;
-
-        -----------------
-        -- Layer 0 RAM --
-        -----------------
-        layer_0_ram : entity work.true_dual_port_ram
-            generic map (
-                ADDR_WIDTH_A => LAYER_0_RAM_LOG_SIZE_C-1,
-                DATA_WIDTH_A => DDP_WORD_WIDTH,
-                ADDR_WIDTH_B => DDP_LAYER_TILE_RAM_LINE_ADDR_WIDTH-1,
-                DATA_WIDTH_B => DDP_LAYER_TILE_RAM_LINE_WIDTH)
-            port map (
-                clk_a  => clk_68k_i,
-                cs_a   => layer_0_ram_enable_s,
-                wr_a   => write_strobe_s,
-                rd_a   => read_strobe_s,
-                addr_a => addr_68k_s(LAYER_0_RAM_LOG_SIZE_C-1 downto 1),
-                din_a  => data_out_68k_s,
-                dout_a => layer_0_ram_data_o_s,
-                ack_a  => layer_0_ram_ack_s,
-                clk_b  => clk_i,
-                -- Do not use the MSB bit because this RAM is 32kB and address is for 64kB
-                addr_b => gfx_layer_0_ram_addr_s(gfx_layer_0_ram_addr_s'high-1 downto 0),
-                dout_b => gfx_layer_0_ram_info_s);
-
-        -----------------
-        -- Layer 1 RAM --
-        -----------------
-        layer_1_ram : entity work.true_dual_port_ram
-            generic map (
-                ADDR_WIDTH_A => LAYER_1_RAM_LOG_SIZE_C-1,
-                DATA_WIDTH_A => DDP_WORD_WIDTH,
-                ADDR_WIDTH_B => DDP_LAYER_TILE_RAM_LINE_ADDR_WIDTH-1,
-                DATA_WIDTH_B => DDP_LAYER_TILE_RAM_LINE_WIDTH)
-            port map (
-                clk_a  => clk_68k_i,
-                cs_a   => layer_1_ram_enable_s,
-                wr_a   => write_strobe_s,
-                rd_a   => read_strobe_s,
-                addr_a => addr_68k_s(LAYER_1_RAM_LOG_SIZE_C-1 downto 1),
-                din_a  => data_out_68k_s,
-                dout_a => layer_1_ram_data_o_s,
-                ack_a  => layer_1_ram_ack_s,
-                clk_b  => clk_i,
-                -- Do not use the MSB bit because this RAM is 32kB and address is for 64kB
-                addr_b => gfx_layer_1_ram_addr_s(gfx_layer_1_ram_addr_s'high-1 downto 0),
-                dout_b => gfx_layer_1_ram_info_s);
-
-        -----------------
-        -- Layer 2 RAM --
-        -----------------
-        -- The layer 2 RAM masks address bits 14 and 15 on the CPU-side (i.e.
-        -- the RAM is 8KB mirrored to 64KB).
-        --
-        -- https://github.com/mamedev/mame/blob/master/src/mame/drivers/cave.cpp#L495
-        layer_2_ram : entity work.true_dual_port_ram
-            generic map (
-                ADDR_WIDTH_A => LAYER_2_RAM_LOG_SIZE_C-3,
-                DATA_WIDTH_A => DDP_WORD_WIDTH,
-                ADDR_WIDTH_B => DDP_LAYER_TILE_RAM_LINE_ADDR_WIDTH-2,
-                DATA_WIDTH_B => DDP_LAYER_TILE_RAM_LINE_WIDTH)
-            port map (
-                clk_a  => clk_68k_i,
-                cs_a   => layer_2_ram_enable_s,
-                wr_a   => write_strobe_s,
-                rd_a   => read_strobe_s,
-                addr_a => addr_68k_s(LAYER_2_RAM_LOG_SIZE_C-3 downto 1),
-                din_a  => data_out_68k_s,
-                dout_a => layer_2_ram_data_o_s,
-                ack_a  => layer_2_ram_ack_s,
-                clk_b  => clk_i,
-                addr_b => gfx_layer_2_ram_addr_s(gfx_layer_2_ram_addr_s'high-2 downto 0),
-                dout_b => gfx_layer_2_ram_info_s);
 
         ---------------------
         -- Video Registers --

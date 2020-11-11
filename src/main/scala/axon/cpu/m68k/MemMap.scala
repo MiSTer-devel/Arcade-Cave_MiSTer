@@ -71,7 +71,7 @@ class MemMap(cpu: CPU, r: Range) {
     mem.rd := cs && readStrobe
     mem.wr := cs && writeStrobe
     mem.addr := f(cpu.io.addr)(mem.addrWidth, 1)
-    mem.mask := 1.U
+    mem.mask := 3.U
     mem.din := cpu.io.dout
     when(cs) {
       cpu.io.din := mem.dout

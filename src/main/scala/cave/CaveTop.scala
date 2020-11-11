@@ -84,6 +84,9 @@ class CaveTop extends Module {
       }
       val tileRom = new TileRomIO
       val spriteRam = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
+      val layer0Ram = ReadMemIO(Config.LAYER_0_RAM_GPU_ADDR_WIDTH, Config.LAYER_0_RAM_GPU_DATA_WIDTH)
+      val layer1Ram = ReadMemIO(Config.LAYER_1_RAM_GPU_ADDR_WIDTH, Config.LAYER_1_RAM_GPU_DATA_WIDTH)
+      val layer2Ram = ReadMemIO(Config.LAYER_2_RAM_GPU_ADDR_WIDTH, Config.LAYER_2_RAM_GPU_DATA_WIDTH)
       val frameBuffer = new FrameBufferIO
     })
 
@@ -129,6 +132,43 @@ class CaveTop extends Module {
   }
   spriteRam.io.clockB := clock
 
+  // Layer 0 RAM
+  val layer0Ram = withClockAndReset(io.cpuClock, io.cpuReset) {
+    Module(new TrueDualPortRam(
+      addrWidthA = Config.LAYER_0_RAM_ADDR_WIDTH,
+      dataWidthA = Config.LAYER_0_RAM_DATA_WIDTH,
+      addrWidthB = Config.LAYER_0_RAM_GPU_ADDR_WIDTH,
+      dataWidthB = Config.LAYER_0_RAM_GPU_DATA_WIDTH
+    ))
+  }
+  layer0Ram.io.clockB := clock
+
+  // Layer 1 RAM
+  val layer1Ram = withClockAndReset(io.cpuClock, io.cpuReset) {
+    Module(new TrueDualPortRam(
+      addrWidthA = Config.LAYER_1_RAM_ADDR_WIDTH,
+      dataWidthA = Config.LAYER_1_RAM_DATA_WIDTH,
+      addrWidthB = Config.LAYER_1_RAM_GPU_ADDR_WIDTH,
+      dataWidthB = Config.LAYER_1_RAM_GPU_DATA_WIDTH
+    ))
+  }
+  layer1Ram.io.clockB := clock
+
+  // Layer 2 RAM
+  //
+  // The layer 2 RAM masks address bits 14 and 15 on the CPU-side (i.e. the RAM is 8KB mirrored to 64KB).
+  //
+  // https://github.com/mamedev/mame/blob/master/src/mame/drivers/cave.cpp#L495
+  val layer2Ram = withClockAndReset(io.cpuClock, io.cpuReset) {
+    Module(new TrueDualPortRam(
+      addrWidthA = Config.LAYER_2_RAM_ADDR_WIDTH,
+      dataWidthA = Config.LAYER_2_RAM_DATA_WIDTH,
+      addrWidthB = Config.LAYER_2_RAM_GPU_ADDR_WIDTH,
+      dataWidthB = Config.LAYER_2_RAM_GPU_DATA_WIDTH
+    ))
+  }
+  layer2Ram.io.clockB := clock
+
   // Cave
   val cave = Module(new CaveBlackBox)
   cave.io.rst_i := reset
@@ -146,6 +186,10 @@ class CaveTop extends Module {
 
   spriteRam.io.portB <> cave.io.spriteRam
 
+  cave.io.layer0Ram <> layer0Ram.io.portB
+  cave.io.layer1Ram <> layer1Ram.io.portB
+  cave.io.layer2Ram <> layer2Ram.io.portB
+
   io.tileRom <> cave.io.tileRom
   io.tileRom.addr := cave.io.tileRom.addr + Config.TILE_ROM_OFFSET.U
 
@@ -156,7 +200,10 @@ class CaveTop extends Module {
 
   // Memory map
   withClockAndReset(io.cpuClock, io.cpuReset) {
-    cpu.memMap(0x100000 to 0x10ffff).ram(mainRam.io)
-    cpu.memMap(0x400000 to 0x40ffff).ram(spriteRam.io.portA)
+    cpu.memMap(0x100000 to 0x10ffff).splitRam(mainRam.io)
+    cpu.memMap(0x400000 to 0x40ffff).splitRam(spriteRam.io.portA)
+    cpu.memMap(0x500000 to 0x507fff).ram(layer0Ram.io.portA)
+    cpu.memMap(0x600000 to 0x607fff).ram(layer1Ram.io.portA)
+    cpu.memMap(0x700000 to 0x70ffff).ram(layer2Ram.io.portA)
   }
 }
