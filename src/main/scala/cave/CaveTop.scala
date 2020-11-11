@@ -93,10 +93,6 @@ class CaveTop extends Module {
     override def desiredName = "cave"
   }
 
-  // Wires
-  val progRomAck = Wire(Bool())
-  val progRomData = Wire(Bits())
-
   // M68000 CPU
   //
   // The CPU runs in the CPU clock domain.
@@ -105,13 +101,6 @@ class CaveTop extends Module {
   val writeStrobe = withClockAndReset(io.cpuClock, io.cpuReset) { Util.rising(cpu.io.as) && !cpu.io.rw }
   val highWriteStrobe = withClockAndReset(io.cpuClock, io.cpuReset) { Util.rising(cpu.io.uds) && !cpu.io.rw }
   val lowWriteStrobe = withClockAndReset(io.cpuClock, io.cpuReset) { Util.rising(cpu.io.lds) && !cpu.io.rw }
-
-  // Program ROM
-  val progRomEnable = cpu.io.addr >= 0x000000.U && cpu.io.addr <= 0x0fffff.U
-  io.progRom.rd := progRomEnable && readStrobe
-  io.progRom.addr := cpu.io.addr + Config.PROG_ROM_OFFSET.U
-  progRomAck := io.progRom.valid
-  progRomData := Mux(progRomEnable, io.progRom.dout, 0.U)
 
   // Main RAM
   val mainRam = withClockAndReset(io.cpuClock, io.cpuReset) {
@@ -186,8 +175,8 @@ class CaveTop extends Module {
   cave.io.frameBuffer <> io.frameBuffer
 
   // Override CPU signals
-  cpu.io.dtack := progRomAck | cave.io.memBus.ack
-  cpu.io.din := progRomData | cave.io.memBus.data
+  cpu.io.dtack := cave.io.memBus.ack
+  cpu.io.din := cave.io.memBus.data
 
   // Outputs
   io.tileRom.addr := cave.io.tileRom.addr + Config.TILE_ROM_OFFSET.U
@@ -196,6 +185,7 @@ class CaveTop extends Module {
 
   // Memory map
   withClockAndReset(io.cpuClock, io.cpuReset) {
+    cpu.memMap(0x000000 to 0x0fffff).romT(io.progRom) { _ + Config.PROG_ROM_OFFSET.U }
     cpu.memMap(0x100000 to 0x10ffff).ram(mainRam.io)
     cpu.memMap(0x400000 to 0x40ffff).ram(spriteRam.io.portA)
     cpu.memMap(0x500000 to 0x507fff).ram(layer0Ram.io.portA)

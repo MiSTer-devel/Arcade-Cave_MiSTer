@@ -39,6 +39,7 @@ package axon.cpu.m68k
 
 import axon.Util
 import axon.mem._
+import cave.types.ProgRomIO
 import chisel3._
 
 /**
@@ -75,6 +76,29 @@ class MemMap(cpu: CPU, r: Range) {
     when(cs) {
       cpu.io.din := mem.dout
       cpu.io.dtack := RegNext(readStrobe || upperWriteStrobe || lowerWriteStrobe)
+    }
+  }
+
+  /**
+   * Maps an address range to the given read-only memory port.
+   *
+   * @param mem The memory port.
+   */
+  def rom(mem: ProgRomIO): Unit = romT(mem)(identity)
+
+  /**
+   * Maps an address range to the given read-only memory port, with an address transform.
+   *
+   * @param mem The memory port.
+   * @param f The address transform function.
+   */
+  def romT(mem: ProgRomIO)(f: UInt => UInt): Unit = {
+    val cs = Util.between(cpu.io.addr, r)
+    mem.rd := cs && readStrobe
+    mem.addr := f(cpu.io.addr)
+    when(cs) {
+      cpu.io.din := mem.dout
+      cpu.io.dtack := mem.valid
     }
   }
 }
