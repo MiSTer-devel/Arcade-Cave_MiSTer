@@ -77,8 +77,8 @@ entity cave is
         cpu_debug_pc             : in std_logic_vector(31 downto 0);
         cpu_debug_pcw            : in std_logic;
         -- Memory bus
-        mem_bus_ack              : out std_logic;
-        mem_bus_data             : out std_logic_vector(15 downto 0);
+        memBus_ack               : out std_logic;
+        memBus_data              : out std_logic_vector(15 downto 0);
         -- Tile ROM
         tileRom_rd               : out std_logic;
         tileRom_addr             : out gfx_rom_addr_t;
@@ -309,7 +309,7 @@ begin
                         edge_case_ack_s   or
                         other_ack_s;
 
-    mem_bus_ack <= memory_bus_ack_s;
+    memBus_ack <= memory_bus_ack_s;
 
     -- "OR" everything together to create the "OR'ed" bus
     memory_bus_data_s <= ymz_ram_data_o_s     or
@@ -326,7 +326,7 @@ begin
                          eeprom_data_o_s      or
                          other_data_o_s;
 
-    mem_bus_data <= memory_bus_data_s;
+    memBus_data <= memory_bus_data_s;
 
     -- We register the address strobe in order to detect when it is asserted in
     -- order to make a single clock read/write strobe below

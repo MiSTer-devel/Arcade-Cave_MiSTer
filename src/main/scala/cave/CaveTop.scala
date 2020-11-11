@@ -84,8 +84,10 @@ class CaveTop extends Module {
       val clk_68k_i = Input(Clock())
       val player = new PlayerIO
       val cpu = Flipped(new M68KIO)
-      val mem_bus_ack = Output(Bool())
-      val mem_bus_data = Output(Bits(M68K.DATA_WIDTH.W))
+      val memBus = new Bundle {
+        val ack = Output(Bool())
+        val data = Output(Bits(M68K.DATA_WIDTH.W))
+      }
       val tileRom = new TileRomIO
       val spriteRam = ReadMemIO(SPRITE_RAM_GPU_ADDR_WIDTH, SPRITE_RAM_GPU_DATA_WIDTH)
       val frameBuffer = new FrameBufferIO
@@ -160,8 +162,8 @@ class CaveTop extends Module {
   io.player <> cave.io.player
 
   cpu.io <> cave.io.cpu
-  cpu.io.dtack := progRomAck | mainRamAck | spriteRamAck | cave.io.mem_bus_ack
-  cpu.io.din := progRomData | mainRamData | spriteRamData | cave.io.mem_bus_data
+  cpu.io.dtack := progRomAck | mainRamAck | spriteRamAck | cave.io.memBus.ack
+  cpu.io.din := progRomData | mainRamData | spriteRamData | cave.io.memBus.data
 
   spriteRam.io.clockB := clock
   spriteRam.io.portB <> cave.io.spriteRam
