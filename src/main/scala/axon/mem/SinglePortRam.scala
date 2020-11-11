@@ -35,48 +35,39 @@
  *  SOFTWARE.
  */
 
-package cave
+package axon.mem
 
-import axon.gpu.VideoTimingConfig
+import chisel3._
 
-object Config {
-  /** The system clock frequency (Hz) */
-  val CLOCK_FREQ = 96000000D
+/**
+ * This module wraps an external single-port RAM module.
+ *
+ * @param addrWidth The width of the address bus.
+ * @param dataWidth The width of the data bus.
+ */
+class SinglePortRam(addrWidth: Int, dataWidth: Int) extends Module {
+  val io = IO(Flipped(ReadWriteMemIO(addrWidth, dataWidth)))
 
-  val SCREEN_WIDTH = 320
-  val SCREEN_HEIGHT = 240
+  class WrappedSinglePortRam extends BlackBox(Map("ADDR_WIDTH" -> addrWidth, "DATA_WIDTH" -> dataWidth)) {
+    val io = IO(new Bundle {
+      val clk = Input(Clock())
+      val rd = Input(Bool())
+      val wr = Input(Bool())
+      val addr = Input(UInt(addrWidth.W))
+      val mask = Input(Bits((dataWidth/8).W))
+      val din = Input(Bits(dataWidth.W))
+      val dout = Output(Bits(dataWidth.W))
+    })
 
-  val CACHE_ADDR_WIDTH = 20
-  val CACHE_DATA_WIDTH = 256
+    override def desiredName = "single_port_ram"
+  }
 
-  val PROG_ROM_ADDR_WIDTH = 24
-  val PROG_ROM_DATA_WIDTH = 16
-  val PROG_ROM_OFFSET = 0x000000
-
-  val TILE_ROM_ADDR_WIDTH = 32
-  val TILE_ROM_DATA_WIDTH = 64
-  val TILE_ROM_OFFSET = 0x100000
-
-  val MAIN_RAM_ADDR_WIDTH = 15
-  val MAIN_RAM_DATA_WIDTH = 16
-
-  val SPRITE_RAM_ADDR_WIDTH = 15
-  val SPRITE_RAM_DATA_WIDTH = 16
-  val SPRITE_RAM_GPU_ADDR_WIDTH = 12
-  val SPRITE_RAM_GPU_DATA_WIDTH = 128
-
-  val FRAME_BUFFER_ADDR_WIDTH = 17
-  val FRAME_BUFFER_DATA_WIDTH = 15
-
-  /** Video timing configuration */
-  val videoTimingConfig = VideoTimingConfig(
-    hDisplay = 320,
-    hFrontPorch = 5,
-    hRetrace = 23,
-    hBackPorch = 34,
-    vDisplay = 240,
-    vFrontPorch = 12,
-    vRetrace = 2,
-    vBackPorch = 19
-  )
+  val ram = Module(new WrappedSinglePortRam)
+  ram.io.clk := clock
+  ram.io.rd := io.rd
+  ram.io.wr := io.wr
+  ram.io.addr := io.addr
+  ram.io.mask := io.mask
+  ram.io.din := io.din
+  io.dout := ram.io.dout
 }

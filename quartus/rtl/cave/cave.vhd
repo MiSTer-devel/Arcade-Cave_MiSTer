@@ -55,37 +55,50 @@ entity cave is
     port (
         -- Fast clock domain
         rst_i                    : in  std_logic;
-        clk_fast_i               : in  std_logic;
+        clk_i                    : in  std_logic;
         -- CPU clock domain
         rst_68k_i                : in  std_logic;
         clk_68k_i                : in  std_logic;
-        -- Player input signals
-        player_1_i               : in  std_logic_vector(8 downto 0);
-        player_2_i               : in  std_logic_vector(8 downto 0);
-        pause_i                  : in  std_logic;
-        -- 68k ROM
-        rom_addr_68k_o           : out unsigned(DDP_ROM_LOG_SIZE_C-1 downto 0);
-        rom_read_68k_o           : out std_logic;
-        rom_valid_68k_i          : in  std_logic;
-        rom_data_68k_i           : in  word_t;
-        -- GFX signals (clocked with clk_fast)
-        rom_addr_gfx_o           : out gfx_rom_addr_t;
-        tiny_burst_gfx_o         : out std_logic;
-        rom_burst_read_gfx_o     : out std_logic;
-        rom_data_valid_gfx_i     : in  std_logic;
-        rom_data_gfx_i           : in  gfx_rom_data_t;
-        rom_burst_done_gfx_i     : in  std_logic;
-        -- Frame Buffer
-        frame_buffer_addr_o      : out frame_buffer_addr_t;
-        frame_buffer_data_o      : out std_logic_vector(DDP_WORD_WIDTH-2 downto 0);
-        frame_buffer_write_o     : out std_logic;
-        frame_buffer_dma_start_o : out std_logic;
-        frame_buffer_dma_done_i  : in  std_logic;
         -- Vertical blank signal
         vblank_i                 : in std_logic;
-        -- Debug signals
-        TG68_PC_o                : out std_logic_vector(31 downto 0);
-        TG68_PCW_o               : out std_logic
+        -- Player input signals
+        player_player1           : in  std_logic_vector(8 downto 0);
+        player_player2           : in  std_logic_vector(8 downto 0);
+        player_pause             : in  std_logic;
+        -- CPU
+        cpu_cen                  : out std_logic;
+        cpu_addr                 : in  unsigned(31 downto 0);
+        cpu_din                  : out std_logic_vector(15 downto 0);
+        cpu_dout                 : in  std_logic_vector(15 downto 0);
+        cpu_as                   : in  std_logic;
+        cpu_rw                   : in  std_logic;
+        cpu_uds                  : in  std_logic;
+        cpu_lds                  : in  std_logic;
+        cpu_dtack                : out std_logic;
+        cpu_ipl                  : out std_logic_vector(2 downto 0);
+        cpu_debug_pc             : in std_logic_vector(31 downto 0);
+        cpu_debug_pcw            : in std_logic;
+        -- Memory bus
+        memBus_ack               : out std_logic;
+        memBus_data              : out std_logic_vector(15 downto 0);
+        -- Tile ROM
+        tileRom_rd               : out std_logic;
+        tileRom_addr             : out gfx_rom_addr_t;
+        tileRom_dout             : in  gfx_rom_data_t;
+        tileRom_valid            : in  std_logic;
+        tileRom_tinyBurst        : out std_logic;
+        tileRom_burstDone        : in  std_logic;
+        -- Sprite RAM
+        spriteRam_rd             : out std_logic;
+        spriteRam_addr           : out sprite_ram_info_access_t;
+        spriteRam_dout           : in  sprite_ram_line_t;
+        -- Frame Buffer
+        frameBuffer_wr           : out std_logic;
+        frameBuffer_addr         : out frame_buffer_addr_t;
+        frameBuffer_mask         : out std_logic_vector(1 downto 0);
+        frameBuffer_din          : out std_logic_vector(DDP_WORD_WIDTH-2 downto 0);
+        frameBuffer_dmaStart     : out std_logic;
+        frameBuffer_dmaDone      : in  std_logic
         );
 end entity cave;
 
@@ -93,21 +106,15 @@ architecture struct of cave is
 
     -- Processor related signals
     signal rst_68k_s                       : std_logic;
-    signal n_rst_68k_s                     : std_logic;
-    signal n_data_ack_68k_s                : std_logic;
     signal addr_68k_s                      : unsigned(31 downto 0);  -- only 24 MSB bits used
     signal data_out_68k_s                  : word_t;
-    signal n_addr_strobe_68k_s             : std_logic;
     signal addr_strobe_68k_s               : std_logic;
     signal addr_strobe_68k_old_reg_s       : std_logic;
-    signal n_upper_data_select_68k_s       : std_logic;
     signal upper_data_select_68k_s         : std_logic;
     signal upper_data_select_68k_old_reg_s : std_logic;
-    signal n_lower_data_select_68k_s       : std_logic;
     signal lower_data_select_68k_s         : std_logic;
     signal lower_data_select_68k_old_reg_s : std_logic;
     signal read_n_write_68k_s              : std_logic;
-    signal n_ipl_to_68k_s                  : std_logic_vector(2 downto 0);
     signal ipl_s                           : std_logic_vector(2 downto 0);
     signal other_ack_s                     : std_logic;
     signal other_data_o_s                  : word_t;
@@ -119,26 +126,11 @@ architecture struct of cave is
     signal write_strobe_s           : std_logic;
     signal high_write_strobe_s      : std_logic;
     signal low_write_strobe_s       : std_logic;
-    -- ROM
-    constant ROM_LOG_SIZE_C         : natural := DDP_ROM_LOG_SIZE_C;  -- 1MB
-    signal rom_ack_s                : std_logic;
-    signal rom_data_o_s             : word_t;
-    signal rom_enable_s             : std_logic;
-    -- RAM
-    constant RAM_LOG_SIZE_C         : natural := 16;  -- 64kB
-    signal ram_enable_s             : std_logic;
-    signal ram_ack_s                : std_logic;
-    signal ram_data_o_s             : word_t;
     -- YMZ RAM
     constant YMZ_RAM_LOG_SIZE_C     : natural := 2;   -- 4B
     signal ymz_ram_enable_s         : std_logic;
     signal ymz_ram_ack_s            : std_logic;
     signal ymz_ram_data_o_s         : word_t;
-    -- Sprite RAM
-    constant SPRITE_RAM_LOG_SIZE_C  : natural := 16;  -- 64kB
-    signal sprite_ram_enable_s      : std_logic;
-    signal sprite_ram_ack_s         : std_logic;
-    signal sprite_ram_data_o_s      : word_t;
     -- Layer 0 RAM
     constant LAYER_0_RAM_LOG_SIZE_C : natural := 15;  -- 32kB
     signal layer_0_ram_enable_s     : std_logic;
@@ -206,8 +198,6 @@ architecture struct of cave is
     signal edge_case_ack_s          : std_logic;
     -- No data for edge cases (will be 0 since the bus is OR'ed)
 
-    signal addr_68k_32b_s           : unsigned(31 downto 0);
-
     signal frame_buffer_color_s     : color_t;
 
 begin
@@ -215,13 +205,6 @@ begin
     -----------------------
     -- IO with top level --
     -----------------------
-    rom_addr_68k_o <= addr_68k_s(ROM_LOG_SIZE_C-1 downto 0);
-    rom_read_68k_o <= rom_enable_s and read_strobe_s;
-    rom_ack_s      <= rom_valid_68k_i;
-    -- The data bus is an OR'ed bus, so we need to ensure that the data from
-    -- the ROM section does not interfere when the ROM is not enabled.
-    rom_data_o_s <= rom_data_68k_i when rom_enable_s else
-                    (others => '0');
 
     -- Sync
     process(clk_68k_i) is
@@ -230,6 +213,9 @@ begin
             rst_68k_s <= rst_68k_i;
         end if;
     end process;
+
+    spriteRam_rd <= '1';
+    frameBuffer_mask <= "11";
 
     -------------------
     -- Interruptions --
@@ -291,66 +277,23 @@ begin
     -- Main Processor --
     --------------------
 
-    -- The main 68000 processor uses negative logic, since we use positive
-    -- logic in our design we need to invert some signals.
-
-    -- Switch from positive logic
-    n_rst_68k_s      <= not rst_68k_s;
-    n_data_ack_68k_s <= not memory_bus_ack_s;
-    n_ipl_to_68k_s   <= not ipl_s;
-
-    -- The main 68000 processor
-    main_68k : entity work.TG68
-        port map (
-            clk            => clk_68k_i,
-            reset          => n_rst_68k_s,
-            clkena_in      => not pause_i,
-            data_in        => memory_bus_data_s,
-            IPL            => n_ipl_to_68k_s,
-            dtack          => n_data_ack_68k_s,
-            unsigned(addr) => addr_68k_32b_s,
-            data_out       => data_out_68k_s,
-            as             => n_addr_strobe_68k_s,
-            uds            => n_upper_data_select_68k_s,
-            lds            => n_lower_data_select_68k_s,
-            rw             => read_n_write_68k_s,
-            TG68_PC_o      => TG68_PC_o,
-            TG68_PCW_o     => TG68_PCW_o);
-
-    -- Mask the high byte since Dodonpachi only uses a 24 bit address bus,
-    -- sometimes the CPU will have the upper 8 bits set due to an operation
-    -- and this will lock the CPU because we are outside of the address space
-    -- therefore no ack is generated, this mask makes sure the CPU only
-    -- addresses 24 bits.
-    --addr_68k_s <= x"00" & addr_68k_32b_s(23 downto 0); -- For some reason
-    -- this deadlocks the CPU at instruction 0x57594, it could be that the TG68
-    -- is written so that if the MSB byte is not used some signals get pruned
-    -- and some address computation fail. (No idea for now).
-    addr_68k_s <= addr_68k_32b_s;
-
-    -- Switch to positive logic
-    addr_strobe_68k_s       <= not n_addr_strobe_68k_s;
-    upper_data_select_68k_s <= not n_upper_data_select_68k_s;
-    lower_data_select_68k_s <= not n_lower_data_select_68k_s;
-
-    -- TODO : Add support for byte access to RAM, check if unaligned accesses
-    -- to a byte in RAM do use the uds/lds signals, and add the support for
-    -- this in the RAM module, since there are accesses to bytes in RAM e.g.
-    -- addq.b 1, <ram_address> in the program code. Check if these are done
-    -- right.
+    cpu_cen <= '1';
+    addr_68k_s <= cpu_addr;
+    cpu_din <= memory_bus_data_s;
+    data_out_68k_s <= cpu_dout;
+    addr_strobe_68k_s <= cpu_as;
+    read_n_write_68k_s <= cpu_rw;
+    upper_data_select_68k_s <= cpu_uds;
+    lower_data_select_68k_s <= cpu_lds;
+    cpu_dtack <= memory_bus_ack_s;
+    cpu_ipl <= ipl_s;
 
     ---------------------
     -- Main Memory Bus --
     ---------------------
 
-    -- TODO : Write an assertion to check that only one is active at any given
-    -- time !
-
     -- This is an OR'ed bus
-    memory_bus_ack_s <= rom_ack_s         or
-                        ram_ack_s         or
-                        ymz_ram_ack_s     or
-                        sprite_ram_ack_s  or
+    memory_bus_ack_s <= ymz_ram_ack_s     or
                         layer_0_ram_ack_s or
                         layer_1_ram_ack_s or
                         layer_2_ram_ack_s or
@@ -366,14 +309,10 @@ begin
                         edge_case_ack_s   or
                         other_ack_s;
 
-    -- TODO : Write an assertion to check that only one is active at any given
-    -- time !
+    memBus_ack <= memory_bus_ack_s;
 
     -- "OR" everything together to create the "OR'ed" bus
-    memory_bus_data_s <= rom_data_o_s         or
-                         ram_data_o_s         or
-                         ymz_ram_data_o_s     or
-                         sprite_ram_data_o_s  or
+    memory_bus_data_s <= ymz_ram_data_o_s     or
                          layer_0_ram_data_o_s or
                          layer_1_ram_data_o_s or
                          layer_2_ram_data_o_s or
@@ -387,10 +326,7 @@ begin
                          eeprom_data_o_s      or
                          other_data_o_s;
 
-    -- This assertion is to check that therer is no byte access to any other
-    -- memory than the RAM or ROM - TODO Change this, since byte read is OK on
-    -- other devices
-    --assert ((ram_enable_s = '0' and rom_enable_s = '0') and (not ((upper_data_select_68k_s = '1') xor (lower_data_select_68k_s = '1')))) or (ram_enable_s = '1' or rom_enable_s = '1') report "Byte access to a memory that is not RAM !" severity error;
+    memBus_data <= memory_bus_data_s;
 
     -- We register the address strobe in order to detect when it is asserted in
     -- order to make a single clock read/write strobe below
@@ -418,17 +354,8 @@ begin
     -- Memory bus decode logic - Dodonpachi Address Map -- TODO Change to constants
     ---------------------------------------------------
 
-    -- ROM                  0x000000 - 0x0fffff
-    rom_enable_s         <= '1' when addr_68k_s(31 downto ROM_LOG_SIZE_C) = x"000" else
-                            '0';
-    -- RAM                  0x100000 - 0x10ffff
-    ram_enable_s         <= '1' when addr_68k_s(31 downto RAM_LOG_SIZE_C) = x"0010" else
-                            '0';
     -- YMZ RAM              0x300000 - 0x300003
     ymz_ram_enable_s     <= '1' when addr_68k_s(31 downto YMZ_RAM_LOG_SIZE_C) = x"0030000" & "00" else
-                            '0';
-    -- Sprite RAM           0x400000 - 0x40ffff
-    sprite_ram_enable_s  <= '1' when addr_68k_s(31 downto SPRITE_RAM_LOG_SIZE_C) = x"0040" else
                             '0';
     -- Layer 0 RAM          0x500000 - 0x507fff
     layer_0_ram_enable_s <= '1' when addr_68k_s(31 downto LAYER_0_RAM_LOG_SIZE_C) = x"0050" & "0" else
@@ -487,26 +414,6 @@ begin
     -- occur, this may be a problem with the softcore... This needs to be
     -- researched further...
 
-    --------------
-    -- Main ROM --
-    --------------
-    -- Main ROM is external
-
-    --------------
-    -- Main RAM --
-    --------------
-    main_ram_1 : entity work.main_ram
-        port map (
-            clk_i    => clk_68k_i,
-            enable_i => ram_enable_s,
-            read_i   => read_strobe_s,
-            write_i  => high_write_strobe_s or low_write_strobe_s,
-            addr_i   => addr_68k_s(RAM_LOG_SIZE_C-1 downto 0),  -- There are unaligned byte accesses
-            mask_i   => high_write_strobe_s & low_write_strobe_s,
-            data_i   => data_out_68k_s,
-            data_o   => ram_data_o_s,
-            ack_o    => ram_ack_s);
-
     -------------
     -- YMZ280b --
     -------------
@@ -527,7 +434,7 @@ begin
                 din_a  => data_out_68k_s,
                 dout_a => ymz_ram_data_o_s,
                 ack_a  => ymz_ram_ack_s,
-                clk_b  => clk_fast_i,
+                clk_b  => clk_i,
                 addr_b => to_unsigned(0, YMZ_RAM_LOG_SIZE_C-1),
                 dout_b => open);
     end block ymz280b_block;
@@ -535,9 +442,6 @@ begin
     graphic_processor_block : block
         signal generate_frame_s         : std_logic;
         signal buffer_select_s          : std_logic;
-        -- Sprite signals
-        signal gfx_sprite_ram_addr_s    : sprite_ram_info_access_t;
-        signal gfx_sprite_ram_info_s    : sprite_ram_line_t;
         -- Layer signals
         signal gfx_layer_0_ram_addr_s   : layer_ram_info_access_t;
         signal gfx_layer_1_ram_addr_s   : layer_ram_info_access_t;
@@ -563,13 +467,13 @@ begin
                     INCLUDE_LAYER_PROCESOR_G => true)
                 port map (
                     rst_i                    => rst_i,
-                    clk_i                    => clk_fast_i,
+                    clk_i                    => clk_i,
                     --
                     generate_frame_i         => generate_frame_s,
                     buffer_select_i          => buffer_select_s,
                     --
-                    sprite_ram_addr_o        => gfx_sprite_ram_addr_s,
-                    sprite_ram_info_i        => gfx_sprite_ram_info_s,
+                    sprite_ram_addr_o        => spriteRam_addr,
+                    sprite_ram_info_i        => spriteRam_dout,
                     --
                     layer_0_ram_addr_o       => gfx_layer_0_ram_addr_s,
                     layer_0_ram_info_i       => gfx_layer_0_ram_info_s,
@@ -584,58 +488,40 @@ begin
                     vctrl_reg_1_i            => gfx_vctrl_1_reg_s,
                     vctrl_reg_2_i            => gfx_vctrl_2_reg_s,
                     --
-                    rom_addr_o               => rom_addr_gfx_o,
-                    tiny_burst_gfx_o         => tiny_burst_gfx_o,
-                    rom_burst_read_o         => rom_burst_read_gfx_o,
-                    rom_data_i               => rom_data_gfx_i,
-                    rom_data_valid_i         => rom_data_valid_gfx_i,
-                    rom_data_burst_done_i    => rom_burst_done_gfx_i,
+                    rom_addr_o               => tileRom_addr,
+                    tiny_burst_gfx_o         => tileRom_tinyBurst,
+                    rom_burst_read_o         => tileRom_rd,
+                    rom_data_i               => tileRom_dout,
+                    rom_data_valid_i         => tileRom_valid,
+                    rom_data_burst_done_i    => tileRom_burstDone,
                     --
                     palette_ram_addr_o       => gfx_palette_ram_addr_s,
                     palette_ram_data_i       => gfx_palette_ram_data_s,
                     --
-                    frame_buffer_addr_o      => frame_buffer_addr_o,
+                    frame_buffer_addr_o      => frameBuffer_addr,
                     frame_buffer_color_o     => frame_buffer_color_s,
-                    frame_buffer_write_o     => frame_buffer_write_o,
-                    frame_buffer_dma_start_o => frame_buffer_dma_start_o,
-                    frame_buffer_dma_done_i  => frame_buffer_dma_done_i);
+                    frame_buffer_write_o     => frameBuffer_wr,
+                    frame_buffer_dma_start_o => frameBuffer_dmaStart,
+                    frame_buffer_dma_done_i  => frameBuffer_dmaDone);
 
-            frame_buffer_data_o <= frame_buffer_color_s.r & frame_buffer_color_s.g & frame_buffer_color_s.b;
+            frameBuffer_din <= frame_buffer_color_s.r & frame_buffer_color_s.g & frame_buffer_color_s.b;
 
         else generate
 
-            gfx_sprite_ram_addr_s    <= (others => '0');
+            spriteRam_addr           <= (others => '0');
             gfx_layer_0_ram_addr_s   <= (others => '0');
             gfx_layer_1_ram_addr_s   <= (others => '0');
             gfx_layer_2_ram_addr_s   <= (others => '0');
-            rom_addr_gfx_o           <= (others => '0');
-            rom_burst_read_gfx_o     <= '0';
+            tileRom_addr             <= (others => '0');
+            tileRom_rd               <= '0';
             gfx_palette_ram_addr_s   <= (others => '0');
-            frame_buffer_addr_o      <= (others => '0');
-            frame_buffer_data_o      <= (others => '0');
-            frame_buffer_write_o     <= '0';
-            frame_buffer_dma_start_o <= '0';
-            tiny_burst_gfx_o         <= '0';
+            frameBuffer_addr         <= (others => '0');
+            frameBuffer_din          <= (others => '0');
+            frameBuffer_wr           <= '0';
+            frameBuffer_dmaStart     <= '0';
+            tileRom_tinyBurst        <= '0';
 
         end generate graphic_processor_generate;
-
-        ----------------
-        -- Sprite RAM --
-        ----------------
-        sprite_ram : entity work.dual_access_ram
-            port map (
-                clk_68k_i    => clk_68k_i,
-                enable_i     => sprite_ram_enable_s,
-                read_i       => read_strobe_s,
-                write_i      => high_write_strobe_s or low_write_strobe_s,
-                addr_i       => addr_68k_s(SPRITE_RAM_LOG_SIZE_C-1 downto 0),
-                mask_i       => high_write_strobe_s & low_write_strobe_s,
-                data_i       => data_out_68k_s,
-                data_o       => sprite_ram_data_o_s,
-                ack_o        => sprite_ram_ack_s,
-                clk_fast_i   => clk_fast_i,
-                addr_fast_i  => gfx_sprite_ram_addr_s,
-                data_fast_o  => gfx_sprite_ram_info_s);
 
         -----------------
         -- Layer 0 RAM --
@@ -655,7 +541,7 @@ begin
                 din_a  => data_out_68k_s,
                 dout_a => layer_0_ram_data_o_s,
                 ack_a  => layer_0_ram_ack_s,
-                clk_b  => clk_fast_i,
+                clk_b  => clk_i,
                 -- Do not use the MSB bit because this RAM is 32kB and address is for 64kB
                 addr_b => gfx_layer_0_ram_addr_s(gfx_layer_0_ram_addr_s'high-1 downto 0),
                 dout_b => gfx_layer_0_ram_info_s);
@@ -678,7 +564,7 @@ begin
                 din_a  => data_out_68k_s,
                 dout_a => layer_1_ram_data_o_s,
                 ack_a  => layer_1_ram_ack_s,
-                clk_b  => clk_fast_i,
+                clk_b  => clk_i,
                 -- Do not use the MSB bit because this RAM is 32kB and address is for 64kB
                 addr_b => gfx_layer_1_ram_addr_s(gfx_layer_1_ram_addr_s'high-1 downto 0),
                 dout_b => gfx_layer_1_ram_info_s);
@@ -705,7 +591,7 @@ begin
                 din_a  => data_out_68k_s,
                 dout_a => layer_2_ram_data_o_s,
                 ack_a  => layer_2_ram_ack_s,
-                clk_b  => clk_fast_i,
+                clk_b  => clk_i,
                 addr_b => gfx_layer_2_ram_addr_s(gfx_layer_2_ram_addr_s'high-2 downto 0),
                 dout_b => gfx_layer_2_ram_info_s);
 
@@ -732,7 +618,7 @@ begin
                     din_a  => data_out_68k_s,
                     dout_a => open, -- write-only
                     ack_a  => video_regs_ack_s,
-                    clk_b  => clk_fast_i,
+                    clk_b  => clk_i,
                     addr_b => to_unsigned(4, VIDEO_REGS_LOG_SIZE_C-1),
                     dout_b => video_reg_4_s);
 
@@ -762,9 +648,9 @@ begin
 
                 -- Shift register for sync (clock domain crossing) and edge
                 -- detection (to start the frame generation)
-                process (clk_fast_i) is
+                process (clk_i) is
                 begin
-                    if rising_edge(clk_fast_i) then
+                    if rising_edge(clk_i) then
                         if rst_i = '1' then
                             sync_reg_s <= (others => '0');
                         else
@@ -820,7 +706,7 @@ begin
                 data_i       => data_out_68k_s,
                 data_o       => v_ctrl_0_data_o_s,
                 ack_o        => v_ctrl_0_ack_s,
-                clk_fast_i   => clk_fast_i,
+                clk_fast_i   => clk_i,
                 vctrl_o      => gfx_vctrl_0_reg_s);
 
         -------------
@@ -838,7 +724,7 @@ begin
                 data_i       => data_out_68k_s,
                 data_o       => v_ctrl_1_data_o_s,
                 ack_o        => v_ctrl_1_ack_s,
-                clk_fast_i   => clk_fast_i,
+                clk_fast_i   => clk_i,
                 vctrl_o      => gfx_vctrl_1_reg_s);
 
         -------------
@@ -856,7 +742,7 @@ begin
                 data_i       => data_out_68k_s,
                 data_o       => v_ctrl_2_data_o_s,
                 ack_o        => v_ctrl_2_ack_s,
-                clk_fast_i   => clk_fast_i,
+                clk_fast_i   => clk_i,
                 vctrl_o      => gfx_vctrl_2_reg_s);
 
         -----------------
@@ -877,7 +763,7 @@ begin
             din_a  => data_out_68k_s,
             dout_a => palette_ram_data_o_s,
             ack_a  => palette_ram_ack_s,
-            clk_b  => clk_fast_i,
+            clk_b  => clk_i,
             addr_b => gfx_palette_ram_addr_s,
             dout_b => gfx_palette_ram_data_s);
 
@@ -899,8 +785,8 @@ begin
             if rising_edge(clk_68k_i) then
                 in_0_ack_s <= '0';
                 in_1_ack_s <= '0';
-                in_0_reg_s <= "1111111" & (not player_1_i(8 downto 0));
-                in_1_reg_s <= "1111" & eeprom_do_s & "11" & (not player_2_i(8 downto 0));
+                in_0_reg_s <= "1111111" & (not player_player1(8 downto 0));
+                in_1_reg_s <= "1111" & eeprom_do_s & "11" & (not player_player2(8 downto 0));
                 if read_strobe_s = '1' then
                     if in_0_enable_s = '1' then
                         in_0_ack_s <= '1';

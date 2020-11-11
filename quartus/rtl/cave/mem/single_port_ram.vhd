@@ -47,26 +47,13 @@ entity single_port_ram is
     DEPTH      : natural := 0
   );
   port (
-    -- clock
-    clk : in std_logic;
-
-    -- chip select
-    cs : in std_logic := '1';
-
-    -- address
+    clk  : in std_logic;
+    rd   : in std_logic := '1';
+    wr   : in std_logic := '0';
     addr : in unsigned(ADDR_WIDTH-1 downto 0);
-
-    -- mask
     mask : in std_logic_vector((DATA_WIDTH/8)-1 downto 0) := (others => '1');
-
-    -- data in
-    din : in std_logic_vector(DATA_WIDTH-1 downto 0) := (others => '0');
-
-    -- data out
-    dout : out std_logic_vector(DATA_WIDTH-1 downto 0);
-
-    -- write enable
-    we : in std_logic := '0'
+    din  : in std_logic_vector(DATA_WIDTH-1 downto 0) := (others => '0');
+    dout : out std_logic_vector(DATA_WIDTH-1 downto 0)
   );
 end single_port_ram;
 
@@ -80,8 +67,6 @@ architecture arch of single_port_ram is
       return 2**addr_width;
     end if;
   end function num_words;
-
-  signal q : std_logic_vector(DATA_WIDTH-1 downto 0);
 begin
   altsyncram_component : altsyncram
   generic map (
@@ -106,9 +91,8 @@ begin
     clock0    => clk,
     data_a    => din,
     byteena_a => mask,
-    wren_a    => cs and we,
-    q_a       => q
+    rden_a    => rd,
+    wren_a    => wr,
+    q_a       => dout
   );
-
-  dout <= q when cs = '1' else (others => '0');
 end architecture arch;
