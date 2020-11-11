@@ -97,11 +97,7 @@ class CaveTop extends Module {
       // Sprite RAM
       val spriteRam = ReadMemIO(SPRITE_RAM_GPU_ADDR_WIDTH, SPRITE_RAM_GPU_DATA_WIDTH)
       // Frame buffer
-      val frame_buffer_addr_o = Output(UInt(Config.FRAME_BUFFER_ADDR_WIDTH.W))
-      val frame_buffer_data_o = Output(Bits(Config.FRAME_BUFFER_DATA_WIDTH.W))
-      val frame_buffer_write_o = Output(Bool())
-      val frame_buffer_dma_start_o = Output(Bool())
-      val frame_buffer_dma_done_i = Input(Bool())
+      val frameBuffer = new FrameBufferIO
       // Vertical blank
       val vblank_i = Input(Bool())
     })
@@ -184,12 +180,7 @@ class CaveTop extends Module {
   io.tileRom <> cave.io.tileRom
   io.tileRom.addr := cave.io.tileRom.addr + Config.TILE_ROM_OFFSET.U
 
-  io.frameBuffer.addr := cave.io.frame_buffer_addr_o
-  io.frameBuffer.mask := 0.U
-  io.frameBuffer.din := cave.io.frame_buffer_data_o
-  io.frameBuffer.wr := cave.io.frame_buffer_write_o
-  io.frameBuffer.dmaStart := cave.io.frame_buffer_dma_start_o
-  cave.io.frame_buffer_dma_done_i := io.frameBuffer.dmaDone
+  io.frameBuffer <> cave.io.frameBuffer
 
   cave.io.vblank_i := io.video.vBlank
 

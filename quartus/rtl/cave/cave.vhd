@@ -79,22 +79,23 @@ entity cave is
         mem_bus_ack              : out std_logic;
         mem_bus_data             : out std_logic_vector(15 downto 0);
         -- Tile ROM
-        tileRom_addr             : out gfx_rom_addr_t;
-        tileRom_tinyBurst        : out std_logic;
         tileRom_rd               : out std_logic;
-        tileRom_valid            : in  std_logic;
+        tileRom_addr             : out gfx_rom_addr_t;
         tileRom_dout             : in  gfx_rom_data_t;
+        tileRom_valid            : in  std_logic;
+        tileRom_tinyBurst        : out std_logic;
         tileRom_burstDone        : in  std_logic;
         -- Sprite RAM
         spriteRam_rd             : out std_logic;
         spriteRam_addr           : out sprite_ram_info_access_t;
         spriteRam_dout           : in  sprite_ram_line_t;
         -- Frame Buffer
-        frame_buffer_addr_o      : out frame_buffer_addr_t;
-        frame_buffer_data_o      : out std_logic_vector(DDP_WORD_WIDTH-2 downto 0);
-        frame_buffer_write_o     : out std_logic;
-        frame_buffer_dma_start_o : out std_logic;
-        frame_buffer_dma_done_i  : in  std_logic;
+        frameBuffer_wr           : out std_logic;
+        frameBuffer_addr         : out frame_buffer_addr_t;
+        frameBuffer_mask         : out std_logic_vector(1 downto 0);
+        frameBuffer_din          : out std_logic_vector(DDP_WORD_WIDTH-2 downto 0);
+        frameBuffer_dmaStart     : out std_logic;
+        frameBuffer_dmaDone      : in  std_logic;
         -- Vertical blank signal
         vblank_i                 : in std_logic
         );
@@ -213,6 +214,7 @@ begin
     end process;
 
     spriteRam_rd <= '1';
+    frameBuffer_mask <= "11";
 
     -------------------
     -- Interruptions --
@@ -495,13 +497,13 @@ begin
                     palette_ram_addr_o       => gfx_palette_ram_addr_s,
                     palette_ram_data_i       => gfx_palette_ram_data_s,
                     --
-                    frame_buffer_addr_o      => frame_buffer_addr_o,
+                    frame_buffer_addr_o      => frameBuffer_addr,
                     frame_buffer_color_o     => frame_buffer_color_s,
-                    frame_buffer_write_o     => frame_buffer_write_o,
-                    frame_buffer_dma_start_o => frame_buffer_dma_start_o,
-                    frame_buffer_dma_done_i  => frame_buffer_dma_done_i);
+                    frame_buffer_write_o     => frameBuffer_wr,
+                    frame_buffer_dma_start_o => frameBuffer_dmaStart,
+                    frame_buffer_dma_done_i  => frameBuffer_dmaDone);
 
-            frame_buffer_data_o <= frame_buffer_color_s.r & frame_buffer_color_s.g & frame_buffer_color_s.b;
+            frameBuffer_din <= frame_buffer_color_s.r & frame_buffer_color_s.g & frame_buffer_color_s.b;
 
         else generate
 
@@ -512,10 +514,10 @@ begin
             tileRom_addr             <= (others => '0');
             tileRom_rd               <= '0';
             gfx_palette_ram_addr_s   <= (others => '0');
-            frame_buffer_addr_o      <= (others => '0');
-            frame_buffer_data_o      <= (others => '0');
-            frame_buffer_write_o     <= '0';
-            frame_buffer_dma_start_o <= '0';
+            frameBuffer_addr         <= (others => '0');
+            frameBuffer_din          <= (others => '0');
+            frameBuffer_wr           <= '0';
+            frameBuffer_dmaStart     <= '0';
             tileRom_tinyBurst        <= '0';
 
         end generate graphic_processor_generate;
