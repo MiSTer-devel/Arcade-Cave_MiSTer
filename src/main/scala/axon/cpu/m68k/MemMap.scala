@@ -49,6 +49,7 @@ import chisel3._
  * @param r The address range.
  */
 class MemMap(cpu: CPU, r: Range) {
+  // TODO: These registers will be duplicated for every mapping. Can they be shared somehow?
   private val readStrobe = Util.rising(cpu.io.as) && cpu.io.rw
   private val upperWriteStrobe = Util.rising(cpu.io.uds) && !cpu.io.rw
   private val lowerWriteStrobe = Util.rising(cpu.io.lds) && !cpu.io.rw

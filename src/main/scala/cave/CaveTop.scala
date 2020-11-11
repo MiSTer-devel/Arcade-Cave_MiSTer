@@ -87,6 +87,7 @@ class CaveTop extends Module {
       val layer0Ram = ReadMemIO(Config.LAYER_0_RAM_GPU_ADDR_WIDTH, Config.LAYER_0_RAM_GPU_DATA_WIDTH)
       val layer1Ram = ReadMemIO(Config.LAYER_1_RAM_GPU_ADDR_WIDTH, Config.LAYER_1_RAM_GPU_DATA_WIDTH)
       val layer2Ram = ReadMemIO(Config.LAYER_2_RAM_GPU_ADDR_WIDTH, Config.LAYER_2_RAM_GPU_DATA_WIDTH)
+      val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
       val frameBuffer = new FrameBufferIO
     })
 
@@ -152,6 +153,17 @@ class CaveTop extends Module {
   }
   layer2Ram.io.clockB := clock
 
+  // Palette RAM
+  val paletteRam = withClockAndReset(io.cpuClock, io.cpuReset) {
+    Module(new TrueDualPortRam(
+      addrWidthA = Config.PALETTE_RAM_ADDR_WIDTH,
+      dataWidthA = Config.PALETTE_RAM_DATA_WIDTH,
+      addrWidthB = Config.PALETTE_RAM_GPU_ADDR_WIDTH,
+      dataWidthB = Config.PALETTE_RAM_GPU_DATA_WIDTH
+    ))
+  }
+  paletteRam.io.clockB := clock
+
   // Cave
   val cave = Module(new CaveBlackBox)
   cave.io.rst_i := reset
@@ -166,6 +178,7 @@ class CaveTop extends Module {
   cave.io.layer0Ram <> layer0Ram.io.portB
   cave.io.layer1Ram <> layer1Ram.io.portB
   cave.io.layer2Ram <> layer2Ram.io.portB
+  cave.io.paletteRam <> paletteRam.io.portB
   cave.io.frameBuffer <> io.frameBuffer
   cpu.io.dtack := cave.io.memBus.ack
   cpu.io.din := cave.io.memBus.data
@@ -178,6 +191,7 @@ class CaveTop extends Module {
     cpu.memMap(0x500000 to 0x507fff).ram(layer0Ram.io.portA)
     cpu.memMap(0x600000 to 0x607fff).ram(layer1Ram.io.portA)
     cpu.memMap(0x700000 to 0x70ffff).ram(layer2Ram.io.portA)
+    cpu.memMap(0xc00000 to 0xc0ffff).ram(paletteRam.io.portA)
   }
 
   // Outputs

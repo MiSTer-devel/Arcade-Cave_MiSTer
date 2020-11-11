@@ -104,6 +104,10 @@ entity cave is
         layer2Ram_rd             : out std_logic;
         layer2Ram_addr           : out layer_ram_info_access_t;
         layer2Ram_dout           : in  layer_ram_line_t;
+        -- Palette RAM
+        paletteRam_rd             : out std_logic;
+        paletteRam_addr           : out unsigned(14 downto 0);
+        paletteRam_dout           : in  word_t;
         -- Frame Buffer
         frameBuffer_wr           : out std_logic;
         frameBuffer_addr         : out frame_buffer_addr_t;
@@ -166,11 +170,6 @@ architecture struct of cave is
     signal v_ctrl_2_enable_s        : std_logic;
     signal v_ctrl_2_ack_s           : std_logic;
     signal v_ctrl_2_data_o_s        : word_t;
-    -- Palette RAM
-    constant PALETTE_RAM_LOG_SIZE_C : natural := 16;  -- 64kB
-    signal palette_ram_enable_s     : std_logic;
-    signal palette_ram_ack_s        : std_logic;
-    signal palette_ram_data_o_s     : word_t;
     -- Inputs 0
     constant IN_0_LOG_SIZE_C        : natural := 1;   -- 2B
     signal in_0_enable_s            : std_logic;
@@ -215,6 +214,7 @@ begin
     layer0Ram_rd <= '1';
     layer1Ram_rd <= '1';
     layer2Ram_rd <= '1';
+    paletteRam_rd <= '1';
     frameBuffer_mask <= "11";
 
     -------------------
@@ -299,7 +299,6 @@ begin
                         v_ctrl_0_ack_s    or
                         v_ctrl_1_ack_s    or
                         v_ctrl_2_ack_s    or
-                        palette_ram_ack_s or
                         in_0_ack_s        or
                         in_1_ack_s        or
                         eeprom_ack_s      or
@@ -314,7 +313,6 @@ begin
                          v_ctrl_0_data_o_s    or
                          v_ctrl_1_data_o_s    or
                          v_ctrl_2_data_o_s    or
-                         palette_ram_data_o_s or
                          in_0_data_o_s        or
                          in_1_data_o_s        or
                          eeprom_data_o_s      or
@@ -370,9 +368,6 @@ begin
     -- Video Control Registers 2
     --                      0xb00000 - 0xb00005
     v_ctrl_2_enable_s    <= '1' when addr_68k_s(31 downto V_CTRL_2_LOG_SIZE_C) = x"00b0000" & "0" else
-                            '0';
-    -- Palette RAM          0xc00000 - 0xc0ffff
-    palette_ram_enable_s <= '1' when addr_68k_s(31 downto PALETTE_RAM_LOG_SIZE_C) = x"00c0" else
                             '0';
     -- Inputs 0             0xd00000 - 0xd00001
     in_0_enable_s        <= '1' when addr_68k_s(31 downto IN_0_LOG_SIZE_C) = x"00d0000" & "000" else
@@ -431,9 +426,6 @@ begin
         signal gfx_vctrl_0_reg_s        : layer_info_line_t;
         signal gfx_vctrl_1_reg_s        : layer_info_line_t;
         signal gfx_vctrl_2_reg_s        : layer_info_line_t;
-        -- Palette signals
-        signal gfx_palette_ram_addr_s   : palette_ram_addr_t;
-        signal gfx_palette_ram_data_s   : palette_ram_data_t;
     begin
 
         graphic_processor_generate : if INCLUDE_GRAPHIC_PROCESSOR_G generate
@@ -474,8 +466,8 @@ begin
                     rom_data_valid_i         => tileRom_valid,
                     rom_data_burst_done_i    => tileRom_burstDone,
                     --
-                    palette_ram_addr_o       => gfx_palette_ram_addr_s,
-                    palette_ram_data_i       => gfx_palette_ram_data_s,
+                    palette_ram_addr_o       => paletteRam_addr,
+                    palette_ram_data_i       => paletteRam_dout,
                     --
                     frame_buffer_addr_o      => frameBuffer_addr,
                     frame_buffer_color_o     => frame_buffer_color_s,
@@ -493,7 +485,7 @@ begin
             layer2Ram_addr           <= (others => '0');
             tileRom_addr             <= (others => '0');
             tileRom_rd               <= '0';
-            gfx_palette_ram_addr_s   <= (others => '0');
+            paletteRam_addr          <= (others => '0');
             frameBuffer_addr         <= (others => '0');
             frameBuffer_din          <= (others => '0');
             frameBuffer_wr           <= '0';
@@ -651,28 +643,6 @@ begin
                 ack_o        => v_ctrl_2_ack_s,
                 clk_fast_i   => clk_i,
                 vctrl_o      => gfx_vctrl_2_reg_s);
-
-        -----------------
-        -- Palette RAM --
-        -----------------
-        palette_ram : entity work.true_dual_port_ram
-        generic map (
-            ADDR_WIDTH_A => PALETTE_RAM_LOG_SIZE_C-1,
-            DATA_WIDTH_A => DDP_WORD_WIDTH,
-            ADDR_WIDTH_B => DDP_PALETTE_RAM_ADDR_WIDTH,
-            DATA_WIDTH_B => DDP_WORD_WIDTH)
-        port map (
-            clk_a  => clk_68k_i,
-            cs_a   => palette_ram_enable_s,
-            wr_a   => write_strobe_s,
-            rd_a   => read_strobe_s,
-            addr_a => addr_68k_s(PALETTE_RAM_LOG_SIZE_C-1 downto 1),
-            din_a  => data_out_68k_s,
-            dout_a => palette_ram_data_o_s,
-            ack_a  => palette_ram_ack_s,
-            clk_b  => clk_i,
-            addr_b => gfx_palette_ram_addr_s,
-            dout_b => gfx_palette_ram_data_s);
 
     end block graphic_processor_block;
 
