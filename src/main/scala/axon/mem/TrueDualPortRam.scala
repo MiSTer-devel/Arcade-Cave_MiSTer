@@ -49,8 +49,6 @@ import chisel3._
  */
 class TrueDualPortRam(addrWidthA: Int, dataWidthA: Int, addrWidthB: Int, dataWidthB: Int) extends Module {
   val io = IO(new Bundle {
-    /** Clock A */
-    val clockA = Input(Clock())
     /** Clock B */
     val clockB = Input(Clock())
     /** Read-write port */
@@ -86,7 +84,7 @@ class TrueDualPortRam(addrWidthA: Int, dataWidthA: Int, addrWidthB: Int, dataWid
   }
 
   val ram = Module(new WrappedTrueDualPortRam)
-  ram.io.clk_a := io.clockA
+  ram.io.clk_a := clock
   ram.io.rd_a := io.portA.rd
   ram.io.wr_a := io.portA.wr
   ram.io.addr_a := io.portA.addr
