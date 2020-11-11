@@ -52,7 +52,6 @@ class MemMap(cpu: CPU, r: Range) {
   private val writeStrobe = Util.rising(cpu.io.as) && !cpu.io.rw
   private val highWriteStrobe = Util.rising(cpu.io.uds) && !cpu.io.rw
   private val lowWriteStrobe = Util.rising(cpu.io.lds) && !cpu.io.rw
-  private val readOrWriteStrobe = (readStrobe || highWriteStrobe || lowWriteStrobe)
 
   /**
    * Maps an address range to the given read-write memory port.
@@ -70,13 +69,39 @@ class MemMap(cpu: CPU, r: Range) {
   def ramT(mem: ReadWriteMemIO)(f: UInt => UInt): Unit = {
     val cs = Util.between(cpu.io.addr, r)
     mem.rd := cs && readStrobe
+    mem.wr := cs && writeStrobe
+    mem.addr := f(cpu.io.addr)(mem.addrWidth, 1)
+    mem.mask := 1.U
+    mem.din := cpu.io.dout
+    when(cs) {
+      cpu.io.din := mem.dout
+      cpu.io.dtack := RegNext(readStrobe || writeStrobe)
+    }
+  }
+
+  /**
+   * Maps an address range to the given read-write memory port.
+   *
+   * @param mem The memory port.
+   */
+  def splitRam(mem: ReadWriteMemIO): Unit = splitRamT(mem)(identity)
+
+  /**
+   * Maps an address range to the given read-write memory port, with an address transform.
+   *
+   * @param mem The memory port.
+   * @param f The address transform function.
+   */
+  def splitRamT(mem: ReadWriteMemIO)(f: UInt => UInt): Unit = {
+    val cs = Util.between(cpu.io.addr, r)
+    mem.rd := cs && readStrobe
     mem.wr := cs && (highWriteStrobe || lowWriteStrobe)
     mem.addr := f(cpu.io.addr)(mem.addrWidth, 1)
     mem.mask := cpu.io.uds ## cpu.io.lds
     mem.din := cpu.io.dout
     when(cs) {
       cpu.io.din := mem.dout
-      cpu.io.dtack := RegNext(readOrWriteStrobe)
+      cpu.io.dtack := RegNext(readStrobe || highWriteStrobe || lowWriteStrobe)
     }
   }
 }
