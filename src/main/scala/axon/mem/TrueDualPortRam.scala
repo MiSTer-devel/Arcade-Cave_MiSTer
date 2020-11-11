@@ -40,7 +40,10 @@ package axon.mem
 import chisel3._
 
 /**
- * This module wraps an external dual-port RAM module.
+ * A dual-port RAM with separate clocks for each port.
+ *
+ * Port A is read-write, and is clocked with the default clock. Port B is read-only, and is clocked with the [[clockB]]
+ * input.
  *
  * @param addrWidthA The width of the port A address bus.
  * @param dataWidthA The width of the port A data bus.
