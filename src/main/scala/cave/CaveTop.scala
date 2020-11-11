@@ -78,27 +78,17 @@ class CaveTop extends Module {
 
   class CaveBlackBox extends BlackBox {
     val io = IO(new Bundle {
-      // Fast clock domain
       val rst_i = Input(Reset())
       val clk_i = Input(Clock())
-      // CPU clock domain
       val rst_68k_i = Input(Reset())
       val clk_68k_i = Input(Clock())
-      // Player inputs
-      val player_1_i = Input(Bits())
-      val player_2_i = Input(Bits())
-      // CPU
+      val player = new PlayerIO
       val cpu = Flipped(new M68KIO)
-      // Memory bus
       val mem_bus_ack = Output(Bool())
       val mem_bus_data = Output(Bits(M68K.DATA_WIDTH.W))
-      // Tile ROM
       val tileRom = new TileRomIO
-      // Sprite RAM
       val spriteRam = ReadMemIO(SPRITE_RAM_GPU_ADDR_WIDTH, SPRITE_RAM_GPU_DATA_WIDTH)
-      // Frame buffer
       val frameBuffer = new FrameBufferIO
-      // Vertical blank
       val vblank_i = Input(Bool())
     })
 
@@ -167,8 +157,7 @@ class CaveTop extends Module {
   cave.io.clk_68k_i := io.cpuClock
   cave.io.rst_68k_i := io.cpuReset
 
-  cave.io.player_1_i := io.player.player1
-  cave.io.player_2_i := io.player.player2
+  io.player <> cave.io.player
 
   cpu.io <> cave.io.cpu
   cpu.io.dtack := progRomAck | mainRamAck | spriteRamAck | cave.io.mem_bus_ack

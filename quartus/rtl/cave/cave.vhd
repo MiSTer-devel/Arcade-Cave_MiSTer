@@ -60,8 +60,9 @@ entity cave is
         rst_68k_i                : in  std_logic;
         clk_68k_i                : in  std_logic;
         -- Player input signals
-        player_1_i               : in  std_logic_vector(8 downto 0);
-        player_2_i               : in  std_logic_vector(8 downto 0);
+        player_player1           : in  std_logic_vector(8 downto 0);
+        player_player2           : in  std_logic_vector(8 downto 0);
+        player_pause             : in  std_logic;
         -- CPU
         cpu_cen                  : out std_logic;
         cpu_addr                 : in  unsigned(31 downto 0);
@@ -784,8 +785,8 @@ begin
             if rising_edge(clk_68k_i) then
                 in_0_ack_s <= '0';
                 in_1_ack_s <= '0';
-                in_0_reg_s <= "1111111" & (not player_1_i(8 downto 0));
-                in_1_reg_s <= "1111" & eeprom_do_s & "11" & (not player_2_i(8 downto 0));
+                in_0_reg_s <= "1111111" & (not player_player1(8 downto 0));
+                in_1_reg_s <= "1111" & eeprom_do_s & "11" & (not player_player2(8 downto 0));
                 if read_strobe_s = '1' then
                     if in_0_enable_s = '1' then
                         in_0_ack_s <= '1';
