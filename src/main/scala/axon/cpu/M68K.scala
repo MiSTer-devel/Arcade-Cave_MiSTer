@@ -69,6 +69,20 @@ class M68KIO extends Bundle {
 
 /** M68000 CPU */
 class M68K extends Module {
+  /**
+   * Create a memory map for the given address.
+   *
+   * @param a The address.
+   */
+  def memMap(a: Int) = new MemMap(this, Range(a, a))
+
+  /**
+   * Create a memory map for the given address range.
+   *
+   * @param r The address range.
+   */
+  def memMap(r: Range) = new MemMap(this, r)
+
   val io = IO(new M68KIO)
 
   class TG68 extends BlackBox {
