@@ -93,8 +93,6 @@ class CaveTop extends Module {
   // Wires
   val progRomAck = Wire(Bool())
   val progRomData = Wire(Bits())
-  val spriteRamAck = Wire(Bool())
-  val spriteRamData = Wire(Bits())
 
   // M68000 CPU
   //
@@ -122,23 +120,14 @@ class CaveTop extends Module {
 
   // Sprite RAM
   val spriteRam = withClockAndReset(io.cpuClock, io.cpuReset) {
-    val spriteRamEnable = cpu.io.addr >= 0x400000.U && cpu.io.addr <= 0x40ffff.U
-    val spriteRam = Module(new TrueDualPortRam(
+    Module(new TrueDualPortRam(
       addrWidthA = Config.SPRITE_RAM_ADDR_WIDTH,
       dataWidthA = Config.SPRITE_RAM_DATA_WIDTH,
       addrWidthB = Config.SPRITE_RAM_GPU_ADDR_WIDTH,
       dataWidthB = Config.SPRITE_RAM_GPU_DATA_WIDTH
     ))
-    spriteRam.io.clockA := clock
-    spriteRam.io.portA.rd := spriteRamEnable && readStrobe
-    spriteRam.io.portA.wr := spriteRamEnable && (highWriteStrobe || lowWriteStrobe)
-    spriteRam.io.portA.addr := cpu.io.addr(15, 1)
-    spriteRam.io.portA.mask := cpu.io.uds ## cpu.io.lds
-    spriteRam.io.portA.din := cpu.io.dout
-    spriteRamAck := RegNext(spriteRamEnable && (readStrobe || highWriteStrobe || lowWriteStrobe))
-    spriteRamData := Mux(spriteRamEnable, spriteRam.io.portA.dout, 0.U)
-    spriteRam
   }
+  spriteRam.io.clockB := clock
 
   // Cave
   val cave = Module(new CaveBlackBox)
@@ -152,10 +141,9 @@ class CaveTop extends Module {
   io.player <> cave.io.player
 
   cpu.io <> cave.io.cpu
-  cpu.io.dtack := progRomAck | spriteRamAck | cave.io.memBus.ack
-  cpu.io.din := progRomData | spriteRamData | cave.io.memBus.data
+  cpu.io.dtack := progRomAck | cave.io.memBus.ack
+  cpu.io.din := progRomData | cave.io.memBus.data
 
-  spriteRam.io.clockB := clock
   spriteRam.io.portB <> cave.io.spriteRam
 
   io.tileRom <> cave.io.tileRom
@@ -169,5 +157,6 @@ class CaveTop extends Module {
   // Memory map
   withClockAndReset(io.cpuClock, io.cpuReset) {
     cpu.memMap(0x100000 to 0x10ffff).ram(mainRam.io)
+    cpu.memMap(0x400000 to 0x40ffff).ram(spriteRam.io.portA)
   }
 }
