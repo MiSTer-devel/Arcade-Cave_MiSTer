@@ -92,8 +92,6 @@ class CaveTop extends Module {
   // Wires
   val progRomAck = Wire(Bool())
   val progRomData = Wire(Bits())
-  val mainRamAck = Wire(Bool())
-  val mainRamData = Wire(Bits())
   val spriteRamAck = Wire(Bool())
   val spriteRamData = Wire(Bits())
 
@@ -115,20 +113,10 @@ class CaveTop extends Module {
 
   // Main RAM
   val mainRam = withClockAndReset(io.cpuClock, io.cpuReset) {
-    val mainRamEnable = cpu.io.addr >= 0x100000.U && cpu.io.addr <= 0x10ffff.U
-    val mainRam = Module(new SinglePortRam(
+    Module(new SinglePortRam(
       addrWidth = Config.MAIN_RAM_ADDR_WIDTH,
       dataWidth = Config.MAIN_RAM_DATA_WIDTH
     ))
-    mainRam.io.din := cpu.io.dout
-    mainRam.io.rd := mainRamEnable && readStrobe
-    mainRam.io.wr := mainRamEnable && (highWriteStrobe || lowWriteStrobe)
-    mainRam.io.addr := cpu.io.addr(15, 1)
-    mainRam.io.mask := cpu.io.uds ## cpu.io.lds
-    mainRam.io.din := cpu.io.dout
-    mainRamAck := RegNext(mainRamEnable && (readStrobe || highWriteStrobe || lowWriteStrobe))
-    mainRamData := Mux(mainRamEnable, mainRam.io.dout, 0.U)
-    mainRam
   }
 
   // Sprite RAM
@@ -141,7 +129,6 @@ class CaveTop extends Module {
       dataWidthB = Config.SPRITE_RAM_GPU_DATA_WIDTH
     ))
     spriteRam.io.clockA := clock
-    spriteRam.io.portA.din := cpu.io.dout
     spriteRam.io.portA.rd := spriteRamEnable && readStrobe
     spriteRam.io.portA.wr := spriteRamEnable && (highWriteStrobe || lowWriteStrobe)
     spriteRam.io.portA.addr := cpu.io.addr(15, 1)
@@ -164,8 +151,8 @@ class CaveTop extends Module {
   io.player <> cave.io.player
 
   cpu.io <> cave.io.cpu
-  cpu.io.dtack := progRomAck | mainRamAck | spriteRamAck | cave.io.memBus.ack
-  cpu.io.din := progRomData | mainRamData | spriteRamData | cave.io.memBus.data
+  cpu.io.dtack := progRomAck | spriteRamAck | cave.io.memBus.ack
+  cpu.io.din := progRomData | spriteRamData | cave.io.memBus.data
 
   spriteRam.io.clockB := clock
   spriteRam.io.portB <> cave.io.spriteRam
@@ -177,4 +164,9 @@ class CaveTop extends Module {
 
   io.debug.pc := cpu.io.debug.pc
   io.debug.pcw := cpu.io.debug.pcw
+
+  // Memory map
+  withClockAndReset(io.cpuClock, io.cpuReset) {
+    cpu.memMap(0x100000 to 0x10ffff).ram(mainRam.io)
+  }
 }
