@@ -46,14 +46,6 @@ import chisel3._
 
 /** Represents the CAVE arcade hardware. */
 class CaveTop extends Module {
-  val MAIN_RAM_ADDR_WIDTH = 15
-  val MAIN_RAM_DATA_WIDTH = 16
-
-  val SPRITE_RAM_ADDR_WIDTH = 15
-  val SPRITE_RAM_DATA_WIDTH = 16
-  val SPRITE_RAM_GPU_ADDR_WIDTH = 12
-  val SPRITE_RAM_GPU_DATA_WIDTH = 128
-
   val io = IO(new Bundle {
     /** CPU clock domain */
     val cpuClock = Input(Clock())
@@ -89,7 +81,7 @@ class CaveTop extends Module {
         val data = Output(Bits(M68K.DATA_WIDTH.W))
       }
       val tileRom = new TileRomIO
-      val spriteRam = ReadMemIO(SPRITE_RAM_GPU_ADDR_WIDTH, SPRITE_RAM_GPU_DATA_WIDTH)
+      val spriteRam = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
       val frameBuffer = new FrameBufferIO
       val vblank_i = Input(Bool())
     })
@@ -124,7 +116,10 @@ class CaveTop extends Module {
   // Main RAM
   val mainRam = withClockAndReset(io.cpuClock, io.cpuReset) {
     val mainRamEnable = cpu.io.addr >= 0x100000.U && cpu.io.addr <= 0x10ffff.U
-    val mainRam = Module(new SinglePortRam(MAIN_RAM_ADDR_WIDTH, MAIN_RAM_DATA_WIDTH))
+    val mainRam = Module(new SinglePortRam(
+      addrWidth = Config.MAIN_RAM_ADDR_WIDTH,
+      dataWidth = Config.MAIN_RAM_DATA_WIDTH
+    ))
     mainRam.io.din := cpu.io.dout
     mainRam.io.rd := mainRamEnable && readStrobe
     mainRam.io.wr := mainRamEnable && (highWriteStrobe || lowWriteStrobe)
@@ -139,7 +134,12 @@ class CaveTop extends Module {
   // Sprite RAM
   val spriteRam = withClockAndReset(io.cpuClock, io.cpuReset) {
     val spriteRamEnable = cpu.io.addr >= 0x400000.U && cpu.io.addr <= 0x40ffff.U
-    val spriteRam = Module(new TrueDualPortRam(SPRITE_RAM_ADDR_WIDTH, SPRITE_RAM_DATA_WIDTH, SPRITE_RAM_GPU_ADDR_WIDTH, SPRITE_RAM_GPU_DATA_WIDTH))
+    val spriteRam = Module(new TrueDualPortRam(
+      addrWidthA = Config.SPRITE_RAM_ADDR_WIDTH,
+      dataWidthA = Config.SPRITE_RAM_DATA_WIDTH,
+      addrWidthB = Config.SPRITE_RAM_GPU_ADDR_WIDTH,
+      dataWidthB = Config.SPRITE_RAM_GPU_DATA_WIDTH
+    ))
     spriteRam.io.clockA := clock
     spriteRam.io.portA.din := cpu.io.dout
     spriteRam.io.portA.rd := spriteRamEnable && readStrobe
