@@ -59,6 +59,8 @@ entity cave is
         -- CPU clock domain
         rst_68k_i                : in  std_logic;
         clk_68k_i                : in  std_logic;
+        -- Vertical blank signal
+        vblank_i                 : in std_logic;
         -- Player input signals
         player_player1           : in  std_logic_vector(8 downto 0);
         player_player2           : in  std_logic_vector(8 downto 0);
@@ -96,9 +98,7 @@ entity cave is
         frameBuffer_mask         : out std_logic_vector(1 downto 0);
         frameBuffer_din          : out std_logic_vector(DDP_WORD_WIDTH-2 downto 0);
         frameBuffer_dmaStart     : out std_logic;
-        frameBuffer_dmaDone      : in  std_logic;
-        -- Vertical blank signal
-        vblank_i                 : in std_logic
+        frameBuffer_dmaDone      : in  std_logic
         );
 end entity cave;
 

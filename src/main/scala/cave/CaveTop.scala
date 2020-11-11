@@ -74,6 +74,7 @@ class CaveTop extends Module {
       val clk_i = Input(Clock())
       val rst_68k_i = Input(Reset())
       val clk_68k_i = Input(Clock())
+      val vblank_i = Input(Bool())
       val player = new PlayerIO
       val cpu = Flipped(new M68KIO)
       val memBus = new Bundle {
@@ -83,7 +84,6 @@ class CaveTop extends Module {
       val tileRom = new TileRomIO
       val spriteRam = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
       val frameBuffer = new FrameBufferIO
-      val vblank_i = Input(Bool())
     })
 
     override def desiredName = "cave"
@@ -159,6 +159,8 @@ class CaveTop extends Module {
   cave.io.clk_68k_i := io.cpuClock
   cave.io.rst_68k_i := io.cpuReset
 
+  cave.io.vblank_i := io.video.vBlank
+
   io.player <> cave.io.player
 
   cpu.io <> cave.io.cpu
@@ -172,8 +174,6 @@ class CaveTop extends Module {
   io.tileRom.addr := cave.io.tileRom.addr + Config.TILE_ROM_OFFSET.U
 
   io.frameBuffer <> cave.io.frameBuffer
-
-  cave.io.vblank_i := io.video.vBlank
 
   io.debug.pc := cpu.io.debug.pc
   io.debug.pcw := cpu.io.debug.pcw
