@@ -196,8 +196,8 @@ class CaveTop extends Module {
 
   // Memory map
   withClockAndReset(io.cpuClock, io.cpuReset) {
-    cpu.memMap(0x100000 to 0x10ffff).splitRam(mainRam.io)
-    cpu.memMap(0x400000 to 0x40ffff).splitRam(spriteRam.io.portA)
+    cpu.memMap(0x100000 to 0x10ffff).ram(mainRam.io)
+    cpu.memMap(0x400000 to 0x40ffff).ram(spriteRam.io.portA)
     cpu.memMap(0x500000 to 0x507fff).ram(layer0Ram.io.portA)
     cpu.memMap(0x600000 to 0x607fff).ram(layer1Ram.io.portA)
     cpu.memMap(0x700000 to 0x70ffff).ram(layer2Ram.io.portA)

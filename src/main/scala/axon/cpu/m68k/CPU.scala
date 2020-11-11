@@ -125,7 +125,7 @@ object CPU {
   /**
    * The width of the CPU address bus.
    *
-   * TODO: Lies, the M68K does not have a 32-bit address bus. This needs to be fixed.
+   * TODO: Lies! The M68K does not have a 32-bit address bus, this should be fixed.
    */
   val ADDR_WIDTH = 32
 
