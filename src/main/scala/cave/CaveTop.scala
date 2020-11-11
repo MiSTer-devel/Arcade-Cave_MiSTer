@@ -88,12 +88,7 @@ class CaveTop extends Module {
       val mem_bus_ack = Output(Bool())
       val mem_bus_data = Output(Bits(M68K.DATA_WIDTH.W))
       // Tile ROM
-      val rom_addr_gfx_o = Output(UInt(Config.TILE_ROM_ADDR_WIDTH.W))
-      val tiny_burst_gfx_o = Output(Bool())
-      val rom_burst_read_gfx_o = Output(Bool())
-      val rom_data_valid_gfx_i = Input(Bool())
-      val rom_data_gfx_i = Input(Bits(Config.TILE_ROM_DATA_WIDTH.W))
-      val rom_burst_done_gfx_i = Input(Bool())
+      val tileRom = new TileRomIO
       // Frame buffer
       val frame_buffer_addr_o = Output(UInt(Config.FRAME_BUFFER_ADDR_WIDTH.W))
       val frame_buffer_data_o = Output(Bits(Config.FRAME_BUFFER_DATA_WIDTH.W))
@@ -156,16 +151,12 @@ class CaveTop extends Module {
   cave.io.player_1_i := io.player.player1
   cave.io.player_2_i := io.player.player2
 
-  cave.io.cpu <> cpu.io
+  cpu.io <> cave.io.cpu
   cpu.io.dtack := progRomAck | mainRamAck | cave.io.mem_bus_ack
   cpu.io.din := progRomData | mainRamData | cave.io.mem_bus_data
 
-  io.tileRom.addr := cave.io.rom_addr_gfx_o + Config.TILE_ROM_OFFSET.U
-  io.tileRom.tinyBurst := cave.io.tiny_burst_gfx_o
-  io.tileRom.rd := cave.io.rom_burst_read_gfx_o
-  cave.io.rom_data_valid_gfx_i := io.tileRom.valid
-  cave.io.rom_data_gfx_i := io.tileRom.dout
-  cave.io.rom_burst_done_gfx_i := io.tileRom.burstDone
+  io.tileRom <> cave.io.tileRom
+  io.tileRom.addr := cave.io.tileRom.addr + Config.TILE_ROM_OFFSET.U
 
   io.frameBuffer.addr := cave.io.frame_buffer_addr_o
   io.frameBuffer.mask := 0.U

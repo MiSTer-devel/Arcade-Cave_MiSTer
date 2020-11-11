@@ -79,12 +79,12 @@ entity cave is
         mem_bus_ack              : out std_logic;
         mem_bus_data             : out std_logic_vector(15 downto 0);
         -- GFX signals (clocked with clk_fast)
-        rom_addr_gfx_o           : out gfx_rom_addr_t;
-        tiny_burst_gfx_o         : out std_logic;
-        rom_burst_read_gfx_o     : out std_logic;
-        rom_data_valid_gfx_i     : in  std_logic;
-        rom_data_gfx_i           : in  gfx_rom_data_t;
-        rom_burst_done_gfx_i     : in  std_logic;
+        tileRom_addr             : out gfx_rom_addr_t;
+        tileRom_tinyBurst        : out std_logic;
+        tileRom_rd               : out std_logic;
+        tileRom_valid            : in  std_logic;
+        tileRom_dout             : in  gfx_rom_data_t;
+        tileRom_burstDone        : in  std_logic;
         -- Frame Buffer
         frame_buffer_addr_o      : out frame_buffer_addr_t;
         frame_buffer_data_o      : out std_logic_vector(DDP_WORD_WIDTH-2 downto 0);
@@ -492,12 +492,12 @@ begin
                     vctrl_reg_1_i            => gfx_vctrl_1_reg_s,
                     vctrl_reg_2_i            => gfx_vctrl_2_reg_s,
                     --
-                    rom_addr_o               => rom_addr_gfx_o,
-                    tiny_burst_gfx_o         => tiny_burst_gfx_o,
-                    rom_burst_read_o         => rom_burst_read_gfx_o,
-                    rom_data_i               => rom_data_gfx_i,
-                    rom_data_valid_i         => rom_data_valid_gfx_i,
-                    rom_data_burst_done_i    => rom_burst_done_gfx_i,
+                    rom_addr_o               => tileRom_addr,
+                    tiny_burst_gfx_o         => tileRom_tinyBurst,
+                    rom_burst_read_o         => tileRom_rd,
+                    rom_data_i               => tileRom_dout,
+                    rom_data_valid_i         => tileRom_valid,
+                    rom_data_burst_done_i    => tileRom_burstDone,
                     --
                     palette_ram_addr_o       => gfx_palette_ram_addr_s,
                     palette_ram_data_i       => gfx_palette_ram_data_s,
@@ -516,14 +516,14 @@ begin
             gfx_layer_0_ram_addr_s   <= (others => '0');
             gfx_layer_1_ram_addr_s   <= (others => '0');
             gfx_layer_2_ram_addr_s   <= (others => '0');
-            rom_addr_gfx_o           <= (others => '0');
-            rom_burst_read_gfx_o     <= '0';
+            tileRom_addr             <= (others => '0');
+            tileRom_rd               <= '0';
             gfx_palette_ram_addr_s   <= (others => '0');
             frame_buffer_addr_o      <= (others => '0');
             frame_buffer_data_o      <= (others => '0');
             frame_buffer_write_o     <= '0';
             frame_buffer_dma_start_o <= '0';
-            tiny_burst_gfx_o         <= '0';
+            tileRom_tinyBurst        <= '0';
 
         end generate graphic_processor_generate;
 
