@@ -87,11 +87,6 @@ class CaveTop extends Module {
       // Memory bus
       val mem_bus_ack = Output(Bool())
       val mem_bus_data = Output(Bits(M68K.DATA_WIDTH.W))
-      // Program ROM
-      val rom_addr_68k_o = Output(UInt(Config.PROG_ROM_ADDR_WIDTH.W))
-      val rom_read_68k_o = Output(Bool())
-      val rom_valid_68k_i = Input(Bool())
-      val rom_data_68k_i = Input(Bits(Config.PROG_ROM_DATA_WIDTH.W))
       // Tile ROM
       val rom_addr_gfx_o = Output(UInt(Config.TILE_ROM_ADDR_WIDTH.W))
       val tiny_burst_gfx_o = Output(Bool())
@@ -113,6 +108,8 @@ class CaveTop extends Module {
   }
 
   // Wires
+  val progRomAck = Wire(Bool())
+  val progRomData = Wire(Bits())
   val mainRamAck = Wire(Bool())
   val mainRamData = Wire(Bits())
 
@@ -126,9 +123,16 @@ class CaveTop extends Module {
     val writeStrobe = Util.rising(cpu.io.as) && !cpu.io.rw
     val highWriteStrobe = Util.rising(cpu.io.uds) && !cpu.io.rw
     val lowWriteStrobe = Util.rising(cpu.io.lds) && !cpu.io.rw
-    val mainRamEnable = cpu.io.addr >= 0x100000.U && cpu.io.addr <= 0x10ffff.U
+
+    // Program ROM
+    val progRomEnable = cpu.io.addr >= 0x000000.U && cpu.io.addr <= 0x0fffff.U
+    io.progRom.rd := progRomEnable && readStrobe
+    io.progRom.addr := cpu.io.addr + Config.PROG_ROM_OFFSET.U
+    progRomAck := io.progRom.valid
+    progRomData := Mux(progRomEnable, io.progRom.dout, 0.U)
 
     // Main RAM
+    val mainRamEnable = cpu.io.addr >= 0x100000.U && cpu.io.addr <= 0x10ffff.U
     val mainRam = Module(new SinglePortRam(MAIN_RAM_ADDR_WIDTH, MAIN_RAM_DATA_WIDTH))
     mainRam.io.din := cpu.io.dout
     mainRam.io.rd := mainRamEnable && readStrobe
@@ -153,13 +157,8 @@ class CaveTop extends Module {
   cave.io.player_2_i := io.player.player2
 
   cave.io.cpu <> cpu.io
-  cpu.io.dtack := mainRamAck | cave.io.mem_bus_ack
-  cpu.io.din := mainRamData | cave.io.mem_bus_data
-
-  io.progRom.addr := cave.io.rom_addr_68k_o + Config.PROG_ROM_OFFSET.U
-  io.progRom.rd := cave.io.rom_read_68k_o
-  cave.io.rom_valid_68k_i := io.progRom.valid
-  cave.io.rom_data_68k_i := io.progRom.dout
+  cpu.io.dtack := progRomAck | mainRamAck | cave.io.mem_bus_ack
+  cpu.io.din := progRomData | mainRamData | cave.io.mem_bus_data
 
   io.tileRom.addr := cave.io.rom_addr_gfx_o + Config.TILE_ROM_OFFSET.U
   io.tileRom.tinyBurst := cave.io.tiny_burst_gfx_o

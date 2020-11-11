@@ -78,11 +78,6 @@ entity cave is
         -- Memory bus
         mem_bus_ack              : out std_logic;
         mem_bus_data             : out std_logic_vector(15 downto 0);
-        -- 68k ROM
-        rom_addr_68k_o           : out unsigned(DDP_ROM_LOG_SIZE_C-1 downto 0);
-        rom_read_68k_o           : out std_logic;
-        rom_valid_68k_i          : in  std_logic;
-        rom_data_68k_i           : in  word_t;
         -- GFX signals (clocked with clk_fast)
         rom_addr_gfx_o           : out gfx_rom_addr_t;
         tiny_burst_gfx_o         : out std_logic;
@@ -125,11 +120,6 @@ architecture struct of cave is
     signal write_strobe_s           : std_logic;
     signal high_write_strobe_s      : std_logic;
     signal low_write_strobe_s       : std_logic;
-    -- ROM
-    constant ROM_LOG_SIZE_C         : natural := DDP_ROM_LOG_SIZE_C;  -- 1MB
-    signal rom_ack_s                : std_logic;
-    signal rom_data_o_s             : word_t;
-    signal rom_enable_s             : std_logic;
     -- YMZ RAM
     constant YMZ_RAM_LOG_SIZE_C     : natural := 2;   -- 4B
     signal ymz_ram_enable_s         : std_logic;
@@ -214,13 +204,6 @@ begin
     -----------------------
     -- IO with top level --
     -----------------------
-    rom_addr_68k_o <= addr_68k_s(ROM_LOG_SIZE_C-1 downto 0);
-    rom_read_68k_o <= rom_enable_s and read_strobe_s;
-    rom_ack_s      <= rom_valid_68k_i;
-    -- The data bus is an OR'ed bus, so we need to ensure that the data from
-    -- the ROM section does not interfere when the ROM is not enabled.
-    rom_data_o_s <= rom_data_68k_i when rom_enable_s else
-                    (others => '0');
 
     -- Sync
     process(clk_68k_i) is
@@ -306,8 +289,7 @@ begin
     ---------------------
 
     -- This is an OR'ed bus
-    memory_bus_ack_s <= rom_ack_s         or
-                        ymz_ram_ack_s     or
+    memory_bus_ack_s <= ymz_ram_ack_s     or
                         sprite_ram_ack_s  or
                         layer_0_ram_ack_s or
                         layer_1_ram_ack_s or
@@ -327,8 +309,7 @@ begin
     mem_bus_ack <= memory_bus_ack_s;
 
     -- "OR" everything together to create the "OR'ed" bus
-    memory_bus_data_s <= rom_data_o_s         or
-                         ymz_ram_data_o_s     or
+    memory_bus_data_s <= ymz_ram_data_o_s     or
                          sprite_ram_data_o_s  or
                          layer_0_ram_data_o_s or
                          layer_1_ram_data_o_s or
@@ -371,9 +352,6 @@ begin
     -- Memory bus decode logic - Dodonpachi Address Map -- TODO Change to constants
     ---------------------------------------------------
 
-    -- ROM                  0x000000 - 0x0fffff
-    rom_enable_s         <= '1' when addr_68k_s(31 downto ROM_LOG_SIZE_C) = x"000" else
-                            '0';
     -- YMZ RAM              0x300000 - 0x300003
     ymz_ram_enable_s     <= '1' when addr_68k_s(31 downto YMZ_RAM_LOG_SIZE_C) = x"0030000" & "00" else
                             '0';
