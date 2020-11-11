@@ -175,26 +175,22 @@ class CaveTop extends Module {
   cave.io.clk_i := clock
   cave.io.clk_68k_i := io.cpuClock
   cave.io.rst_68k_i := io.cpuReset
-
   cave.io.vblank_i := io.video.vBlank
-
-  io.player <> cave.io.player
-
-  cpu.io <> cave.io.cpu
-  cpu.io.dtack := progRomAck | cave.io.memBus.ack
-  cpu.io.din := progRomData | cave.io.memBus.data
-
-  spriteRam.io.portB <> cave.io.spriteRam
-
+  cave.io.player <> io.player
+  cave.io.cpu <> cpu.io
+  cave.io.tileRom <> io.tileRom
+  cave.io.spriteRam <> spriteRam.io.portB
   cave.io.layer0Ram <> layer0Ram.io.portB
   cave.io.layer1Ram <> layer1Ram.io.portB
   cave.io.layer2Ram <> layer2Ram.io.portB
+  cave.io.frameBuffer <> io.frameBuffer
 
-  io.tileRom <> cave.io.tileRom
+  // Override CPU signals
+  cpu.io.dtack := progRomAck | cave.io.memBus.ack
+  cpu.io.din := progRomData | cave.io.memBus.data
+
+  // Outputs
   io.tileRom.addr := cave.io.tileRom.addr + Config.TILE_ROM_OFFSET.U
-
-  io.frameBuffer <> cave.io.frameBuffer
-
   io.debug.pc := cpu.io.debug.pc
   io.debug.pcw := cpu.io.debug.pcw
 
