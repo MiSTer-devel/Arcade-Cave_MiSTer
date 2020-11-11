@@ -94,13 +94,7 @@ class CaveTop extends Module {
   }
 
   // M68000 CPU
-  //
-  // The CPU runs in the CPU clock domain.
   val cpu = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new CPU) }
-  val readStrobe = withClockAndReset(io.cpuClock, io.cpuReset) { Util.rising(cpu.io.as) && cpu.io.rw }
-  val writeStrobe = withClockAndReset(io.cpuClock, io.cpuReset) { Util.rising(cpu.io.as) && !cpu.io.rw }
-  val highWriteStrobe = withClockAndReset(io.cpuClock, io.cpuReset) { Util.rising(cpu.io.uds) && !cpu.io.rw }
-  val lowWriteStrobe = withClockAndReset(io.cpuClock, io.cpuReset) { Util.rising(cpu.io.lds) && !cpu.io.rw }
 
   // Main RAM
   val mainRam = withClockAndReset(io.cpuClock, io.cpuReset) {
@@ -173,15 +167,8 @@ class CaveTop extends Module {
   cave.io.layer1Ram <> layer1Ram.io.portB
   cave.io.layer2Ram <> layer2Ram.io.portB
   cave.io.frameBuffer <> io.frameBuffer
-
-  // Override CPU signals
   cpu.io.dtack := cave.io.memBus.ack
   cpu.io.din := cave.io.memBus.data
-
-  // Outputs
-  io.tileRom.addr := cave.io.tileRom.addr + Config.TILE_ROM_OFFSET.U
-  io.debug.pc := cpu.io.debug.pc
-  io.debug.pcw := cpu.io.debug.pcw
 
   // Memory map
   withClockAndReset(io.cpuClock, io.cpuReset) {
@@ -192,4 +179,9 @@ class CaveTop extends Module {
     cpu.memMap(0x600000 to 0x607fff).ram(layer1Ram.io.portA)
     cpu.memMap(0x700000 to 0x70ffff).ram(layer2Ram.io.portA)
   }
+
+  // Outputs
+  io.tileRom.addr := cave.io.tileRom.addr + Config.TILE_ROM_OFFSET.U
+  io.debug.pc := cpu.io.debug.pc
+  io.debug.pcw := cpu.io.debug.pcw
 }
