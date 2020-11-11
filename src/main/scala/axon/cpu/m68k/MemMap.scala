@@ -35,7 +35,7 @@
  *  SOFTWARE.
  */
 
-package axon.cpu
+package axon.cpu.m68k
 
 import axon.Util
 import axon.mem._
@@ -47,7 +47,7 @@ import chisel3._
  * @param cpu The CPU.
  * @param r The address range.
  */
-class MemMap(cpu: M68K, r: Range) {
+class MemMap(cpu: CPU, r: Range) {
   private val readStrobe = Util.rising(cpu.io.as) && cpu.io.rw
   private val writeStrobe = Util.rising(cpu.io.as) && !cpu.io.rw
   private val highWriteStrobe = Util.rising(cpu.io.uds) && !cpu.io.rw

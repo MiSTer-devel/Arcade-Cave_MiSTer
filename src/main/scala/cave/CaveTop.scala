@@ -39,6 +39,7 @@ package cave
 
 import axon.Util
 import axon.cpu._
+import axon.cpu.m68k.{CPU, CPUIO}
 import axon.gpu.VideoIO
 import axon.mem._
 import cave.types._
@@ -76,10 +77,10 @@ class CaveTop extends Module {
       val clk_68k_i = Input(Clock())
       val vblank_i = Input(Bool())
       val player = new PlayerIO
-      val cpu = Flipped(new M68KIO)
+      val cpu = Flipped(new CPUIO)
       val memBus = new Bundle {
         val ack = Output(Bool())
-        val data = Output(Bits(M68K.DATA_WIDTH.W))
+        val data = Output(Bits(CPU.DATA_WIDTH.W))
       }
       val tileRom = new TileRomIO
       val spriteRam = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
@@ -98,7 +99,7 @@ class CaveTop extends Module {
   // M68000 CPU
   //
   // The CPU runs in the CPU clock domain.
-  val cpu = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new M68K) }
+  val cpu = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new CPU) }
   val readStrobe = withClockAndReset(io.cpuClock, io.cpuReset) { Util.rising(cpu.io.as) && cpu.io.rw }
   val writeStrobe = withClockAndReset(io.cpuClock, io.cpuReset) { Util.rising(cpu.io.as) && !cpu.io.rw }
   val highWriteStrobe = withClockAndReset(io.cpuClock, io.cpuReset) { Util.rising(cpu.io.uds) && !cpu.io.rw }
