@@ -49,6 +49,11 @@ class CaveTop extends Module {
   val MAIN_RAM_ADDR_WIDTH = 15
   val MAIN_RAM_DATA_WIDTH = 16
 
+  val SPRITE_RAM_ADDR_WIDTH = 15
+  val SPRITE_RAM_DATA_WIDTH = 16
+  val SPRITE_RAM_GPU_ADDR_WIDTH = 12
+  val SPRITE_RAM_GPU_DATA_WIDTH = 128
+
   val io = IO(new Bundle {
     /** CPU clock domain */
     val cpuClock = Input(Clock())
@@ -89,6 +94,8 @@ class CaveTop extends Module {
       val mem_bus_data = Output(Bits(M68K.DATA_WIDTH.W))
       // Tile ROM
       val tileRom = new TileRomIO
+      // Sprite RAM
+      val spriteRam = ReadMemIO(SPRITE_RAM_GPU_ADDR_WIDTH, SPRITE_RAM_GPU_DATA_WIDTH)
       // Frame buffer
       val frame_buffer_addr_o = Output(UInt(Config.FRAME_BUFFER_ADDR_WIDTH.W))
       val frame_buffer_data_o = Output(Bits(Config.FRAME_BUFFER_DATA_WIDTH.W))
@@ -107,26 +114,27 @@ class CaveTop extends Module {
   val progRomData = Wire(Bits())
   val mainRamAck = Wire(Bool())
   val mainRamData = Wire(Bits())
+  val spriteRamAck = Wire(Bool())
+  val spriteRamData = Wire(Bits())
 
   // M68000 CPU
   //
   // The CPU runs in the CPU clock domain.
-  val cpu = withClockAndReset(io.cpuClock, io.cpuReset) {
-    val cpu = Module(new M68K)
+  val cpu = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new M68K) }
+  val readStrobe = withClockAndReset(io.cpuClock, io.cpuReset) { Util.rising(cpu.io.as) && cpu.io.rw }
+  val writeStrobe = withClockAndReset(io.cpuClock, io.cpuReset) { Util.rising(cpu.io.as) && !cpu.io.rw }
+  val highWriteStrobe = withClockAndReset(io.cpuClock, io.cpuReset) { Util.rising(cpu.io.uds) && !cpu.io.rw }
+  val lowWriteStrobe = withClockAndReset(io.cpuClock, io.cpuReset) { Util.rising(cpu.io.lds) && !cpu.io.rw }
 
-    val readStrobe = Util.rising(cpu.io.as) && cpu.io.rw
-    val writeStrobe = Util.rising(cpu.io.as) && !cpu.io.rw
-    val highWriteStrobe = Util.rising(cpu.io.uds) && !cpu.io.rw
-    val lowWriteStrobe = Util.rising(cpu.io.lds) && !cpu.io.rw
+  // Program ROM
+  val progRomEnable = cpu.io.addr >= 0x000000.U && cpu.io.addr <= 0x0fffff.U
+  io.progRom.rd := progRomEnable && readStrobe
+  io.progRom.addr := cpu.io.addr + Config.PROG_ROM_OFFSET.U
+  progRomAck := io.progRom.valid
+  progRomData := Mux(progRomEnable, io.progRom.dout, 0.U)
 
-    // Program ROM
-    val progRomEnable = cpu.io.addr >= 0x000000.U && cpu.io.addr <= 0x0fffff.U
-    io.progRom.rd := progRomEnable && readStrobe
-    io.progRom.addr := cpu.io.addr + Config.PROG_ROM_OFFSET.U
-    progRomAck := io.progRom.valid
-    progRomData := Mux(progRomEnable, io.progRom.dout, 0.U)
-
-    // Main RAM
+  // Main RAM
+  val mainRam = withClockAndReset(io.cpuClock, io.cpuReset) {
     val mainRamEnable = cpu.io.addr >= 0x100000.U && cpu.io.addr <= 0x10ffff.U
     val mainRam = Module(new SinglePortRam(MAIN_RAM_ADDR_WIDTH, MAIN_RAM_DATA_WIDTH))
     mainRam.io.din := cpu.io.dout
@@ -137,8 +145,23 @@ class CaveTop extends Module {
     mainRam.io.din := cpu.io.dout
     mainRamAck := RegNext(mainRamEnable && (readStrobe || highWriteStrobe || lowWriteStrobe))
     mainRamData := Mux(mainRamEnable, mainRam.io.dout, 0.U)
+    mainRam
+  }
 
-    cpu
+  // Sprite RAM
+  val spriteRam = withClockAndReset(io.cpuClock, io.cpuReset) {
+    val spriteRamEnable = cpu.io.addr >= 0x400000.U && cpu.io.addr <= 0x40ffff.U
+    val spriteRam = Module(new TrueDualPortRam(SPRITE_RAM_ADDR_WIDTH, SPRITE_RAM_DATA_WIDTH, SPRITE_RAM_GPU_ADDR_WIDTH, SPRITE_RAM_GPU_DATA_WIDTH))
+    spriteRam.io.clockA := clock
+    spriteRam.io.portA.din := cpu.io.dout
+    spriteRam.io.portA.rd := spriteRamEnable && readStrobe
+    spriteRam.io.portA.wr := spriteRamEnable && (highWriteStrobe || lowWriteStrobe)
+    spriteRam.io.portA.addr := cpu.io.addr(15, 1)
+    spriteRam.io.portA.mask := cpu.io.uds ## cpu.io.lds
+    spriteRam.io.portA.din := cpu.io.dout
+    spriteRamAck := RegNext(spriteRamEnable && (readStrobe || highWriteStrobe || lowWriteStrobe))
+    spriteRamData := Mux(spriteRamEnable, spriteRam.io.portA.dout, 0.U)
+    spriteRam
   }
 
   // Cave
@@ -152,8 +175,11 @@ class CaveTop extends Module {
   cave.io.player_2_i := io.player.player2
 
   cpu.io <> cave.io.cpu
-  cpu.io.dtack := progRomAck | mainRamAck | cave.io.mem_bus_ack
-  cpu.io.din := progRomData | mainRamData | cave.io.mem_bus_data
+  cpu.io.dtack := progRomAck | mainRamAck | spriteRamAck | cave.io.mem_bus_ack
+  cpu.io.din := progRomData | mainRamData | spriteRamData | cave.io.mem_bus_data
+
+  spriteRam.io.clockB := clock
+  spriteRam.io.portB <> cave.io.spriteRam
 
   io.tileRom <> cave.io.tileRom
   io.tileRom.addr := cave.io.tileRom.addr + Config.TILE_ROM_OFFSET.U

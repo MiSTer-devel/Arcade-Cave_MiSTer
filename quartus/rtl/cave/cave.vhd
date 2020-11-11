@@ -78,13 +78,17 @@ entity cave is
         -- Memory bus
         mem_bus_ack              : out std_logic;
         mem_bus_data             : out std_logic_vector(15 downto 0);
-        -- GFX signals (clocked with clk_fast)
+        -- Tile ROM
         tileRom_addr             : out gfx_rom_addr_t;
         tileRom_tinyBurst        : out std_logic;
         tileRom_rd               : out std_logic;
         tileRom_valid            : in  std_logic;
         tileRom_dout             : in  gfx_rom_data_t;
         tileRom_burstDone        : in  std_logic;
+        -- Sprite RAM
+        spriteRam_rd             : out std_logic;
+        spriteRam_addr           : out sprite_ram_info_access_t;
+        spriteRam_dout           : in  sprite_ram_line_t;
         -- Frame Buffer
         frame_buffer_addr_o      : out frame_buffer_addr_t;
         frame_buffer_data_o      : out std_logic_vector(DDP_WORD_WIDTH-2 downto 0);
@@ -125,11 +129,6 @@ architecture struct of cave is
     signal ymz_ram_enable_s         : std_logic;
     signal ymz_ram_ack_s            : std_logic;
     signal ymz_ram_data_o_s         : word_t;
-    -- Sprite RAM
-    constant SPRITE_RAM_LOG_SIZE_C  : natural := 16;  -- 64kB
-    signal sprite_ram_enable_s      : std_logic;
-    signal sprite_ram_ack_s         : std_logic;
-    signal sprite_ram_data_o_s      : word_t;
     -- Layer 0 RAM
     constant LAYER_0_RAM_LOG_SIZE_C : natural := 15;  -- 32kB
     signal layer_0_ram_enable_s     : std_logic;
@@ -213,6 +212,8 @@ begin
         end if;
     end process;
 
+    spriteRam_rd <= '1';
+
     -------------------
     -- Interruptions --
     -------------------
@@ -290,7 +291,6 @@ begin
 
     -- This is an OR'ed bus
     memory_bus_ack_s <= ymz_ram_ack_s     or
-                        sprite_ram_ack_s  or
                         layer_0_ram_ack_s or
                         layer_1_ram_ack_s or
                         layer_2_ram_ack_s or
@@ -310,7 +310,6 @@ begin
 
     -- "OR" everything together to create the "OR'ed" bus
     memory_bus_data_s <= ymz_ram_data_o_s     or
-                         sprite_ram_data_o_s  or
                          layer_0_ram_data_o_s or
                          layer_1_ram_data_o_s or
                          layer_2_ram_data_o_s or
@@ -354,9 +353,6 @@ begin
 
     -- YMZ RAM              0x300000 - 0x300003
     ymz_ram_enable_s     <= '1' when addr_68k_s(31 downto YMZ_RAM_LOG_SIZE_C) = x"0030000" & "00" else
-                            '0';
-    -- Sprite RAM           0x400000 - 0x40ffff
-    sprite_ram_enable_s  <= '1' when addr_68k_s(31 downto SPRITE_RAM_LOG_SIZE_C) = x"0040" else
                             '0';
     -- Layer 0 RAM          0x500000 - 0x507fff
     layer_0_ram_enable_s <= '1' when addr_68k_s(31 downto LAYER_0_RAM_LOG_SIZE_C) = x"0050" & "0" else
@@ -443,9 +439,6 @@ begin
     graphic_processor_block : block
         signal generate_frame_s         : std_logic;
         signal buffer_select_s          : std_logic;
-        -- Sprite signals
-        signal gfx_sprite_ram_addr_s    : sprite_ram_info_access_t;
-        signal gfx_sprite_ram_info_s    : sprite_ram_line_t;
         -- Layer signals
         signal gfx_layer_0_ram_addr_s   : layer_ram_info_access_t;
         signal gfx_layer_1_ram_addr_s   : layer_ram_info_access_t;
@@ -476,8 +469,8 @@ begin
                     generate_frame_i         => generate_frame_s,
                     buffer_select_i          => buffer_select_s,
                     --
-                    sprite_ram_addr_o        => gfx_sprite_ram_addr_s,
-                    sprite_ram_info_i        => gfx_sprite_ram_info_s,
+                    sprite_ram_addr_o        => spriteRam_addr,
+                    sprite_ram_info_i        => spriteRam_dout,
                     --
                     layer_0_ram_addr_o       => gfx_layer_0_ram_addr_s,
                     layer_0_ram_info_i       => gfx_layer_0_ram_info_s,
@@ -512,7 +505,7 @@ begin
 
         else generate
 
-            gfx_sprite_ram_addr_s    <= (others => '0');
+            spriteRam_addr           <= (others => '0');
             gfx_layer_0_ram_addr_s   <= (others => '0');
             gfx_layer_1_ram_addr_s   <= (others => '0');
             gfx_layer_2_ram_addr_s   <= (others => '0');
@@ -526,24 +519,6 @@ begin
             tileRom_tinyBurst        <= '0';
 
         end generate graphic_processor_generate;
-
-        ----------------
-        -- Sprite RAM --
-        ----------------
-        sprite_ram : entity work.dual_access_ram
-            port map (
-                clk_68k_i    => clk_68k_i,
-                enable_i     => sprite_ram_enable_s,
-                read_i       => read_strobe_s,
-                write_i      => high_write_strobe_s or low_write_strobe_s,
-                addr_i       => addr_68k_s(SPRITE_RAM_LOG_SIZE_C-1 downto 0),
-                mask_i       => high_write_strobe_s & low_write_strobe_s,
-                data_i       => data_out_68k_s,
-                data_o       => sprite_ram_data_o_s,
-                ack_o        => sprite_ram_ack_s,
-                clk_fast_i   => clk_fast_i,
-                addr_fast_i  => gfx_sprite_ram_addr_s,
-                data_fast_o  => gfx_sprite_ram_info_s);
 
         -----------------
         -- Layer 0 RAM --
