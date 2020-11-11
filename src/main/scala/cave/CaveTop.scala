@@ -80,7 +80,7 @@ class CaveTop extends Module {
     val io = IO(new Bundle {
       // Fast clock domain
       val rst_i = Input(Reset())
-      val clk_fast_i = Input(Clock())
+      val clk_i = Input(Clock())
       // CPU clock domain
       val rst_68k_i = Input(Reset())
       val clk_68k_i = Input(Clock())
@@ -163,7 +163,7 @@ class CaveTop extends Module {
   // Cave
   val cave = Module(new CaveBlackBox)
   cave.io.rst_i := reset
-  cave.io.clk_fast_i := clock
+  cave.io.clk_i := clock
   cave.io.clk_68k_i := io.cpuClock
   cave.io.rst_68k_i := io.cpuReset
 

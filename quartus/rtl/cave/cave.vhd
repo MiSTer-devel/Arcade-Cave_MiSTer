@@ -55,7 +55,7 @@ entity cave is
     port (
         -- Fast clock domain
         rst_i                    : in  std_logic;
-        clk_fast_i               : in  std_logic;
+        clk_i                    : in  std_logic;
         -- CPU clock domain
         rst_68k_i                : in  std_logic;
         clk_68k_i                : in  std_logic;
@@ -433,7 +433,7 @@ begin
                 din_a  => data_out_68k_s,
                 dout_a => ymz_ram_data_o_s,
                 ack_a  => ymz_ram_ack_s,
-                clk_b  => clk_fast_i,
+                clk_b  => clk_i,
                 addr_b => to_unsigned(0, YMZ_RAM_LOG_SIZE_C-1),
                 dout_b => open);
     end block ymz280b_block;
@@ -466,7 +466,7 @@ begin
                     INCLUDE_LAYER_PROCESOR_G => true)
                 port map (
                     rst_i                    => rst_i,
-                    clk_i                    => clk_fast_i,
+                    clk_i                    => clk_i,
                     --
                     generate_frame_i         => generate_frame_s,
                     buffer_select_i          => buffer_select_s,
@@ -540,7 +540,7 @@ begin
                 din_a  => data_out_68k_s,
                 dout_a => layer_0_ram_data_o_s,
                 ack_a  => layer_0_ram_ack_s,
-                clk_b  => clk_fast_i,
+                clk_b  => clk_i,
                 -- Do not use the MSB bit because this RAM is 32kB and address is for 64kB
                 addr_b => gfx_layer_0_ram_addr_s(gfx_layer_0_ram_addr_s'high-1 downto 0),
                 dout_b => gfx_layer_0_ram_info_s);
@@ -563,7 +563,7 @@ begin
                 din_a  => data_out_68k_s,
                 dout_a => layer_1_ram_data_o_s,
                 ack_a  => layer_1_ram_ack_s,
-                clk_b  => clk_fast_i,
+                clk_b  => clk_i,
                 -- Do not use the MSB bit because this RAM is 32kB and address is for 64kB
                 addr_b => gfx_layer_1_ram_addr_s(gfx_layer_1_ram_addr_s'high-1 downto 0),
                 dout_b => gfx_layer_1_ram_info_s);
@@ -590,7 +590,7 @@ begin
                 din_a  => data_out_68k_s,
                 dout_a => layer_2_ram_data_o_s,
                 ack_a  => layer_2_ram_ack_s,
-                clk_b  => clk_fast_i,
+                clk_b  => clk_i,
                 addr_b => gfx_layer_2_ram_addr_s(gfx_layer_2_ram_addr_s'high-2 downto 0),
                 dout_b => gfx_layer_2_ram_info_s);
 
@@ -617,7 +617,7 @@ begin
                     din_a  => data_out_68k_s,
                     dout_a => open, -- write-only
                     ack_a  => video_regs_ack_s,
-                    clk_b  => clk_fast_i,
+                    clk_b  => clk_i,
                     addr_b => to_unsigned(4, VIDEO_REGS_LOG_SIZE_C-1),
                     dout_b => video_reg_4_s);
 
@@ -647,9 +647,9 @@ begin
 
                 -- Shift register for sync (clock domain crossing) and edge
                 -- detection (to start the frame generation)
-                process (clk_fast_i) is
+                process (clk_i) is
                 begin
-                    if rising_edge(clk_fast_i) then
+                    if rising_edge(clk_i) then
                         if rst_i = '1' then
                             sync_reg_s <= (others => '0');
                         else
@@ -705,7 +705,7 @@ begin
                 data_i       => data_out_68k_s,
                 data_o       => v_ctrl_0_data_o_s,
                 ack_o        => v_ctrl_0_ack_s,
-                clk_fast_i   => clk_fast_i,
+                clk_fast_i   => clk_i,
                 vctrl_o      => gfx_vctrl_0_reg_s);
 
         -------------
@@ -723,7 +723,7 @@ begin
                 data_i       => data_out_68k_s,
                 data_o       => v_ctrl_1_data_o_s,
                 ack_o        => v_ctrl_1_ack_s,
-                clk_fast_i   => clk_fast_i,
+                clk_fast_i   => clk_i,
                 vctrl_o      => gfx_vctrl_1_reg_s);
 
         -------------
@@ -741,7 +741,7 @@ begin
                 data_i       => data_out_68k_s,
                 data_o       => v_ctrl_2_data_o_s,
                 ack_o        => v_ctrl_2_ack_s,
-                clk_fast_i   => clk_fast_i,
+                clk_fast_i   => clk_i,
                 vctrl_o      => gfx_vctrl_2_reg_s);
 
         -----------------
@@ -762,7 +762,7 @@ begin
             din_a  => data_out_68k_s,
             dout_a => palette_ram_data_o_s,
             ack_a  => palette_ram_ack_s,
-            clk_b  => clk_fast_i,
+            clk_b  => clk_i,
             addr_b => gfx_palette_ram_addr_s,
             dout_b => gfx_palette_ram_data_s);
 
