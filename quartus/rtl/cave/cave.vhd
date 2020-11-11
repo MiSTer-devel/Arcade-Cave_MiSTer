@@ -62,7 +62,22 @@ entity cave is
         -- Player input signals
         player_1_i               : in  std_logic_vector(8 downto 0);
         player_2_i               : in  std_logic_vector(8 downto 0);
-        pause_i                  : in  std_logic;
+        -- CPU
+        cpu_cen                  : out std_logic;
+        cpu_addr                 : in  unsigned(31 downto 0);
+        cpu_din                  : out std_logic_vector(15 downto 0);
+        cpu_dout                 : in  std_logic_vector(15 downto 0);
+        cpu_as                   : in  std_logic;
+        cpu_rw                   : in  std_logic;
+        cpu_uds                  : in  std_logic;
+        cpu_lds                  : in  std_logic;
+        cpu_dtack                : out std_logic;
+        cpu_ipl                  : out std_logic_vector(2 downto 0);
+        cpu_debug_pc             : in std_logic_vector(31 downto 0);
+        cpu_debug_pcw            : in std_logic;
+        -- Memory bus
+        mem_bus_ack              : out std_logic;
+        mem_bus_data             : out std_logic_vector(15 downto 0);
         -- 68k ROM
         rom_addr_68k_o           : out unsigned(DDP_ROM_LOG_SIZE_C-1 downto 0);
         rom_read_68k_o           : out std_logic;
@@ -82,10 +97,7 @@ entity cave is
         frame_buffer_dma_start_o : out std_logic;
         frame_buffer_dma_done_i  : in  std_logic;
         -- Vertical blank signal
-        vblank_i                 : in std_logic;
-        -- Debug signals
-        TG68_PC_o                : out std_logic_vector(31 downto 0);
-        TG68_PCW_o               : out std_logic
+        vblank_i                 : in std_logic
         );
 end entity cave;
 
@@ -93,21 +105,15 @@ architecture struct of cave is
 
     -- Processor related signals
     signal rst_68k_s                       : std_logic;
-    signal n_rst_68k_s                     : std_logic;
-    signal n_data_ack_68k_s                : std_logic;
     signal addr_68k_s                      : unsigned(31 downto 0);  -- only 24 MSB bits used
     signal data_out_68k_s                  : word_t;
-    signal n_addr_strobe_68k_s             : std_logic;
     signal addr_strobe_68k_s               : std_logic;
     signal addr_strobe_68k_old_reg_s       : std_logic;
-    signal n_upper_data_select_68k_s       : std_logic;
     signal upper_data_select_68k_s         : std_logic;
     signal upper_data_select_68k_old_reg_s : std_logic;
-    signal n_lower_data_select_68k_s       : std_logic;
     signal lower_data_select_68k_s         : std_logic;
     signal lower_data_select_68k_old_reg_s : std_logic;
     signal read_n_write_68k_s              : std_logic;
-    signal n_ipl_to_68k_s                  : std_logic_vector(2 downto 0);
     signal ipl_s                           : std_logic_vector(2 downto 0);
     signal other_ack_s                     : std_logic;
     signal other_data_o_s                  : word_t;
@@ -124,11 +130,6 @@ architecture struct of cave is
     signal rom_ack_s                : std_logic;
     signal rom_data_o_s             : word_t;
     signal rom_enable_s             : std_logic;
-    -- RAM
-    constant RAM_LOG_SIZE_C         : natural := 16;  -- 64kB
-    signal ram_enable_s             : std_logic;
-    signal ram_ack_s                : std_logic;
-    signal ram_data_o_s             : word_t;
     -- YMZ RAM
     constant YMZ_RAM_LOG_SIZE_C     : natural := 2;   -- 4B
     signal ymz_ram_enable_s         : std_logic;
@@ -205,8 +206,6 @@ architecture struct of cave is
     signal edge_case_enable_s       : std_logic;
     signal edge_case_ack_s          : std_logic;
     -- No data for edge cases (will be 0 since the bus is OR'ed)
-
-    signal addr_68k_32b_s           : unsigned(31 downto 0);
 
     signal frame_buffer_color_s     : color_t;
 
@@ -291,64 +290,23 @@ begin
     -- Main Processor --
     --------------------
 
-    -- The main 68000 processor uses negative logic, since we use positive
-    -- logic in our design we need to invert some signals.
-
-    -- Switch from positive logic
-    n_rst_68k_s      <= not rst_68k_s;
-    n_data_ack_68k_s <= not memory_bus_ack_s;
-    n_ipl_to_68k_s   <= not ipl_s;
-
-    -- The main 68000 processor
-    main_68k : entity work.TG68
-        port map (
-            clk            => clk_68k_i,
-            reset          => n_rst_68k_s,
-            clkena_in      => not pause_i,
-            data_in        => memory_bus_data_s,
-            IPL            => n_ipl_to_68k_s,
-            dtack          => n_data_ack_68k_s,
-            unsigned(addr) => addr_68k_32b_s,
-            data_out       => data_out_68k_s,
-            as             => n_addr_strobe_68k_s,
-            uds            => n_upper_data_select_68k_s,
-            lds            => n_lower_data_select_68k_s,
-            rw             => read_n_write_68k_s,
-            TG68_PC_o      => TG68_PC_o,
-            TG68_PCW_o     => TG68_PCW_o);
-
-    -- Mask the high byte since Dodonpachi only uses a 24 bit address bus,
-    -- sometimes the CPU will have the upper 8 bits set due to an operation
-    -- and this will lock the CPU because we are outside of the address space
-    -- therefore no ack is generated, this mask makes sure the CPU only
-    -- addresses 24 bits.
-    --addr_68k_s <= x"00" & addr_68k_32b_s(23 downto 0); -- For some reason
-    -- this deadlocks the CPU at instruction 0x57594, it could be that the TG68
-    -- is written so that if the MSB byte is not used some signals get pruned
-    -- and some address computation fail. (No idea for now).
-    addr_68k_s <= addr_68k_32b_s;
-
-    -- Switch to positive logic
-    addr_strobe_68k_s       <= not n_addr_strobe_68k_s;
-    upper_data_select_68k_s <= not n_upper_data_select_68k_s;
-    lower_data_select_68k_s <= not n_lower_data_select_68k_s;
-
-    -- TODO : Add support for byte access to RAM, check if unaligned accesses
-    -- to a byte in RAM do use the uds/lds signals, and add the support for
-    -- this in the RAM module, since there are accesses to bytes in RAM e.g.
-    -- addq.b 1, <ram_address> in the program code. Check if these are done
-    -- right.
+    cpu_cen <= '1';
+    addr_68k_s <= cpu_addr;
+    cpu_din <= memory_bus_data_s;
+    data_out_68k_s <= cpu_dout;
+    addr_strobe_68k_s <= cpu_as;
+    read_n_write_68k_s <= cpu_rw;
+    upper_data_select_68k_s <= cpu_uds;
+    lower_data_select_68k_s <= cpu_lds;
+    cpu_dtack <= memory_bus_ack_s;
+    cpu_ipl <= ipl_s;
 
     ---------------------
     -- Main Memory Bus --
     ---------------------
 
-    -- TODO : Write an assertion to check that only one is active at any given
-    -- time !
-
     -- This is an OR'ed bus
     memory_bus_ack_s <= rom_ack_s         or
-                        ram_ack_s         or
                         ymz_ram_ack_s     or
                         sprite_ram_ack_s  or
                         layer_0_ram_ack_s or
@@ -366,12 +324,10 @@ begin
                         edge_case_ack_s   or
                         other_ack_s;
 
-    -- TODO : Write an assertion to check that only one is active at any given
-    -- time !
+    mem_bus_ack <= memory_bus_ack_s;
 
     -- "OR" everything together to create the "OR'ed" bus
     memory_bus_data_s <= rom_data_o_s         or
-                         ram_data_o_s         or
                          ymz_ram_data_o_s     or
                          sprite_ram_data_o_s  or
                          layer_0_ram_data_o_s or
@@ -387,10 +343,7 @@ begin
                          eeprom_data_o_s      or
                          other_data_o_s;
 
-    -- This assertion is to check that therer is no byte access to any other
-    -- memory than the RAM or ROM - TODO Change this, since byte read is OK on
-    -- other devices
-    --assert ((ram_enable_s = '0' and rom_enable_s = '0') and (not ((upper_data_select_68k_s = '1') xor (lower_data_select_68k_s = '1')))) or (ram_enable_s = '1' or rom_enable_s = '1') report "Byte access to a memory that is not RAM !" severity error;
+    mem_bus_data <= memory_bus_data_s;
 
     -- We register the address strobe in order to detect when it is asserted in
     -- order to make a single clock read/write strobe below
@@ -420,9 +373,6 @@ begin
 
     -- ROM                  0x000000 - 0x0fffff
     rom_enable_s         <= '1' when addr_68k_s(31 downto ROM_LOG_SIZE_C) = x"000" else
-                            '0';
-    -- RAM                  0x100000 - 0x10ffff
-    ram_enable_s         <= '1' when addr_68k_s(31 downto RAM_LOG_SIZE_C) = x"0010" else
                             '0';
     -- YMZ RAM              0x300000 - 0x300003
     ymz_ram_enable_s     <= '1' when addr_68k_s(31 downto YMZ_RAM_LOG_SIZE_C) = x"0030000" & "00" else
@@ -486,26 +436,6 @@ begin
     -- The second case when the upper 8 bits are non zero should maybe never
     -- occur, this may be a problem with the softcore... This needs to be
     -- researched further...
-
-    --------------
-    -- Main ROM --
-    --------------
-    -- Main ROM is external
-
-    --------------
-    -- Main RAM --
-    --------------
-    main_ram_1 : entity work.main_ram
-        port map (
-            clk_i    => clk_68k_i,
-            enable_i => ram_enable_s,
-            read_i   => read_strobe_s,
-            write_i  => high_write_strobe_s or low_write_strobe_s,
-            addr_i   => addr_68k_s(RAM_LOG_SIZE_C-1 downto 0),  -- There are unaligned byte accesses
-            mask_i   => high_write_strobe_s & low_write_strobe_s,
-            data_i   => data_out_68k_s,
-            data_o   => ram_data_o_s,
-            ack_o    => ram_ack_s);
 
     -------------
     -- YMZ280b --

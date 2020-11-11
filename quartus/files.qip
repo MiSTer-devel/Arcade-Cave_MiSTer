@@ -20,7 +20,6 @@ set_global_assignment -name VHDL_FILE rtl/cave/mem/cache_memory.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/mem/dual_access_ram.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/mem/dual_port_ram.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/mem/eeprom_93c46.vhd
-set_global_assignment -name VHDL_FILE rtl/cave/mem/main_ram.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/mem/single_port_ram.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/mem/true_dual_port_ram.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/mem/vctrl_regs.vhd

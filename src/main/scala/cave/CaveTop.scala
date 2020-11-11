@@ -37,12 +37,18 @@
 
 package cave
 
+import axon.Util
+import axon.cpu._
 import axon.gpu.VideoIO
+import axon.mem._
 import cave.types._
 import chisel3._
 
 /** Represents the CAVE arcade hardware. */
 class CaveTop extends Module {
+  val MAIN_RAM_ADDR_WIDTH = 15
+  val MAIN_RAM_DATA_WIDTH = 16
+
   val io = IO(new Bundle {
     /** CPU clock domain */
     val cpuClock = Input(Clock())
@@ -60,7 +66,7 @@ class CaveTop extends Module {
     val video = Input(new VideoIO)
     /** Debug port */
     val debug = new Bundle {
-      val pc = Output(UInt(32.W))
+      val pc = Output(UInt())
       val pcw = Output(Bool())
     }
   })
@@ -76,7 +82,11 @@ class CaveTop extends Module {
       // Player inputs
       val player_1_i = Input(Bits())
       val player_2_i = Input(Bits())
-      val pause_i = Input(Bool())
+      // CPU
+      val cpu = Flipped(new M68KIO)
+      // Memory bus
+      val mem_bus_ack = Output(Bool())
+      val mem_bus_data = Output(Bits(M68K.DATA_WIDTH.W))
       // Program ROM
       val rom_addr_68k_o = Output(UInt(Config.PROG_ROM_ADDR_WIDTH.W))
       val rom_read_68k_o = Output(Bool())
@@ -97,12 +107,39 @@ class CaveTop extends Module {
       val frame_buffer_dma_done_i = Input(Bool())
       // Vertical blank
       val vblank_i = Input(Bool())
-      // Debug
-      val TG68_PC_o = Output(UInt(32.W))
-      val TG68_PCW_o = Output(Bool())
     })
 
     override def desiredName = "cave"
+  }
+
+  // Wires
+  val mainRamAck = Wire(Bool())
+  val mainRamData = Wire(Bits())
+
+  // M68000 CPU
+  //
+  // The CPU runs in the CPU clock domain.
+  val cpu = withClockAndReset(io.cpuClock, io.cpuReset) {
+    val cpu = Module(new M68K)
+
+    val readStrobe = Util.rising(cpu.io.as) && cpu.io.rw
+    val writeStrobe = Util.rising(cpu.io.as) && !cpu.io.rw
+    val highWriteStrobe = Util.rising(cpu.io.uds) && !cpu.io.rw
+    val lowWriteStrobe = Util.rising(cpu.io.lds) && !cpu.io.rw
+    val mainRamEnable = cpu.io.addr >= 0x100000.U && cpu.io.addr <= 0x10ffff.U
+
+    // Main RAM
+    val mainRam = Module(new SinglePortRam(MAIN_RAM_ADDR_WIDTH, MAIN_RAM_DATA_WIDTH))
+    mainRam.io.din := cpu.io.dout
+    mainRam.io.rd := mainRamEnable && readStrobe
+    mainRam.io.wr := mainRamEnable && (highWriteStrobe || lowWriteStrobe)
+    mainRam.io.addr := cpu.io.addr(15, 1)
+    mainRam.io.mask := cpu.io.uds ## cpu.io.lds
+    mainRam.io.din := cpu.io.dout
+    mainRamAck := RegNext(mainRamEnable && (readStrobe || highWriteStrobe || lowWriteStrobe))
+    mainRamData := Mux(mainRamEnable, mainRam.io.dout, 0.U)
+
+    cpu
   }
 
   // Cave
@@ -114,7 +151,10 @@ class CaveTop extends Module {
 
   cave.io.player_1_i := io.player.player1
   cave.io.player_2_i := io.player.player2
-  cave.io.pause_i := io.player.pause
+
+  cave.io.cpu <> cpu.io
+  cpu.io.dtack := mainRamAck | cave.io.mem_bus_ack
+  cpu.io.din := mainRamData | cave.io.mem_bus_data
 
   io.progRom.addr := cave.io.rom_addr_68k_o + Config.PROG_ROM_OFFSET.U
   io.progRom.rd := cave.io.rom_read_68k_o
@@ -129,6 +169,7 @@ class CaveTop extends Module {
   cave.io.rom_burst_done_gfx_i := io.tileRom.burstDone
 
   io.frameBuffer.addr := cave.io.frame_buffer_addr_o
+  io.frameBuffer.mask := 0.U
   io.frameBuffer.din := cave.io.frame_buffer_data_o
   io.frameBuffer.wr := cave.io.frame_buffer_write_o
   io.frameBuffer.dmaStart := cave.io.frame_buffer_dma_start_o
@@ -136,6 +177,6 @@ class CaveTop extends Module {
 
   cave.io.vblank_i := io.video.vBlank
 
-  io.debug.pc := cave.io.TG68_PC_o
-  io.debug.pcw := cave.io.TG68_PCW_o
+  io.debug.pc := cpu.io.debug.pc
+  io.debug.pcw := cpu.io.debug.pcw
 }
