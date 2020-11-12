@@ -39,7 +39,9 @@ package axon.mem
 
 import chisel3._
 
-abstract class MemIO(val addrWidth: Int, val dataWidth: Int) extends Bundle
+abstract class MemIO(val addrWidth: Int, val dataWidth: Int) extends Bundle {
+  def maskWidth = dataWidth/8
+}
 
 /**
  * A simple flow control interface for reading from synchronous memory.
@@ -74,7 +76,7 @@ class WriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWi
   /** Address bus */
   val addr = Output(UInt(addrWidth.W))
   /** Byte mask */
-  val mask = Output(Bits((dataWidth/8).W))
+  val mask = Output(Bits(maskWidth.W))
   /** Data bus */
   val din = Output(UInt(dataWidth.W))
 
@@ -99,7 +101,7 @@ class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, da
   /** Address bus */
   val addr = Output(UInt(addrWidth.W))
   /** Byte mask */
-  val mask = Output(Bits((dataWidth/8).W))
+  val mask = Output(Bits(maskWidth.W))
   /** Data input bus */
   val din = Output(Bits(dataWidth.W))
   /** Data output bus */

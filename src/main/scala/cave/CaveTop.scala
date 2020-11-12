@@ -37,11 +37,10 @@
 
 package cave
 
-import axon.Util
-import axon.cpu._
-import axon.cpu.m68k.{CPU, CPUIO}
-import axon.gpu.VideoIO
+import axon.cpu.m68k._
+import axon.gpu._
 import axon.mem._
+import cave.gpu._
 import cave.types._
 import chisel3._
 
@@ -82,13 +81,8 @@ class CaveTop extends Module {
         val ack = Output(Bool())
         val data = Output(Bits(CPU.DATA_WIDTH.W))
       }
-      val tileRom = new TileRomIO
-      val spriteRam = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
-      val layer0Ram = ReadMemIO(Config.LAYER_0_RAM_GPU_ADDR_WIDTH, Config.LAYER_0_RAM_GPU_DATA_WIDTH)
-      val layer1Ram = ReadMemIO(Config.LAYER_1_RAM_GPU_ADDR_WIDTH, Config.LAYER_1_RAM_GPU_DATA_WIDTH)
-      val layer2Ram = ReadMemIO(Config.LAYER_2_RAM_GPU_ADDR_WIDTH, Config.LAYER_2_RAM_GPU_DATA_WIDTH)
-      val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
-      val frameBuffer = new FrameBufferIO
+      val generateFrame = Output(Bool())
+      val bufferSelect = Output(Bool())
     })
 
     override def desiredName = "cave"
@@ -153,6 +147,18 @@ class CaveTop extends Module {
   }
   layer2Ram.io.clockB := clock
 
+  // Layer 0 info
+  val layer0Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new LayerInfo) }
+  layer0Info.io.clockB := clock
+
+  // Layer 1 info
+  val layer1Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new LayerInfo) }
+  layer1Info.io.clockB := clock
+
+  // Layer 2 info
+  val layer2Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new LayerInfo) }
+  layer2Info.io.clockB := clock
+
   // Palette RAM
   val paletteRam = withClockAndReset(io.cpuClock, io.cpuReset) {
     Module(new TrueDualPortRam(
@@ -164,6 +170,20 @@ class CaveTop extends Module {
   }
   paletteRam.io.clockB := clock
 
+  // GPU
+  val gpu = Module(new GPU)
+  gpu.io.tileRom <> io.tileRom
+  gpu.io.spriteRam <> spriteRam.io.portB
+  gpu.io.layer0Ram <> layer0Ram.io.portB
+  gpu.io.layer1Ram <> layer1Ram.io.portB
+  gpu.io.layer2Ram <> layer2Ram.io.portB
+  gpu.io.layer0Info <> layer0Info.io.portB
+  gpu.io.layer1Info <> layer1Info.io.portB
+  gpu.io.layer2Info <> layer2Info.io.portB
+  gpu.io.paletteRam <> paletteRam.io.portB
+  gpu.io.frameBuffer <> io.frameBuffer
+
+
   // Cave
   val cave = Module(new CaveBlackBox)
   cave.io.rst_i := reset
@@ -173,15 +193,10 @@ class CaveTop extends Module {
   cave.io.vblank_i := io.video.vBlank
   cave.io.player <> io.player
   cave.io.cpu <> cpu.io
-  cave.io.tileRom <> io.tileRom
-  cave.io.spriteRam <> spriteRam.io.portB
-  cave.io.layer0Ram <> layer0Ram.io.portB
-  cave.io.layer1Ram <> layer1Ram.io.portB
-  cave.io.layer2Ram <> layer2Ram.io.portB
-  cave.io.paletteRam <> paletteRam.io.portB
-  cave.io.frameBuffer <> io.frameBuffer
   cpu.io.dtack := cave.io.memBus.ack
   cpu.io.din := cave.io.memBus.data
+  gpu.io.generateFrame := cave.io.generateFrame
+  gpu.io.bufferSelect := cave.io.bufferSelect
 
   // Memory map
   withClockAndReset(io.cpuClock, io.cpuReset) {
@@ -191,11 +206,14 @@ class CaveTop extends Module {
     cpu.memMap(0x500000 to 0x507fff).ram(layer0Ram.io.portA)
     cpu.memMap(0x600000 to 0x607fff).ram(layer1Ram.io.portA)
     cpu.memMap(0x700000 to 0x70ffff).ram(layer2Ram.io.portA)
+    cpu.memMap(0x900000 to 0x900005).ram(layer0Info.io.portA)
+    cpu.memMap(0xa00000 to 0xa00005).ram(layer1Info.io.portA)
+    cpu.memMap(0xb00000 to 0xb00005).ram(layer2Info.io.portA)
     cpu.memMap(0xc00000 to 0xc0ffff).ram(paletteRam.io.portA)
   }
 
   // Outputs
-  io.tileRom.addr := cave.io.tileRom.addr + Config.TILE_ROM_OFFSET.U
+  io.tileRom.addr := gpu.io.tileRom.addr + Config.TILE_ROM_OFFSET.U
   io.debug.pc := cpu.io.debug.pc
   io.debug.pcw := cpu.io.debug.pcw
 }

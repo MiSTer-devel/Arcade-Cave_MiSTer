@@ -81,40 +81,9 @@ entity cave is
         -- Memory bus
         memBus_ack               : out std_logic;
         memBus_data              : out std_logic_vector(15 downto 0);
-        -- Tile ROM
-        tileRom_rd               : out std_logic;
-        tileRom_addr             : out gfx_rom_addr_t;
-        tileRom_dout             : in  gfx_rom_data_t;
-        tileRom_valid            : in  std_logic;
-        tileRom_tinyBurst        : out std_logic;
-        tileRom_burstDone        : in  std_logic;
-        -- Sprite RAM
-        spriteRam_rd             : out std_logic;
-        spriteRam_addr           : out sprite_ram_info_access_t;
-        spriteRam_dout           : in  sprite_ram_line_t;
-        -- Layer 0 RAM
-        layer0Ram_rd             : out std_logic;
-        layer0Ram_addr           : out layer_ram_info_access_t;
-        layer0Ram_dout           : in  layer_ram_line_t;
-        -- Layer 1 RAM
-        layer1Ram_rd             : out std_logic;
-        layer1Ram_addr           : out layer_ram_info_access_t;
-        layer1Ram_dout           : in  layer_ram_line_t;
-        -- Layer 2 RAM
-        layer2Ram_rd             : out std_logic;
-        layer2Ram_addr           : out layer_ram_info_access_t;
-        layer2Ram_dout           : in  layer_ram_line_t;
-        -- Palette RAM
-        paletteRam_rd             : out std_logic;
-        paletteRam_addr           : out unsigned(14 downto 0);
-        paletteRam_dout           : in  word_t;
-        -- Frame Buffer
-        frameBuffer_wr           : out std_logic;
-        frameBuffer_addr         : out frame_buffer_addr_t;
-        frameBuffer_mask         : out std_logic_vector(1 downto 0);
-        frameBuffer_din          : out std_logic_vector(DDP_WORD_WIDTH-2 downto 0);
-        frameBuffer_dmaStart     : out std_logic;
-        frameBuffer_dmaDone      : in  std_logic
+        -- Control signals
+        generateFrame            : out std_logic;
+        bufferSelect             : out std_logic
         );
 end entity cave;
 
@@ -155,21 +124,6 @@ architecture struct of cave is
     signal irq_cause_enable_s       : std_logic;
     signal irq_cause_ack_s          : std_logic;
     signal irq_cause_data_o_s       : word_t;
-    -- Video Control Registers 0
-    constant V_CTRL_0_LOG_SIZE_C    : natural := 3;   -- 8B (actually 6B)
-    signal v_ctrl_0_enable_s        : std_logic;
-    signal v_ctrl_0_ack_s           : std_logic;
-    signal v_ctrl_0_data_o_s        : word_t;
-    -- Video Control Registers 1
-    constant V_CTRL_1_LOG_SIZE_C    : natural := 3;   -- 8B (actually 6B)
-    signal v_ctrl_1_enable_s        : std_logic;
-    signal v_ctrl_1_ack_s           : std_logic;
-    signal v_ctrl_1_data_o_s        : word_t;
-    -- Video Control Registers 2
-    constant V_CTRL_2_LOG_SIZE_C    : natural := 3;   -- 8B (actually 6B)
-    signal v_ctrl_2_enable_s        : std_logic;
-    signal v_ctrl_2_ack_s           : std_logic;
-    signal v_ctrl_2_data_o_s        : word_t;
     -- Inputs 0
     constant IN_0_LOG_SIZE_C        : natural := 1;   -- 2B
     signal in_0_enable_s            : std_logic;
@@ -209,13 +163,6 @@ begin
             rst_68k_s <= rst_68k_i;
         end if;
     end process;
-
-    spriteRam_rd <= '1';
-    layer0Ram_rd <= '1';
-    layer1Ram_rd <= '1';
-    layer2Ram_rd <= '1';
-    paletteRam_rd <= '1';
-    frameBuffer_mask <= "11";
 
     -------------------
     -- Interruptions --
@@ -296,9 +243,6 @@ begin
     memory_bus_ack_s <= ymz_ram_ack_s     or
                         video_regs_ack_s  or
                         irq_cause_ack_s   or
-                        v_ctrl_0_ack_s    or
-                        v_ctrl_1_ack_s    or
-                        v_ctrl_2_ack_s    or
                         in_0_ack_s        or
                         in_1_ack_s        or
                         eeprom_ack_s      or
@@ -310,9 +254,6 @@ begin
     -- "OR" everything together to create the "OR'ed" bus
     memory_bus_data_s <= ymz_ram_data_o_s     or
                          irq_cause_data_o_s   or
-                         v_ctrl_0_data_o_s    or
-                         v_ctrl_1_data_o_s    or
-                         v_ctrl_2_data_o_s    or
                          in_0_data_o_s        or
                          in_1_data_o_s        or
                          eeprom_data_o_s      or
@@ -356,18 +297,6 @@ begin
     -- IRQ Cause (same about redundancy)
     --                      0x800000 - 0x800007
     irq_cause_enable_s   <= '1' when (addr_68k_s(31 downto 3) = x"0080000" & "0") and (read_n_write_68k_s = '1') else
-                            '0';
-    -- Video Control Registers 0
-    --                      0x900000 - 0x900005
-    v_ctrl_0_enable_s    <= '1' when addr_68k_s(31 downto V_CTRL_0_LOG_SIZE_C) = x"0090000" & "0" else
-                            '0';
-    -- Video Control Registers 1
-    --                      0xa00000 - 0xa00005
-    v_ctrl_1_enable_s    <= '1' when addr_68k_s(31 downto V_CTRL_1_LOG_SIZE_C) = x"00a0000" & "0" else
-                            '0';
-    -- Video Control Registers 2
-    --                      0xb00000 - 0xb00005
-    v_ctrl_2_enable_s    <= '1' when addr_68k_s(31 downto V_CTRL_2_LOG_SIZE_C) = x"00b0000" & "0" else
                             '0';
     -- Inputs 0             0xd00000 - 0xd00001
     in_0_enable_s        <= '1' when addr_68k_s(31 downto IN_0_LOG_SIZE_C) = x"00d0000" & "000" else
@@ -420,79 +349,7 @@ begin
     end block ymz280b_block;
 
     graphic_processor_block : block
-        signal generate_frame_s         : std_logic;
-        signal buffer_select_s          : std_logic;
-        -- Layer signals
-        signal gfx_vctrl_0_reg_s        : layer_info_line_t;
-        signal gfx_vctrl_1_reg_s        : layer_info_line_t;
-        signal gfx_vctrl_2_reg_s        : layer_info_line_t;
     begin
-
-        graphic_processor_generate : if INCLUDE_GRAPHIC_PROCESSOR_G generate
-
-            -----------------------
-            -- Graphic Processor --
-            -----------------------
-            graphic_processor_inst : entity work.graphic_processor
-                generic map (
-                    INCLUDE_LAYER_PROCESOR_G => true)
-                port map (
-                    rst_i                    => rst_i,
-                    clk_i                    => clk_i,
-                    --
-                    generate_frame_i         => generate_frame_s,
-                    buffer_select_i          => buffer_select_s,
-                    --
-                    sprite_ram_addr_o        => spriteRam_addr,
-                    sprite_ram_info_i        => spriteRam_dout,
-                    --
-                    layer_0_ram_addr_o       => layer0Ram_addr,
-                    layer_0_ram_info_i       => layer0Ram_dout,
-                    --
-                    layer_1_ram_addr_o       => layer1Ram_addr,
-                    layer_1_ram_info_i       => layer1Ram_dout,
-                    --
-                    layer_2_ram_addr_o       => layer2Ram_addr,
-                    layer_2_ram_info_i       => layer2Ram_dout,
-                    --
-                    vctrl_reg_0_i            => gfx_vctrl_0_reg_s,
-                    vctrl_reg_1_i            => gfx_vctrl_1_reg_s,
-                    vctrl_reg_2_i            => gfx_vctrl_2_reg_s,
-                    --
-                    rom_addr_o               => tileRom_addr,
-                    tiny_burst_gfx_o         => tileRom_tinyBurst,
-                    rom_burst_read_o         => tileRom_rd,
-                    rom_data_i               => tileRom_dout,
-                    rom_data_valid_i         => tileRom_valid,
-                    rom_data_burst_done_i    => tileRom_burstDone,
-                    --
-                    palette_ram_addr_o       => paletteRam_addr,
-                    palette_ram_data_i       => paletteRam_dout,
-                    --
-                    frame_buffer_addr_o      => frameBuffer_addr,
-                    frame_buffer_color_o     => frame_buffer_color_s,
-                    frame_buffer_write_o     => frameBuffer_wr,
-                    frame_buffer_dma_start_o => frameBuffer_dmaStart,
-                    frame_buffer_dma_done_i  => frameBuffer_dmaDone);
-
-            frameBuffer_din <= frame_buffer_color_s.r & frame_buffer_color_s.g & frame_buffer_color_s.b;
-
-        else generate
-
-            spriteRam_addr           <= (others => '0');
-            layer0Ram_addr           <= (others => '0');
-            layer1Ram_addr           <= (others => '0');
-            layer2Ram_addr           <= (others => '0');
-            tileRom_addr             <= (others => '0');
-            tileRom_rd               <= '0';
-            paletteRam_addr          <= (others => '0');
-            frameBuffer_addr         <= (others => '0');
-            frameBuffer_din          <= (others => '0');
-            frameBuffer_wr           <= '0';
-            frameBuffer_dmaStart     <= '0';
-            tileRom_tinyBurst        <= '0';
-
-        end generate graphic_processor_generate;
 
         ---------------------
         -- Video Registers --
@@ -522,7 +379,7 @@ begin
                     dout_b => video_reg_4_s);
 
             -- TODO: Check this
-            buffer_select_s <= video_reg_4_s(0);
+            bufferSelect <= video_reg_4_s(0);
 
             sync_generate_frame_block : block
                 signal sync_reg_s            : std_logic_vector(2 downto 0);
@@ -564,7 +421,7 @@ begin
                 end process;
 
                 -- Edge detection
-                generate_frame_s <= (not sync_reg_s(sync_reg_s'high)) and sync_reg_s(sync_reg_s'high-1);
+                generateFrame <= (not sync_reg_s(sync_reg_s'high)) and sync_reg_s(sync_reg_s'high-1);
             end block sync_generate_frame_block;
 
         end block video_regs_block;
@@ -586,63 +443,6 @@ begin
                 end if;
             end if;  -- Rising Edge Clock
         end process irq_cause_process;
-
-        -- TODO : Check the VCTRL REGS (signals etc.)
-        -- TODO : Replace the VCTRL blocks altogether (so not to use BRAM)
-
-        -------------
-        -- Vctrl 0 --
-        -------------
-        vctrl_regs_0 : entity work.vctrl_regs
-            port map (
-                clk_68k_i    => clk_68k_i,
-                enable_i     => v_ctrl_0_enable_s,
-                write_low_i  => low_write_strobe_s,
-                write_high_i => high_write_strobe_s,
-                read_low_i   => read_strobe_s,
-                read_high_i  => read_strobe_s,
-                addr_i       => addr_68k_s(V_CTRL_0_LOG_SIZE_C-1 downto 1),
-                data_i       => data_out_68k_s,
-                data_o       => v_ctrl_0_data_o_s,
-                ack_o        => v_ctrl_0_ack_s,
-                clk_fast_i   => clk_i,
-                vctrl_o      => gfx_vctrl_0_reg_s);
-
-        -------------
-        -- Vctrl 1 --
-        -------------
-        vctrl_regs_1 : entity work.vctrl_regs
-            port map (
-                clk_68k_i    => clk_68k_i,
-                enable_i     => v_ctrl_1_enable_s,
-                write_low_i  => low_write_strobe_s,
-                write_high_i => high_write_strobe_s,
-                read_low_i   => read_strobe_s,
-                read_high_i  => read_strobe_s,
-                addr_i       => addr_68k_s(V_CTRL_1_LOG_SIZE_C-1 downto 1),
-                data_i       => data_out_68k_s,
-                data_o       => v_ctrl_1_data_o_s,
-                ack_o        => v_ctrl_1_ack_s,
-                clk_fast_i   => clk_i,
-                vctrl_o      => gfx_vctrl_1_reg_s);
-
-        -------------
-        -- Vctrl 2 --
-        -------------
-        vctrl_regs_2 : entity work.vctrl_regs
-            port map (
-                clk_68k_i    => clk_68k_i,
-                enable_i     => v_ctrl_2_enable_s,
-                write_low_i  => low_write_strobe_s,
-                write_high_i => high_write_strobe_s,
-                read_low_i   => read_strobe_s,
-                read_high_i  => read_strobe_s,
-                addr_i       => addr_68k_s(V_CTRL_2_LOG_SIZE_C-1 downto 1),
-                data_i       => data_out_68k_s,
-                data_o       => v_ctrl_2_data_o_s,
-                ack_o        => v_ctrl_2_ack_s,
-                clk_fast_i   => clk_i,
-                vctrl_o      => gfx_vctrl_2_reg_s);
 
     end block graphic_processor_block;
 
