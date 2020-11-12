@@ -51,6 +51,7 @@ import chisel3._
 class MemMap(cpu: CPU, r: Range) {
   // TODO: These registers will be duplicated for every mapping. Can they be shared somehow?
   private val readStrobe = Util.rising(cpu.io.as) && cpu.io.rw
+  private val writeStrobe = Util.rising(cpu.io.as) && !cpu.io.rw
   private val upperWriteStrobe = Util.rising(cpu.io.uds) && !cpu.io.rw
   private val lowerWriteStrobe = Util.rising(cpu.io.lds) && !cpu.io.rw
 
@@ -101,5 +102,27 @@ class MemMap(cpu: CPU, r: Range) {
       cpu.io.din := mem.dout
       cpu.io.dtack := mem.valid
     }
+  }
+
+  /**
+   * Maps an address range to the given getter function.
+   *
+   * @param f The getter function.
+   */
+  def r(f: (UInt, UInt) => Bits): Unit = {
+    val cs = Util.between(cpu.io.addr, r)
+    val offset = cpu.io.addr - r.start.U
+    when(cs && readStrobe) { cpu.io.din := f(cpu.io.addr, offset) }
+  }
+
+  /**
+   * Maps an address range to the given setter function.
+   *
+   * @param f The setter function.
+   */
+  def w(f: (UInt, UInt, Bits) => Unit): Unit = {
+    val cs = Util.between(cpu.io.addr, r)
+    val offset = cpu.io.addr - r.start.U
+    when(cs && writeStrobe) { f(cpu.io.addr, offset, cpu.io.dout) }
   }
 }

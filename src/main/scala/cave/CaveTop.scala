@@ -206,6 +206,9 @@ class CaveTop extends Module {
     cpu.memMap(0x500000 to 0x507fff).ram(layer0Ram.io.portA)
     cpu.memMap(0x600000 to 0x607fff).ram(layer1Ram.io.portA)
     cpu.memMap(0x700000 to 0x70ffff).ram(layer2Ram.io.portA)
+    cpu.memMap(0x800000 to 0x80007f).w { (addr, offset, data) =>
+
+    }
     cpu.memMap(0x900000 to 0x900005).ram(layer0Info.io.portA)
     cpu.memMap(0xa00000 to 0xa00005).ram(layer1Info.io.portA)
     cpu.memMap(0xb00000 to 0xb00005).ram(layer2Info.io.portA)
