@@ -105,6 +105,30 @@ class MemMap(cpu: CPU, r: Range) {
   }
 
   /**
+   * Maps an address range to the given write-only memory port.
+   *
+   * @param mem The memory port.
+   */
+  def wom(mem: WriteMemIO): Unit = womT(mem)(identity)
+
+  /**
+   * Maps an address range to the given write-only memory port, with an address transform.
+   *
+   * @param mem The memory port.
+   * @param f The address transform function.
+   */
+  def womT(mem: WriteMemIO)(f: UInt => UInt): Unit = {
+    val cs = Util.between(cpu.io.addr, r)
+    mem.wr := cs && (upperWriteStrobe || lowerWriteStrobe)
+    mem.addr := f(cpu.io.addr)
+    mem.mask := cpu.io.uds ## cpu.io.lds
+    mem.din := cpu.io.dout
+    when(cs) {
+      cpu.io.dtack := RegNext(upperWriteStrobe || lowerWriteStrobe)
+    }
+  }
+
+  /**
    * Maps an address range to the given getter function.
    *
    * @param f The getter function.
