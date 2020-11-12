@@ -205,9 +205,9 @@ class CaveTop extends Module {
     cpu.memMap(0x800000 to 0x80007f).w { (addr, _, data) =>
       generateFrameReg := addr === 0x800004.U && data === 0x01f0.U
     }
-    cpu.memMap(0x900000 to 0x900005).ram(layer0Info.io.portA)
-    cpu.memMap(0xa00000 to 0xa00005).ram(layer1Info.io.portA)
-    cpu.memMap(0xb00000 to 0xb00005).ram(layer2Info.io.portA)
+    cpu.memMap(0x900000 to 0x900005).ram(layer0Info.io.mem)
+    cpu.memMap(0xa00000 to 0xa00005).ram(layer1Info.io.mem)
+    cpu.memMap(0xb00000 to 0xb00005).ram(layer2Info.io.mem)
     cpu.memMap(0xc00000 to 0xc0ffff).ram(paletteRam.io.portA)
   }
 

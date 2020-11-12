@@ -44,49 +44,49 @@ import org.scalatest._
 class RegisterFileTest extends FlatSpec with ChiselScalatestTester with Matchers {
   it should "allow reading and writing to port A" in {
     test(new RegisterFile(3)) { dut =>
-      dut.io.portA.wr.poke(true.B)
-      dut.io.portA.rd.poke(true.B)
+      dut.io.mem.wr.poke(true.B)
+      dut.io.mem.rd.poke(true.B)
 
       // Write
-      dut.io.portA.mask.poke(0.U)
-      dut.io.portA.din.poke(0x1234.U)
+      dut.io.mem.mask.poke(0.U)
+      dut.io.mem.din.poke(0x1234.U)
       dut.clock.step()
-      dut.io.portA.dout.expect(0x0000.U)
+      dut.io.mem.dout.expect(0x0000.U)
 
       // Write
-      dut.io.portA.mask.poke(1.U)
-      dut.io.portA.din.poke(0x1234.U)
+      dut.io.mem.mask.poke(1.U)
+      dut.io.mem.din.poke(0x1234.U)
       dut.clock.step()
-      dut.io.portA.dout.expect(0x0034.U)
+      dut.io.mem.dout.expect(0x0034.U)
 
       // Write
-      dut.io.portA.mask.poke(2.U)
-      dut.io.portA.din.poke(0x5678.U)
+      dut.io.mem.mask.poke(2.U)
+      dut.io.mem.din.poke(0x5678.U)
       dut.clock.step()
-      dut.io.portA.dout.expect(0x5634.U)
+      dut.io.mem.dout.expect(0x5634.U)
 
       // Write
-      dut.io.portA.mask.poke(3.U)
-      dut.io.portA.din.poke(0xabcd.U)
+      dut.io.mem.mask.poke(3.U)
+      dut.io.mem.din.poke(0xabcd.U)
       dut.clock.step()
-      dut.io.portA.dout.expect(0xabcd.U)
+      dut.io.mem.dout.expect(0xabcd.U)
     }
   }
 
   it should "allow reading from port B" in {
     test(new RegisterFile(3)) { dut =>
-      dut.io.portA.wr.poke(true.B)
-      dut.io.portA.mask.poke(3.U)
+      dut.io.mem.wr.poke(true.B)
+      dut.io.mem.mask.poke(3.U)
 
       // Write
-      dut.io.portA.addr.poke(0.U)
-      dut.io.portA.din.poke(0x1234.U)
+      dut.io.mem.addr.poke(0.U)
+      dut.io.mem.din.poke(0x1234.U)
       dut.clock.step()
-      dut.io.portA.addr.poke(1.U)
-      dut.io.portA.din.poke(0x5678.U)
+      dut.io.mem.addr.poke(1.U)
+      dut.io.mem.din.poke(0x5678.U)
       dut.clock.step()
-      dut.io.portA.addr.poke(2.U)
-      dut.io.portA.din.poke(0xabcd.U)
+      dut.io.mem.addr.poke(2.U)
+      dut.io.mem.din.poke(0xabcd.U)
       dut.clock.step()
 
       // Read
