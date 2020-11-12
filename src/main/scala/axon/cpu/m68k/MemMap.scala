@@ -109,7 +109,7 @@ class MemMap(cpu: CPU, r: Range) {
    *
    * @param f The getter function.
    */
-  def r(f: (UInt, UInt) => Bits): Unit = {
+  def r(f: (UInt, UInt) => UInt): Unit = {
     val cs = Util.between(cpu.io.addr, r)
     val offset = cpu.io.addr - r.start.U
     when(cs && readStrobe) { cpu.io.din := f(cpu.io.addr, offset) }
@@ -120,7 +120,7 @@ class MemMap(cpu: CPU, r: Range) {
    *
    * @param f The setter function.
    */
-  def w(f: (UInt, UInt, Bits) => Unit): Unit = {
+  def w(f: (UInt, UInt, UInt) => Unit): Unit = {
     val cs = Util.between(cpu.io.addr, r)
     val offset = cpu.io.addr - r.start.U
     when(cs && writeStrobe) { f(cpu.io.addr, offset, cpu.io.dout) }

@@ -37,12 +37,14 @@
 
 package cave
 
+import axon.Util
 import axon.cpu.m68k._
 import axon.gpu._
 import axon.mem._
 import cave.gpu._
 import cave.types._
 import chisel3._
+import chisel3.util._
 
 /** Represents the CAVE arcade hardware. */
 class CaveTop extends Module {
@@ -81,7 +83,6 @@ class CaveTop extends Module {
         val ack = Output(Bool())
         val data = Output(Bits(CPU.DATA_WIDTH.W))
       }
-      val generateFrame = Output(Bool())
       val bufferSelect = Output(Bool())
     })
 
@@ -170,8 +171,15 @@ class CaveTop extends Module {
   }
   paletteRam.io.clockB := clock
 
+  // The generate frame register is set when the GPU should start drawing a frame
+  val generateFrameReg = withClockAndReset(io.cpuClock, io.cpuReset) { RegInit(false.B) }
+
+  // Transfer the generate frame register to the system clock domain
+  val generateFrame = Util.rising(ShiftRegister(generateFrameReg, 2))
+
   // GPU
   val gpu = Module(new GPU)
+  gpu.io.generateFrame := generateFrame
   gpu.io.tileRom <> io.tileRom
   gpu.io.spriteRam <> spriteRam.io.portB
   gpu.io.layer0Ram <> layer0Ram.io.portB
@@ -182,7 +190,6 @@ class CaveTop extends Module {
   gpu.io.layer2Info <> layer2Info.io.portB
   gpu.io.paletteRam <> paletteRam.io.portB
   gpu.io.frameBuffer <> io.frameBuffer
-
 
   // Cave
   val cave = Module(new CaveBlackBox)
@@ -195,7 +202,6 @@ class CaveTop extends Module {
   cave.io.cpu <> cpu.io
   cpu.io.dtack := cave.io.memBus.ack
   cpu.io.din := cave.io.memBus.data
-  gpu.io.generateFrame := cave.io.generateFrame
   gpu.io.bufferSelect := cave.io.bufferSelect
 
   // Memory map
@@ -206,8 +212,8 @@ class CaveTop extends Module {
     cpu.memMap(0x500000 to 0x507fff).ram(layer0Ram.io.portA)
     cpu.memMap(0x600000 to 0x607fff).ram(layer1Ram.io.portA)
     cpu.memMap(0x700000 to 0x70ffff).ram(layer2Ram.io.portA)
-    cpu.memMap(0x800000 to 0x80007f).w { (addr, offset, data) =>
-
+    cpu.memMap(0x800000 to 0x80007f).w { (addr, _, data) =>
+      generateFrameReg := addr === 0x800004.U && data === 0x01f0.U
     }
     cpu.memMap(0x900000 to 0x900005).ram(layer0Info.io.portA)
     cpu.memMap(0xa00000 to 0xa00005).ram(layer1Info.io.portA)

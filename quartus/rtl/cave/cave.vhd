@@ -82,7 +82,6 @@ entity cave is
         memBus_ack               : out std_logic;
         memBus_data              : out std_logic_vector(15 downto 0);
         -- Control signals
-        generateFrame            : out std_logic;
         bufferSelect             : out std_logic
         );
 end entity cave;
@@ -380,49 +379,6 @@ begin
 
             -- TODO: Check this
             bufferSelect <= video_reg_4_s(0);
-
-            sync_generate_frame_block : block
-                signal sync_reg_s            : std_logic_vector(2 downto 0);
-                signal start_frame_gen_reg_s : std_logic;
-            begin
-                -- Register at 68k side which indicates we need to start drawing a frame
-                process (clk_68k_i) is
-                begin
-                    if rising_edge(clk_68k_i) then
-                        if rst_68k_s = '1' then
-                            start_frame_gen_reg_s <= '0';
-                        else
-                            -- If video reg at 0x800004 is written with 0x1F0 the graphic co-processor should start drawing a frame
-                            if (write_strobe_s = '1') and (addr_68k_s(23 downto 0) = x"800004") and (data_out_68k_s = x"01f0") then
-                                start_frame_gen_reg_s <= '1';
-                            else
-                                start_frame_gen_reg_s <= '0';
-                            end if;
-                        end if; -- Reset
-                    end if; -- Rising Edge Clock
-                end process;
-
-                -- Shift register for sync (clock domain crossing) and edge
-                -- detection (to start the frame generation)
-                process (clk_i) is
-                begin
-                    if rising_edge(clk_i) then
-                        if rst_i = '1' then
-                            sync_reg_s <= (others => '0');
-                        else
-                            -- Input
-                            sync_reg_s(0) <= start_frame_gen_reg_s;
-                            -- Shift
-                            for i in 1 to sync_reg_s'high loop
-                                sync_reg_s(i) <= sync_reg_s(i-1);
-                            end loop;
-                        end if; -- Reset
-                    end if; -- Rising Edge Clock
-                end process;
-
-                -- Edge detection
-                generateFrame <= (not sync_reg_s(sync_reg_s'high)) and sync_reg_s(sync_reg_s'high-1);
-            end block sync_generate_frame_block;
 
         end block video_regs_block;
 

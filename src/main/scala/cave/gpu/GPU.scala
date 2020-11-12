@@ -82,6 +82,8 @@ class GPU extends Module {
   val gpu = Module(new GPUBlackBox)
   gpu.io.clk_i := clock
   gpu.io.rst_i := reset
+  gpu.io.generateFrame := io.generateFrame
+  gpu.io.bufferSelect := io.bufferSelect
   gpu.io.tileRom <> io.tileRom
   gpu.io.spriteRam <> io.spriteRam
   gpu.io.layer0Ram <> io.layer0Ram
@@ -92,6 +94,4 @@ class GPU extends Module {
   gpu.io.layer2Info <> io.layer2Info
   gpu.io.paletteRam <> io.paletteRam
   gpu.io.frameBuffer <> io.frameBuffer
-  gpu.io.generateFrame := io.generateFrame
-  gpu.io.bufferSelect := io.bufferSelect
 }
