@@ -37,64 +37,46 @@
 
 package cave.gpu
 
+import axon.mem.{ReadMemIO, ReadWriteMemIO}
 import chisel3._
-import chiseltest._
-import chiseltest.experimental.UncheckedClockPoke._
-import org.scalatest._
+import chisel3.util._
 
-class LayerInfoTest extends FlatSpec with ChiselScalatestTester with Matchers {
-  it should "allow reading and writing to port A" in {
-    test(new LayerInfo) { dut =>
-      dut.io.portA.wr.poke(true.B)
-      dut.io.portA.rd.poke(true.B)
+/**
+ * A set of registers.
+ *
+ * @param numRegs The number of registers in the register file.
+ */
+class RegisterFile(numRegs: Int) extends Module {
+  /** The width of the address bus. */
+  val ADDR_WIDTH = log2Up(numRegs)
+  /** The width of the data bus. */
+  val DATA_WIDTH = 16
 
-      // Write
-      dut.io.portA.mask.poke(0.U)
-      dut.io.portA.din.poke(0x1234.U)
-      dut.clock.step()
-      dut.io.portA.dout.expect(0x0000.U)
+  val io = IO(new Bundle {
+    /** Read-write port */
+    val portA = Flipped(ReadWriteMemIO(ADDR_WIDTH, DATA_WIDTH))
+    /** The register file */
+    val regs = Output(Vec(numRegs, Bits(DATA_WIDTH.W)))
+  })
 
-      // Write
-      dut.io.portA.mask.poke(1.U)
-      dut.io.portA.din.poke(0x1234.U)
-      dut.clock.step()
-      dut.io.portA.dout.expect(0x0034.U)
+  // Data registers
+  val dataRegs = Reg(Vec(numRegs, Bits(DATA_WIDTH.W)))
 
-      // Write
-      dut.io.portA.mask.poke(2.U)
-      dut.io.portA.din.poke(0x5678.U)
-      dut.clock.step()
-      dut.io.portA.dout.expect(0x5634.U)
+  // Alias the current data register
+  val dataReg = dataRegs(io.portA.addr)
 
-      // Write
-      dut.io.portA.mask.poke(3.U)
-      dut.io.portA.din.poke(0xabcd.U)
-      dut.clock.step()
-      dut.io.portA.dout.expect(0xabcd.U)
-    }
+  // Split data register into a vector of bytes
+  val bytes = dataReg.asTypeOf(Vec(io.portA.maskWidth, Bits(8.W)))
+
+  // Write masked bytes to the data register
+  0.until(io.portA.maskWidth).foreach { n =>
+    when(io.portA.wr && io.portA.mask(n)) { bytes(n) := io.portA.din((n+1)*8-1, n*8) }
   }
 
-  it should "allow reading from port B" in {
-    test(new LayerInfo) { dut =>
-      dut.io.portA.wr.poke(true.B)
-      dut.io.portA.mask.poke(3.U)
+  // Concatenate the bytes and update the current data register
+  dataReg := bytes.asUInt
 
-      // Write
-      dut.io.portA.addr.poke(0.U)
-      dut.io.portA.din.poke(0x1234.U)
-      dut.clock.step()
-      dut.io.portA.addr.poke(1.U)
-      dut.io.portA.din.poke(0x5678.U)
-      dut.clock.step()
-      dut.io.portA.addr.poke(2.U)
-      dut.io.portA.din.poke(0xabcd.U)
-      dut.clock.step()
-
-      // Read
-      dut.io.portB.rd.poke(true.B)
-      dut.io.clockB.low()
-      dut.io.clockB.high()
-      dut.io.portB.dout.expect(0xabcd56781234L.U)
-    }
-  }
+  // Outputs
+  io.portA.dout := dataReg
+  io.regs := dataRegs
 }

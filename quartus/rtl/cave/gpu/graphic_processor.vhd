@@ -85,18 +85,10 @@ entity graphic_processor is
         layer2Ram_rd             : out std_logic;
         layer2Ram_addr           : out layer_ram_info_access_t;
         layer2Ram_dout           : in  layer_ram_line_t;
-        -- Layer 0 info
-        layer0Info_rd            : out std_logic;
-        layer0Info_addr          : out unsigned(0 downto 0);
-        layer0Info_dout          : in  layer_info_line_t;
-        -- Layer 1 info
-        layer1Info_rd            : out std_logic;
-        layer1Info_addr          : out unsigned(0 downto 0);
-        layer1Info_dout          : in  layer_info_line_t;
-        -- Layer 2 info
-        layer2Info_rd            : out std_logic;
-        layer2Info_addr          : out unsigned(0 downto 0);
-        layer2Info_dout          : in  layer_info_line_t;
+        -- Layer info
+        layer0Info               : in  layer_info_line_t;
+        layer1Info               : in  layer_info_line_t;
+        layer2Info               : in  layer_info_line_t;
         -- Palette RAM
         paletteRam_rd             : out std_logic;
         paletteRam_addr           : out unsigned(14 downto 0);
@@ -186,13 +178,7 @@ begin
     layer0Ram_rd <= '1';
     layer1Ram_rd <= '1';
     layer2Ram_rd <= '1';
-    layer0Info_rd <= '1';
-    layer1Info_rd <= '1';
-    layer2Info_rd <= '1';
     paletteRam_rd <= '1';
-    layer0Info_addr <= "0";
-    layer1Info_addr <= "0";
-    layer2Info_addr <= "0";
     frameBuffer_mask <= "11";
 
     ---------
@@ -397,9 +383,9 @@ begin
                     frame_buffer_write_o      => layer_frame_buffer_write_s);
 
             -- Global Layer Info Mux
-            layer_info_to_layer_processor_s <= extract_global_layer_info_from_regs(layer0Info_dout) when state_reg_s = DRAW_LAYER_0 else
-                                               extract_global_layer_info_from_regs(layer1Info_dout) when state_reg_s = DRAW_LAYER_1 else
-                                               extract_global_layer_info_from_regs(layer2Info_dout);
+            layer_info_to_layer_processor_s <= extract_global_layer_info_from_regs(layer0Info) when state_reg_s = DRAW_LAYER_0 else
+                                               extract_global_layer_info_from_regs(layer1Info) when state_reg_s = DRAW_LAYER_1 else
+                                               extract_global_layer_info_from_regs(layer2Info);
 
             -- All get the same address, only one is used at a time
             layer0Ram_addr <= layer_ram_addr_s;

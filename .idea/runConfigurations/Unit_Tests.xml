@@ -8,7 +8,7 @@
     <option name="testKind" value="All in package" />
     <option name="classBuf">
       <list>
-        <option value="cave.gpu.LayerInfoTest" />
+        <option value="cave.gpu.RegisterFileTest" />
       </list>
     </option>
     <option name="searchTest" value="In single module" />

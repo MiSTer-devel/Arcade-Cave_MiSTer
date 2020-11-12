@@ -37,51 +37,62 @@
 
 package cave.gpu
 
-import axon.mem.{ReadMemIO, ReadWriteMemIO}
 import chisel3._
-import chisel3.util._
+import chiseltest._
+import org.scalatest._
 
-/** A set of registers that describe the properties of a layer. */
-class LayerInfo extends Module {
-  /** The number of layer registers. */
-  val NUM_REGS = 3
-  /** The width of the port A address bus. */
-  val ADDR_WIDTH_A = 2
-  /** The width of the port A data bus. */
-  val DATA_WIDTH_A = 16
-  /** The width of the port B address bus. */
-  val ADDR_WIDTH_B = 1
-  /** The width of the port B data bus. */
-  val DATA_WIDTH_B = 48
+class RegisterFileTest extends FlatSpec with ChiselScalatestTester with Matchers {
+  it should "allow reading and writing to port A" in {
+    test(new RegisterFile(3)) { dut =>
+      dut.io.portA.wr.poke(true.B)
+      dut.io.portA.rd.poke(true.B)
 
-  val io = IO(new Bundle {
-    /** Clock B */
-    val clockB = Input(Clock())
-    /** Read-write port */
-    val portA = Flipped(ReadWriteMemIO(ADDR_WIDTH_A, DATA_WIDTH_A))
-    /** Read-only port */
-    val portB = Flipped(ReadMemIO(ADDR_WIDTH_B, DATA_WIDTH_B))
-  })
+      // Write
+      dut.io.portA.mask.poke(0.U)
+      dut.io.portA.din.poke(0x1234.U)
+      dut.clock.step()
+      dut.io.portA.dout.expect(0x0000.U)
 
-  // Registers
-  val dataRegs = Reg(Vec(NUM_REGS, Bits(DATA_WIDTH_A.W)))
-  val outReg = withClock(io.clockB) { RegEnable(dataRegs.asUInt, io.portB.rd) }
+      // Write
+      dut.io.portA.mask.poke(1.U)
+      dut.io.portA.din.poke(0x1234.U)
+      dut.clock.step()
+      dut.io.portA.dout.expect(0x0034.U)
 
-  // Alias the current data register
-  val dataReg = dataRegs(io.portA.addr)
+      // Write
+      dut.io.portA.mask.poke(2.U)
+      dut.io.portA.din.poke(0x5678.U)
+      dut.clock.step()
+      dut.io.portA.dout.expect(0x5634.U)
 
-  // Split data register into a vector of bytes
-  val bytes = dataReg.asTypeOf(Vec(io.portA.maskWidth, Bits(8.W)))
-
-  // Write masked bytes to the data register
-  0.until(io.portA.maskWidth).foreach { n =>
-    when(io.portA.wr && io.portA.mask(n)) { bytes(n) := io.portA.din((n+1)*8-1, n*8) }
+      // Write
+      dut.io.portA.mask.poke(3.U)
+      dut.io.portA.din.poke(0xabcd.U)
+      dut.clock.step()
+      dut.io.portA.dout.expect(0xabcd.U)
+    }
   }
 
-  // Concatenate the bytes and update the current data register
-  dataReg := bytes.asUInt
+  it should "allow reading from port B" in {
+    test(new RegisterFile(3)) { dut =>
+      dut.io.portA.wr.poke(true.B)
+      dut.io.portA.mask.poke(3.U)
 
-  // Outputs
-  io.portA.dout := dataReg
-  io.portB.dout := outReg
+      // Write
+      dut.io.portA.addr.poke(0.U)
+      dut.io.portA.din.poke(0x1234.U)
+      dut.clock.step()
+      dut.io.portA.addr.poke(1.U)
+      dut.io.portA.din.poke(0x5678.U)
+      dut.clock.step()
+      dut.io.portA.addr.poke(2.U)
+      dut.io.portA.din.poke(0xabcd.U)
+      dut.clock.step()
+
+      // Read
+      dut.io.regs(0).expect(0x1234.U)
+      dut.io.regs(1).expect(0x5678.U)
+      dut.io.regs(2).expect(0xabcd.U)
+    }
+  }
 }

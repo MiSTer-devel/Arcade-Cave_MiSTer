@@ -148,17 +148,10 @@ class CaveTop extends Module {
   }
   layer2Ram.io.clockB := clock
 
-  // Layer 0 info
-  val layer0Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new LayerInfo) }
-  layer0Info.io.clockB := clock
-
-  // Layer 1 info
-  val layer1Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new LayerInfo) }
-  layer1Info.io.clockB := clock
-
-  // Layer 2 info
-  val layer2Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new LayerInfo) }
-  layer2Info.io.clockB := clock
+  // Layer registers
+  val layer0Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
+  val layer1Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
+  val layer2Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
 
   // Palette RAM
   val paletteRam = withClockAndReset(io.cpuClock, io.cpuReset) {
@@ -174,20 +167,17 @@ class CaveTop extends Module {
   // The generate frame register is set when the GPU should start drawing a frame
   val generateFrameReg = withClockAndReset(io.cpuClock, io.cpuReset) { RegInit(false.B) }
 
-  // Transfer the generate frame register to the system clock domain
-  val generateFrame = Util.rising(ShiftRegister(generateFrameReg, 2))
-
   // GPU
   val gpu = Module(new GPU)
-  gpu.io.generateFrame := generateFrame
+  gpu.io.generateFrame := Util.rising(ShiftRegister(generateFrameReg, 2))
   gpu.io.tileRom <> io.tileRom
   gpu.io.spriteRam <> spriteRam.io.portB
   gpu.io.layer0Ram <> layer0Ram.io.portB
   gpu.io.layer1Ram <> layer1Ram.io.portB
   gpu.io.layer2Ram <> layer2Ram.io.portB
-  gpu.io.layer0Info <> layer0Info.io.portB
-  gpu.io.layer1Info <> layer1Info.io.portB
-  gpu.io.layer2Info <> layer2Info.io.portB
+  gpu.io.layer0Info := RegNext(layer0Info.io.regs.asUInt)
+  gpu.io.layer1Info := RegNext(layer1Info.io.regs.asUInt)
+  gpu.io.layer2Info := RegNext(layer2Info.io.regs.asUInt)
   gpu.io.paletteRam <> paletteRam.io.portB
   gpu.io.frameBuffer <> io.frameBuffer
 
