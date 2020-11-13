@@ -37,7 +37,8 @@
 
 package cave.gpu
 
-import axon.mem.{ReadMemIO, ReadWriteMemIO}
+import axon.cpu.m68k.CPU
+import axon.mem.ReadWriteMemIO
 import chisel3._
 import chisel3.util._
 
@@ -49,34 +50,35 @@ import chisel3.util._
 class RegisterFile(numRegs: Int) extends Module {
   /** The width of the address bus. */
   val ADDR_WIDTH = log2Up(numRegs)
-  /** The width of the data bus. */
-  val DATA_WIDTH = 16
+
+  /** The width of a byte. */
+  val BYTE_WIDTH = 8
 
   val io = IO(new Bundle {
-    /** Read-write port */
-    val mem = Flipped(ReadWriteMemIO(ADDR_WIDTH, DATA_WIDTH))
-    /** The register file */
-    val regs = Output(Vec(numRegs, Bits(DATA_WIDTH.W)))
+    /** Memory port */
+    val mem = Flipped(ReadWriteMemIO(ADDR_WIDTH, CPU.DATA_WIDTH))
+    /** Registers port */
+    val regs = Output(Vec(numRegs, Bits(CPU.DATA_WIDTH.W)))
   })
 
   // Data registers
-  val dataRegs = Reg(Vec(numRegs, Bits(DATA_WIDTH.W)))
+  val regs = Reg(Vec(numRegs, Bits(CPU.DATA_WIDTH.W)))
 
   // Alias the current data register
-  val dataReg = dataRegs(io.mem.addr)
+  val data = regs(io.mem.addr)
 
   // Split data register into a vector of bytes
-  val bytes = dataReg.asTypeOf(Vec(io.mem.maskWidth, Bits(8.W)))
+  val bytes = data.asTypeOf(Vec(io.mem.maskWidth, Bits(BYTE_WIDTH.W)))
 
   // Write masked bytes to the data register
   0.until(io.mem.maskWidth).foreach { n =>
-    when(io.mem.wr && io.mem.mask(n)) { bytes(n) := io.mem.din((n+1)*8-1, n*8) }
+    when(io.mem.wr && io.mem.mask(n)) { bytes(n) := io.mem.din((n+1)*BYTE_WIDTH-1, n*BYTE_WIDTH) }
   }
 
-  // Concatenate the bytes and update the current data register
-  dataReg := bytes.asUInt
+  // Concatenate the bytes and update the data register
+  data := bytes.asUInt
 
   // Outputs
-  io.mem.dout := dataReg
-  io.regs := dataRegs
+  io.mem.dout := data
+  io.regs := regs
 }

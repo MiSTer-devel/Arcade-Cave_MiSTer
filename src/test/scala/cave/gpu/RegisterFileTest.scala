@@ -42,7 +42,7 @@ import chiseltest._
 import org.scalatest._
 
 class RegisterFileTest extends FlatSpec with ChiselScalatestTester with Matchers {
-  it should "allow reading and writing to port A" in {
+  it should "allow writing masked bytes" in {
     test(new RegisterFile(3)) { dut =>
       dut.io.mem.wr.poke(true.B)
       dut.io.mem.rd.poke(true.B)
@@ -73,7 +73,7 @@ class RegisterFileTest extends FlatSpec with ChiselScalatestTester with Matchers
     }
   }
 
-  it should "allow reading from port B" in {
+  it should "output the registers" in {
     test(new RegisterFile(3)) { dut =>
       dut.io.mem.wr.poke(true.B)
       dut.io.mem.mask.poke(3.U)
