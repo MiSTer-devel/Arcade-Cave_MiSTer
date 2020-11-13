@@ -39,6 +39,7 @@ package axon.cpu.m68k
 
 import chisel3._
 
+/** An interface for the M68000 CPU. */
 class CPUIO extends Bundle {
   /** Clock enable */
   val cen = Input(Bool())
@@ -74,14 +75,14 @@ class CPU extends Module {
    *
    * @param a The address.
    */
-  def memMap(a: Int) = new MemMap(this, Range(a, a))
+  def memMap(a: Int) = new MemMap(io, Range(a, a))
 
   /**
    * Create a memory map for the given address range.
    *
    * @param r The address range.
    */
-  def memMap(r: Range) = new MemMap(this, r)
+  def memMap(r: Range) = new MemMap(io, r)
 
   val io = IO(new CPUIO)
 

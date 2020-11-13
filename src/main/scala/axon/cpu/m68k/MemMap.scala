@@ -45,15 +45,15 @@ import chisel3._
 /**
  * Represents a memory mapped address range.
  *
- * @param cpu The CPU.
+ * @param cpu The CPU IO port.
  * @param r The address range.
  */
-class MemMap(cpu: CPU, r: Range) {
+class MemMap(cpu: CPUIO, r: Range) {
   // TODO: These registers will be duplicated for every mapping. Can they be shared somehow?
-  private val readStrobe = Util.rising(cpu.io.as) && cpu.io.rw
-  private val writeStrobe = Util.rising(cpu.io.as) && !cpu.io.rw
-  private val upperWriteStrobe = Util.rising(cpu.io.uds) && !cpu.io.rw
-  private val lowerWriteStrobe = Util.rising(cpu.io.lds) && !cpu.io.rw
+  private val readStrobe = Util.rising(cpu.as) && cpu.rw
+  private val writeStrobe = Util.rising(cpu.as) && !cpu.rw
+  private val upperWriteStrobe = Util.rising(cpu.uds) && !cpu.rw
+  private val lowerWriteStrobe = Util.rising(cpu.lds) && !cpu.rw
 
   /**
    * Maps an address range to the given read-write memory port.
@@ -69,15 +69,15 @@ class MemMap(cpu: CPU, r: Range) {
    * @param f The address transform function.
    */
   def ramT(mem: ReadWriteMemIO)(f: UInt => UInt): Unit = {
-    val cs = Util.between(cpu.io.addr, r)
+    val cs = Util.between(cpu.addr, r)
     mem.rd := cs && readStrobe
     mem.wr := cs && (upperWriteStrobe || lowerWriteStrobe)
-    mem.addr := f(cpu.io.addr)(mem.addrWidth, 1)
-    mem.mask := cpu.io.uds ## cpu.io.lds
-    mem.din := cpu.io.dout
+    mem.addr := f(cpu.addr)(mem.addrWidth, 1)
+    mem.mask := cpu.uds ## cpu.lds
+    mem.din := cpu.dout
     when(cs) {
-      cpu.io.din := mem.dout
-      cpu.io.dtack := RegNext(readStrobe || upperWriteStrobe || lowerWriteStrobe)
+      cpu.din := mem.dout
+      cpu.dtack := readStrobe || upperWriteStrobe || lowerWriteStrobe
     }
   }
 
@@ -95,12 +95,12 @@ class MemMap(cpu: CPU, r: Range) {
    * @param f The address transform function.
    */
   def romT(mem: ProgRomIO)(f: UInt => UInt): Unit = {
-    val cs = Util.between(cpu.io.addr, r)
+    val cs = Util.between(cpu.addr, r)
     mem.rd := cs && readStrobe
-    mem.addr := f(cpu.io.addr)
+    mem.addr := f(cpu.addr)
     when(cs) {
-      cpu.io.din := mem.dout
-      cpu.io.dtack := mem.valid
+      cpu.din := mem.dout
+      cpu.dtack := mem.valid
     }
   }
 
@@ -118,13 +118,14 @@ class MemMap(cpu: CPU, r: Range) {
    * @param f The address transform function.
    */
   def womT(mem: WriteMemIO)(f: UInt => UInt): Unit = {
-    val cs = Util.between(cpu.io.addr, r)
-    mem.wr := cs && (upperWriteStrobe || lowerWriteStrobe)
-    mem.addr := f(cpu.io.addr)
-    mem.mask := cpu.io.uds ## cpu.io.lds
-    mem.din := cpu.io.dout
-    when(cs) {
-      cpu.io.dtack := RegNext(upperWriteStrobe || lowerWriteStrobe)
+    val cs = Util.between(cpu.addr, r)
+    val wr = upperWriteStrobe || lowerWriteStrobe
+    mem.wr := cs && wr
+    mem.addr := f(cpu.addr)(mem.addrWidth, 1)
+    mem.mask := cpu.uds ## cpu.lds
+    mem.din := cpu.dout
+    when((cs && wr)) {
+      cpu.dtack := true.B
     }
   }
 
@@ -134,9 +135,9 @@ class MemMap(cpu: CPU, r: Range) {
    * @param f The getter function.
    */
   def r(f: (UInt, UInt) => UInt): Unit = {
-    val cs = Util.between(cpu.io.addr, r)
-    val offset = cpu.io.addr - r.start.U
-    when(cs && readStrobe) { cpu.io.din := f(cpu.io.addr, offset) }
+    val cs = Util.between(cpu.addr, r)
+    val offset = cpu.addr - r.start.U
+    when(cs && readStrobe) { cpu.din := f(cpu.addr, offset) }
   }
 
   /**
@@ -145,8 +146,8 @@ class MemMap(cpu: CPU, r: Range) {
    * @param f The setter function.
    */
   def w(f: (UInt, UInt, UInt) => Unit): Unit = {
-    val cs = Util.between(cpu.io.addr, r)
-    val offset = cpu.io.addr - r.start.U
-    when(cs && writeStrobe) { f(cpu.io.addr, offset, cpu.io.dout) }
+    val cs = Util.between(cpu.addr, r)
+    val offset = cpu.addr - r.start.U
+    when(cs && writeStrobe) { f(cpu.addr, offset, cpu.dout) }
   }
 }
