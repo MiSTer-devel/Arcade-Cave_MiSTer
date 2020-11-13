@@ -77,7 +77,7 @@ class MemMap(cpu: CPUIO, r: Range) {
     mem.din := cpu.dout
     when(cs) {
       cpu.din := mem.dout
-      cpu.dtack := readStrobe || upperWriteStrobe || lowerWriteStrobe
+      cpu.dtack := RegNext(readStrobe || upperWriteStrobe || lowerWriteStrobe)
     }
   }
 
@@ -124,7 +124,7 @@ class MemMap(cpu: CPUIO, r: Range) {
     mem.addr := f(cpu.addr)(mem.addrWidth, 1)
     mem.mask := cpu.uds ## cpu.lds
     mem.din := cpu.dout
-    when((cs && wr)) {
+    when(RegNext(cs && wr)) {
       cpu.dtack := true.B
     }
   }

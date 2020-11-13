@@ -83,11 +83,13 @@ class CaveTop extends Module {
         val ack = Output(Bool())
         val data = Output(Bits(CPU.DATA_WIDTH.W))
       }
-      val bufferSelect = Output(Bool())
     })
 
     override def desiredName = "cave"
   }
+
+  // Wires
+  val startFrame = WireInit(false.B)
 
   // M68000 CPU
   val cpu = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new CPU) }
@@ -148,11 +150,6 @@ class CaveTop extends Module {
   }
   layer2Ram.io.clockB := clock
 
-  // Layer registers
-  val layer0Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
-  val layer1Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
-  val layer2Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
-
   // Palette RAM
   val paletteRam = withClockAndReset(io.cpuClock, io.cpuReset) {
     Module(new TrueDualPortRam(
@@ -164,12 +161,20 @@ class CaveTop extends Module {
   }
   paletteRam.io.clockB := clock
 
-  // The generate frame register is set when the GPU should start drawing a frame
-  val generateFrameReg = withClockAndReset(io.cpuClock, io.cpuReset) { RegInit(false.B) }
+  // Layer registers
+  val layer0Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
+  val layer1Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
+  val layer2Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
+
+  // Video registers
+  val videoRegs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(8)) }
+
+  val bufferSelect = videoRegs.io.regs(4)(0)
 
   // GPU
   val gpu = Module(new GPU)
-  gpu.io.generateFrame := Util.rising(ShiftRegister(generateFrameReg, 2))
+  gpu.io.generateFrame := Util.rising(ShiftRegister(startFrame, 2))
+  gpu.io.bufferSelect := bufferSelect
   gpu.io.tileRom <> io.tileRom
   gpu.io.spriteRam <> spriteRam.io.portB
   gpu.io.layer0Ram <> layer0Ram.io.portB
@@ -192,7 +197,6 @@ class CaveTop extends Module {
   cave.io.cpu <> cpu.io
   cpu.io.dtack := cave.io.memBus.ack
   cpu.io.din := cave.io.memBus.data
-  gpu.io.bufferSelect := cave.io.bufferSelect
 
   // Memory map
   withClockAndReset(io.cpuClock, io.cpuReset) {
@@ -202,8 +206,10 @@ class CaveTop extends Module {
     cpu.memMap(0x500000 to 0x507fff).ram(layer0Ram.io.portA)
     cpu.memMap(0x600000 to 0x607fff).ram(layer1Ram.io.portA)
     cpu.memMap(0x700000 to 0x70ffff).ram(layer2Ram.io.portA)
-    cpu.memMap(0x800000 to 0x80007f).w { (addr, _, data) =>
-      generateFrameReg := addr === 0x800004.U && data === 0x01f0.U
+    cpu.memMap(0x800000 to 0x80007f).wom(videoRegs.io.mem.asWriteMemIO)
+    cpu.memMap(0x800004).w { (_, _, data) =>
+      // Writing $01f0 to the video register triggers the start of a new frame
+      startFrame := data === 0x01f0.U
     }
     cpu.memMap(0x900000 to 0x900005).ram(layer0Info.io.mem)
     cpu.memMap(0xa00000 to 0xa00005).ram(layer1Info.io.mem)

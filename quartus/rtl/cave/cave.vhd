@@ -80,9 +80,7 @@ entity cave is
         cpu_debug_pcw            : in std_logic;
         -- Memory bus
         memBus_ack               : out std_logic;
-        memBus_data              : out std_logic_vector(15 downto 0);
-        -- Control signals
-        bufferSelect             : out std_logic
+        memBus_data              : out std_logic_vector(15 downto 0)
         );
 end entity cave;
 
@@ -115,10 +113,6 @@ architecture struct of cave is
     signal ymz_ram_enable_s         : std_logic;
     signal ymz_ram_ack_s            : std_logic;
     signal ymz_ram_data_o_s         : word_t;
-    -- Video Registers (should not necessarily be ram) (write only)
-    constant VIDEO_REGS_LOG_SIZE_C  : natural := 7;   -- 128B
-    signal video_regs_enable_s      : std_logic;
-    signal video_regs_ack_s         : std_logic;
     -- IRQ Cause (read only)
     signal irq_cause_enable_s       : std_logic;
     signal irq_cause_ack_s          : std_logic;
@@ -240,7 +234,6 @@ begin
 
     -- This is an OR'ed bus
     memory_bus_ack_s <= ymz_ram_ack_s     or
-                        video_regs_ack_s  or
                         irq_cause_ack_s   or
                         in_0_ack_s        or
                         in_1_ack_s        or
@@ -288,10 +281,6 @@ begin
 
     -- YMZ RAM              0x300000 - 0x300003
     ymz_ram_enable_s     <= '1' when addr_68k_s(31 downto YMZ_RAM_LOG_SIZE_C) = x"0030000" & "00" else
-                            '0';
-    -- Video Registers (should not necessarily be ram) (maybe remove read/write
-    -- check redundancy).   0x800000 - 0x80007f
-    video_regs_enable_s  <= '1' when (addr_68k_s(31 downto VIDEO_REGS_LOG_SIZE_C) = x"008000" & "0") and (read_n_write_68k_s = '0') else
                             '0';
     -- IRQ Cause (same about redundancy)
     --                      0x800000 - 0x800007
@@ -349,38 +338,6 @@ begin
 
     graphic_processor_block : block
     begin
-
-        ---------------------
-        -- Video Registers --
-        ---------------------
-        -- Could be changed to a more specific component since most of them are not
-        -- needed
-        video_regs_block : block
-            signal video_reg_4_s : word_t;
-        begin
-            video_regs : entity work.true_dual_port_ram
-                generic map (
-                    ADDR_WIDTH_A => VIDEO_REGS_LOG_SIZE_C-1,
-                    DATA_WIDTH_A => DDP_WORD_WIDTH,
-                    ADDR_WIDTH_B => VIDEO_REGS_LOG_SIZE_C-1,
-                    DATA_WIDTH_B => DDP_WORD_WIDTH)
-                port map (
-                    clk_a  => clk_68k_i,
-                    cs_a   => video_regs_enable_s,
-                    wr_a   => write_strobe_s,
-                    rd_a   => '0', -- write-only
-                    addr_a => addr_68k_s(VIDEO_REGS_LOG_SIZE_C-1 downto 1),
-                    din_a  => data_out_68k_s,
-                    dout_a => open, -- write-only
-                    ack_a  => video_regs_ack_s,
-                    clk_b  => clk_i,
-                    addr_b => to_unsigned(4, VIDEO_REGS_LOG_SIZE_C-1),
-                    dout_b => video_reg_4_s);
-
-            -- TODO: Check this
-            bufferSelect <= video_reg_4_s(0);
-
-        end block video_regs_block;
 
         ---------------
         -- IRQ Cause --
