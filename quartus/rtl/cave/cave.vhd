@@ -109,10 +109,6 @@ architecture struct of cave is
     signal ymz_ram_enable_s         : std_logic;
     signal ymz_ram_ack_s            : std_logic;
     signal ymz_ram_data_o_s         : word_t;
-    -- IRQ Cause (read only)
-    signal irq_cause_enable_s       : std_logic;
-    signal irq_cause_ack_s          : std_logic;
-    signal irq_cause_data_o_s       : word_t;
     -- Edge Cases
     signal edge_case_enable_s       : std_logic;
     signal edge_case_ack_s          : std_logic;
@@ -211,7 +207,6 @@ begin
 
     -- This is an OR'ed bus
     memory_bus_ack_s <= ymz_ram_ack_s     or
-                        irq_cause_ack_s   or
                         edge_case_ack_s   or
                         other_ack_s;
 
@@ -219,7 +214,6 @@ begin
 
     -- "OR" everything together to create the "OR'ed" bus
     memory_bus_data_s <= ymz_ram_data_o_s     or
-                         irq_cause_data_o_s   or
                          other_data_o_s;
 
     memBus_data <= memory_bus_data_s;
@@ -252,10 +246,6 @@ begin
 
     -- YMZ RAM              0x300000 - 0x300003
     ymz_ram_enable_s     <= '1' when addr_68k_s(31 downto YMZ_RAM_LOG_SIZE_C) = x"0030000" & "00" else
-                            '0';
-    -- IRQ Cause (same about redundancy)
-    --                      0x800000 - 0x800007
-    irq_cause_enable_s   <= '1' when (addr_68k_s(31 downto 3) = x"0080000" & "0") and (read_n_write_68k_s = '1') else
                             '0';
     -- Edge Cases
     edge_case_enable_s   <= '1' when (addr_68k_s(23 downto 16) = x"5f") or
@@ -297,29 +287,6 @@ begin
                 addr_b => to_unsigned(0, YMZ_RAM_LOG_SIZE_C-1),
                 dout_b => open);
     end block ymz280b_block;
-
-    graphic_processor_block : block
-    begin
-
-        ---------------
-        -- IRQ Cause --
-        ---------------
-        -- TODO (Temporary)
-        irq_cause_process : process(clk_68k_i) is
-        begin
-            if rising_edge(clk_68k_i) then
-                irq_cause_ack_s       <= '0';
-                irq_cause_data_o_s    <= (others => '0');
-                if irq_cause_enable_s = '1' then
-                    if read_strobe_s = '1' then
-                        irq_cause_data_o_s <= x"0003";  -- Active low
-                        irq_cause_ack_s    <= '1';
-                    end if;
-                end if;
-            end if;  -- Rising Edge Clock
-        end process irq_cause_process;
-
-    end block graphic_processor_block;
 
     ----------------
     -- Edge Cases --

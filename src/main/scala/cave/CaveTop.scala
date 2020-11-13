@@ -205,6 +205,8 @@ class CaveTop extends Module {
     cpu.memMap(0x500000 to 0x507fff).ram(layer0Ram.io.portA)
     cpu.memMap(0x600000 to 0x607fff).ram(layer1Ram.io.portA)
     cpu.memMap(0x700000 to 0x70ffff).ram(layer2Ram.io.portA)
+    // IRQ cause
+    cpu.memMap(0x800000 to 0x800007).r { (_, _) => 3.U }
     cpu.memMap(0x800000 to 0x80007f).wom(videoRegs.io.mem.asWriteMemIO)
     // Trigger the start of a new frame
     cpu.memMap(0x800004).w { (_, _, data) => startFrame := data === 0x01f0.U }
