@@ -45,15 +45,15 @@ import chisel3._
 class GPU extends Module {
   val io = IO(new Bundle {
     val generateFrame = Input(Bool())
-    val bufferSelect = Input(Bool())
+    val videoRegs = Input(Bits(Config.VIDEO_GPU_DATA_WIDTH.W))
+    val layer0Regs = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
+    val layer1Regs = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
+    val layer2Regs = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
     val tileRom = new TileRomIO
     val spriteRam = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
     val layer0Ram = ReadMemIO(Config.LAYER_0_RAM_GPU_ADDR_WIDTH, Config.LAYER_0_RAM_GPU_DATA_WIDTH)
     val layer1Ram = ReadMemIO(Config.LAYER_1_RAM_GPU_ADDR_WIDTH, Config.LAYER_1_RAM_GPU_DATA_WIDTH)
     val layer2Ram = ReadMemIO(Config.LAYER_2_RAM_GPU_ADDR_WIDTH, Config.LAYER_2_RAM_GPU_DATA_WIDTH)
-    val layer0Regs = Input(Bits(Config.LAYER_INFO_GPU_DATA_WIDTH.W))
-    val layer1Regs = Input(Bits(Config.LAYER_INFO_GPU_DATA_WIDTH.W))
-    val layer2Regs = Input(Bits(Config.LAYER_INFO_GPU_DATA_WIDTH.W))
     val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
     val frameBuffer = new FrameBufferIO
   })
@@ -69,9 +69,9 @@ class GPU extends Module {
       val layer0Ram = ReadMemIO(Config.LAYER_0_RAM_GPU_ADDR_WIDTH, Config.LAYER_0_RAM_GPU_DATA_WIDTH)
       val layer1Ram = ReadMemIO(Config.LAYER_1_RAM_GPU_ADDR_WIDTH, Config.LAYER_1_RAM_GPU_DATA_WIDTH)
       val layer2Ram = ReadMemIO(Config.LAYER_2_RAM_GPU_ADDR_WIDTH, Config.LAYER_2_RAM_GPU_DATA_WIDTH)
-      val layer0Info = Input(Bits(Config.LAYER_INFO_GPU_DATA_WIDTH.W))
-      val layer1Info = Input(Bits(Config.LAYER_INFO_GPU_DATA_WIDTH.W))
-      val layer2Info = Input(Bits(Config.LAYER_INFO_GPU_DATA_WIDTH.W))
+      val layer0Info = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
+      val layer1Info = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
+      val layer2Info = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
       val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
       val frameBuffer = new FrameBufferIO
     })
@@ -79,11 +79,14 @@ class GPU extends Module {
     override def desiredName = "graphic_processor"
   }
 
+  // Set the sprite bank
+  val bufferSelect = io.videoRegs(4)(0)
+
   val gpu = Module(new GPUBlackBox)
   gpu.io.clk_i := clock
   gpu.io.rst_i := reset
   gpu.io.generateFrame := io.generateFrame
-  gpu.io.bufferSelect := io.bufferSelect
+  gpu.io.bufferSelect := bufferSelect
   gpu.io.tileRom <> io.tileRom
   gpu.io.spriteRam <> io.spriteRam
   gpu.io.layer0Ram <> io.layer0Ram

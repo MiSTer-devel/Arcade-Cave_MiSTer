@@ -156,31 +156,28 @@ class CaveTop extends Module {
   paletteRam.io.clockB := clock
 
   // Layer registers
-  val layer0Regs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
-  val layer1Regs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
-  val layer2Regs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
+  val layer0Regs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_NUM_REGS)) }
+  val layer1Regs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_NUM_REGS)) }
+  val layer2Regs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_NUM_REGS)) }
 
   // Video registers
-  val videoRegs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(8)) }
+  val videoRegs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.VIDEO_NUM_REGS)) }
 
   // Sound registers
-  val soundRegs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(4)) }
-
-  // TODO: Register this output
-  val bufferSelect = videoRegs.io.regs(4)(0)
+  val soundRegs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.SOUND_NUM_REGS)) }
 
   // GPU
   val gpu = Module(new GPU)
   gpu.io.generateFrame := Util.rising(ShiftRegister(startFrame, 2))
-  gpu.io.bufferSelect := bufferSelect
+  gpu.io.videoRegs := videoRegs.io.regs.asUInt
+  gpu.io.layer0Regs := layer0Regs.io.regs.asUInt
+  gpu.io.layer1Regs := layer1Regs.io.regs.asUInt
+  gpu.io.layer2Regs := layer2Regs.io.regs.asUInt
   gpu.io.tileRom <> io.tileRom
   gpu.io.spriteRam <> spriteRam.io.portB
   gpu.io.layer0Ram <> layer0Ram.io.portB
   gpu.io.layer1Ram <> layer1Ram.io.portB
   gpu.io.layer2Ram <> layer2Ram.io.portB
-  gpu.io.layer0Regs := RegNext(layer0Regs.io.regs.asUInt)
-  gpu.io.layer1Regs := RegNext(layer1Regs.io.regs.asUInt)
-  gpu.io.layer2Regs := RegNext(layer2Regs.io.regs.asUInt)
   gpu.io.paletteRam <> paletteRam.io.portB
   gpu.io.frameBuffer <> io.frameBuffer
 
@@ -228,9 +225,7 @@ class CaveTop extends Module {
     cpu.memMap(0x5f0000 to 0x5fffff).ignore()
     // Acknowledge accesses outside the M680000 memory range
     // TODO: This hack shouldn't be required by the CPU, but there is something wrong with the CPU implementation.
-    when(cpu.io.addr(31, 28) === 0xf.U && cpu.io.rw) {
-      cpu.io.dtack := true.B
-    }
+    when(cpu.io.addr(31, 28) === 0xf.U && cpu.io.rw) { cpu.io.dtack := true.B }
   }
 
   // Outputs
