@@ -232,6 +232,13 @@ class CaveTop extends Module {
     cpu.memMap(0xd00002 to 0xd00003).r { (_, _) => "b1111011".U ## ~io.player.player2 }
     // EEPROM
     cpu.memMap(0xe00000).w { (_, _, _) => /* TODO */ }
+    // Access to 0x5fxxxx appears in DoDonPachi on attract loop when showing the air stage on frame 9355 i.e., after
+    // roughly 2 min 30 sec. The game is accessing data relative to a Layer 1 address and underflows. These accesses do
+    // nothing, but should be acknowledged in order not to block the CPU.
+    //
+    // The reason these accesses appear is probably because it made the layer update routine simpler to write (no need
+    // to handle edge cases). These accesses are simply ignored by the hardware.
+    cpu.memMap(0x5f0000 to 0x5fffff).ignore
   }
 
   // Outputs

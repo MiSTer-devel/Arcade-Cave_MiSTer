@@ -126,6 +126,22 @@ class MemMap(cpu: CPUIO, r: Range) {
   }
 
   /**
+   * Maps an address range to the given getter and setter functions.
+   *
+   * @param f The getter function.
+   * @param g The setter function.
+   */
+  def rw(f: (UInt, UInt) => UInt)(g: (UInt, UInt, UInt) => Unit): Unit = {
+    val cs = Util.between(cpu.addr, r)
+    val offset = cpu.addr - r.start.U
+    when(cs) {
+      when(cpu.rw) { cpu.din := f(cpu.addr, offset) }
+      when(!cpu.rw) { g(cpu.addr, offset, cpu.dout) }
+      cpu.dtack := true.B
+    }
+  }
+
+  /**
    * Maps an address range to the given getter function.
    *
    * @param f The getter function.
@@ -151,5 +167,10 @@ class MemMap(cpu: CPUIO, r: Range) {
       f(cpu.addr, offset, cpu.dout)
       cpu.dtack := true.B
     }
+  }
+
+  /** Ignores the address range. Read/write operations will still be acknowledged. */
+  def ignore: Unit = {
+    rw((_, _) => 0.U)((_, _, _) => {})
   }
 }

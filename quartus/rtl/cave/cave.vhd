@@ -101,14 +101,6 @@ architecture struct of cave is
     signal memory_bus_ack_s         : std_logic;
     signal memory_bus_data_s        : word_t;
     signal read_strobe_s            : std_logic;
-    signal write_strobe_s           : std_logic;
-    signal high_write_strobe_s      : std_logic;
-    signal low_write_strobe_s       : std_logic;
-    -- Edge Cases
-    signal edge_case_enable_s       : std_logic;
-    signal edge_case_ack_s          : std_logic;
-    -- No data for edge cases (will be 0 since the bus is OR'ed)
-
     signal frame_buffer_color_s     : color_t;
 
 begin
@@ -201,8 +193,7 @@ begin
     ---------------------
 
     -- This is an OR'ed bus
-    memory_bus_ack_s <= edge_case_ack_s   or
-                        other_ack_s;
+    memory_bus_ack_s <= other_ack_s;
 
     memBus_ack <= memory_bus_ack_s;
 
@@ -230,42 +221,5 @@ begin
 
     -- These strobes indicate a read or write operation from the processor
     read_strobe_s       <= addr_strobe_68k_s and (not addr_strobe_68k_old_reg_s) and read_n_write_68k_s;
-    write_strobe_s      <= addr_strobe_68k_s and (not addr_strobe_68k_old_reg_s) and (not read_n_write_68k_s);
-    high_write_strobe_s <= upper_data_select_68k_s and (not upper_data_select_68k_old_reg_s) and (not read_n_write_68k_s);
-    low_write_strobe_s  <= lower_data_select_68k_s and (not lower_data_select_68k_old_reg_s) and (not read_n_write_68k_s);
-
-    -- Memory bus decode logic - Dodonpachi Address Map -- TODO Change to constants
-    ---------------------------------------------------
-
-    -- Edge Cases
-    edge_case_enable_s   <= '1' when (addr_68k_s(23 downto 16) = x"5f") or
-                                     (addr_68k_s(31 downto 24) /= x"00") else
-                            '0';
-    -- Access to 0x5fxxxx appears in dodonpachi on attract loop when showing
-    -- the air stage on frame 9355 i.e., after roughly 2 min 30 sec
-    -- The game is accessing data relative to a Layer 1 address and underflows,
-    -- these accesses do nothing but should be acknowledged in order not to
-    -- block de CPU.
-    -- The reason these accesses appear is probably because it made the layer
-    -- update routine simpler to write (no need to handle edge cases) and
-    -- these accesses are simply ignored by the hardware.
-    -- The second case when the upper 8 bits are non zero should maybe never
-    -- occur, this may be a problem with the softcore... This needs to be
-    -- researched further...
-
-    ----------------
-    -- Edge Cases --
-    ----------------
-    edge_case_process : process(clk_68k_i) is
-    begin
-        if rising_edge(clk_68k_i) then
-            edge_case_ack_s <= '0';
-            if edge_case_enable_s = '1' then
-                if (read_strobe_s = '1') or (write_strobe_s = '1') then
-                    edge_case_ack_s <= '1';
-                end if;
-            end if; -- Enable
-        end if; -- Rising Edge Clock
-    end process edge_case_process;
 
 end struct;
