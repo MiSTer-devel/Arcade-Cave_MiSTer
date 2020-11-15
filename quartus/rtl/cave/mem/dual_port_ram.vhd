@@ -50,21 +50,13 @@ entity dual_port_ram is
     DEPTH_B      : natural := 0
   );
   port (
-    -- clock
-    clk : in std_logic;
-
-    -- chip select
-    cs : in std_logic := '1';
-
-    -- port A (write)
+    clk    : in std_logic;
+    wr_a   : in std_logic := '1';
     addr_a : in unsigned(ADDR_WIDTH_A-1 downto 0);
     din_a  : in std_logic_vector(DATA_WIDTH_A-1 downto 0) := (others => '0');
-    we_a   : in std_logic := '1';
-
-    -- port B (read)
+    rd_b   : in std_logic := '1';
     addr_b : in unsigned(ADDR_WIDTH_B-1 downto 0);
-    dout_b : out std_logic_vector(DATA_WIDTH_B-1 downto 0);
-    re_b   : in std_logic := '1'
+    dout_b : out std_logic_vector(DATA_WIDTH_B-1 downto 0)
   );
 end dual_port_ram;
 
@@ -78,8 +70,6 @@ architecture arch of dual_port_ram is
       return 2**addr_width;
     end if;
   end function num_words;
-
-  signal q_b : std_logic_vector(DATA_WIDTH_B-1 downto 0);
 begin
   altsyncram_component : altsyncram
   generic map (
@@ -104,7 +94,6 @@ begin
     width_a                            => DATA_WIDTH_A,
     width_b                            => DATA_WIDTH_B,
     width_byteena_a                    => 1,
-    width_byteena_b                    => 1,
     widthad_a                          => ADDR_WIDTH_A,
     widthad_b                          => ADDR_WIDTH_B
   )
@@ -112,12 +101,9 @@ begin
     address_a => std_logic_vector(addr_a),
     address_b => std_logic_vector(addr_b),
     clock0    => clk,
-    wren_a    => cs and we_a,
-    rden_b    => cs and re_b,
     data_a    => din_a,
-    q_b       => q_b
+    rden_b    => rd_b,
+    wren_a    => wr_a,
+    q_b       => dout_b
   );
-
-  -- output
-  dout_b <= q_b when cs = '1' else (others => '0');
 end architecture arch;

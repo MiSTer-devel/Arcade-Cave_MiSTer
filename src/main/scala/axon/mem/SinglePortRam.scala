@@ -44,11 +44,18 @@ import chisel3._
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
+ * @param depth The optional memory depth (in words).
  */
-class SinglePortRam(addrWidth: Int, dataWidth: Int) extends Module {
+class SinglePortRam(addrWidth: Int, dataWidth: Int, depth: Option[Int] = None) extends Module {
   val io = IO(Flipped(ReadWriteMemIO(addrWidth, dataWidth)))
 
-  class WrappedSinglePortRam extends BlackBox(Map("ADDR_WIDTH" -> addrWidth, "DATA_WIDTH" -> dataWidth)) {
+  private val depth_ = depth.getOrElse(0)
+
+  class WrappedSinglePortRam extends BlackBox(Map(
+    "ADDR_WIDTH" -> addrWidth,
+    "DATA_WIDTH" -> dataWidth,
+    "DEPTH" -> depth_
+  )) {
     val io = IO(new Bundle {
       val clk = Input(Clock())
       val rd = Input(Bool())

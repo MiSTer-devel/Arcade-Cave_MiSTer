@@ -504,7 +504,7 @@ begin
                 DATA_WIDTH_B => DDP_FRAME_BUFFER_PRIORITY_BITS)
             port map (
                 clk    => clk_i,
-                we_a   => priority_ram_write_s,
+                wr_a   => priority_ram_write_s,
                 addr_a => priority_ram_write_addr_s,
                 din_a  => std_logic_vector(priority_ram_write_data_s),
                 addr_b => priority_ram_read_addr_s,

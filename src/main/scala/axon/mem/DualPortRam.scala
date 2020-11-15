@@ -44,10 +44,10 @@ import chisel3._
  *
  * @param addrWidthA The width of the port A address bus.
  * @param dataWidthA The width of the port A data bus.
- * @param depthA The optional depth of port A.
+ * @param depthA The optional memory depth of port A (in words).
  * @param addrWidthB The width of the port B address bus.
  * @param dataWidthB The width of the port B data bus.
- * @param depthB The optional depth of port B.
+ * @param depthB The optional memory depth of port B (in words).
  */
 class DualPortRam(addrWidthA: Int,
                   dataWidthA: Int,
@@ -77,12 +77,12 @@ class DualPortRam(addrWidthA: Int,
       val clk = Input(Clock())
 
       // port A
-      val we_a = Input(Bool())
+      val wr_a = Input(Bool())
       val addr_a = Input(UInt(addrWidthA.W))
       val din_a = Input(Bits(dataWidthA.W))
 
       // port B
-      val re_b = Input(Bool())
+      val rd_B = Input(Bool())
       val addr_b = Input(UInt(addrWidthB.W))
       val dout_b = Output(Bits(dataWidthB.W))
     })
@@ -92,10 +92,10 @@ class DualPortRam(addrWidthA: Int,
 
   val ram = Module(new WrappedDualPortRam)
   ram.io.clk := clock
-  ram.io.we_a := io.portA.wr
+  ram.io.wr_a := io.portA.wr
   ram.io.addr_a := io.portA.addr
   ram.io.din_a := io.portA.din
-  ram.io.re_b := io.portB.rd
+  ram.io.rd_B := io.portB.rd
   ram.io.addr_b := io.portB.addr
   io.portB.dout := ram.io.dout_b
 }

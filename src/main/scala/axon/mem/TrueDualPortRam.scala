@@ -47,10 +47,17 @@ import chisel3._
  *
  * @param addrWidthA The width of the port A address bus.
  * @param dataWidthA The width of the port A data bus.
+ * @param depthA The optional memory depth of port A (in words).
  * @param addrWidthB The width of the port B address bus.
  * @param dataWidthB The width of the port B data bus.
+ * @param depthB The optional memory depth of port B (in words).
  */
-class TrueDualPortRam(addrWidthA: Int, dataWidthA: Int, addrWidthB: Int, dataWidthB: Int) extends Module {
+class TrueDualPortRam(addrWidthA: Int,
+                      dataWidthA: Int,
+                      depthA: Option[Int] = None,
+                      addrWidthB: Int,
+                      dataWidthB: Int,
+                      depthB: Option[Int] = None) extends Module {
   val io = IO(new Bundle {
     /** Clock B */
     val clockB = Input(Clock())
@@ -60,11 +67,16 @@ class TrueDualPortRam(addrWidthA: Int, dataWidthA: Int, addrWidthB: Int, dataWid
     val portB = Flipped(ReadMemIO(addrWidthB, dataWidthB))
   })
 
+  private val depthA_ = depthA.getOrElse(0)
+  private val depthB_ = depthB.getOrElse(0)
+
   class WrappedTrueDualPortRam extends BlackBox(Map(
-      "ADDR_WIDTH_A" -> addrWidthA,
-      "DATA_WIDTH_A" -> dataWidthA,
-      "ADDR_WIDTH_B" -> addrWidthB,
-      "DATA_WIDTH_B" -> dataWidthB
+    "ADDR_WIDTH_A" -> addrWidthA,
+    "DATA_WIDTH_A" -> dataWidthA,
+    "DEPTH_A"      -> depthA_,
+    "ADDR_WIDTH_B" -> addrWidthB,
+    "DATA_WIDTH_B" -> dataWidthB,
+    "DEPTH_B"      -> depthB_
     )) {
     val io = IO(new Bundle {
       // port A
