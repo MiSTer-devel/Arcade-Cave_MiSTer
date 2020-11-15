@@ -104,11 +104,6 @@ architecture struct of cave is
     signal write_strobe_s           : std_logic;
     signal high_write_strobe_s      : std_logic;
     signal low_write_strobe_s       : std_logic;
-    -- YMZ RAM
-    constant YMZ_RAM_LOG_SIZE_C     : natural := 2;   -- 4B
-    signal ymz_ram_enable_s         : std_logic;
-    signal ymz_ram_ack_s            : std_logic;
-    signal ymz_ram_data_o_s         : word_t;
     -- Edge Cases
     signal edge_case_enable_s       : std_logic;
     signal edge_case_ack_s          : std_logic;
@@ -206,15 +201,13 @@ begin
     ---------------------
 
     -- This is an OR'ed bus
-    memory_bus_ack_s <= ymz_ram_ack_s     or
-                        edge_case_ack_s   or
+    memory_bus_ack_s <= edge_case_ack_s   or
                         other_ack_s;
 
     memBus_ack <= memory_bus_ack_s;
 
     -- "OR" everything together to create the "OR'ed" bus
-    memory_bus_data_s <= ymz_ram_data_o_s     or
-                         other_data_o_s;
+    memory_bus_data_s <= other_data_o_s;
 
     memBus_data <= memory_bus_data_s;
 
@@ -244,9 +237,6 @@ begin
     -- Memory bus decode logic - Dodonpachi Address Map -- TODO Change to constants
     ---------------------------------------------------
 
-    -- YMZ RAM              0x300000 - 0x300003
-    ymz_ram_enable_s     <= '1' when addr_68k_s(31 downto YMZ_RAM_LOG_SIZE_C) = x"0030000" & "00" else
-                            '0';
     -- Edge Cases
     edge_case_enable_s   <= '1' when (addr_68k_s(23 downto 16) = x"5f") or
                                      (addr_68k_s(31 downto 24) /= x"00") else
@@ -262,31 +252,6 @@ begin
     -- The second case when the upper 8 bits are non zero should maybe never
     -- occur, this may be a problem with the softcore... This needs to be
     -- researched further...
-
-    -------------
-    -- YMZ280b --
-    -------------
-    ymz280b_block : block
-    begin
-        ymz280b_regs : entity work.true_dual_port_ram
-            generic map (
-                ADDR_WIDTH_A => YMZ_RAM_LOG_SIZE_C-1,
-                DATA_WIDTH_A => DDP_WORD_WIDTH,
-                ADDR_WIDTH_B => YMZ_RAM_LOG_SIZE_C-1,
-                DATA_WIDTH_B => DDP_WORD_WIDTH)
-            port map (
-                clk_a  => clk_68k_i,
-                cs_a   => ymz_ram_enable_s,
-                wr_a   => write_strobe_s,
-                rd_a   => read_strobe_s,
-                addr_a => addr_68k_s(YMZ_RAM_LOG_SIZE_C-1 downto 1),
-                din_a  => data_out_68k_s,
-                dout_a => ymz_ram_data_o_s,
-                ack_a  => ymz_ram_ack_s,
-                clk_b  => clk_i,
-                addr_b => to_unsigned(0, YMZ_RAM_LOG_SIZE_C-1),
-                dout_b => open);
-    end block ymz280b_block;
 
     ----------------
     -- Edge Cases --

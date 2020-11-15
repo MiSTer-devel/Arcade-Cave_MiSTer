@@ -168,6 +168,9 @@ class CaveTop extends Module {
   // Video registers
   val videoRegs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(8)) }
 
+  // Sound registers
+  val soundRegs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(4)) }
+
   // TODO: Register this output
   val bufferSelect = videoRegs.io.regs(4)(0)
 
@@ -203,6 +206,8 @@ class CaveTop extends Module {
     cpu.memMap(0x000000 to 0x0fffff).romT(io.progRom) { _ + Config.PROG_ROM_OFFSET.U }
     // Main RAM
     cpu.memMap(0x100000 to 0x10ffff).ram(mainRam.io)
+    // Sound regs
+    cpu.memMap(0x300000 to 0x300003).wom(soundRegs.io.mem.asWriteMemIO)
     // Sprite RAM
     cpu.memMap(0x400000 to 0x40ffff).ram(spriteRam.io.portA)
     // Layer RAM
