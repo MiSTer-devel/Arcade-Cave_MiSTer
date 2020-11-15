@@ -187,19 +187,19 @@ class CaveTop extends Module {
   // Memory map
   withClockAndReset(io.cpuClock, io.cpuReset) {
     // Program ROM
-    cpu.memMap(0x000000 to 0x0fffff).romT(io.progRom) { _ + Config.PROG_ROM_OFFSET.U }
+    cpu.memMap(0x000000 to 0x0fffff).readMemT(io.progRom) { _ + Config.PROG_ROM_OFFSET.U }
     // Main RAM
-    cpu.memMap(0x100000 to 0x10ffff).ram(mainRam.io)
+    cpu.memMap(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     // Sound regs
-    cpu.memMap(0x300000 to 0x300003).wom(soundRegs.io.mem.asWriteMemIO)
+    cpu.memMap(0x300000 to 0x300003).writeMem(soundRegs.io.mem.asWriteMemIO)
     // Sprite RAM
-    cpu.memMap(0x400000 to 0x40ffff).ram(spriteRam.io.portA)
+    cpu.memMap(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     // Layer RAM
-    cpu.memMap(0x500000 to 0x507fff).ram(layer0Ram.io.portA)
-    cpu.memMap(0x600000 to 0x607fff).ram(layer1Ram.io.portA)
-    cpu.memMap(0x700000 to 0x70ffff).ram(layer2Ram.io.portA)
+    cpu.memMap(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
+    cpu.memMap(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
+    cpu.memMap(0x700000 to 0x70ffff).readWriteMem(layer2Ram.io.portA)
     // Video regs
-    cpu.memMap(0x800000 to 0x80007f).wom(videoRegs.io.mem.asWriteMemIO)
+    cpu.memMap(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
     // IRQ
     cpu.memMap(0x800000 to 0x800007).r { (addr, _) =>
       when(addr === 0x800004.U) { clearIRQ := true.B }
@@ -208,11 +208,11 @@ class CaveTop extends Module {
     // Trigger the start of a new frame
     cpu.memMap(0x800004).w { (_, _, data) => startFrame := data === 0x01f0.U }
     // Layer regs
-    cpu.memMap(0x900000 to 0x900005).ram(layer0Regs.io.mem)
-    cpu.memMap(0xa00000 to 0xa00005).ram(layer1Regs.io.mem)
-    cpu.memMap(0xb00000 to 0xb00005).ram(layer2Regs.io.mem)
+    cpu.memMap(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
+    cpu.memMap(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
+    cpu.memMap(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
     // Palette RAM
-    cpu.memMap(0xc00000 to 0xc0ffff).ram(paletteRam.io.portA)
+    cpu.memMap(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
     // Player 1 inputs
     cpu.memMap(0xd00000 to 0xd00001).r { (_, _) => "b1111111".U ## ~io.player.player1 }
     // Player 2 inputs

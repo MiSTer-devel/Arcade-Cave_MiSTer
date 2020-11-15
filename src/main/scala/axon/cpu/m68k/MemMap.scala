@@ -59,7 +59,7 @@ class MemMap(cpu: CPUIO, r: Range) {
    *
    * @param mem The memory port.
    */
-  def ram(mem: ReadWriteMemIO): Unit = ramT(mem)(identity)
+  def readWriteMem(mem: ReadWriteMemIO): Unit = readWriteMemT(mem)(identity)
 
   /**
    * Maps an address range to the given read-write memory port, with an address transform.
@@ -67,7 +67,7 @@ class MemMap(cpu: CPUIO, r: Range) {
    * @param mem The memory port.
    * @param f The address transform function.
    */
-  def ramT(mem: ReadWriteMemIO)(f: UInt => UInt): Unit = {
+  def readWriteMemT(mem: ReadWriteMemIO)(f: UInt => UInt): Unit = {
     val cs = Util.between(cpu.addr, r)
     mem.rd := cs && readStrobe
     mem.wr := cs && (upperWriteStrobe || lowerWriteStrobe)
@@ -85,7 +85,7 @@ class MemMap(cpu: CPUIO, r: Range) {
    *
    * @param mem The memory port.
    */
-  def rom(mem: ProgRomIO): Unit = romT(mem)(identity)
+  def readMem(mem: ProgRomIO): Unit = readMemT(mem)(identity)
 
   /**
    * Maps an address range to the given read-only memory port, with an address transform.
@@ -93,7 +93,7 @@ class MemMap(cpu: CPUIO, r: Range) {
    * @param mem The memory port.
    * @param f The address transform function.
    */
-  def romT(mem: ProgRomIO)(f: UInt => UInt): Unit = {
+  def readMemT(mem: ProgRomIO)(f: UInt => UInt): Unit = {
     val cs = Util.between(cpu.addr, r)
     mem.rd := cs && readStrobe
     mem.addr := f(cpu.addr)
@@ -108,7 +108,7 @@ class MemMap(cpu: CPUIO, r: Range) {
    *
    * @param mem The memory port.
    */
-  def wom(mem: WriteMemIO): Unit = womT(mem)(identity)
+  def writeMem(mem: WriteMemIO): Unit = writeMemT(mem)(identity)
 
   /**
    * Maps an address range to the given write-only memory port, with an address transform.
@@ -116,7 +116,7 @@ class MemMap(cpu: CPUIO, r: Range) {
    * @param mem The memory port.
    * @param f The address transform function.
    */
-  def womT(mem: WriteMemIO)(f: UInt => UInt): Unit = {
+  def writeMemT(mem: WriteMemIO)(f: UInt => UInt): Unit = {
     val cs = Util.between(cpu.addr, r)
     mem.wr := cs && (upperWriteStrobe || lowerWriteStrobe)
     mem.addr := f(cpu.addr)(mem.addrWidth, 1)
