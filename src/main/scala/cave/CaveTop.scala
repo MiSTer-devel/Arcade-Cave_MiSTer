@@ -71,7 +71,7 @@ class CaveTop extends Module {
   })
 
   // Wires
-  val startFrame = WireInit(false.B)
+  val generateFrame = WireInit(false.B)
   val clearIRQ = WireInit(false.B)
 
   // M68000 CPU
@@ -168,7 +168,7 @@ class CaveTop extends Module {
 
   // GPU
   val gpu = Module(new GPU)
-  gpu.io.generateFrame := Util.rising(ShiftRegister(startFrame, 2))
+  gpu.io.generateFrame := Util.rising(ShiftRegister(generateFrame, 2))
   gpu.io.videoRegs := videoRegs.io.regs.asUInt
   gpu.io.layer0Regs := layer0Regs.io.regs.asUInt
   gpu.io.layer1Regs := layer1Regs.io.regs.asUInt
@@ -203,7 +203,7 @@ class CaveTop extends Module {
       3.U
     }
     // Trigger the start of a new frame
-    cpu.memMap(0x800004).w { (_, _, data) => startFrame := data === 0x01f0.U }
+    cpu.memMap(0x800004).w { (_, _, data) => generateFrame := data === 0x01f0.U }
     // Layer regs
     cpu.memMap(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
     cpu.memMap(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)

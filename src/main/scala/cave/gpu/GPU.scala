@@ -45,17 +45,29 @@ import chisel3._
 /** Graphics Processor */
 class GPU extends Module {
   val io = IO(new Bundle {
+    /** Strobe to indicate that a new frame should be generated */
     val generateFrame = Input(Bool())
+    /** Video registers port */
     val videoRegs = Input(Bits(Config.VIDEO_GPU_DATA_WIDTH.W))
+    /** Layer 0 registers port */
     val layer0Regs = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
+    /** Layer 1 registers port */
     val layer1Regs = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
+    /** Layer 2 registers port */
     val layer2Regs = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
+    /** Tile ROM port */
     val tileRom = new TileRomIO
+    /** Sprite RAM port */
     val spriteRam = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
+    /** Layer 0 RAM port */
     val layer0Ram = ReadMemIO(Config.LAYER_0_RAM_GPU_ADDR_WIDTH, Config.LAYER_0_RAM_GPU_DATA_WIDTH)
+    /** Layer 1 RAM port */
     val layer1Ram = ReadMemIO(Config.LAYER_1_RAM_GPU_ADDR_WIDTH, Config.LAYER_1_RAM_GPU_DATA_WIDTH)
+    /** Layer 2 RAM port */
     val layer2Ram = ReadMemIO(Config.LAYER_2_RAM_GPU_ADDR_WIDTH, Config.LAYER_2_RAM_GPU_DATA_WIDTH)
+    /** Palette RAM port */
     val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
+    /** Frame buffer port */
     val frameBuffer = new FrameBufferIO
   })
 
