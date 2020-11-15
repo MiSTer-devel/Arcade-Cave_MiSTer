@@ -225,7 +225,7 @@ class CaveTop extends Module {
     //
     // The reason these accesses appear is probably because it made the layer update routine simpler to write (no need
     // to handle edge cases). These accesses are simply ignored by the hardware.
-    cpu.memMap(0x5f0000 to 0x5fffff).ignore
+    cpu.memMap(0x5f0000 to 0x5fffff).ignore()
     // Acknowledge accesses outside the M680000 memory range
     // TODO: This hack shouldn't be required by the CPU, but there is something wrong with the CPU implementation.
     when(cpu.io.addr(31, 28) === 0xf.U && cpu.io.rw) {

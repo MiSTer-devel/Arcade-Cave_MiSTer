@@ -170,7 +170,7 @@ class MemMap(cpu: CPUIO, r: Range) {
   }
 
   /** Ignores the address range. Read/write operations will still be acknowledged. */
-  def ignore: Unit = {
+  def ignore(): Unit = {
     rw((_, _) => 0.U)((_, _, _) => {})
   }
 }
