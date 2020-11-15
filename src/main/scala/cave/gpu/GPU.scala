@@ -51,9 +51,9 @@ class GPU extends Module {
     val layer0Ram = ReadMemIO(Config.LAYER_0_RAM_GPU_ADDR_WIDTH, Config.LAYER_0_RAM_GPU_DATA_WIDTH)
     val layer1Ram = ReadMemIO(Config.LAYER_1_RAM_GPU_ADDR_WIDTH, Config.LAYER_1_RAM_GPU_DATA_WIDTH)
     val layer2Ram = ReadMemIO(Config.LAYER_2_RAM_GPU_ADDR_WIDTH, Config.LAYER_2_RAM_GPU_DATA_WIDTH)
-    val layer0Info = Input(Bits(Config.LAYER_INFO_GPU_DATA_WIDTH.W))
-    val layer1Info = Input(Bits(Config.LAYER_INFO_GPU_DATA_WIDTH.W))
-    val layer2Info = Input(Bits(Config.LAYER_INFO_GPU_DATA_WIDTH.W))
+    val layer0Regs = Input(Bits(Config.LAYER_INFO_GPU_DATA_WIDTH.W))
+    val layer1Regs = Input(Bits(Config.LAYER_INFO_GPU_DATA_WIDTH.W))
+    val layer2Regs = Input(Bits(Config.LAYER_INFO_GPU_DATA_WIDTH.W))
     val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
     val frameBuffer = new FrameBufferIO
   })
@@ -89,9 +89,9 @@ class GPU extends Module {
   gpu.io.layer0Ram <> io.layer0Ram
   gpu.io.layer1Ram <> io.layer1Ram
   gpu.io.layer2Ram <> io.layer2Ram
-  gpu.io.layer0Info <> io.layer0Info
-  gpu.io.layer1Info <> io.layer1Info
-  gpu.io.layer2Info <> io.layer2Info
+  gpu.io.layer0Info <> io.layer0Regs
+  gpu.io.layer1Info <> io.layer1Regs
+  gpu.io.layer2Info <> io.layer2Regs
   gpu.io.paletteRam <> io.paletteRam
   gpu.io.frameBuffer <> io.frameBuffer
 }

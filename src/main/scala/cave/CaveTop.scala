@@ -156,9 +156,9 @@ class CaveTop extends Module {
   paletteRam.io.clockB := clock
 
   // Layer registers
-  val layer0Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
-  val layer1Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
-  val layer2Info = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
+  val layer0Regs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
+  val layer1Regs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
+  val layer2Regs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_INFO_NUM_REGS)) }
 
   // Video registers
   val videoRegs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(8)) }
@@ -178,9 +178,9 @@ class CaveTop extends Module {
   gpu.io.layer0Ram <> layer0Ram.io.portB
   gpu.io.layer1Ram <> layer1Ram.io.portB
   gpu.io.layer2Ram <> layer2Ram.io.portB
-  gpu.io.layer0Info := RegNext(layer0Info.io.regs.asUInt)
-  gpu.io.layer1Info := RegNext(layer1Info.io.regs.asUInt)
-  gpu.io.layer2Info := RegNext(layer2Info.io.regs.asUInt)
+  gpu.io.layer0Regs := RegNext(layer0Regs.io.regs.asUInt)
+  gpu.io.layer1Regs := RegNext(layer1Regs.io.regs.asUInt)
+  gpu.io.layer2Regs := RegNext(layer2Regs.io.regs.asUInt)
   gpu.io.paletteRam <> paletteRam.io.portB
   gpu.io.frameBuffer <> io.frameBuffer
 
@@ -208,9 +208,9 @@ class CaveTop extends Module {
     // Trigger the start of a new frame
     cpu.memMap(0x800004).w { (_, _, data) => startFrame := data === 0x01f0.U }
     // Layer regs
-    cpu.memMap(0x900000 to 0x900005).ram(layer0Info.io.mem)
-    cpu.memMap(0xa00000 to 0xa00005).ram(layer1Info.io.mem)
-    cpu.memMap(0xb00000 to 0xb00005).ram(layer2Info.io.mem)
+    cpu.memMap(0x900000 to 0x900005).ram(layer0Regs.io.mem)
+    cpu.memMap(0xa00000 to 0xa00005).ram(layer1Regs.io.mem)
+    cpu.memMap(0xb00000 to 0xb00005).ram(layer2Regs.io.mem)
     // Palette RAM
     cpu.memMap(0xc00000 to 0xc0ffff).ram(paletteRam.io.portA)
     // Player 1 inputs
