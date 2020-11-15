@@ -35,72 +35,50 @@
  *  SOFTWARE.
  */
 
-package cave
+package cave.gpu
 
-import axon.gpu.VideoTimingConfig
+import axon.cpu.m68k.CPU
+import axon.mem.ReadWriteMemIO
+import chisel3._
+import chisel3.util._
 
-object Config {
-  /** The system clock frequency (Hz) */
-  val CLOCK_FREQ = 96000000D
+/**
+ * A set of registers.
+ *
+ * @param numRegs The number of registers in the register file.
+ */
+class RegisterFile(numRegs: Int) extends Module {
+  /** The width of the address bus. */
+  val ADDR_WIDTH = log2Up(numRegs)
 
-  val SCREEN_WIDTH = 320
-  val SCREEN_HEIGHT = 240
+  /** The width of a byte. */
+  val BYTE_WIDTH = 8
 
-  val CACHE_ADDR_WIDTH = 20
-  val CACHE_DATA_WIDTH = 256
+  val io = IO(new Bundle {
+    /** Memory port */
+    val mem = Flipped(ReadWriteMemIO(ADDR_WIDTH, CPU.DATA_WIDTH))
+    /** Registers port */
+    val regs = Output(Vec(numRegs, Bits(CPU.DATA_WIDTH.W)))
+  })
 
-  val PROG_ROM_ADDR_WIDTH = 24
-  val PROG_ROM_DATA_WIDTH = 16
-  val PROG_ROM_OFFSET = 0x000000
+  // Data registers
+  val regs = Reg(Vec(numRegs, Bits(CPU.DATA_WIDTH.W)))
 
-  val TILE_ROM_ADDR_WIDTH = 32
-  val TILE_ROM_DATA_WIDTH = 64
-  val TILE_ROM_OFFSET = 0x100000
+  // Alias the current data register
+  val data = regs(io.mem.addr)
 
-  val MAIN_RAM_ADDR_WIDTH = 15
-  val MAIN_RAM_DATA_WIDTH = 16
+  // Split data register into a vector of bytes
+  val bytes = data.asTypeOf(Vec(io.mem.maskWidth, Bits(BYTE_WIDTH.W)))
 
-  val SPRITE_RAM_ADDR_WIDTH = 15
-  val SPRITE_RAM_DATA_WIDTH = 16
-  val SPRITE_RAM_GPU_ADDR_WIDTH = 12
-  val SPRITE_RAM_GPU_DATA_WIDTH = 128
+  // Write masked bytes to the data register
+  0.until(io.mem.maskWidth).foreach { n =>
+    when(io.mem.wr && io.mem.mask(n)) { bytes(n) := io.mem.din((n+1)*BYTE_WIDTH-1, n*BYTE_WIDTH) }
+  }
 
-  val LAYER_0_RAM_ADDR_WIDTH = 14
-  val LAYER_0_RAM_DATA_WIDTH = 16
-  val LAYER_0_RAM_GPU_ADDR_WIDTH = 13
-  val LAYER_0_RAM_GPU_DATA_WIDTH = 32
+  // Concatenate the bytes and update the data register
+  data := bytes.asUInt
 
-  val LAYER_1_RAM_ADDR_WIDTH = 14
-  val LAYER_1_RAM_DATA_WIDTH = 16
-  val LAYER_1_RAM_GPU_ADDR_WIDTH = 13
-  val LAYER_1_RAM_GPU_DATA_WIDTH = 32
-
-  val LAYER_2_RAM_ADDR_WIDTH = 12
-  val LAYER_2_RAM_DATA_WIDTH = 16
-  val LAYER_2_RAM_GPU_ADDR_WIDTH = 11
-  val LAYER_2_RAM_GPU_DATA_WIDTH = 32
-
-  val PALETTE_RAM_ADDR_WIDTH = 15
-  val PALETTE_RAM_DATA_WIDTH = 16
-  val PALETTE_RAM_GPU_ADDR_WIDTH = 15
-  val PALETTE_RAM_GPU_DATA_WIDTH = 16
-
-  val LAYER_INFO_NUM_REGS = 3
-  val LAYER_INFO_GPU_ADDR_WIDTH = 1
-  val LAYER_INFO_GPU_DATA_WIDTH = 48
-
-  val FRAME_BUFFER_ADDR_WIDTH = 17
-  val FRAME_BUFFER_DATA_WIDTH = 15
-
-  /** Video timing configuration */
-  val videoTimingConfig = VideoTimingConfig(
-    hDisplay = 320,
-    hFrontPorch = 5,
-    hRetrace = 23,
-    hBackPorch = 34,
-    vDisplay = 240,
-    vFrontPorch = 12,
-    vRetrace = 2,
-    vBackPorch = 19
-  )
+  // Outputs
+  io.mem.dout := data
+  io.regs := regs
 }

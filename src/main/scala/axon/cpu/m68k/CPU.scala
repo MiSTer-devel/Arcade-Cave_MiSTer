@@ -35,19 +35,20 @@
  *  SOFTWARE.
  */
 
-package axon.cpu
+package axon.cpu.m68k
 
 import chisel3._
 
-class M68KIO extends Bundle {
+/** An interface for the M68000 CPU. */
+class CPUIO extends Bundle {
   /** Clock enable */
   val cen = Input(Bool())
   /** Address bus */
-  val addr = Output(UInt(M68K.ADDR_WIDTH.W))
+  val addr = Output(UInt(CPU.ADDR_WIDTH.W))
   /** Data input bus */
-  val din = Input(Bits(M68K.DATA_WIDTH.W))
+  val din = Input(Bits(CPU.DATA_WIDTH.W))
   /** Data output bus */
-  val dout = Output(Bits(M68K.DATA_WIDTH.W))
+  val dout = Output(Bits(CPU.DATA_WIDTH.W))
   /** Address strobe */
   val as = Output(Bool())
   /** Read/write */
@@ -59,7 +60,7 @@ class M68KIO extends Bundle {
   /** Data transfer acknowledge */
   val dtack = Input(Bool())
   /** Interrupt priority level */
-  val ipl = Input(UInt(M68K.IPL_WIDTH.W))
+  val ipl = Input(UInt(CPU.IPL_WIDTH.W))
   /** Debug port */
   val debug = new Bundle {
     val pc = Output(UInt())
@@ -68,24 +69,38 @@ class M68KIO extends Bundle {
 }
 
 /** M68000 CPU */
-class M68K extends Module {
-  val io = IO(new M68KIO)
+class CPU extends Module {
+  /**
+   * Create a memory map for the given address.
+   *
+   * @param a The address.
+   */
+  def memMap(a: Int) = new MemMap(io, Range(a, a))
+
+  /**
+   * Create a memory map for the given address range.
+   *
+   * @param r The address range.
+   */
+  def memMap(r: Range) = new MemMap(io, r)
+
+  val io = IO(new CPUIO)
 
   class TG68 extends BlackBox {
     val io = IO(new Bundle {
       val clk = Input(Bool())
       val reset = Input(Bool())
       val clkena_in = Input(Bool())
-      val data_in = Input(Bits(M68K.DATA_WIDTH.W))
-      val IPL = Input(UInt(M68K.IPL_WIDTH.W))
+      val data_in = Input(Bits(CPU.DATA_WIDTH.W))
+      val IPL = Input(UInt(CPU.IPL_WIDTH.W))
       val dtack = Input(Bool())
-      val addr = Output(UInt(M68K.ADDR_WIDTH.W))
-      val data_out = Output(Bits(M68K.DATA_WIDTH.W))
+      val addr = Output(UInt(CPU.ADDR_WIDTH.W))
+      val data_out = Output(Bits(CPU.DATA_WIDTH.W))
       val as = Output(Bool())
       val uds = Output(Bool())
       val lds = Output(Bool())
       val rw = Output(Bool())
-      val TG68_PC_o = Output(UInt(M68K.ADDR_WIDTH.W))
+      val TG68_PC_o = Output(UInt(CPU.ADDR_WIDTH.W))
       val TG68_PCW_o = Output(Bool())
     })
   }
@@ -107,11 +122,11 @@ class M68K extends Module {
   io.debug.pcw := cpu.io.TG68_PCW_o
 }
 
-object M68K {
+object CPU {
   /**
    * The width of the CPU address bus.
    *
-   * TODO: Lies, the M68K does not have a 32-bit address bus. This needs to be addressed.
+   * TODO: Lies! The M68K does not have a 32-bit address bus, this should be fixed.
    */
   val ADDR_WIDTH = 32
 

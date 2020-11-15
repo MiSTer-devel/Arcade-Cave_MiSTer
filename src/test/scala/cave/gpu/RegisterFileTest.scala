@@ -35,72 +35,64 @@
  *  SOFTWARE.
  */
 
-package cave
+package cave.gpu
 
-import axon.gpu.VideoTimingConfig
+import chisel3._
+import chiseltest._
+import org.scalatest._
 
-object Config {
-  /** The system clock frequency (Hz) */
-  val CLOCK_FREQ = 96000000D
+class RegisterFileTest extends FlatSpec with ChiselScalatestTester with Matchers {
+  it should "allow writing masked bytes" in {
+    test(new RegisterFile(3)) { dut =>
+      dut.io.mem.wr.poke(true.B)
+      dut.io.mem.rd.poke(true.B)
 
-  val SCREEN_WIDTH = 320
-  val SCREEN_HEIGHT = 240
+      // Write
+      dut.io.mem.mask.poke(0.U)
+      dut.io.mem.din.poke(0x1234.U)
+      dut.clock.step()
+      dut.io.mem.dout.expect(0x0000.U)
 
-  val CACHE_ADDR_WIDTH = 20
-  val CACHE_DATA_WIDTH = 256
+      // Write
+      dut.io.mem.mask.poke(1.U)
+      dut.io.mem.din.poke(0x1234.U)
+      dut.clock.step()
+      dut.io.mem.dout.expect(0x0034.U)
 
-  val PROG_ROM_ADDR_WIDTH = 24
-  val PROG_ROM_DATA_WIDTH = 16
-  val PROG_ROM_OFFSET = 0x000000
+      // Write
+      dut.io.mem.mask.poke(2.U)
+      dut.io.mem.din.poke(0x5678.U)
+      dut.clock.step()
+      dut.io.mem.dout.expect(0x5634.U)
 
-  val TILE_ROM_ADDR_WIDTH = 32
-  val TILE_ROM_DATA_WIDTH = 64
-  val TILE_ROM_OFFSET = 0x100000
+      // Write
+      dut.io.mem.mask.poke(3.U)
+      dut.io.mem.din.poke(0xabcd.U)
+      dut.clock.step()
+      dut.io.mem.dout.expect(0xabcd.U)
+    }
+  }
 
-  val MAIN_RAM_ADDR_WIDTH = 15
-  val MAIN_RAM_DATA_WIDTH = 16
+  it should "output the registers" in {
+    test(new RegisterFile(3)) { dut =>
+      dut.io.mem.wr.poke(true.B)
+      dut.io.mem.mask.poke(3.U)
 
-  val SPRITE_RAM_ADDR_WIDTH = 15
-  val SPRITE_RAM_DATA_WIDTH = 16
-  val SPRITE_RAM_GPU_ADDR_WIDTH = 12
-  val SPRITE_RAM_GPU_DATA_WIDTH = 128
+      // Write
+      dut.io.mem.addr.poke(0.U)
+      dut.io.mem.din.poke(0x1234.U)
+      dut.clock.step()
+      dut.io.mem.addr.poke(1.U)
+      dut.io.mem.din.poke(0x5678.U)
+      dut.clock.step()
+      dut.io.mem.addr.poke(2.U)
+      dut.io.mem.din.poke(0xabcd.U)
+      dut.clock.step()
 
-  val LAYER_0_RAM_ADDR_WIDTH = 14
-  val LAYER_0_RAM_DATA_WIDTH = 16
-  val LAYER_0_RAM_GPU_ADDR_WIDTH = 13
-  val LAYER_0_RAM_GPU_DATA_WIDTH = 32
-
-  val LAYER_1_RAM_ADDR_WIDTH = 14
-  val LAYER_1_RAM_DATA_WIDTH = 16
-  val LAYER_1_RAM_GPU_ADDR_WIDTH = 13
-  val LAYER_1_RAM_GPU_DATA_WIDTH = 32
-
-  val LAYER_2_RAM_ADDR_WIDTH = 12
-  val LAYER_2_RAM_DATA_WIDTH = 16
-  val LAYER_2_RAM_GPU_ADDR_WIDTH = 11
-  val LAYER_2_RAM_GPU_DATA_WIDTH = 32
-
-  val PALETTE_RAM_ADDR_WIDTH = 15
-  val PALETTE_RAM_DATA_WIDTH = 16
-  val PALETTE_RAM_GPU_ADDR_WIDTH = 15
-  val PALETTE_RAM_GPU_DATA_WIDTH = 16
-
-  val LAYER_INFO_NUM_REGS = 3
-  val LAYER_INFO_GPU_ADDR_WIDTH = 1
-  val LAYER_INFO_GPU_DATA_WIDTH = 48
-
-  val FRAME_BUFFER_ADDR_WIDTH = 17
-  val FRAME_BUFFER_DATA_WIDTH = 15
-
-  /** Video timing configuration */
-  val videoTimingConfig = VideoTimingConfig(
-    hDisplay = 320,
-    hFrontPorch = 5,
-    hRetrace = 23,
-    hBackPorch = 34,
-    vDisplay = 240,
-    vFrontPorch = 12,
-    vRetrace = 2,
-    vBackPorch = 19
-  )
+      // Read
+      dut.io.regs(0).expect(0x1234.U)
+      dut.io.regs(1).expect(0x5678.U)
+      dut.io.regs(2).expect(0xabcd.U)
+    }
+  }
 }

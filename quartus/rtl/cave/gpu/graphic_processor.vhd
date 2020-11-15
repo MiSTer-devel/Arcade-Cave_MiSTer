@@ -54,47 +54,52 @@ use work.cave_pkg.all;
 
 entity graphic_processor is
     generic (
-        INCLUDE_LAYER_PROCESOR_G : boolean := false);
+        INCLUDE_LAYER_PROCESOR_G : boolean := true);
     port (
         -- Standard signals
         clk_i                    : in  std_logic;
         rst_i                    : in  std_logic;
         -- Control signals
-        generate_frame_i         : in  std_logic;
-        buffer_select_i          : in  std_logic;
-        layer_processor_en_i     : in  std_logic := '1';
-        -- Sprite RAM interface
-        sprite_ram_addr_o        : out sprite_ram_info_access_t;
-        sprite_ram_info_i        : in  sprite_ram_line_t := (others => '0');
-        -- Layer 0 RAM interface
-        layer_0_ram_addr_o       : out layer_ram_info_access_t;
-        layer_0_ram_info_i       : in  layer_ram_line_t := (others => '0');
-        -- Layer 1 RAM interface
-        layer_1_ram_addr_o       : out layer_ram_info_access_t;
-        layer_1_ram_info_i       : in  layer_ram_line_t := (others => '0');
-        -- Layer 2 RAM interface
-        layer_2_ram_addr_o       : out layer_ram_info_access_t;
-        layer_2_ram_info_i       : in  layer_ram_line_t := (others => '0');
-        -- Video Control Regs
-        vctrl_reg_0_i            : in  layer_info_line_t := (others => '0');
-        vctrl_reg_1_i            : in  layer_info_line_t := (others => '0');
-        vctrl_reg_2_i            : in  layer_info_line_t := (others => '0');
-        -- ROM interface (both for sprite ROM and layer ROM)
-        rom_addr_o               : out gfx_rom_addr_t;
-        tiny_burst_gfx_o         : out std_logic;
-        rom_burst_read_o         : out std_logic;
-        rom_data_i               : in  gfx_rom_data_t;
-        rom_data_valid_i         : in  std_logic;
-        rom_data_burst_done_i    : in  std_logic;
-        -- Palette RAM interface (Do not delay ! It expects data the next cycle)
-        palette_ram_addr_o       : out palette_ram_addr_t;
-        palette_ram_data_i       : in  palette_ram_data_t;
-        -- Frame Buffer interface
-        frame_buffer_addr_o      : out frame_buffer_addr_t;
-        frame_buffer_color_o     : out color_t;
-        frame_buffer_write_o     : out std_logic;
-        frame_buffer_dma_start_o : out std_logic;
-        frame_buffer_dma_done_i  : in  std_logic);
+        generateFrame            : in  std_logic;
+        bufferSelect             : in  std_logic;
+        -- Tile ROM
+        tileRom_rd               : out std_logic;
+        tileRom_addr             : out gfx_rom_addr_t;
+        tileRom_dout             : in  gfx_rom_data_t;
+        tileRom_valid            : in  std_logic;
+        tileRom_tinyBurst        : out std_logic;
+        tileRom_burstDone        : in  std_logic;
+        -- Sprite RAM
+        spriteRam_rd             : out std_logic;
+        spriteRam_addr           : out sprite_ram_info_access_t;
+        spriteRam_dout           : in  sprite_ram_line_t;
+        -- Layer 0 RAM
+        layer0Ram_rd             : out std_logic;
+        layer0Ram_addr           : out layer_ram_info_access_t;
+        layer0Ram_dout           : in  layer_ram_line_t;
+        -- Layer 1 RAM
+        layer1Ram_rd             : out std_logic;
+        layer1Ram_addr           : out layer_ram_info_access_t;
+        layer1Ram_dout           : in  layer_ram_line_t;
+        -- Layer 2 RAM
+        layer2Ram_rd             : out std_logic;
+        layer2Ram_addr           : out layer_ram_info_access_t;
+        layer2Ram_dout           : in  layer_ram_line_t;
+        -- Layer info
+        layer0Info               : in  layer_info_line_t;
+        layer1Info               : in  layer_info_line_t;
+        layer2Info               : in  layer_info_line_t;
+        -- Palette RAM
+        paletteRam_rd             : out std_logic;
+        paletteRam_addr           : out unsigned(14 downto 0);
+        paletteRam_dout           : in  word_t;
+        -- Frame Buffer
+        frameBuffer_wr           : out std_logic;
+        frameBuffer_addr         : out frame_buffer_addr_t;
+        frameBuffer_mask         : out std_logic_vector(1 downto 0);
+        frameBuffer_din          : out std_logic_vector(DDP_WORD_WIDTH-2 downto 0);
+        frameBuffer_dmaStart     : out std_logic;
+        frameBuffer_dmaDone      : in  std_logic);
 end entity graphic_processor;
 
 architecture struct of graphic_processor is
@@ -112,6 +117,7 @@ architecture struct of graphic_processor is
     -------------
     signal state_reg_s, next_state_s       : state_t;
     --
+    signal frame_buffer_color_s            : color_t;
     signal clear_fb_done_s                 : std_logic;
     --
     signal start_drawing_sprites_s         : std_logic;
@@ -168,6 +174,13 @@ architecture struct of graphic_processor is
 
 begin
 
+    spriteRam_rd <= '1';
+    layer0Ram_rd <= '1';
+    layer1Ram_rd <= '1';
+    layer2Ram_rd <= '1';
+    paletteRam_rd <= '1';
+    frameBuffer_mask <= "11";
+
     ---------
     -- FSM --
     ---------
@@ -189,7 +202,7 @@ begin
 
         case state_reg_s is
             when IDLE =>
-                if generate_frame_i = '1' then
+                if generateFrame = '1' then
                     next_state_s <= CLEAR_FB;
                 end if;
 
@@ -200,11 +213,7 @@ begin
 
             when DRAW_SPRITES =>
                 if sprite_processor_done_s = '1' then
-                    if layer_processor_en_i = '1' then
-                        next_state_s <= DRAW_LAYER_0;
-                    else
-                        next_state_s <= START_DMA;
-                    end if;
+                    next_state_s <= DRAW_LAYER_0;
                 end if;
 
             when DRAW_LAYER_0 =>
@@ -226,7 +235,7 @@ begin
                 next_state_s <= WAIT_DMA;
 
             when WAIT_DMA =>
-                if frame_buffer_dma_done_i = '1' then
+                if frameBuffer_dmaDone = '1' then
                     next_state_s <= IDLE;
                 end if;
         end case;
@@ -258,7 +267,7 @@ begin
                       "10" when state_reg_s = DRAW_LAYER_2 else
                       "00";
 
-    frame_buffer_dma_start_o <= '1' when state_reg_s = START_DMA else '0';
+    frameBuffer_dmaStart <= '1' when state_reg_s = START_DMA else '0';
 
     ----------------
     -- Processors --
@@ -306,11 +315,11 @@ begin
             rst_i                     => rst_i,
             --
             start_i                   => start_drawing_sprites_s,
-            buffer_select_i           => buffer_select_i,
+            buffer_select_i           => bufferSelect,
             done_o                    => sprite_processor_done_s,
             --
-            sprite_ram_addr_o         => sprite_ram_addr_o,
-            sprite_ram_info_i         => sprite_ram_info_i,
+            sprite_ram_addr_o         => spriteRam_addr,
+            sprite_ram_info_i         => spriteRam_dout,
             --
             sprite_rom_addr_o         => spr_rom_addr_s,
             sprite_burst_read_o       => spr_burst_read_s,
@@ -325,7 +334,7 @@ begin
             priority_ram_write_o      => spr_priority_ram_write_s,
             --
             palette_ram_addr_o        => spr_palette_ram_addr_s,
-            palette_ram_data_i        => palette_ram_data_i,
+            palette_ram_data_i        => paletteRam_dout,
             --
             frame_buffer_addr_o       => spr_frame_buffer_addr_s,
             frame_buffer_color_o      => spr_frame_buffer_color_s,
@@ -368,25 +377,25 @@ begin
                     priority_ram_data_o       => layer_priority_ram_write_data_s,
                     priority_ram_write_o      => layer_priority_ram_write_s,
                     palette_ram_addr_o        => layer_palette_ram_addr_s,
-                    palette_ram_data_i        => palette_ram_data_i,
+                    palette_ram_data_i        => paletteRam_dout,
                     frame_buffer_addr_o       => layer_frame_buffer_addr_s,
                     frame_buffer_color_o      => layer_frame_buffer_color_s,
                     frame_buffer_write_o      => layer_frame_buffer_write_s);
 
             -- Global Layer Info Mux
-            layer_info_to_layer_processor_s <= extract_global_layer_info_from_regs(vctrl_reg_0_i) when state_reg_s = DRAW_LAYER_0 else
-                                               extract_global_layer_info_from_regs(vctrl_reg_1_i) when state_reg_s = DRAW_LAYER_1 else
-                                               extract_global_layer_info_from_regs(vctrl_reg_2_i);
+            layer_info_to_layer_processor_s <= extract_global_layer_info_from_regs(layer0Info) when state_reg_s = DRAW_LAYER_0 else
+                                               extract_global_layer_info_from_regs(layer1Info) when state_reg_s = DRAW_LAYER_1 else
+                                               extract_global_layer_info_from_regs(layer2Info);
 
             -- All get the same address, only one is used at a time
-            layer_0_ram_addr_o <= layer_ram_addr_s;
-            layer_1_ram_addr_o <= layer_ram_addr_s;
-            layer_2_ram_addr_o <= layer_ram_addr_s;
+            layer0Ram_addr <= layer_ram_addr_s;
+            layer1Ram_addr <= layer_ram_addr_s;
+            layer2Ram_addr <= layer_ram_addr_s;
 
             -- Layer RAM Info Mux
-            layer_ram_info_s <= layer_0_ram_info_i when state_reg_s = DRAW_LAYER_0 else
-                                layer_1_ram_info_i when state_reg_s = DRAW_LAYER_1 else
-                                layer_2_ram_info_i;
+            layer_ram_info_s <= layer0Ram_dout when state_reg_s = DRAW_LAYER_0 else
+                                layer1Ram_dout when state_reg_s = DRAW_LAYER_1 else
+                                layer2Ram_dout;
 
             -- Get the correct layer rom address
             layer_rom_addr_s <= layer_processor_rom_offset_s + layer_0_rom_offset_c when state_reg_s = DRAW_LAYER_0 else
@@ -398,9 +407,9 @@ begin
     else generate
 
         -- No layer processor
-        layer_0_ram_addr_o              <= (others => '0');
-        layer_1_ram_addr_o              <= (others => '0');
-        layer_2_ram_addr_o              <= (others => '0');
+        layer0Ram_addr                  <= (others => '0');
+        layer1Ram_addr                  <= (others => '0');
+        layer2Ram_addr                  <= (others => '0');
         --
         tiny_burst_s                    <= '0';
         layer_rom_addr_s                <= (others => '0');
@@ -433,34 +442,36 @@ begin
     -- ROM memory bus
     -----------------
 
-    rom_addr_o               <= spr_rom_addr_s when state_reg_s = DRAW_SPRITES else
+    tileRom_addr             <= spr_rom_addr_s when state_reg_s = DRAW_SPRITES else
                                 layer_rom_addr_s when (state_reg_s = DRAW_LAYER_0) or (state_reg_s = DRAW_LAYER_1) or (state_reg_s = DRAW_LAYER_2) else
                                 (others => '0');
-    tiny_burst_gfx_o         <= '0' when state_reg_s = DRAW_SPRITES else tiny_burst_s;
-    rom_burst_read_o         <= spr_burst_read_s when state_reg_s = DRAW_SPRITES else layer_burst_read_s;
-    spr_data_s               <= rom_data_i;
-    layer_data_s             <= rom_data_i;
-    spr_data_valid_s         <= rom_data_valid_i when state_reg_s = DRAW_SPRITES else '0';
-    layer_data_valid_s       <= rom_data_valid_i when (state_reg_s = DRAW_LAYER_0) or (state_reg_s = DRAW_LAYER_1) or (state_reg_s = DRAW_LAYER_2) else '0';
-    spr_data_burst_done_s    <= rom_data_burst_done_i when state_reg_s = DRAW_SPRITES else '0';
-    layer_data_burst_done_s  <= rom_data_burst_done_i when (state_reg_s = DRAW_LAYER_0) or (state_reg_s = DRAW_LAYER_1) or (state_reg_s = DRAW_LAYER_2) else '0';
+    tileRom_tinyBurst        <= '0' when state_reg_s = DRAW_SPRITES else tiny_burst_s;
+    tileRom_rd               <= spr_burst_read_s when state_reg_s = DRAW_SPRITES else layer_burst_read_s;
+    spr_data_s               <= tileRom_dout;
+    layer_data_s             <= tileRom_dout;
+    spr_data_valid_s         <= tileRom_valid when state_reg_s = DRAW_SPRITES else '0';
+    layer_data_valid_s       <= tileRom_valid when (state_reg_s = DRAW_LAYER_0) or (state_reg_s = DRAW_LAYER_1) or (state_reg_s = DRAW_LAYER_2) else '0';
+    spr_data_burst_done_s    <= tileRom_burstDone when state_reg_s = DRAW_SPRITES else '0';
+    layer_data_burst_done_s  <= tileRom_burstDone when (state_reg_s = DRAW_LAYER_0) or (state_reg_s = DRAW_LAYER_1) or (state_reg_s = DRAW_LAYER_2) else '0';
 
     -- Palette memory bus
     ---------------------
-    palette_ram_addr_o <= spr_palette_ram_addr_s when state_reg_s = DRAW_SPRITES else layer_palette_ram_addr_s;
+    paletteRam_addr <= spr_palette_ram_addr_s when state_reg_s = DRAW_SPRITES else layer_palette_ram_addr_s;
 
     -- Frame buffer memory bus
     --------------------------
-    frame_buffer_addr_o      <= spr_frame_buffer_addr_s when state_reg_s = DRAW_SPRITES else
-                                clear_frame_buffer_addr_s when state_reg_s = CLEAR_FB else
-                                layer_frame_buffer_addr_s;
-    frame_buffer_color_o     <= spr_frame_buffer_color_s when state_reg_s = DRAW_SPRITES else
-                                clear_frame_buffer_color_s when state_reg_s = CLEAR_FB else
-                                layer_frame_buffer_color_s;
-    frame_buffer_write_o     <= spr_frame_buffer_write_s when state_reg_s = DRAW_SPRITES else
-                                clear_frame_buffer_write_s when state_reg_s = CLEAR_FB else
-                                layer_frame_buffer_write_s when (state_reg_s = DRAW_LAYER_0) or (state_reg_s = DRAW_LAYER_1) or (state_reg_s = DRAW_LAYER_2) else
-                                '0';
+    frameBuffer_wr       <= spr_frame_buffer_write_s when state_reg_s = DRAW_SPRITES else
+                            clear_frame_buffer_write_s when state_reg_s = CLEAR_FB else
+                            layer_frame_buffer_write_s when (state_reg_s = DRAW_LAYER_0) or (state_reg_s = DRAW_LAYER_1) or (state_reg_s = DRAW_LAYER_2) else
+                            '0';
+    frameBuffer_addr     <= spr_frame_buffer_addr_s when state_reg_s = DRAW_SPRITES else
+                            clear_frame_buffer_addr_s when state_reg_s = CLEAR_FB else
+                            layer_frame_buffer_addr_s;
+    frame_buffer_color_s <= spr_frame_buffer_color_s when state_reg_s = DRAW_SPRITES else
+                            clear_frame_buffer_color_s when state_reg_s = CLEAR_FB else
+                            layer_frame_buffer_color_s;
+
+    frameBuffer_din <= frame_buffer_color_s.r & frame_buffer_color_s.g & frame_buffer_color_s.b;
 
     -- Priority RAM
     ---------------
