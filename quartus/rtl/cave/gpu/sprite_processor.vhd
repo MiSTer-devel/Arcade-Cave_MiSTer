@@ -61,7 +61,7 @@ entity sprite_processor is
         rst_i                     : in  std_logic;
         -- Control signals
         start_i                   : in  std_logic; -- Start drawing sprites
-        buffer_select_i           : in  std_logic; -- Which sprites to draw
+        sprite_bank_i             : in  std_logic; -- Which sprites to draw
         done_o                    : out std_logic;
         -- Sprite RAM interface (Do not delay ! It expects data the next cycle)
         sprite_ram_addr_o         : out sprite_ram_info_access_t;
@@ -351,7 +351,7 @@ begin
     done_o              <= work_done_s;
     -- Address by line (1024 lines) and buffer_select says which group of
     -- lines, the first or the second group.
-    sprite_ram_addr_o <= resize(buffer_select_i & sprite_info_counter_s(9 downto 0), sprite_ram_addr_o'length);
+    sprite_ram_addr_o <= resize(sprite_bank_i & sprite_info_counter_s(9 downto 0), sprite_ram_addr_o'length);
     -- The sprite rom address is the (code + burst counter) * byte_per_tile
     -- since the code indicates the first tile and the burst counter bursts by
     -- the same amount of bytes than a 16x16 tile.

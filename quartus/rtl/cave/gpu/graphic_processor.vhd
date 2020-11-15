@@ -61,7 +61,7 @@ entity graphic_processor is
         rst_i                    : in  std_logic;
         -- Control signals
         generateFrame            : in  std_logic;
-        bufferSelect             : in  std_logic;
+        spriteBank               : in  std_logic;
         -- Tile ROM
         tileRom_rd               : out std_logic;
         tileRom_addr             : out gfx_rom_addr_t;
@@ -315,7 +315,7 @@ begin
             rst_i                     => rst_i,
             --
             start_i                   => start_drawing_sprites_s,
-            buffer_select_i           => bufferSelect,
+            sprite_bank_i             => spriteBank,
             done_o                    => sprite_processor_done_s,
             --
             sprite_ram_addr_o         => spriteRam_addr,
