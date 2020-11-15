@@ -181,9 +181,7 @@ object Util {
    */
   def toggle(enable: Bool = true.B): Bool = {
     val dataReg = RegInit(false.B)
-    when(enable) {
-      dataReg := !dataReg
-    }
+    when(enable) { dataReg := !dataReg }
     dataReg
   }
 
@@ -193,9 +191,7 @@ object Util {
    * @param targetClock The target clock domain.
    */
   def sync(targetClock: Clock): Bool = {
-    val s = withClock(targetClock) {
-      toggle()
-    }
+    val s = withClock(targetClock) { toggle() }
     edge(s)
   }
 }

@@ -70,28 +70,23 @@ class CaveTop extends Module {
     }
   })
 
-  class CaveBlackBox extends BlackBox {
-    val io = IO(new Bundle {
-      val rst_i = Input(Reset())
-      val clk_i = Input(Clock())
-      val rst_68k_i = Input(Reset())
-      val clk_68k_i = Input(Clock())
-      val vblank_i = Input(Bool())
-      val cpu = Flipped(new CPUIO)
-      val memBus = new Bundle {
-        val ack = Output(Bool())
-        val data = Output(Bits(CPU.DATA_WIDTH.W))
-      }
-    })
-
-    override def desiredName = "cave"
-  }
-
   // Wires
   val startFrame = WireInit(false.B)
+  val clearIRQ = WireInit(false.B)
 
   // M68000 CPU
   val cpu = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new CPU) }
+  cpu.io.cen := true.B
+  cpu.io.dtack := false.B
+  cpu.io.din := 0.U
+
+  // Trigger an interrupt request on the rising edge of the vertical blank signal
+  withClockAndReset(io.cpuClock, io.cpuReset) {
+    val vBlank = ShiftRegister(io.video.vBlank, 2)
+    val iplReg = RegInit(0.U)
+    when(Util.rising(vBlank)) { iplReg := 1.U }.elsewhen(clearIRQ) { iplReg := 0.U }
+    cpu.io.ipl := iplReg
+  }
 
   // Main RAM
   val mainRam = withClockAndReset(io.cpuClock, io.cpuReset) {
@@ -189,17 +184,6 @@ class CaveTop extends Module {
   gpu.io.paletteRam <> paletteRam.io.portB
   gpu.io.frameBuffer <> io.frameBuffer
 
-  // Cave
-  val cave = Module(new CaveBlackBox)
-  cave.io.rst_i := reset
-  cave.io.clk_i := clock
-  cave.io.clk_68k_i := io.cpuClock
-  cave.io.rst_68k_i := io.cpuReset
-  cave.io.vblank_i := io.video.vBlank
-  cave.io.cpu <> cpu.io
-  cpu.io.dtack := cave.io.memBus.ack
-  cpu.io.din := cave.io.memBus.data
-
   // Memory map
   withClockAndReset(io.cpuClock, io.cpuReset) {
     // Program ROM
@@ -214,10 +198,13 @@ class CaveTop extends Module {
     cpu.memMap(0x500000 to 0x507fff).ram(layer0Ram.io.portA)
     cpu.memMap(0x600000 to 0x607fff).ram(layer1Ram.io.portA)
     cpu.memMap(0x700000 to 0x70ffff).ram(layer2Ram.io.portA)
-    // IRQ cause
-    cpu.memMap(0x800000 to 0x800007).r { (_, _) => 3.U }
     // Video regs
     cpu.memMap(0x800000 to 0x80007f).wom(videoRegs.io.mem.asWriteMemIO)
+    // IRQ
+    cpu.memMap(0x800000 to 0x800007).r { (addr, _) =>
+      when(addr === 0x800004.U) { clearIRQ := true.B }
+      3.U
+    }
     // Trigger the start of a new frame
     cpu.memMap(0x800004).w { (_, _, data) => startFrame := data === 0x01f0.U }
     // Layer regs
@@ -232,13 +219,18 @@ class CaveTop extends Module {
     cpu.memMap(0xd00002 to 0xd00003).r { (_, _) => "b1111011".U ## ~io.player.player2 }
     // EEPROM
     cpu.memMap(0xe00000).w { (_, _, _) => /* TODO */ }
-    // Access to 0x5fxxxx appears in DoDonPachi on attract loop when showing the air stage on frame 9355 i.e., after
-    // roughly 2 min 30 sec. The game is accessing data relative to a Layer 1 address and underflows. These accesses do
+    // Access to 0x5fxxxx appears in DoDonPachi on attract loop when showing the air stage on frame 9355 (i.e. after
+    // roughly 2 min 30 sec). The game is accessing data relative to a Layer 1 address and underflows. These accesses do
     // nothing, but should be acknowledged in order not to block the CPU.
     //
     // The reason these accesses appear is probably because it made the layer update routine simpler to write (no need
     // to handle edge cases). These accesses are simply ignored by the hardware.
     cpu.memMap(0x5f0000 to 0x5fffff).ignore
+    // Acknowledge accesses outside the M680000 memory range
+    // TODO: This hack shouldn't be required by the CPU, but there is something wrong with the CPU implementation.
+    when(cpu.io.addr(31, 28) === 0xf.U && cpu.io.rw) {
+      cpu.io.dtack := true.B
+    }
   }
 
   // Outputs
