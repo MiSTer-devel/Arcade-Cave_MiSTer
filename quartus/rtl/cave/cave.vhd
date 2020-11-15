@@ -61,10 +61,6 @@ entity cave is
         clk_68k_i                : in  std_logic;
         -- Vertical blank signal
         vblank_i                 : in std_logic;
-        -- Player input signals
-        player_player1           : in  std_logic_vector(8 downto 0);
-        player_player2           : in  std_logic_vector(8 downto 0);
-        player_pause             : in  std_logic;
         -- CPU
         cpu_cen                  : out std_logic;
         cpu_addr                 : in  unsigned(31 downto 0);
@@ -117,25 +113,6 @@ architecture struct of cave is
     signal irq_cause_enable_s       : std_logic;
     signal irq_cause_ack_s          : std_logic;
     signal irq_cause_data_o_s       : word_t;
-    -- Inputs 0
-    constant IN_0_LOG_SIZE_C        : natural := 1;   -- 2B
-    signal in_0_enable_s            : std_logic;
-    signal in_0_ack_s               : std_logic;
-    signal in_0_data_o_s            : word_t;
-    -- Inputs 1
-    constant IN_1_LOG_SIZE_C        : natural := 1;   -- 2B
-    signal in_1_enable_s            : std_logic;
-    signal in_1_ack_s               : std_logic;
-    signal in_1_data_o_s            : word_t;
-    -- EEPROM
-    constant EEPROM_LOG_SIZE_C      : natural := 1;   -- 2B
-    signal eeprom_enable_s          : std_logic;
-    signal eeprom_ack_s             : std_logic;
-    signal eeprom_data_o_s          : word_t;
-    signal eeprom_ci_s              : std_logic;
-    signal eeprom_cs_s              : std_logic;
-    signal eeprom_di_s              : std_logic;
-    signal eeprom_do_s              : std_logic;
     -- Edge Cases
     signal edge_case_enable_s       : std_logic;
     signal edge_case_ack_s          : std_logic;
@@ -235,9 +212,6 @@ begin
     -- This is an OR'ed bus
     memory_bus_ack_s <= ymz_ram_ack_s     or
                         irq_cause_ack_s   or
-                        in_0_ack_s        or
-                        in_1_ack_s        or
-                        eeprom_ack_s      or
                         edge_case_ack_s   or
                         other_ack_s;
 
@@ -246,9 +220,6 @@ begin
     -- "OR" everything together to create the "OR'ed" bus
     memory_bus_data_s <= ymz_ram_data_o_s     or
                          irq_cause_data_o_s   or
-                         in_0_data_o_s        or
-                         in_1_data_o_s        or
-                         eeprom_data_o_s      or
                          other_data_o_s;
 
     memBus_data <= memory_bus_data_s;
@@ -285,15 +256,6 @@ begin
     -- IRQ Cause (same about redundancy)
     --                      0x800000 - 0x800007
     irq_cause_enable_s   <= '1' when (addr_68k_s(31 downto 3) = x"0080000" & "0") and (read_n_write_68k_s = '1') else
-                            '0';
-    -- Inputs 0             0xd00000 - 0xd00001
-    in_0_enable_s        <= '1' when addr_68k_s(31 downto IN_0_LOG_SIZE_C) = x"00d0000" & "000" else
-                            '0';
-    -- Inputs 1             0xd00000 - 0xd00003
-    in_1_enable_s        <= '1' when addr_68k_s(31 downto IN_1_LOG_SIZE_C) = x"00d0000" & "001" else
-                            '0';
-    -- EEPROM               0xe00000 - 0xe00001
-    eeprom_enable_s      <= '1' when addr_68k_s(31 downto EEPROM_LOG_SIZE_C) = x"00e0000" & "000" else
                             '0';
     -- Edge Cases
     edge_case_enable_s   <= '1' when (addr_68k_s(23 downto 16) = x"5f") or
@@ -358,76 +320,6 @@ begin
         end process irq_cause_process;
 
     end block graphic_processor_block;
-
-    -----------------
-    -- Input Ports --
-    -----------------
-    input_ports_block : block
-        signal in_0_reg_s : word_t;
-        signal in_1_reg_s : word_t;
-    begin
-        -- Enable for the OR'ed bus
-        in_0_data_o_s <= in_0_reg_s when in_0_enable_s = '1' else (others => '0');
-        in_1_data_o_s <= in_1_reg_s when in_1_enable_s = '1' else (others => '0');
-
-        in_process : process(clk_68k_i) is
-        begin
-            if rising_edge(clk_68k_i) then
-                in_0_ack_s <= '0';
-                in_1_ack_s <= '0';
-                in_0_reg_s <= "1111111" & (not player_player1(8 downto 0));
-                in_1_reg_s <= "1111" & eeprom_do_s & "11" & (not player_player2(8 downto 0));
-                if read_strobe_s = '1' then
-                    if in_0_enable_s = '1' then
-                        in_0_ack_s <= '1';
-                    end if;
-                    if in_1_enable_s = '1' then
-                        in_1_ack_s <= '1';
-                    end if;
-                end if;
-            end if;
-        end process in_process;
-
-    end block input_ports_block;
-
-    ------------
-    -- EEPROM --
-    ------------
-    eeprom_generate : if INCLUDE_EEPROM_G generate
-
-        eeprom : entity work.eeprom_93c46
-            port map (
-                clk_i  => eeprom_ci_s,
-                cs_i   => eeprom_cs_s,
-                data_i => eeprom_di_s,
-                data_o => eeprom_do_s);
-
-    else generate
-
-        eeprom_do_s <= '0';
-
-    end generate eeprom_generate;
-
-    eeprom_process : process(clk_68k_i) is
-    begin
-        if rising_edge(clk_68k_i) then
-            eeprom_ack_s <= '0';
-            if eeprom_enable_s = '1' then
-                -- I believe it is possible that this is never ever read
-                if read_strobe_s = '1' then
-                    eeprom_data_o_s <= x"0000";
-                    eeprom_ack_s    <= '1';
-                elsif write_strobe_s = '1' then
-                    eeprom_cs_s  <= data_out_68k_s(1);
-                    eeprom_ci_s  <= data_out_68k_s(2);
-                    eeprom_di_s  <= data_out_68k_s(3);
-                    eeprom_ack_s <= '1';
-                end if;
-            else
-                eeprom_data_o_s <= (others => '0');
-            end if;  -- Enable
-        end if;  -- Rising Edge Clock
-    end process eeprom_process;
 
     ----------------
     -- Edge Cases --

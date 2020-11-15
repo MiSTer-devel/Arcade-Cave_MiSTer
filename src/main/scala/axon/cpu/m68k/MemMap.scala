@@ -51,7 +51,6 @@ import chisel3._
 class MemMap(cpu: CPUIO, r: Range) {
   // TODO: These registers will be duplicated for every mapping. Can they be shared somehow?
   private val readStrobe = Util.rising(cpu.as) && cpu.rw
-  private val writeStrobe = Util.rising(cpu.as) && !cpu.rw
   private val upperWriteStrobe = Util.rising(cpu.uds) && !cpu.rw
   private val lowerWriteStrobe = Util.rising(cpu.lds) && !cpu.rw
 
@@ -77,7 +76,7 @@ class MemMap(cpu: CPUIO, r: Range) {
     mem.din := cpu.dout
     when(cs) {
       cpu.din := mem.dout
-      cpu.dtack := RegNext(readStrobe || upperWriteStrobe || lowerWriteStrobe)
+      cpu.dtack := true.B
     }
   }
 
@@ -98,7 +97,7 @@ class MemMap(cpu: CPUIO, r: Range) {
     val cs = Util.between(cpu.addr, r)
     mem.rd := cs && readStrobe
     mem.addr := f(cpu.addr)
-    when(cs) {
+    when(cs && cpu.rw) {
       cpu.din := mem.dout
       cpu.dtack := mem.valid
     }
@@ -119,14 +118,11 @@ class MemMap(cpu: CPUIO, r: Range) {
    */
   def womT(mem: WriteMemIO)(f: UInt => UInt): Unit = {
     val cs = Util.between(cpu.addr, r)
-    val wr = upperWriteStrobe || lowerWriteStrobe
-    mem.wr := cs && wr
+    mem.wr := cs && (upperWriteStrobe || lowerWriteStrobe)
     mem.addr := f(cpu.addr)(mem.addrWidth, 1)
     mem.mask := cpu.uds ## cpu.lds
     mem.din := cpu.dout
-    when(RegNext(cs && wr)) {
-      cpu.dtack := true.B
-    }
+    when(cs && !cpu.rw) { cpu.dtack := true.B }
   }
 
   /**
@@ -137,7 +133,10 @@ class MemMap(cpu: CPUIO, r: Range) {
   def r(f: (UInt, UInt) => UInt): Unit = {
     val cs = Util.between(cpu.addr, r)
     val offset = cpu.addr - r.start.U
-    when(cs && readStrobe) { cpu.din := f(cpu.addr, offset) }
+    when(cs && cpu.rw) {
+      cpu.din := f(cpu.addr, offset)
+      cpu.dtack := true.B
+    }
   }
 
   /**
@@ -148,6 +147,9 @@ class MemMap(cpu: CPUIO, r: Range) {
   def w(f: (UInt, UInt, UInt) => Unit): Unit = {
     val cs = Util.between(cpu.addr, r)
     val offset = cpu.addr - r.start.U
-    when(cs && writeStrobe) { f(cpu.addr, offset, cpu.dout) }
+    when(cs && !cpu.rw) {
+      f(cpu.addr, offset, cpu.dout)
+      cpu.dtack := true.B
+    }
   }
 }

@@ -77,7 +77,6 @@ class CaveTop extends Module {
       val rst_68k_i = Input(Reset())
       val clk_68k_i = Input(Clock())
       val vblank_i = Input(Bool())
-      val player = new PlayerIO
       val cpu = Flipped(new CPUIO)
       val memBus = new Bundle {
         val ack = Output(Bool())
@@ -169,6 +168,7 @@ class CaveTop extends Module {
   // Video registers
   val videoRegs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(8)) }
 
+  // TODO: Register this output
   val bufferSelect = videoRegs.io.regs(4)(0)
 
   // GPU
@@ -193,7 +193,6 @@ class CaveTop extends Module {
   cave.io.clk_68k_i := io.cpuClock
   cave.io.rst_68k_i := io.cpuReset
   cave.io.vblank_i := io.video.vBlank
-  cave.io.player <> io.player
   cave.io.cpu <> cpu.io
   cpu.io.dtack := cave.io.memBus.ack
   cpu.io.din := cave.io.memBus.data
@@ -207,14 +206,18 @@ class CaveTop extends Module {
     cpu.memMap(0x600000 to 0x607fff).ram(layer1Ram.io.portA)
     cpu.memMap(0x700000 to 0x70ffff).ram(layer2Ram.io.portA)
     cpu.memMap(0x800000 to 0x80007f).wom(videoRegs.io.mem.asWriteMemIO)
-    cpu.memMap(0x800004).w { (_, _, data) =>
-      // Writing $01f0 to the video register triggers the start of a new frame
-      startFrame := data === 0x01f0.U
-    }
+    // Trigger the start of a new frame
+    cpu.memMap(0x800004).w { (_, _, data) => startFrame := data === 0x01f0.U }
     cpu.memMap(0x900000 to 0x900005).ram(layer0Info.io.mem)
     cpu.memMap(0xa00000 to 0xa00005).ram(layer1Info.io.mem)
     cpu.memMap(0xb00000 to 0xb00005).ram(layer2Info.io.mem)
     cpu.memMap(0xc00000 to 0xc0ffff).ram(paletteRam.io.portA)
+    // Player 1 inputs
+    cpu.memMap(0xd00000 to 0xd00001).r { (_, _) => "b1111111".U ## ~io.player.player1 }
+    // Player 2 inputs
+    cpu.memMap(0xd00002 to 0xd00003).r { (_, _) => "b1111011".U ## ~io.player.player2 }
+    // EEPROM
+    cpu.memMap(0xe00000).w { (_, _, _) => /* TODO */ }
   }
 
   // Outputs
