@@ -163,7 +163,7 @@ architecture struct of graphic_processor is
     signal layer_frame_buffer_write_s      : std_logic;
     --
     signal layer_number_s                  : unsigned(1 downto 0);
-    signal layer_info_to_layer_processor_s : layer_info_t;
+    signal layer_info_s                    : layer_info_line_t;
     -- --
     signal clear_frame_buffer_addr_s       : frame_buffer_addr_t;
     signal clear_frame_buffer_color_s      : color_t;
@@ -362,7 +362,7 @@ begin
                     start_i                   => start_drawing_layer_s,
                     done_o                    => layer_processor_done_s,
                     layer_number_i            => layer_number_s,
-                    layer_info_i              => layer_info_to_layer_processor_s,
+                    layer_info_i              => layer_info_s,
                     layer_ram_addr_o          => layer_ram_addr_s,
                     layer_ram_info_i          => layer_ram_info_s,
                     layer_rom_addr_o          => layer_processor_rom_offset_s,
@@ -383,9 +383,9 @@ begin
                     frame_buffer_write_o      => layer_frame_buffer_write_s);
 
             -- Global Layer Info Mux
-            layer_info_to_layer_processor_s <= extract_global_layer_info_from_regs(layer0Info) when state_reg_s = DRAW_LAYER_0 else
-                                               extract_global_layer_info_from_regs(layer1Info) when state_reg_s = DRAW_LAYER_1 else
-                                               extract_global_layer_info_from_regs(layer2Info);
+            layer_info_s <= layer0Info when state_reg_s = DRAW_LAYER_0 else
+                            layer1Info when state_reg_s = DRAW_LAYER_1 else
+                            layer2Info;
 
             -- All get the same address, only one is used at a time
             layer0Ram_addr <= layer_ram_addr_s;

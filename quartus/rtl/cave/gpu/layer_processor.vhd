@@ -56,7 +56,7 @@ entity layer_processor is
         done_o                    : out std_logic;
         -- Layer related info
         layer_number_i            : in  unsigned(1 downto 0);
-        layer_info_i              : in  layer_info_t;
+        layer_info_i              : in  layer_info_line_t;
         -- Layer RAM interface (Do not delay ! It expects data the next cycle)
         layer_ram_addr_o          : out layer_ram_info_access_t;
         layer_ram_info_i          : in  layer_ram_line_t;
@@ -95,9 +95,10 @@ architecture struct of layer_processor is
     -------------
     signal state_reg_s, next_state_s        : state_t;
     --
+    signal layer_info_s                     : layer_info_t;
+    signal layer_info_reg_s                 : layer_info_t;
     signal tile_info_s                      : tile_info_t;
     signal tile_info_reg_s                  : tile_info_t;
-    signal layer_info_reg_s                 : layer_info_t;
     signal tile_data_burst_done_s           : std_logic;
     signal update_tile_info_s               : std_logic;
     signal tile_burst_read_s                : std_logic;
@@ -136,6 +137,8 @@ architecture struct of layer_processor is
     signal pipeline_reset_s                 : std_logic;
 
 begin
+    -- The layer info from the layer registers
+    layer_info_s <= extract_global_layer_info_from_regs(layer_info_i);
 
     -- The tile info from the layer RAM
     tile_info_s <= extract_tile_info_from_layer_ram_line(layer_ram_info_i);
@@ -225,8 +228,8 @@ begin
             end if;
 
             if state_reg_s = REGISTER_INFO then
-                layer_info_reg_s <= layer_info_i;
-                if layer_info_i.small_tile = '1' then
+                layer_info_reg_s <= layer_info_s;
+                if layer_info_s.small_tile = '1' then
                     -- Small Tiles
                     total_tile_counter_max_s <= to_unsigned(41 * 31, total_tile_counter_max_s'length); -- TODO: Replace magic
                 else
