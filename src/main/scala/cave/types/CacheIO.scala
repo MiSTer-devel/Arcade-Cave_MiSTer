@@ -40,4 +40,6 @@ package cave.types
 import cave.Config
 
 /** Cache IO */
-class CacheIO extends ValidReadMemIO(Config.CACHE_ADDR_WIDTH, Config.CACHE_DATA_WIDTH)
+class CacheIO extends ValidReadMemIO(Config.CACHE_ADDR_WIDTH, Config.CACHE_DATA_WIDTH) {
+  override def cloneType: this.type = new CacheIO().asInstanceOf[this.type]
+}
