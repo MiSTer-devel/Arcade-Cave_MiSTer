@@ -51,14 +51,16 @@ import chisel3._
  * @param addrWidthB The width of the port B address bus.
  * @param dataWidthB The width of the port B data bus.
  * @param depthB The optional memory depth of port B (in words).
+ * @param maskEnable A boolean value indicating whether byte masking is enabled.
  */
 class TrueDualPortRam(addrWidthA: Int,
                       dataWidthA: Int,
                       depthA: Option[Int] = None,
                       addrWidthB: Int,
                       dataWidthB: Int,
-                      depthB: Option[Int] = None) extends Module {
-  val io = IO(new Bundle {
+                      depthB: Option[Int] = None,
+                      maskEnable: Boolean = true) extends Module {
+    val io = IO(new Bundle {
     /** Clock B */
     val clockB = Input(Clock())
     /** Read-write port */
@@ -73,11 +75,12 @@ class TrueDualPortRam(addrWidthA: Int,
   class WrappedTrueDualPortRam extends BlackBox(Map(
     "ADDR_WIDTH_A" -> addrWidthA,
     "DATA_WIDTH_A" -> dataWidthA,
-    "DEPTH_A"      -> depthA_,
+    "DEPTH_A" -> depthA_,
     "ADDR_WIDTH_B" -> addrWidthB,
     "DATA_WIDTH_B" -> dataWidthB,
-    "DEPTH_B"      -> depthB_
-    )) {
+    "DEPTH_B" -> depthB_,
+    "MASK_ENABLE" -> (if (maskEnable) "TRUE" else "FALSE"),
+  )) {
     val io = IO(new Bundle {
       // port A
       val clk_a = Input(Clock())
