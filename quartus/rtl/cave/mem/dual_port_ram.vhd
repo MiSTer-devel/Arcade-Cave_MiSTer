@@ -47,12 +47,14 @@ entity dual_port_ram is
     DATA_WIDTH_A : natural := 8;
     DATA_WIDTH_B : natural := 8;
     DEPTH_A      : natural := 0;
-    DEPTH_B      : natural := 0
+    DEPTH_B      : natural := 0;
+    MASK_ENABLE  : boolean := true
   );
   port (
     clk    : in std_logic;
     wr_a   : in std_logic := '1';
     addr_a : in unsigned(ADDR_WIDTH_A-1 downto 0);
+    mask_a : in std_logic_vector((DATA_WIDTH_A/8)-1 downto 0) := (others => '1');
     din_a  : in std_logic_vector(DATA_WIDTH_A-1 downto 0) := (others => '0');
     rd_b   : in std_logic := '1';
     addr_b : in unsigned(ADDR_WIDTH_B-1 downto 0);
@@ -71,39 +73,79 @@ architecture arch of dual_port_ram is
     end if;
   end function num_words;
 begin
-  altsyncram_component : altsyncram
-  generic map (
-    address_reg_b                      => "CLOCK0",
-    clock_enable_input_a               => "BYPASS",
-    clock_enable_input_b               => "BYPASS",
-    clock_enable_output_a              => "BYPASS",
-    clock_enable_output_b              => "BYPASS",
-    indata_reg_b                       => "CLOCK0",
-    intended_device_family             => "Cyclone V",
-    lpm_type                           => "altsyncram",
-    numwords_a                         => num_words(DEPTH_A, ADDR_WIDTH_A),
-    numwords_b                         => num_words(DEPTH_B, ADDR_WIDTH_B),
-    operation_mode                     => "DUAL_PORT",
-    outdata_aclr_a                     => "NONE",
-    outdata_aclr_b                     => "NONE",
-    outdata_reg_a                      => "UNREGISTERED",
-    outdata_reg_b                      => "UNREGISTERED",
-    power_up_uninitialized             => "FALSE",
-    rdcontrol_reg_b                    => "CLOCK0",
-    read_during_write_mode_mixed_ports => "OLD_DATA",
-    width_a                            => DATA_WIDTH_A,
-    width_b                            => DATA_WIDTH_B,
-    width_byteena_a                    => 1,
-    widthad_a                          => ADDR_WIDTH_A,
-    widthad_b                          => ADDR_WIDTH_B
-  )
-  port map (
-    address_a => std_logic_vector(addr_a),
-    address_b => std_logic_vector(addr_b),
-    clock0    => clk,
-    data_a    => din_a,
-    rden_b    => rd_b,
-    wren_a    => wr_a,
-    q_b       => dout_b
-  );
+  masked_ram_generate : if MASK_ENABLE generate
+    altsyncram_component : altsyncram
+    generic map (
+      address_reg_b                      => "CLOCK0",
+      byte_size                          => 8,
+      clock_enable_input_a               => "BYPASS",
+      clock_enable_input_b               => "BYPASS",
+      clock_enable_output_a              => "BYPASS",
+      clock_enable_output_b              => "BYPASS",
+      indata_reg_b                       => "CLOCK0",
+      intended_device_family             => "Cyclone V",
+      lpm_type                           => "altsyncram",
+      numwords_a                         => num_words(DEPTH_A, ADDR_WIDTH_A),
+      numwords_b                         => num_words(DEPTH_B, ADDR_WIDTH_B),
+      operation_mode                     => "DUAL_PORT",
+      outdata_aclr_a                     => "NONE",
+      outdata_aclr_b                     => "NONE",
+      outdata_reg_a                      => "UNREGISTERED",
+      outdata_reg_b                      => "UNREGISTERED",
+      power_up_uninitialized             => "FALSE",
+      rdcontrol_reg_b                    => "CLOCK0",
+      read_during_write_mode_mixed_ports => "OLD_DATA",
+      width_a                            => DATA_WIDTH_A,
+      width_b                            => DATA_WIDTH_B,
+      width_byteena_a                    => DATA_WIDTH_A/8,
+      widthad_a                          => ADDR_WIDTH_A,
+      widthad_b                          => ADDR_WIDTH_B
+    )
+    port map (
+      address_a => std_logic_vector(addr_a),
+      address_b => std_logic_vector(addr_b),
+      clock0    => clk,
+      data_a    => din_a,
+      byteena_a => mask_a,
+      rden_b    => rd_b,
+      wren_a    => wr_a,
+      q_b       => dout_b
+    );
+  else generate
+    altsyncram_component : altsyncram
+    generic map (
+      address_reg_b                      => "CLOCK0",
+      clock_enable_input_a               => "BYPASS",
+      clock_enable_input_b               => "BYPASS",
+      clock_enable_output_a              => "BYPASS",
+      clock_enable_output_b              => "BYPASS",
+      indata_reg_b                       => "CLOCK0",
+      intended_device_family             => "Cyclone V",
+      lpm_type                           => "altsyncram",
+      numwords_a                         => num_words(DEPTH_A, ADDR_WIDTH_A),
+      numwords_b                         => num_words(DEPTH_B, ADDR_WIDTH_B),
+      operation_mode                     => "DUAL_PORT",
+      outdata_aclr_a                     => "NONE",
+      outdata_aclr_b                     => "NONE",
+      outdata_reg_a                      => "UNREGISTERED",
+      outdata_reg_b                      => "UNREGISTERED",
+      power_up_uninitialized             => "FALSE",
+      rdcontrol_reg_b                    => "CLOCK0",
+      read_during_write_mode_mixed_ports => "OLD_DATA",
+      width_a                            => DATA_WIDTH_A,
+      width_b                            => DATA_WIDTH_B,
+      width_byteena_a                    => 1,
+      widthad_a                          => ADDR_WIDTH_A,
+      widthad_b                          => ADDR_WIDTH_B
+    )
+    port map (
+      address_a => std_logic_vector(addr_a),
+      address_b => std_logic_vector(addr_b),
+      clock0    => clk,
+      data_a    => din_a,
+      rden_b    => rd_b,
+      wren_a    => wr_a,
+      q_b       => dout_b
+    );
+  end generate;
 end architecture arch;

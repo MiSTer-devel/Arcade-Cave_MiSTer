@@ -501,7 +501,8 @@ begin
                 ADDR_WIDTH_A => DDP_FRAME_BUFFER_ADDR_BITS,
                 DATA_WIDTH_A => DDP_FRAME_BUFFER_PRIORITY_BITS,
                 ADDR_WIDTH_B => DDP_FRAME_BUFFER_ADDR_BITS,
-                DATA_WIDTH_B => DDP_FRAME_BUFFER_PRIORITY_BITS)
+                DATA_WIDTH_B => DDP_FRAME_BUFFER_PRIORITY_BITS,
+                MASK_ENABLE  => false)
             port map (
                 clk    => clk_i,
                 wr_a   => priority_ram_write_s,
