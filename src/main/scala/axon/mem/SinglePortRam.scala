@@ -45,8 +45,12 @@ import chisel3._
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  * @param depth The optional memory depth (in words).
+ * @param maskEnable A boolean value indicating whether byte masking is enabled.
  */
-class SinglePortRam(addrWidth: Int, dataWidth: Int, depth: Option[Int] = None) extends Module {
+class SinglePortRam(addrWidth: Int,
+                    dataWidth: Int,
+                    depth: Option[Int] = None,
+                    maskEnable: Boolean = true) extends Module {
   val io = IO(Flipped(ReadWriteMemIO(addrWidth, dataWidth)))
 
   private val depth_ = depth.getOrElse(0)
@@ -54,7 +58,8 @@ class SinglePortRam(addrWidth: Int, dataWidth: Int, depth: Option[Int] = None) e
   class WrappedSinglePortRam extends BlackBox(Map(
     "ADDR_WIDTH" -> addrWidth,
     "DATA_WIDTH" -> dataWidth,
-    "DEPTH" -> depth_
+    "DEPTH" -> depth_,
+    "MASK_ENABLE" -> (if (maskEnable) "TRUE" else "FALSE"),
   )) {
     val io = IO(new Bundle {
       val clk = Input(Clock())
