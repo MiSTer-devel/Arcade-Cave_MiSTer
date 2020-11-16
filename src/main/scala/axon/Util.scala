@@ -86,11 +86,10 @@ object Util {
    * @param n     The number of elements.
    * @param width The width of each element.
    */
-  def decode(bits: Bits, n: Int, width: Int): Seq[Bits] = {
+  def decode(bits: Bits, n: Int, width: Int): Seq[Bits] =
     Seq.tabulate(n) { i =>
       bits(((i + 1) * width) - 1, i * width)
-    }.reverse
-  }
+    }
 
   /**
    * Creates a bitmask with the given number of lower bits masked off (set to zero). All other bits
