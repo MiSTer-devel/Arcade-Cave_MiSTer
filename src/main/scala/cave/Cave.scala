@@ -47,7 +47,7 @@ import chisel3._
 import chisel3.util._
 
 /** Represents the CAVE arcade hardware. */
-class CaveTop extends Module {
+class Cave extends Module {
   val io = IO(new Bundle {
     /** CPU clock domain */
     val cpuClock = Input(Clock())

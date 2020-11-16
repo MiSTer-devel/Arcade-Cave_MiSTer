@@ -48,13 +48,15 @@ import chisel3._
  * @param addrWidthB The width of the port B address bus.
  * @param dataWidthB The width of the port B data bus.
  * @param depthB The optional memory depth of port B (in words).
+ * @param maskEnable A boolean value indicating whether byte masking is enabled.
  */
 class DualPortRam(addrWidthA: Int,
                   dataWidthA: Int,
                   depthA: Option[Int] = None,
                   addrWidthB: Int,
                   dataWidthB: Int,
-                  depthB: Option[Int] = None) extends Module {
+                  depthB: Option[Int] = None,
+                  maskEnable: Boolean = true) extends Module {
   val io = IO(new Bundle {
     /** Write-only port */
     val portA = Flipped(WriteMemIO(addrWidthA, dataWidthA))
@@ -68,10 +70,11 @@ class DualPortRam(addrWidthA: Int,
   class WrappedDualPortRam extends BlackBox(Map(
     "ADDR_WIDTH_A" -> addrWidthA,
     "DATA_WIDTH_A" -> dataWidthA,
-    "DEPTH_A"      -> depthA_,
+    "DEPTH_A" -> depthA_,
     "ADDR_WIDTH_B" -> addrWidthB,
     "DATA_WIDTH_B" -> dataWidthB,
-    "DEPTH_B"      -> depthB_
+    "DEPTH_B" -> depthB_,
+    "MASK_ENABLE" -> (if (maskEnable) "TRUE" else "FALSE"),
   )) {
     val io = IO(new Bundle {
       val clk = Input(Clock())
@@ -79,6 +82,7 @@ class DualPortRam(addrWidthA: Int,
       // port A
       val wr_a = Input(Bool())
       val addr_a = Input(UInt(addrWidthA.W))
+      val mask_a = Input(Bits((dataWidthA/8).W))
       val din_a = Input(Bits(dataWidthA.W))
 
       // port B
@@ -94,6 +98,7 @@ class DualPortRam(addrWidthA: Int,
   ram.io.clk := clock
   ram.io.wr_a := io.portA.wr
   ram.io.addr_a := io.portA.addr
+  ram.io.mask_a := io.portA.mask
   ram.io.din_a := io.portA.din
   ram.io.rd_B := io.portB.rd
   ram.io.addr_b := io.portB.addr

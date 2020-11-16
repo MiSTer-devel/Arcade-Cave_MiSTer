@@ -120,7 +120,7 @@ class Main extends Module {
   dataFreezer.io.out <> io.progRom
 
   // Cave
-  val cave = Module(new CaveTop)
+  val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.player := io.player
@@ -148,7 +148,8 @@ class Main extends Module {
     depthA = Some(Config.SCREEN_WIDTH*Config.SCREEN_HEIGHT),
     addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH-2,
     dataWidthB = Config.FRAME_BUFFER_DATA_WIDTH*4,
-    depthB = Some(Config.SCREEN_WIDTH*Config.SCREEN_HEIGHT/4)
+    depthB = Some(Config.SCREEN_WIDTH*Config.SCREEN_HEIGHT/4),
+    maskEnable = false
   ))
   frameBuffer.io.portA.wr := RegNext(cave.io.frameBuffer.wr)
   frameBuffer.io.portA.addr := RegNext(frameBufferAddr)

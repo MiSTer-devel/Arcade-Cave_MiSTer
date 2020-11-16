@@ -42,16 +42,17 @@ use altera_mf.altera_mf_components.all;
 
 entity single_port_ram is
   generic (
-    ADDR_WIDTH : natural := 8;
-    DATA_WIDTH : natural := 8;
-    DEPTH      : natural := 0
+    ADDR_WIDTH  : natural := 8;
+    DATA_WIDTH  : natural := 8;
+    DEPTH       : natural := 0;
+    MASK_ENABLE : boolean := true
   );
   port (
     clk  : in std_logic;
     rd   : in std_logic := '1';
     wr   : in std_logic := '0';
     addr : in unsigned(ADDR_WIDTH-1 downto 0);
-    mask : in std_logic_vector((DATA_WIDTH/8)-1 downto 0) := (others => '1');
+    mask : in std_logic_vector(DATA_WIDTH/8-1 downto 0) := (others => '1');
     din  : in std_logic_vector(DATA_WIDTH-1 downto 0) := (others => '0');
     dout : out std_logic_vector(DATA_WIDTH-1 downto 0)
   );
@@ -68,31 +69,59 @@ architecture arch of single_port_ram is
     end if;
   end function num_words;
 begin
-  altsyncram_component : altsyncram
-  generic map (
-    byte_size                     => 8,
-    clock_enable_input_a          => "BYPASS",
-    clock_enable_output_a         => "BYPASS",
-    intended_device_family        => "Cyclone V",
-    lpm_hint                      => "ENABLE_RUNTIME_MOD=NO",
-    lpm_type                      => "altsyncram",
-    numwords_a                    => num_words(DEPTH, ADDR_WIDTH),
-    operation_mode                => "SINGLE_PORT",
-    outdata_aclr_a                => "NONE",
-    outdata_reg_a                 => "UNREGISTERED",
-    power_up_uninitialized        => "FALSE",
-    read_during_write_mode_port_a => "NEW_DATA_NO_NBE_READ",
-    width_a                       => DATA_WIDTH,
-    width_byteena_a               => DATA_WIDTH/8,
-    widthad_a                     => ADDR_WIDTH
-  )
-  port map (
-    address_a => std_logic_vector(addr),
-    clock0    => clk,
-    data_a    => din,
-    byteena_a => mask,
-    rden_a    => rd,
-    wren_a    => wr,
-    q_a       => dout
-  );
+  masked_ram_generate : if MASK_ENABLE generate
+    altsyncram_component : altsyncram
+    generic map (
+      byte_size                     => 8,
+      clock_enable_input_a          => "BYPASS",
+      clock_enable_output_a         => "BYPASS",
+      intended_device_family        => "Cyclone V",
+      lpm_hint                      => "ENABLE_RUNTIME_MOD=NO",
+      lpm_type                      => "altsyncram",
+      numwords_a                    => num_words(DEPTH, ADDR_WIDTH),
+      operation_mode                => "SINGLE_PORT",
+      outdata_aclr_a                => "NONE",
+      outdata_reg_a                 => "UNREGISTERED",
+      power_up_uninitialized        => "FALSE",
+      read_during_write_mode_port_a => "NEW_DATA_NO_NBE_READ",
+      width_a                       => DATA_WIDTH,
+      width_byteena_a               => DATA_WIDTH/8,
+      widthad_a                     => ADDR_WIDTH
+    )
+    port map (
+      address_a => std_logic_vector(addr),
+      clock0    => clk,
+      data_a    => din,
+      byteena_a => mask,
+      rden_a    => rd,
+      wren_a    => wr,
+      q_a       => dout
+    );
+  else generate
+    altsyncram_component : altsyncram
+    generic map (
+      clock_enable_input_a          => "BYPASS",
+      clock_enable_output_a         => "BYPASS",
+      intended_device_family        => "Cyclone V",
+      lpm_hint                      => "ENABLE_RUNTIME_MOD=NO",
+      lpm_type                      => "altsyncram",
+      numwords_a                    => num_words(DEPTH, ADDR_WIDTH),
+      operation_mode                => "SINGLE_PORT",
+      outdata_aclr_a                => "NONE",
+      outdata_reg_a                 => "UNREGISTERED",
+      power_up_uninitialized        => "FALSE",
+      read_during_write_mode_port_a => "NEW_DATA_NO_NBE_READ",
+      width_a                       => DATA_WIDTH,
+      width_byteena_a               => 1,
+      widthad_a                     => ADDR_WIDTH
+    )
+    port map (
+      address_a => std_logic_vector(addr),
+      clock0 => clk,
+      data_a => din,
+      rden_a => rd,
+      wren_a => wr,
+      q_a    => dout
+    );
+  end generate;
 end architecture arch;
