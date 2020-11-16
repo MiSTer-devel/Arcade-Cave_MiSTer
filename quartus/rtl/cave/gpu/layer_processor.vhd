@@ -58,28 +58,32 @@ entity layer_processor is
         layer_number_i            : in  unsigned(1 downto 0);
         layer_info_i              : in  layer_info_line_t;
         -- Layer RAM interface (Do not delay ! It expects data the next cycle)
-        layer_ram_addr_o          : out layer_ram_info_access_t;
-        layer_ram_info_i          : in  layer_ram_line_t;
+        layerRam_rd               : out std_logic;
+        layerRam_addr             : out layer_ram_info_access_t;
+        layerRam_dout             : in  layer_ram_line_t;
         -- Layer ROM interface
-        layer_rom_addr_o          : out gfx_rom_addr_t;
-        tiny_burst_o              : out std_logic;
-        layer_burst_read_o        : out std_logic;
-        layer_data_i              : in  gfx_rom_data_t;
-        layer_data_valid_i        : in  std_logic;
-        layer_data_burst_done_i   : in  std_logic;
+        tileRom_rd                : out std_logic;
+        tileRom_addr              : out gfx_rom_addr_t;
+        tileRom_dout              : in  gfx_rom_data_t;
+        tileRom_valid             : in  std_logic;
+        tileRom_tinyBurst         : out std_logic;
+        tileRom_burstDone         : in  std_logic;
         -- Priority RAM interface (Do not delay ! It expects data the next cycle)
-        priority_ram_read_addr_o  : out priority_ram_addr_t;
-        priority_ram_data_i       : in  priority_t;
-        priority_ram_write_addr_o : out priority_ram_addr_t;
-        priority_ram_data_o       : out priority_t;
-        priority_ram_write_o      : out std_logic;
+        priority_read_rd          : out std_logic;
+        priority_read_addr        : out priority_ram_addr_t;
+        priority_read_dout        : in  priority_t;
+        priority_write_wr         : out std_logic;
+        priority_write_addr       : out priority_ram_addr_t;
+        priority_write_din        : out priority_t;
         -- Palette RAM interface (Do not delay ! It expects data the next cycle)
-        palette_ram_addr_o        : out palette_ram_addr_t;
-        palette_ram_data_i        : in  palette_ram_data_t;
+        paletteRam_rd             : out std_logic;
+        paletteRam_addr           : out palette_ram_addr_t;
+        paletteRam_dout           : in  palette_ram_data_t;
         -- Frame Buffer interface
-        frame_buffer_addr_o       : out frame_buffer_addr_t;
-        frame_buffer_color_o      : out color_t;
-        frame_buffer_write_o      : out std_logic
+        frameBuffer_addr          : out frame_buffer_addr_t;
+        frameBuffer_mask          : out std_logic_vector(0 downto 0);
+        frameBuffer_din           : out std_logic_vector(DDP_WORD_WIDTH-2 downto 0);
+        frameBuffer_wr            : out std_logic
         );
 end entity layer_processor;
 
@@ -136,15 +140,16 @@ architecture struct of layer_processor is
     --
     signal pipeline_reset_s                 : std_logic;
 
+    signal frame_buffer_color_s             : color_t;
 begin
     -- The layer info from the layer registers
     layer_info_s <= extract_global_layer_info_from_regs(layer_info_i);
 
     -- The tile info from the layer RAM
-    tile_info_s <= extract_tile_info_from_layer_ram_line(layer_ram_info_i);
+    tile_info_s <= extract_tile_info_from_layer_ram_line(layerRam_dout);
 
     -- Relabel for clarity
-    tile_data_burst_done_s <= layer_data_burst_done_i;
+    tile_data_burst_done_s <= tileRom_burstDone;
 
     -- The work is done when all the tiles that could be on screen have been handled
     work_done_s <= '1' when (tile_done_counter_s = total_tile_counter_max_s) else '0';
@@ -358,9 +363,9 @@ begin
     tile_fifo_inst : entity work.tile_fifo
         port map (
             clock       => clk_i,
-            data        => layer_data_i,
+            data        => tileRom_dout,
             rdreq       => read_fifo_s,
-            wrreq       => layer_data_valid_i,
+            wrreq       => tileRom_valid,
             almost_full => fifo_prog_full_s,
             empty       => fifo_empty_s,
             q           => data_to_pipeline_s);
@@ -403,16 +408,18 @@ begin
             layer_burst_fifo_read_o   => read_fifo_s,
             layer_burst_fifo_empty_i  => fifo_empty_s,
             palette_color_select_o    => palette_color_select_s,
-            palette_color_i           => extract_color_from_palette_data(palette_ram_data_i),
-            priority_ram_read_addr_o  => priority_ram_read_addr_o,
-            priority_ram_priority_i   => priority_ram_data_i,
-            priority_ram_write_addr_o => priority_ram_write_addr_o,
-            priority_ram_priority_o   => priority_ram_data_o,
-            priority_ram_write_o      => priority_ram_write_o,
-            frame_buffer_addr_o       => frame_buffer_addr_o,
-            frame_buffer_color_o      => frame_buffer_color_o,
-            frame_buffer_write_o      => frame_buffer_write_o,
+            palette_color_i           => extract_color_from_palette_data(paletteRam_dout),
+            priority_ram_read_addr_o  => priority_read_addr,
+            priority_ram_priority_i   => priority_read_dout,
+            priority_ram_write_addr_o => priority_write_addr,
+            priority_ram_priority_o   => priority_write_din,
+            priority_ram_write_o      => priority_write_wr,
+            frame_buffer_addr_o       => frameBuffer_addr,
+            frame_buffer_color_o      => frame_buffer_color_s,
+            frame_buffer_write_o      => frameBuffer_wr,
             done_writing_tile_o       => pipeline_done_writing_tile_s);
+
+    frameBuffer_din <= frame_buffer_color_s.r & frame_buffer_color_s.g & frame_buffer_color_s.b;
 
     -------------
     -- Outputs --
@@ -420,9 +427,9 @@ begin
 
     -- The small tile need tiny bursts (they require half the data of the big
     -- tiles)
-    tiny_burst_o <= '1' when layer_info_reg_s.small_tile = '1' else '0';
+    tileRom_tinyBurst <= '1' when layer_info_reg_s.small_tile = '1' else '0';
 
-    layer_burst_read_o <= tile_burst_read_s;
+    tileRom_rd <= tile_burst_read_s;
 
     -- TODO : Rethink this (this is a quick fix to have a single clock cycle
     -- done pulse and it is delayed by one clock cycle to let the processor
@@ -468,12 +475,16 @@ begin
 
     end block big_tile_layer_ram_addr_block;
 
-    layer_ram_addr_o <= resize(small_tile_index_s, layer_ram_addr_o'length) when layer_info_reg_s.small_tile = '1' else
-                        resize(big_tile_index_s, layer_ram_addr_o'length);
+    layerRam_addr <= resize(small_tile_index_s, layerRam_addr'length) when layer_info_reg_s.small_tile = '1' else
+                     resize(big_tile_index_s, layerRam_addr'length);
 
-    layer_rom_addr_o <= resize(tile_info_reg_s.code * DDP_BYTES_PER_8x8_TILE, layer_rom_addr_o'length) when layer_info_reg_s.small_tile = '1' else
-                        resize(tile_info_reg_s.code * DDP_BYTES_PER_16x16_TILE, layer_rom_addr_o'length);
+    tileRom_addr <= resize(tile_info_reg_s.code * DDP_BYTES_PER_8x8_TILE, tileRom_addr'length) when layer_info_reg_s.small_tile = '1' else
+                    resize(tile_info_reg_s.code * DDP_BYTES_PER_16x16_TILE, tileRom_addr'length);
 
-    palette_ram_addr_o <= palette_ram_addr_from_palette_color_select(palette_color_select_s);
+    paletteRam_addr <= palette_ram_addr_from_palette_color_select(palette_color_select_s);
 
+    layerRam_rd <= '1';
+    paletteRam_rd <= '1';
+    priority_read_rd <= '1';
+    frameBuffer_mask <= "0";
 end struct;
