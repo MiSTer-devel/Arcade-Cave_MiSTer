@@ -120,7 +120,7 @@ class Main extends Module {
   dataFreezer.io.out <> io.progRom
 
   // Cave
-  val cave = Module(new CaveTop)
+  val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.player := io.player
