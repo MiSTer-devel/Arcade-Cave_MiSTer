@@ -46,4 +46,6 @@ class TileRomIO extends ValidReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_R
   val tinyBurst = Output(Bool())
   /** Burst done flag */
   val burstDone = Input(Bool())
+
+  override def cloneType: this.type = new TileRomIO().asInstanceOf[this.type]
 }
