@@ -44,6 +44,7 @@ private class CounterStatic(to: Int, init: Int = 0) {
   require(to >= init, s"Counter value must greater than initial value, got: $to")
   val value = if (to > 1) RegInit(init.U(log2Ceil(to).W)) else init.U
 
+  /** Increments the counter */
   def inc(): Bool = {
     if (to > 1) {
       val wrap = value === (to-1).U
@@ -56,31 +57,44 @@ private class CounterStatic(to: Int, init: Int = 0) {
       true.B
     }
   }
+
+  /** Resets the counter to its initial value */
+  def reset(): Unit = {
+    if (to > 1) {
+      value := init.U
+    }
+  }
 }
 
 private class CounterDynamic(to: UInt) {
   val value = RegInit(0.U(to.getWidth.W))
 
+  /** Increments the counter */
   def inc(): Bool = {
-    val wrap = value === to - 1.U
+    val wrap = value === to-1.U || to === 0.U
     value := value + 1.U
     when(wrap) { value := 0.U }
     wrap
   }
+
+  /** Resets the counter to its initial value */
+  def reset(): Unit = {
+    value := 0.U
+  }
 }
 
 object Counter {
-  def apply(cond: Bool, to: Int, init: Int = 0): (UInt, Bool) = {
-    val c = new CounterStatic(to, init)
+  def static(n: Int, enable: Bool = true.B, reset: Bool = false.B, init: Int = 0): (UInt, Bool) = {
+    val c = new CounterStatic(n, init)
     val wrap = WireInit(false.B)
-    when(cond) { wrap := c.inc() }
+    when(reset) { c.reset() }.elsewhen(enable) { wrap := c.inc() }
     (c.value, wrap)
   }
 
-  def apply(cond: Bool, to: UInt): (UInt, Bool) = {
-    val c = new CounterDynamic(to)
+  def dynamic(n: UInt, enable: Bool = true.B, reset: Bool = false.B): (UInt, Bool) = {
+    val c = new CounterDynamic(n)
     val wrap = WireInit(false.B)
-    when(cond) { wrap := c.inc() }
+    when(reset) { c.reset() }.elsewhen(enable) { wrap := c.inc() }
     (c.value, wrap)
   }
 }
