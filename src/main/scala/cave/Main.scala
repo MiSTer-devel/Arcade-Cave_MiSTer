@@ -38,8 +38,9 @@
 package cave
 
 import axon.Util
-import axon.gpu.{VideoIO, VideoTiming}
-import axon.mem.DualPortRam
+import axon.gpu._
+import axon.mem._
+import axon.types._
 import cave.types._
 import chisel3._
 import chisel3.util._
@@ -61,10 +62,6 @@ class Main extends Module {
     val cpuReset = Input(Bool())
     /** Player port */
     val player = new PlayerIO
-    /** Program ROM port */
-    val progRom = new CacheIO
-    /** Tile ROM port */
-    val tileRom = new TileRomIO
     /** Frame buffer port */
     val frameBuffer = new Bundle {
       /** DMA start flag */
@@ -80,16 +77,30 @@ class Main extends Module {
     }
     /** Video port */
     val video = Output(new VideoIO)
+    /** DDR port */
+    val ddr = new BurstReadWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
+    /** Download port */
+    val download = DownloadIO()
+    /** Frame buffer to DDR port */
+    val fbToDDR = Flipped(BurstWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH))
+    /** Frame buffer from DDR port */
+    val fbFromDDR = Flipped(BurstReadMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH))
     /** Debug port */
     val debug = Output(new Bundle {
-      val addr = UInt(10.W)
-      val pc = UInt(32.W)
+      val pc = UInt()
       val pcw = Bool()
     })
   })
 
   // Registers
   val swapReg = RegInit(false.B)
+
+  // DDR arbiter
+  val arbiter = Module(new DDRArbiter)
+  arbiter.io.ddr <> io.ddr
+  arbiter.io.download <> io.download
+  arbiter.io.fbToDDR <> io.fbToDDR
+  arbiter.io.fbFromDDR <> io.fbFromDDR
 
   // Video timing
   //
@@ -117,7 +128,7 @@ class Main extends Module {
   dataFreezer.io.targetClock := io.cpuClock
   dataFreezer.io.targetReset := io.cpuReset
   dataFreezer.io.in <> cacheMem.io.out
-  dataFreezer.io.out <> io.progRom
+  dataFreezer.io.out <> arbiter.io.cache
 
   // Cave
   val cave = Module(new Cave)
@@ -125,7 +136,7 @@ class Main extends Module {
   cave.io.cpuReset := io.cpuReset
   cave.io.player := io.player
   cave.io.progRom <> cacheMem.io.in
-  cave.io.tileRom <> io.tileRom
+  cave.io.tileRom <> arbiter.io.gfx
   cave.io.frameBuffer.dmaDone := io.frameBuffer.dmaDone
   cave.io.video := videoTiming.io
 
@@ -174,9 +185,8 @@ class Main extends Module {
   io.frameBuffer.dmaStart := cave.io.frameBuffer.dmaStart
   io.frameBuffer.data := frameBufferData
   io.frameBuffer.swap := swapReg
-  io.debug.addr := 0.U
-  io.debug.pc := 0.U
-  io.debug.pcw := false.B
+  io.debug.pc := cave.io.debug.pc
+  io.debug.pcw := cave.io.debug.pcw
 }
 
 object Main extends App {
