@@ -379,7 +379,7 @@ wire player_2_pause    =             joystick_0[9];
 // CAVE
 ////////////////////////////////////////////////////////////////////////////////
 
-wire core_sreset = RESET | ioctl_download | status[0] | buttons[1] | ~locked;
+wire core_sreset = RESET | status[0] | buttons[1] | ~locked;
 
 logic sreset_68k_0;
 logic sreset_68k_1;
@@ -418,7 +418,7 @@ end
 
 Main main (
     // Fast clock domain
-    .reset(core_sreset),
+    .reset(RESET),
     .clock(clk_sys),
     // Video clock domain
     .io_videoClock(CLK_VIDEO),
