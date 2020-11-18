@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="FrameBufferWriteDMATest" type="ScalaTestRunConfiguration" factoryName="ScalaTest" nameIsGenerated="true" show_console_on_std_err="false" show_console_on_std_out="false">
+    <module name="cave-chisel" />
+    <option name="allowRunningInParallel" value="false" />
+    <option name="selectedOptions">
+      <set />
+    </option>
+    <option name="testKind" value="Class" />
+    <option name="testClassPath" value="FrameBufferWriteDMATest" />
+    <option name="workingDirectory" value="$PROJECT_DIR$" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
