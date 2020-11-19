@@ -39,9 +39,9 @@ package axon.mem
 
 import chisel3._
 
-trait AckIO {
-  /** The acknowledge signal is asserted when a request has been received */
-  val ack = Input(Bool())
+trait WaitIO {
+  /** The wait request signal is asserted when the device isn't ready to proceed with the request */
+  val waitReq = Input(Bool())
 }
 
 trait ValidIO {
@@ -50,12 +50,12 @@ trait ValidIO {
 }
 
 /**
- * A simple flow control interface for reading from asynchronous memory.
+ * A flow control interface for reading from asynchronous memory.
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class AsyncReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth, dataWidth) with AckIO with ValidIO {
+class AsyncReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth, dataWidth) with WaitIO with ValidIO {
   override def cloneType: this.type = new AsyncReadMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
 }
 
@@ -64,12 +64,12 @@ object AsyncReadMemIO {
 }
 
 /**
- * A simple flow control interface for writing to asynchronous memory.
+ * A control interface for writing to asynchronous memory.
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class AsyncWriteMemIO(addrWidth: Int, dataWidth: Int) extends WriteMemIO(addrWidth, dataWidth) with AckIO {
+class AsyncWriteMemIO(addrWidth: Int, dataWidth: Int) extends WriteMemIO(addrWidth, dataWidth) with WaitIO {
   override def cloneType: this.type = new AsyncWriteMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
 }
 
@@ -78,12 +78,12 @@ object AsyncWriteMemIO {
 }
 
 /**
- * A simple flow control interface for reading and writing to asynchronous memory.
+ * A flow control interface for reading and writing to asynchronous memory.
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class AsyncReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends ReadWriteMemIO(addrWidth, dataWidth) with AckIO with ValidIO {
+class AsyncReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends ReadWriteMemIO(addrWidth, dataWidth) with WaitIO with ValidIO {
   override def cloneType: this.type = new AsyncReadWriteMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
 
   /** Converts the interface to read-only */
@@ -91,7 +91,7 @@ class AsyncReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends ReadWriteMemIO
     val wire = Wire(Flipped(AsyncReadMemIO(addrWidth, dataWidth)))
     rd := wire.rd
     wr := false.B
-    wire.ack := ack
+    wire.waitReq := waitReq
     wire.valid := valid
     addr := wire.addr
     din := 0.U
@@ -104,7 +104,7 @@ class AsyncReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends ReadWriteMemIO
     val wire = Wire(Flipped(AsyncWriteMemIO(addrWidth, dataWidth)))
     rd := false.B
     wr := wire.wr
-    wire.ack := ack
+    wire.waitReq := waitReq
     addr := wire.addr
     din := wire.din
     wire

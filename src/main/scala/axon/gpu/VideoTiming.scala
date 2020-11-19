@@ -114,8 +114,8 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
   val io = IO(new VideoIO)
 
   // Counters
-  val (x, xWrap) = Counter(true.B, config.hEndSync, config.hInit)
-  val (y, yWrap) = Counter(xWrap, config.vEndSync, config.vInit)
+  val (x, xWrap) = Counter.static(config.hEndSync, init = config.hInit)
+  val (y, yWrap) = Counter.static(config.vEndSync, enable = xWrap, init = config.vInit)
 
   // Adjust the position so the display region begins at the origin
   val pos = Vec2(x-config.hOffset.U, y-config.vOffset.U)

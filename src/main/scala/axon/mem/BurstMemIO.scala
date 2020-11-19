@@ -35,11 +35,54 @@
  *  SOFTWARE.
  */
 
-package cave.types
+package axon.mem
 
-import cave.Config
+import chisel3._
 
-/** Cache IO */
-class CacheIO extends ValidReadMemIO(Config.CACHE_ADDR_WIDTH, Config.CACHE_DATA_WIDTH) {
-  override def cloneType: this.type = new CacheIO().asInstanceOf[this.type]
+trait BurstIO {
+  /** Burst count */
+  val burstCount = Output(UInt(8.W))
 }
+
+/**
+ * A flow control interface for bursted reading to memory.
+ *
+ * @param addrWidth The width of the address bus.
+ * @param dataWidth The width of the data bus.
+ */
+class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addrWidth, dataWidth) with BurstIO {
+  override def cloneType: this.type = new BurstReadMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
+}
+
+object BurstReadMemIO {
+  def apply(addrWidth: Int, dataWidth: Int) = new BurstReadMemIO(addrWidth, dataWidth)
+}
+
+/**
+ * A flow control interface for bursted writing to memory.
+ *
+ * @param addrWidth The width of the address bus.
+ * @param dataWidth The width of the data bus.
+ */
+class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(addrWidth, dataWidth) with BurstIO {
+  override def cloneType: this.type = new BurstWriteMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
+}
+
+object BurstWriteMemIO {
+  def apply(addrWidth: Int, dataWidth: Int) = new BurstWriteMemIO(addrWidth, dataWidth)
+}
+
+/**
+ * A flow control interface for bursted reading and writing to memory.
+ *
+ * @param addrWidth The width of the address bus.
+ * @param dataWidth The width of the data bus.
+ */
+class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWriteMemIO(addrWidth, dataWidth) with BurstIO {
+  override def cloneType: this.type = new BurstReadWriteMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
+}
+
+object BurstReadWriteMemIO {
+  def apply(addrWidth: Int, dataWidth: Int) = new BurstReadWriteMemIO(addrWidth, dataWidth)
+}
+

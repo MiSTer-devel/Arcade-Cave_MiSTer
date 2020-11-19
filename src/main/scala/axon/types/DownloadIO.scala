@@ -35,11 +35,33 @@
  *  SOFTWARE.
  */
 
-package cave.types
+package axon.types
 
-import cave.Config
+import chisel3._
 
-/** Cache IO */
-class CacheIO extends ValidReadMemIO(Config.CACHE_ADDR_WIDTH, Config.CACHE_DATA_WIDTH) {
-  override def cloneType: this.type = new CacheIO().asInstanceOf[this.type]
+/** A flow control interface used to download data into the core. */
+class DownloadIO private extends Bundle {
+  /** Enable flag */
+  val enable = Input(Bool())
+  /** Write enable */
+  val wr = Input(Bool())
+  /** Flag to indicate that the device isn't ready to proceed with the request  */
+  val waitReq = Output(Bool())
+  /** Index */
+  val index = Input(UInt(DownloadIO.INDEX_WIDTH.W))
+  /** Address bus */
+  val addr = Input(UInt(DownloadIO.ADDR_WIDTH.W))
+  /** Data bus */
+  val dout = Input(Bits(DownloadIO.DATA_WIDTH.W))
+}
+
+object DownloadIO {
+  /** The width of the index */
+  val INDEX_WIDTH = 8
+  /** The width of the address bus */
+  val ADDR_WIDTH = 27
+  /** The width of the data bus */
+  val DATA_WIDTH = 8
+
+  def apply() = new DownloadIO
 }

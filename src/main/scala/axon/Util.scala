@@ -103,6 +103,18 @@ object Util {
   def bitmask(n: UInt, width: Int): UInt = (~((1.U(width.W) << n).asUInt - 1.U)).asUInt
 
   /**
+   * Pads the words packed into a bitvector value.
+   *
+   * @param bits      The value.
+   * @param n         The number of words.
+   * @param fromWidth The width of the source words.
+   * @param toWidth   The width of the destination words.
+   * @return
+   */
+  def padWords(bits: Bits, n: Int, fromWidth: Int, toWidth: Int): Bits =
+    Cat(Util.decode(bits, n, fromWidth).map(_.pad(toWidth)).reverse)
+
+  /**
    * Detects edges of a signal.
    *
    * @param s The signal used to detect edges.

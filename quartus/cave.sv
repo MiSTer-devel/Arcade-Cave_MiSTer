@@ -386,29 +386,8 @@ logic sreset_68k_1;
 logic sreset_68k;
 
 // Interface to debug PC trace circular buffer
-logic [9:0]   tg68_addr;
 logic [31:0]  tg68_data;
 logic         tg68_write;
-
-// Interface to cache DMA
-logic [31:0]  rom_addr_68k_cache;
-logic         rom_read_68k_cache;
-logic         rom_valid_68k_cache;
-logic [255:0] rom_data_68k_cache;
-
-// Interface to graphics DMA
-logic [31:0]  gfx_addr;
-logic         gfx_tiny_burst;
-logic         gfx_burst_read;
-logic         gfx_burst_done;
-logic [63:0]  gfx_data;
-logic         gfx_data_valid;
-
-// Frame Buffer Interface for FB DMA
-logic [14:0]  fb_addr;
-logic [63:0]  fb_data;
-logic         fb_dma_transfer;
-logic         fb_dma_hi_nlo;
 
 always_ff @(posedge clk_68k) begin
     sreset_68k_0 <= core_sreset;
@@ -429,24 +408,6 @@ Main main (
     .io_player_player1({player_1_coin, player_1_start, player_1_button_3, player_1_button_2, player_1_button_1, player_1_right, player_1_left, player_1_down, player_1_up}),
     .io_player_player2({player_2_coin, player_2_start, player_2_button_3, player_2_button_2, player_2_button_1, player_2_right, player_2_left, player_2_down, player_2_up}),
     .io_player_pause(player_1_pause | player_2_pause),
-    // Cache memory interface
-    .io_progRom_addr(rom_addr_68k_cache),
-    .io_progRom_rd(rom_read_68k_cache),
-    .io_progRom_valid(rom_valid_68k_cache),
-    .io_progRom_dout(rom_data_68k_cache),
-    // Graphics
-    .io_tileRom_addr(gfx_addr),
-    .io_tileRom_tinyBurst(gfx_tiny_burst),
-    .io_tileRom_rd(gfx_burst_read),
-    .io_tileRom_dout(gfx_data),
-    .io_tileRom_valid(gfx_data_valid),
-    .io_tileRom_burstDone(gfx_burst_done),
-    // Frame buffer
-    .io_frameBuffer_dmaStart(fb_dma_transfer),
-    .io_frameBuffer_dmaDone(fb_to_ddr3_done),
-    .io_frameBuffer_data(fb_data),
-    .io_frameBuffer_addr(fb_addr),
-    .io_frameBuffer_swap(fb_dma_hi_nlo),
     // Video signals
     .io_video_pos_x(hc),
     .io_video_pos_y(vc),
@@ -455,74 +416,29 @@ Main main (
     .io_video_hBlank(hblank),
     .io_video_vBlank(vblank),
     .io_video_enable(video_enable),
+    // DDR arbiter
+    .io_ddr_rd(ddr3_read_arbiter),
+    .io_ddr_wr(ddr3_write_arbiter),
+    .io_ddr_addr(ddr3_address_arbiter),
+    .io_ddr_mask(ddr3_write_be_arbiter),
+    .io_ddr_din(ddr3_write_data_arbiter),
+    .io_ddr_dout(ddr3_read_data_arbiter),
+    .io_ddr_waitReq(ddr3_waitrequest_arbiter),
+    .io_ddr_valid(ddr3_read_data_valid_arbiter),
+    .io_ddr_burstCount(ddr3_burstcount_arbiter),
+    // Download
+    .io_download_enable(ioctl_download),
+    .io_download_wr(ioctl_wr),
+    .io_download_waitReq(ioctl_wait_arbiter),
+    .io_download_addr(ioctl_addr),
+    .io_download_dout(ioctl_dout),
+    // Pixel port
+    .io_pixelData_ready(video_fifo_ready),
+    .io_pixelData_valid(video_fifo_write),
+    .io_pixelData_bits(video_fifo_data_in),
     // Debug
-    .io_debug_addr(tg68_addr),
     .io_debug_pc(tg68_data),
     .io_debug_pcw(tg68_write)
-);
-
-////////////////////////////////////////////////////////////////////////////////
-// DDR3 ARBITER
-////////////////////////////////////////////////////////////////////////////////
-//
-logic [31:0] fb_to_ddr3_address;
-logic [7:0]  fb_to_ddr3_burstcount;
-logic        fb_to_ddr3_write;
-logic [63:0] fb_to_ddr3_writedata;
-logic        fb_to_ddr3_waitrequest;
-logic        fb_to_ddr3_done;
-
-logic [31:0] fb_from_ddr3_address;
-logic [7:0]  fb_from_ddr3_burstcount;
-logic        fb_from_ddr3_read;
-logic        fb_from_ddr3_waitrequest;
-logic [63:0] fb_from_ddr3_data;
-logic        fb_from_ddr3_data_valid;
-
-ddr3_arbiter walter_day (
-    .clock_i(clk_sys),
-    .reset_i(RESET),
-    // DDR3
-    .ddr3_address_o(ddr3_address_arbiter),
-    .ddr3_waitrequest_i(ddr3_waitrequest_arbiter),
-    .ddr3_burstcount_o(ddr3_burstcount_arbiter),
-    .ddr3_read_o(ddr3_read_arbiter),
-    .ddr3_read_data_valid_i(ddr3_read_data_valid_arbiter),
-    .ddr3_read_data_i(ddr3_read_data_arbiter),
-    .ddr3_write_o(ddr3_write_arbiter),
-    .ddr3_write_data_o(ddr3_write_data_arbiter),
-    .ddr3_write_be_o(ddr3_write_be_arbiter),
-    // IOCTL
-    .ioctl_download_i(ioctl_download),
-    .ioctl_address_i(ioctl_addr),
-    .ioctl_write_i(ioctl_wr),
-    .ioctl_data_i(ioctl_dout),
-    .ioctl_wait_o(ioctl_wait_arbiter),
-    // Cache
-    .cache_address_i(rom_addr_68k_cache),
-    .cache_read_i(rom_read_68k_cache),
-    .cache_data_valid_o(rom_valid_68k_cache),
-    .cache_data_o(rom_data_68k_cache),
-    // GFX
-    .gfx_address_i(gfx_addr),
-    .gfx_tiny_burst_i(gfx_tiny_burst),
-    .gfx_burst_read_i(gfx_burst_read),
-    .gfx_data_o(gfx_data),
-    .gfx_data_valid_o(gfx_data_valid),
-    .gfx_burst_read_done_o(gfx_burst_done),
-    // FB -> DDR3
-    .fb_to_ddr3_address_i(fb_to_ddr3_address),
-    .fb_to_ddr3_burstcount_i(fb_to_ddr3_burstcount),
-    .fb_to_ddr3_write_i(fb_to_ddr3_write),
-    .fb_to_ddr3_writedata_i(fb_to_ddr3_writedata),
-    .fb_to_ddr3_waitrequest_o(fb_to_ddr3_waitrequest),
-    // DDR3 -> FB
-    .fb_from_ddr3_address_i(fb_from_ddr3_address),
-    .fb_from_ddr3_burstcount_i(fb_from_ddr3_burstcount),
-    .fb_from_ddr3_read_i(fb_from_ddr3_read),
-    .fb_from_ddr3_waitrequest_o(fb_from_ddr3_waitrequest),
-    .fb_from_ddr3_data_o(fb_from_ddr3_data),
-    .fb_from_ddr3_data_valid_o(fb_from_ddr3_data_valid)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -562,48 +478,6 @@ video_fifo output_video_fifo (
     .q(video_fifo_pixel),
     .rdempty(video_fifo_empty),
     .wrusedw(video_fifo_contents)
-);
-
-// Frame buffer address
-logic [31:0] frame_buffer_address; // = 32'h02000000; // would not work with Quartus for some reason (check RTL viewer)
-assign frame_buffer_address = 32'h02000000;
-
-fb_to_ddr3_dma fb2ddr (
-    .clk_i(clk_sys),
-    .rst_i(RESET),
-    //
-    .address_i(frame_buffer_address),
-    .transfer_i(fb_dma_transfer),
-    .hi_nlo_i(fb_dma_hi_nlo),
-    .busy_o(),
-    .done_o(fb_to_ddr3_done),
-    //
-    .fb_addr_o(fb_addr),
-    .fb_data_i(fb_data), // This is not the correct width for the moment // Seems OK, TODO check
-    .address_ddr3_o(fb_to_ddr3_address),
-    .burstcount_ddr3_o(fb_to_ddr3_burstcount),
-    .write_ddr3_o(fb_to_ddr3_write),
-    .writedata_ddr3_o(fb_to_ddr3_writedata),
-    .waitrequest_ddr3_i(fb_to_ddr3_waitrequest)
-);
-
-fb_from_ddr3_dma ddr2fb (
-    .clk_i(clk_sys),
-    .rst_i(RESET),
-    //
-    .address_i(frame_buffer_address),
-    .hi_nlo_i(~fb_dma_hi_nlo),
-    //
-    .fifo_ready_i(video_fifo_ready),
-    .data_o(video_fifo_data_in),
-    .write_fifo_o(video_fifo_write),
-    //
-    .addr_ddr3_o(fb_from_ddr3_address),
-    .burstcount_ddr3_o(fb_from_ddr3_burstcount),
-    .waitrequest_ddr3_i(fb_from_ddr3_waitrequest),
-    .read_ddr3_o(fb_from_ddr3_read),
-    .data_ddr3_i(fb_from_ddr3_data),
-    .data_valid_ddr3_i(fb_from_ddr3_data_valid)
 );
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -35,66 +35,63 @@
  *  SOFTWARE.
  */
 
-package axon.util
+package cave
 
+import axon.mem.BurstReadMemIO
+import axon.util.Counter
 import chisel3._
 import chisel3.util._
 
-private class CounterStatic(to: Int, init: Int = 0) {
-  require(to >= init, s"Counter value must greater than initial value, got: $to")
-  val value = if (to > 1) RegInit(init.U(log2Ceil(to).W)) else init.U
+/**
+ * A direct memory access (DMA) controller for reading the frame buffer from DDR.
+ *
+ * @param numWords The number of words to transfer.
+ * @param burstLength The length of the DDR burst.
+ * @param addr The start address of the transfer.
+ */
+class FrameBufferReadDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
+  /** The number of bursts */
+  private val NUM_BURSTS = numWords / burstLength
 
-  /** Increments the counter */
-  def inc(): Bool = {
-    if (to > 1) {
-      val wrap = value === (to-1).U
-      value := value + 1.U
-      if (!isPow2(to)) {
-        when(wrap) { value := 0.U }
-      }
-      wrap
-    } else {
-      true.B
-    }
+  val io = IO(new Bundle {
+    /** Swap the frame buffer */
+    val swap = Input(Bool())
+    /** Done flag */
+    val done = Output(Bool())
+    /** Pixel data port */
+    val pixelData = DecoupledIO(Bits(DDRArbiter.DATA_WIDTH.W))
+    /** DDR port */
+    val ddr = BurstReadMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
+  })
+
+  // Registers
+  val busyReg = RegInit(false.B)
+
+  // Assert the read enable unless the DMA is busy
+  val read = io.pixelData.ready && !busyReg
+
+  // Counters
+  val (wordCounterValue, wordCounterDone) = Counter.static(burstLength, enable = io.ddr.valid)
+  val (burstCounterValue, burstCounterDone) = Counter.static(NUM_BURSTS, enable = wordCounterDone)
+
+  // Calculate the address offset value
+  val mask = 0.U(log2Ceil(burstLength*8).W)
+  val offset = io.swap ## burstCounterValue ## mask
+
+  // Toggle the busy register
+  when(read && !io.ddr.waitReq) {
+    busyReg := true.B
+  }.elsewhen(wordCounterDone) {
+    busyReg := false.B
   }
 
-  /** Resets the counter to its initial value */
-  def reset(): Unit = {
-    if (to > 1) {
-      value := init.U
-    }
-  }
-}
+  // Outputs
+  io.done := RegNext(wordCounterDone, false.B)
+  io.pixelData.bits := io.ddr.dout
+  io.pixelData.valid := io.ddr.valid
+  io.ddr.rd := read
+  io.ddr.addr := addr.U + offset
+  io.ddr.burstCount := burstLength.U
 
-private class CounterDynamic(to: UInt) {
-  val value = RegInit(0.U(to.getWidth.W))
-
-  /** Increments the counter */
-  def inc(): Bool = {
-    val wrap = value === to-1.U || to === 0.U
-    value := value + 1.U
-    when(wrap) { value := 0.U }
-    wrap
-  }
-
-  /** Resets the counter to its initial value */
-  def reset(): Unit = {
-    value := 0.U
-  }
-}
-
-object Counter {
-  def static(n: Int, enable: Bool = true.B, reset: Bool = false.B, init: Int = 0): (UInt, Bool) = {
-    val c = new CounterStatic(n, init)
-    val wrap = WireInit(false.B)
-    when(reset) { c.reset() }.elsewhen(enable) { wrap := c.inc() }
-    (c.value, wrap)
-  }
-
-  def dynamic(n: UInt, enable: Bool = true.B, reset: Bool = false.B): (UInt, Bool) = {
-    val c = new CounterDynamic(n)
-    val wrap = WireInit(false.B)
-    when(reset) { c.reset() }.elsewhen(enable) { wrap := c.inc() }
-    (c.value, wrap)
-  }
+  printf(p"FrameBufferReadDMA(busy: $busyReg, wordCounter: $wordCounterValue ($wordCounterDone), burstCounter: $burstCounterValue ($burstCounterDone))\n")
 }
