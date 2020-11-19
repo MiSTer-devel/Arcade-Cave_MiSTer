@@ -40,7 +40,7 @@ package cave.dma
 import axon.Util
 import axon.mem.BurstWriteMemIO
 import axon.util.Counter
-import cave.types.FrameBufferDMAIO
+import cave.types.FrameBufferIO
 import cave.{Config, DDRArbiter}
 import chisel3._
 import chisel3.util._
@@ -48,9 +48,9 @@ import chisel3.util._
 /**
  * A direct memory access (DMA) controller for copying the frame buffer to DDR memory.
  *
+ * @param addr The start address of the transfer.
  * @param numWords The number of words to transfer.
  * @param burstLength The length of the DDR burst.
- * @param addr The start address of the transfer.
  */
 class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
   /** The number of bursts */
@@ -59,8 +59,12 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
   val io = IO(new Bundle {
     /** Swap the frame buffer */
     val swap = Input(Bool())
-    /** Frame buffer DMA port */
-    val frameBufferDMA = new FrameBufferDMAIO
+    /** Start the transfer */
+    val start = Input(Bool())
+    /** Asserted when the transfer is complete */
+    val done = Output(Bool())
+    /** Frame buffer port */
+    val frameBuffer = new FrameBufferIO
     /** DDR port */
     val ddr = BurstWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
   })
@@ -84,19 +88,15 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
   val offset = io.swap ## burstCounterValue ## mask
 
   // Pad the pixel data, so that four 15-bit pixels pack into a 64-bit DDR word
-  val pixelData = Util.padWords(io.frameBufferDMA.dout, 4, Config.FRAME_BUFFER_DATA_WIDTH, DDRArbiter.DATA_WIDTH/4)
+  val pixelData = Util.padWords(io.frameBuffer.dout, 4, Config.FRAME_BUFFER_DATA_WIDTH, DDRArbiter.DATA_WIDTH/4)
 
   // Toggle the busy register
-  when(io.frameBufferDMA.dmaStart) {
-    busyReg := true.B
-  }.elsewhen(totalCounterDone) {
-    busyReg := false.B
-  }
+  when(io.start) { busyReg := true.B }.elsewhen(totalCounterDone) { busyReg := false.B }
 
   // Outputs
-  io.frameBufferDMA.dmaDone := RegNext(totalCounterDone, false.B)
-  io.frameBufferDMA.rd := true.B
-  io.frameBufferDMA.addr := Mux(effectiveWrite, totalCounterValue+&1.U, totalCounterValue)
+  io.done := RegNext(totalCounterDone, false.B)
+  io.frameBuffer.rd := true.B
+  io.frameBuffer.addr := Mux(effectiveWrite, totalCounterValue+&1.U, totalCounterValue)
   io.ddr.wr := busyReg
   io.ddr.addr := addr.U + offset
   io.ddr.mask := Fill(io.ddr.maskWidth, 1.U)

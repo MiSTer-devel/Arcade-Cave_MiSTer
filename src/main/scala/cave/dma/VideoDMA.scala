@@ -80,11 +80,7 @@ class VideoDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
   val offset = io.swap ## burstCounterValue ## mask
 
   // Toggle the busy register
-  when(read && !io.ddr.waitReq) {
-    busyReg := true.B
-  }.elsewhen(wordCounterDone) {
-    busyReg := false.B
-  }
+  when(read && !io.ddr.waitReq) { busyReg := true.B }.elsewhen(wordCounterDone) { busyReg := false.B }
 
   // Outputs
   io.done := RegNext(wordCounterDone, false.B)

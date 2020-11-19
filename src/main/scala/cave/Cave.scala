@@ -53,6 +53,8 @@ class Cave extends Module {
     val cpuClock = Input(Clock())
     /** CPU reset */
     val cpuReset = Input(Reset())
+    /** Asserted when the frame is complete */
+    val frameDone = Output(Bool())
     /** Player port */
     val player = new PlayerIO
     /** Program ROM port */
@@ -60,7 +62,7 @@ class Cave extends Module {
     /** Tile ROM port */
     val tileRom = new TileRomIO
     /** Frame buffer DMA port */
-    val frameBufferDMA = Flipped(new FrameBufferDMAIO)
+    val frameBuffer = Flipped(new FrameBufferIO)
     /** Video port */
     val video = Input(new VideoIO)
     /** Debug port */
@@ -173,13 +175,13 @@ class Cave extends Module {
   gpu.io.layer0Regs := layer0Regs.io.regs.asUInt
   gpu.io.layer1Regs := layer1Regs.io.regs.asUInt
   gpu.io.layer2Regs := layer2Regs.io.regs.asUInt
-  gpu.io.tileRom <> io.tileRom
   gpu.io.spriteRam <> spriteRam.io.portB
   gpu.io.layer0Ram <> layer0Ram.io.portB
   gpu.io.layer1Ram <> layer1Ram.io.portB
   gpu.io.layer2Ram <> layer2Ram.io.portB
   gpu.io.paletteRam <> paletteRam.io.portB
-  gpu.io.frameBufferDMA <> io.frameBufferDMA
+  gpu.io.tileRom <> io.tileRom
+  gpu.io.frameBuffer <> io.frameBuffer
 
   // Memory map
   withClockAndReset(io.cpuClock, io.cpuReset) {
@@ -229,6 +231,7 @@ class Cave extends Module {
   }
 
   // Outputs
+  io.frameDone := gpu.io.frameDone
   io.tileRom.addr := gpu.io.tileRom.addr + Config.TILE_ROM_OFFSET.U
   io.debug.pc := cpu.io.debug.pc
   io.debug.pcw := cpu.io.debug.pcw

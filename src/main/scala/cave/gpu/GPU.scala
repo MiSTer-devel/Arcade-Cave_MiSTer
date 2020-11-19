@@ -48,6 +48,8 @@ class GPU extends Module {
   val io = IO(new Bundle {
     /** Strobe to indicate that a new frame should be generated */
     val generateFrame = Input(Bool())
+    /** Asserted when the frame is complete */
+    val frameDone = Output(Bool())
     /** Video registers port */
     val videoRegs = Input(Bits(Config.VIDEO_GPU_DATA_WIDTH.W))
     /** Layer 0 registers port */
@@ -56,8 +58,6 @@ class GPU extends Module {
     val layer1Regs = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
     /** Layer 2 registers port */
     val layer2Regs = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
-    /** Tile ROM port */
-    val tileRom = new TileRomIO
     /** Sprite RAM port */
     val spriteRam = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
     /** Layer 0 RAM port */
@@ -68,8 +68,10 @@ class GPU extends Module {
     val layer2Ram = ReadMemIO(Config.LAYER_2_RAM_GPU_ADDR_WIDTH, Config.LAYER_2_RAM_GPU_DATA_WIDTH)
     /** Palette RAM port */
     val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
-    /** Frame buffer DMA port */
-    val frameBufferDMA = Flipped(new FrameBufferDMAIO)
+    /** Tile ROM port */
+    val tileRom = new TileRomIO
+    /** Frame buffer port */
+    val frameBuffer = Flipped(new FrameBufferIO)
   })
 
   class GPUBlackBox extends BlackBox {
@@ -77,8 +79,7 @@ class GPU extends Module {
       val clk_i = Input(Clock())
       val rst_i = Input(Reset())
       val generateFrame = Input(Bool())
-      val dmaStart = Output(Bool())
-      val dmaDone = Input(Bool())
+      val frameDone = Output(Bool())
       val spriteBank = Input(Bool())
       val layer0Info = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
       val layer1Info = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
@@ -112,8 +113,6 @@ class GPU extends Module {
   gpu.io.layer1Ram <> io.layer1Ram
   gpu.io.layer2Ram <> io.layer2Ram
   gpu.io.paletteRam <> io.paletteRam
-  io.frameBufferDMA.dmaStart := gpu.io.dmaStart
-  gpu.io.dmaDone := io.frameBufferDMA.dmaDone
 
   // Convert the X and Y values to a linear address
   //
@@ -141,7 +140,10 @@ class GPU extends Module {
   frameBuffer.io.portA.addr := RegNext(frameBufferAddr)
   frameBuffer.io.portA.mask := 0.U
   frameBuffer.io.portA.din := RegNext(gpu.io.frameBuffer.din)
-  frameBuffer.io.portB.rd := io.frameBufferDMA.rd
-  frameBuffer.io.portB.addr := io.frameBufferDMA.addr
-  io.frameBufferDMA.dout := frameBuffer.io.portB.dout
+  frameBuffer.io.portB.rd := io.frameBuffer.rd
+  frameBuffer.io.portB.addr := io.frameBuffer.addr
+
+  // Outputs
+  io.frameDone := gpu.io.frameDone
+  io.frameBuffer.dout := frameBuffer.io.portB.dout
 }

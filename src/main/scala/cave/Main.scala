@@ -141,7 +141,8 @@ class Main extends Module {
   cave.io.progRom <> cacheMem.io.in
   cave.io.tileRom <> arbiter.io.gfx
   cave.io.video := videoTiming.io
-  cave.io.frameBufferDMA <> fbDMA.io.frameBufferDMA
+  cave.io.frameBuffer <> fbDMA.io.frameBuffer
+  fbDMA.io.start := cave.io.frameDone
 
   // Toggle the swap register on the rising edge of the vertical blank signal
   val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)

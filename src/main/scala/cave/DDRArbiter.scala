@@ -122,9 +122,7 @@ class DDRArbiter extends Module {
   )
 
   // Shift the DDR output data into the data register
-  when(io.ddr.valid) {
-    cacheDataReg := cacheDataReg.tail :+ io.ddr.dout
-  }
+  when(io.ddr.valid) { cacheDataReg := cacheDataReg.tail :+ io.ddr.dout }
 
   // Latch cache requests
   when(io.cache.rd) {

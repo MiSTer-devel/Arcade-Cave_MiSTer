@@ -61,8 +61,7 @@ entity graphic_processor is
         rst_i                    : in  std_logic;
         -- Control signals
         generateFrame            : in  std_logic;
-        dmaStart                 : out std_logic;
-        dmaDone                  : in  std_logic;
+        frameDone                : out std_logic;
         spriteBank               : in  std_logic;
         -- Tile ROM
         tileRom_rd               : out std_logic;
@@ -111,7 +110,7 @@ architecture struct of graphic_processor is
 
     -- NOTE : Maybe an extra stage is needed to clear the frame buffer (make it
     -- all black), this is not needed if the layers span the entire screen.
-    type state_t is (IDLE, CLEAR_FB, DRAW_SPRITES, DRAW_LAYER_0, DRAW_LAYER_1, DRAW_LAYER_2, START_DMA, WAIT_DMA);
+    type state_t is (IDLE, CLEAR_FB, DRAW_SPRITES, DRAW_LAYER_0, DRAW_LAYER_1, DRAW_LAYER_2, DONE);
 
     -------------
     -- Signals --
@@ -229,16 +228,11 @@ begin
 
             when DRAW_LAYER_2 =>
                 if layer_processor_done_s = '1' then
-                    next_state_s <= START_DMA;
+                    next_state_s <= DONE;
                 end if;
 
-            when START_DMA =>
-                next_state_s <= WAIT_DMA;
-
-            when WAIT_DMA =>
-                if dmaDone = '1' then
-                    next_state_s <= IDLE;
-                end if;
+            when DONE =>
+                next_state_s <= IDLE;
         end case;
 
     end process fsm_next_state_process;
@@ -268,7 +262,7 @@ begin
                       "10" when state_reg_s = DRAW_LAYER_2 else
                       "00";
 
-    dmaStart <= '1' when state_reg_s = START_DMA else '0';
+    frameDone <= '1' when state_reg_s = DONE else '0';
 
     ----------------
     -- Processors --
