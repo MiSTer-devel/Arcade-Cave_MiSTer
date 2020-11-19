@@ -59,8 +59,8 @@ class Cave extends Module {
     val progRom = new ProgRomIO
     /** Tile ROM port */
     val tileRom = new TileRomIO
-    /** Frame buffer port */
-    val frameBuffer = new FrameBufferIO
+    /** Frame buffer DMA port */
+    val frameBufferDMA = Flipped(new FrameBufferDMAIO)
     /** Video port */
     val video = Input(new VideoIO)
     /** Debug port */
@@ -179,7 +179,7 @@ class Cave extends Module {
   gpu.io.layer1Ram <> layer1Ram.io.portB
   gpu.io.layer2Ram <> layer2Ram.io.portB
   gpu.io.paletteRam <> paletteRam.io.portB
-  gpu.io.frameBuffer <> io.frameBuffer
+  gpu.io.frameBufferDMA <> io.frameBufferDMA
 
   // Memory map
   withClockAndReset(io.cpuClock, io.cpuReset) {

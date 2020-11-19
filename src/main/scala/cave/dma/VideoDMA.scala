@@ -35,75 +35,64 @@
  *  SOFTWARE.
  */
 
-package cave
+package cave.dma
 
-import axon.Util
-import axon.mem.{BurstWriteMemIO, ReadMemIO}
+import axon.mem.BurstReadMemIO
 import axon.util.Counter
+import cave.DDRArbiter
 import chisel3._
 import chisel3.util._
 
 /**
- * A direct memory access (DMA) controller for writing the frame buffer to DDR.
+ * A direct memory access (DMA) controller for reading pixel data from DDR memory.
  *
  * @param numWords The number of words to transfer.
  * @param burstLength The length of the DDR burst.
  * @param addr The start address of the transfer.
  */
-class FrameBufferWriteDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
+class VideoDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
   /** The number of bursts */
   private val NUM_BURSTS = numWords / burstLength
 
   val io = IO(new Bundle {
-    /** Start the DMA transfer */
-    val start = Input(Bool())
     /** Swap the frame buffer */
     val swap = Input(Bool())
     /** Done flag */
     val done = Output(Bool())
-    /** Frame buffer port */
-    val frameBuffer = ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH-2, Config.FRAME_BUFFER_DATA_WIDTH*4)
+    /** Pixel data port */
+    val pixelData = DecoupledIO(Bits(DDRArbiter.DATA_WIDTH.W))
     /** DDR port */
-    val ddr = BurstWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
+    val ddr = BurstReadMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
   })
 
   // Registers
   val busyReg = RegInit(false.B)
 
-  // Asserted unless the DDR is busy
-  val write = !io.ddr.waitReq && busyReg
-
-  // Asserted when the write will succeed
-  val effectiveWrite = busyReg && !io.ddr.waitReq
+  // Assert the read enable unless the DMA is busy
+  val read = io.pixelData.ready && !busyReg
 
   // Counters
-  val (totalCounterValue, totalCounterDone) = Counter.static(numWords, enable = effectiveWrite)
-  val (wordCounterValue, wordCounterDone) = Counter.static(burstLength, enable = effectiveWrite)
+  val (wordCounterValue, wordCounterDone) = Counter.static(burstLength, enable = io.ddr.valid)
   val (burstCounterValue, burstCounterDone) = Counter.static(NUM_BURSTS, enable = wordCounterDone)
 
   // Calculate the address offset value
   val mask = 0.U(log2Ceil(burstLength*8).W)
   val offset = io.swap ## burstCounterValue ## mask
 
-  // Pad the pixel data, so that four 15-bit pixels pack into a 64-bit DDR word
-  val pixelData = Util.padWords(io.frameBuffer.dout, 4, Config.FRAME_BUFFER_DATA_WIDTH, DDRArbiter.DATA_WIDTH/4)
-
   // Toggle the busy register
-  when(io.start) {
+  when(read && !io.ddr.waitReq) {
     busyReg := true.B
-  }.elsewhen(totalCounterDone) {
+  }.elsewhen(wordCounterDone) {
     busyReg := false.B
   }
 
   // Outputs
-  io.done := RegNext(totalCounterDone, false.B)
-  io.frameBuffer.rd := true.B
-  io.frameBuffer.addr := Mux(effectiveWrite, totalCounterValue+&1.U, totalCounterValue)
-  io.ddr.wr := busyReg
+  io.done := RegNext(wordCounterDone, false.B)
+  io.pixelData.bits := io.ddr.dout
+  io.pixelData.valid := io.ddr.valid
+  io.ddr.rd := read
   io.ddr.addr := addr.U + offset
-  io.ddr.mask := Fill(io.ddr.maskWidth, 1.U)
   io.ddr.burstCount := burstLength.U
-  io.ddr.din := pixelData
 
-  printf(p"FrameBufferWriteDMA(busy: $busyReg, wordCounter: $wordCounterValue ($wordCounterDone), burstCounter: $burstCounterValue ($burstCounterDone), totalCounter: $totalCounterValue ($totalCounterDone))\n")
+  printf(p"VideoDMA(busy: $busyReg, wordCounter: $wordCounterValue ($wordCounterDone), burstCounter: $burstCounterValue ($burstCounterDone))\n")
 }

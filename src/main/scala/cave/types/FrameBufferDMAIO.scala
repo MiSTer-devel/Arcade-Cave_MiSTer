@@ -37,14 +37,16 @@
 
 package cave.types
 
-import axon.mem.WriteMemIO
+import axon.mem.ReadMemIO
 import cave.Config
 import chisel3._
 
-/** Frame buffer IO */
-class FrameBufferIO extends WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH) {
+/** Frame buffer DMA IO */
+class FrameBufferDMAIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH-2, Config.FRAME_BUFFER_DATA_WIDTH*4) {
   /** DMA start flag */
-  val dmaStart = Output(Bool())
+  val dmaStart = Input(Bool())
   /** DMA done flag */
-  val dmaDone = Input(Bool())
+  val dmaDone = Output(Bool())
+
+  override def cloneType: this.type = new FrameBufferDMAIO().asInstanceOf[this.type]
 }

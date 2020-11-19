@@ -61,6 +61,8 @@ entity graphic_processor is
         rst_i                    : in  std_logic;
         -- Control signals
         generateFrame            : in  std_logic;
+        dmaStart                 : out std_logic;
+        dmaDone                  : in  std_logic;
         spriteBank               : in  std_logic;
         -- Tile ROM
         tileRom_rd               : out std_logic;
@@ -97,9 +99,8 @@ entity graphic_processor is
         frameBuffer_wr           : out std_logic;
         frameBuffer_addr         : out frame_buffer_addr_t;
         frameBuffer_mask         : out std_logic_vector(1 downto 0);
-        frameBuffer_din          : out std_logic_vector(DDP_WORD_WIDTH-2 downto 0);
-        frameBuffer_dmaStart     : out std_logic;
-        frameBuffer_dmaDone      : in  std_logic);
+        frameBuffer_din          : out std_logic_vector(DDP_WORD_WIDTH-2 downto 0)
+        );
 end entity graphic_processor;
 
 architecture struct of graphic_processor is
@@ -235,7 +236,7 @@ begin
                 next_state_s <= WAIT_DMA;
 
             when WAIT_DMA =>
-                if frameBuffer_dmaDone = '1' then
+                if dmaDone = '1' then
                     next_state_s <= IDLE;
                 end if;
         end case;
@@ -267,7 +268,7 @@ begin
                       "10" when state_reg_s = DRAW_LAYER_2 else
                       "00";
 
-    frameBuffer_dmaStart <= '1' when state_reg_s = START_DMA else '0';
+    dmaStart <= '1' when state_reg_s = START_DMA else '0';
 
     ----------------
     -- Processors --

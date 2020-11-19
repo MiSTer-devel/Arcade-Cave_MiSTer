@@ -35,17 +35,17 @@
  *  SOFTWARE.
  */
 
-package cave
+package cave.dma
 
 import chisel3._
 import chiseltest._
 import org.scalatest._
 
 trait FrameBufferReadDMATestHelpers {
-  protected def mkDMA() = new FrameBufferReadDMA(addr = 1, numWords = 8, burstLength = 4)
+  protected def mkDMA() = new VideoDMA(addr = 1, numWords = 8, burstLength = 4)
 }
 
-class FrameBufferReadDMATest extends FlatSpec with ChiselScalatestTester with Matchers with FrameBufferReadDMATestHelpers {
+class VideoDMATest extends FlatSpec with ChiselScalatestTester with Matchers with FrameBufferReadDMATestHelpers {
   it should "assert the read enable signal at the start of a transfer" in {
     test(mkDMA()) { dut =>
       dut.io.pixelData.ready.poke(true.B)

@@ -41,6 +41,7 @@ import axon.Util
 import axon.gpu._
 import axon.mem._
 import axon.types._
+import cave.dma._
 import cave.types._
 import chisel3._
 import chisel3.util._
@@ -85,24 +86,24 @@ class Main extends Module {
   arbiter.io.ddr <> io.ddr
   arbiter.io.download <> io.download
 
-  // Frame buffer read DMA
-  val fbReadDMA = Module(new FrameBufferReadDMA(
+  // Video DMA
+  val videoDMA = Module(new VideoDMA(
     addr = Config.FRAME_BUFFER_OFFSET,
     numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
-  fbReadDMA.io.swap := swapReg
-  fbReadDMA.io.pixelData <> io.pixelData
-  fbReadDMA.io.ddr <> arbiter.io.fbFromDDR
+  videoDMA.io.swap := swapReg
+  videoDMA.io.pixelData <> io.pixelData
+  videoDMA.io.ddr <> arbiter.io.fbFromDDR
 
-  // Frame buffer write DMA
-  val fbWriteDMA = Module(new FrameBufferWriteDMA(
+  // Frame buffer DMA
+  val fbDMA = Module(new FrameBufferDMA(
     addr = Config.FRAME_BUFFER_OFFSET,
     numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
-  fbWriteDMA.io.swap := !swapReg
-  fbWriteDMA.io.ddr <> arbiter.io.fbToDDR
+  fbDMA.io.swap := !swapReg
+  fbDMA.io.ddr <> arbiter.io.fbToDDR
 
   // Video timing
   //
@@ -139,37 +140,8 @@ class Main extends Module {
   cave.io.player := io.player
   cave.io.progRom <> cacheMem.io.in
   cave.io.tileRom <> arbiter.io.gfx
-  cave.io.frameBuffer.dmaDone := fbWriteDMA.io.done
-  fbWriteDMA.io.start := cave.io.frameBuffer.dmaStart
   cave.io.video := videoTiming.io
-
-  // Convert the X and Y values to a linear address
-  //
-  // TODO: Can the video layers do this conversion and use linear addressing?
-  val frameBufferAddr = {
-    val x = cave.io.frameBuffer.addr.head(log2Up(Config.SCREEN_WIDTH))
-    val y = cave.io.frameBuffer.addr.tail(log2Up(Config.SCREEN_WIDTH))
-    (y*Config.SCREEN_WIDTH.U)+x
-  }
-
-  // Frame buffer
-  //
-  // The first port of the frame buffer is used by the GPU to buffer pixel data, as the tiles and sprites are rendered.
-  // The second port is used to read pixel data, when pixel data is required by the video FIFO.
-  val frameBuffer = Module(new DualPortRam(
-    addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
-    dataWidthA = Config.FRAME_BUFFER_DATA_WIDTH,
-    depthA = Some(Config.SCREEN_WIDTH*Config.SCREEN_HEIGHT),
-    addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH-2,
-    dataWidthB = Config.FRAME_BUFFER_DATA_WIDTH*4,
-    depthB = Some(Config.SCREEN_WIDTH*Config.SCREEN_HEIGHT/4),
-    maskEnable = false
-  ))
-  frameBuffer.io.portA.wr := RegNext(cave.io.frameBuffer.wr)
-  frameBuffer.io.portA.addr := RegNext(frameBufferAddr)
-  frameBuffer.io.portA.mask := 0.U
-  frameBuffer.io.portA.din := RegNext(cave.io.frameBuffer.din)
-  frameBuffer.io.portB <> fbWriteDMA.io.frameBuffer
+  cave.io.frameBufferDMA <> fbDMA.io.frameBufferDMA
 
   // Toggle the swap register on the rising edge of the vertical blank signal
   val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)

@@ -37,10 +37,11 @@
 
 package cave.gpu
 
-import axon.mem.ReadMemIO
+import axon.mem.{DualPortRam, ReadMemIO, WriteMemIO}
 import cave._
 import cave.types._
 import chisel3._
+import chisel3.util._
 
 /** Graphics Processor */
 class GPU extends Module {
@@ -67,8 +68,8 @@ class GPU extends Module {
     val layer2Ram = ReadMemIO(Config.LAYER_2_RAM_GPU_ADDR_WIDTH, Config.LAYER_2_RAM_GPU_DATA_WIDTH)
     /** Palette RAM port */
     val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
-    /** Frame buffer port */
-    val frameBuffer = new FrameBufferIO
+    /** Frame buffer DMA port */
+    val frameBufferDMA = Flipped(new FrameBufferDMAIO)
   })
 
   class GPUBlackBox extends BlackBox {
@@ -76,6 +77,8 @@ class GPU extends Module {
       val clk_i = Input(Clock())
       val rst_i = Input(Reset())
       val generateFrame = Input(Bool())
+      val dmaStart = Output(Bool())
+      val dmaDone = Input(Bool())
       val spriteBank = Input(Bool())
       val layer0Info = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
       val layer1Info = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
@@ -86,7 +89,7 @@ class GPU extends Module {
       val layer1Ram = ReadMemIO(Config.LAYER_1_RAM_GPU_ADDR_WIDTH, Config.LAYER_1_RAM_GPU_DATA_WIDTH)
       val layer2Ram = ReadMemIO(Config.LAYER_2_RAM_GPU_ADDR_WIDTH, Config.LAYER_2_RAM_GPU_DATA_WIDTH)
       val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
-      val frameBuffer = new FrameBufferIO
+      val frameBuffer = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH)
     })
 
     override def desiredName = "graphic_processor"
@@ -109,5 +112,36 @@ class GPU extends Module {
   gpu.io.layer1Ram <> io.layer1Ram
   gpu.io.layer2Ram <> io.layer2Ram
   gpu.io.paletteRam <> io.paletteRam
-  gpu.io.frameBuffer <> io.frameBuffer
+  io.frameBufferDMA.dmaStart := gpu.io.dmaStart
+  gpu.io.dmaDone := io.frameBufferDMA.dmaDone
+
+  // Convert the X and Y values to a linear address
+  //
+  // TODO: Can the video layers do this conversion and use linear addressing?
+  val frameBufferAddr = {
+    val x = gpu.io.frameBuffer.addr.head(log2Up(Config.SCREEN_WIDTH))
+    val y = gpu.io.frameBuffer.addr.tail(log2Up(Config.SCREEN_WIDTH))
+    (y*Config.SCREEN_WIDTH.U)+x
+  }
+
+  // Frame buffer
+  //
+  // The first port of the frame buffer is used by the GPU to buffer pixel data, as the tiles and sprites are rendered.
+  // The second port is used to read pixel data, when pixel data is required by the video FIFO.
+  val frameBuffer = Module(new DualPortRam(
+    addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
+    dataWidthA = Config.FRAME_BUFFER_DATA_WIDTH,
+    depthA = Some(Config.SCREEN_WIDTH*Config.SCREEN_HEIGHT),
+    addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH-2,
+    dataWidthB = Config.FRAME_BUFFER_DATA_WIDTH*4,
+    depthB = Some(Config.SCREEN_WIDTH*Config.SCREEN_HEIGHT/4),
+    maskEnable = false
+  ))
+  frameBuffer.io.portA.wr := RegNext(gpu.io.frameBuffer.wr)
+  frameBuffer.io.portA.addr := RegNext(frameBufferAddr)
+  frameBuffer.io.portA.mask := 0.U
+  frameBuffer.io.portA.din := RegNext(gpu.io.frameBuffer.din)
+  frameBuffer.io.portB.rd := io.frameBufferDMA.rd
+  frameBuffer.io.portB.addr := io.frameBufferDMA.addr
+  io.frameBufferDMA.dout := frameBuffer.io.portB.dout
 }
