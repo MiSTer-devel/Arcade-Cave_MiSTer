@@ -35,7 +35,8 @@
  *  SOFTWARE.
  */
 
-import cave.DDRArbiter
+package cave
+
 import chisel3._
 import chiseltest._
 import org.scalatest._

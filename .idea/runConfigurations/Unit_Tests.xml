@@ -8,9 +8,9 @@
     <option name="testKind" value="All in package" />
     <option name="classBuf">
       <list>
-        <option value="DDRArbiterTest" />
-        <option value="FrameBufferReadDMATest" />
-        <option value="FrameBufferWriteDMATest" />
+        <option value="cave.DDRArbiterTest" />
+        <option value="cave.FrameBufferReadDMATest" />
+        <option value="cave.FrameBufferWriteDMATest" />
         <option value="cave.gpu.RegisterFileTest" />
         <option value="axon.UtilTest" />
         <option value="axon.util.CounterTest" />

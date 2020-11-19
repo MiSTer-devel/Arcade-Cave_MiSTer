@@ -6,7 +6,7 @@
       <set />
     </option>
     <option name="testKind" value="Class" />
-    <option name="testClassPath" value="FrameBufferWriteDMATest" />
+    <option name="testClassPath" value="cave.FrameBufferWriteDMATest" />
     <option name="workingDirectory" value="$PROJECT_DIR$" />
     <method v="2">
       <option name="Make" enabled="true" />

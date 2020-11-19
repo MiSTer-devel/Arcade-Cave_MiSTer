@@ -35,38 +35,51 @@
  *  SOFTWARE.
  */
 
-import cave.FrameBufferReadDMA
+package cave
+
 import chisel3._
 import chiseltest._
 import org.scalatest._
 
-trait FrameBufferReadDMATestHelpers {
-  protected def mkDMA() = new FrameBufferReadDMA(addr = 1, numWords = 8, burstLength = 4)
+trait FrameBufferDMATestHelpers {
+  protected def mkDMA() = new FrameBufferWriteDMA(addr = 1, numWords = 8, burstLength = 4)
 }
 
-class FrameBufferReadDMATest extends FlatSpec with ChiselScalatestTester with Matchers with FrameBufferReadDMATestHelpers {
-  it should "assert the read enable signal at the start of a transfer" in {
+class FrameBufferWriteDMATest extends FlatSpec with ChiselScalatestTester with Matchers with FrameBufferDMATestHelpers {
+  it should "assert the write enable signal during a transfer" in {
     test(mkDMA()) { dut =>
-      dut.io.pixelData.ready.poke(true.B)
-      dut.io.ddr.rd.expect(true.B)
+      dut.io.start.poke(true.B)
       dut.clock.step()
-      dut.io.ddr.valid.poke(true.B)
-      dut.io.ddr.rd.expect(false.B)
+      dut.io.start.poke(false.B)
+      dut.io.ddr.wr.expect(true.B)
       dut.clock.step(8)
+      dut.io.ddr.wr.expect(false.B)
       dut.io.done.expect(true.B)
     }
   }
 
-  it should "not start a transfer while the wait signal is asserted" in {
+  it should "not increment the address while the wait signal is asserted" in {
     test(mkDMA()) { dut =>
-      dut.io.pixelData.ready.poke(true.B)
+      dut.io.start.poke(true.B)
       dut.io.ddr.waitReq.poke(true.B)
-      dut.io.ddr.rd.expect(true.B)
+      dut.io.frameBuffer.rd.expect(true.B)
+      dut.io.frameBuffer.addr.expect(0.U)
       dut.clock.step()
       dut.io.ddr.waitReq.poke(false.B)
-      dut.io.ddr.rd.expect(true.B)
+      dut.io.frameBuffer.rd.expect(true.B)
+      dut.io.frameBuffer.addr.expect(1.U)
       dut.clock.step()
-      dut.io.ddr.rd.expect(false.B)
+      dut.io.frameBuffer.rd.expect(true.B)
+      dut.io.frameBuffer.addr.expect(2.U)
+    }
+  }
+
+  it should "pad the pixel data" in {
+    test(mkDMA()) { dut =>
+      dut.io.start.poke(true.B)
+      dut.clock.step()
+      dut.io.frameBuffer.dout.poke(0x22228889999C444L.U)
+      dut.io.ddr.din.expect(0x1111222233334444L.U)
     }
   }
 
@@ -78,33 +91,36 @@ class FrameBufferReadDMATest extends FlatSpec with ChiselScalatestTester with Ma
     }
   }
 
-  it should "read frame buffer data from DDR memory" in {
+  it should "write frame buffer data to DDR memory" in {
     test(mkDMA()) { dut =>
-      dut.io.pixelData.ready.poke(true.B)
+      dut.io.start.poke(true.B)
+      dut.io.frameBuffer.rd.expect(true.B)
+      dut.io.frameBuffer.addr.expect(0.U)
+      dut.io.ddr.wr.expect(false.B)
+      dut.clock.step()
+      dut.io.start.poke(false.B)
 
       // Burst 1
-      dut.io.ddr.rd.expect(true.B)
+      dut.io.frameBuffer.rd.expect(true.B)
+      dut.io.ddr.wr.expect(true.B)
       dut.io.ddr.addr.expect(0x01.U)
-      dut.clock.step()
-      dut.io.ddr.rd.expect(false.B)
+      dut.io.ddr.mask.expect(0xff.U)
       0.to(3).foreach { n =>
-        dut.io.ddr.valid.poke(true.B)
-        dut.io.ddr.dout.poke(n.U)
-        dut.io.pixelData.valid.expect(true.B)
-        dut.io.pixelData.bits.expect(n.U)
+        dut.io.frameBuffer.addr.expect((n+1).U)
+        dut.io.frameBuffer.dout.poke(n.U)
+        dut.io.ddr.din.expect(n.U)
         dut.clock.step()
       }
 
       // Burst 2
-      dut.io.ddr.rd.expect(true.B)
+      dut.io.frameBuffer.rd.expect(true.B)
+      dut.io.ddr.wr.expect(true.B)
       dut.io.ddr.addr.expect(0x21.U)
-      dut.clock.step()
-      dut.io.ddr.rd.expect(false.B)
+      dut.io.ddr.mask.expect(0xff.U)
       0.to(3).foreach { n =>
-        dut.io.ddr.valid.poke(true.B)
-        dut.io.ddr.dout.poke(n.U)
-        dut.io.pixelData.valid.expect(true.B)
-        dut.io.pixelData.bits.expect(n.U)
+        dut.io.frameBuffer.addr.expect((n+5).U)
+        dut.io.frameBuffer.dout.poke(n.U)
+        dut.io.ddr.din.expect(n.U)
         dut.clock.step()
       }
     }
