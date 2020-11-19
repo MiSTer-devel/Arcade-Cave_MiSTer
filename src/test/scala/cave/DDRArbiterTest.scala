@@ -98,7 +98,7 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
 
   it should "move to the graphics request state" in {
     test(new DDRArbiter) { dut =>
-      dut.io.gfx.rd.poke(true.B)
+      dut.io.tileRom.rd.poke(true.B)
       waitForIdle(dut)
       dut.clock.step(2)
       dut.io.debug.gfxReq.expect(true.B)
@@ -107,7 +107,7 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
 
   it should "move to the graphics wait state" in {
     test(new DDRArbiter) { dut =>
-      dut.io.gfx.rd.poke(true.B)
+      dut.io.tileRom.rd.poke(true.B)
       waitForIdle(dut)
       dut.clock.step(3)
       dut.io.debug.gfxWait.expect(true.B)
@@ -126,7 +126,7 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
 
   it should "return to the idle state after reading graphics data" in {
     test(new DDRArbiter) { dut =>
-      dut.io.gfx.rd.poke(true.B)
+      dut.io.tileRom.rd.poke(true.B)
       dut.io.ddr.valid.poke(true.B)
       waitForIdle(dut)
       dut.clock.step(19)
@@ -190,8 +190,8 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
 
   it should "read a large tile from DDR" in {
     test(new DDRArbiter) { dut =>
-      dut.io.gfx.rd.poke(true.B)
-      dut.io.gfx.addr.poke(1.U)
+      dut.io.tileRom.rd.poke(true.B)
+      dut.io.tileRom.addr.poke(1.U)
       waitForGfxReq(dut)
       dut.io.ddr.rd.expect(true.B)
       dut.io.ddr.addr.expect(1.U)
@@ -201,19 +201,19 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
       0.to(15).foreach { n =>
         dut.io.ddr.valid.poke(true.B)
         dut.io.ddr.dout.poke(n.U)
-        dut.io.gfx.valid.expect(true.B)
-        dut.io.gfx.dout.expect(n.U)
+        dut.io.tileRom.valid.expect(true.B)
+        dut.io.tileRom.dout.expect(n.U)
         dut.clock.step()
       }
-      dut.io.gfx.burstDone.expect(true.B)
+      dut.io.tileRom.burstDone.expect(true.B)
     }
   }
 
   it should "read a small tile from DDR" in {
     test(new DDRArbiter) { dut =>
-      dut.io.gfx.rd.poke(true.B)
-      dut.io.gfx.tinyBurst.poke(true.B)
-      dut.io.gfx.addr.poke(1.U)
+      dut.io.tileRom.rd.poke(true.B)
+      dut.io.tileRom.tinyBurst.poke(true.B)
+      dut.io.tileRom.addr.poke(1.U)
       waitForGfxReq(dut)
       dut.io.ddr.rd.expect(true.B)
       dut.io.ddr.addr.expect(1.U)
@@ -223,11 +223,11 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
       0.to(7).foreach { n =>
         dut.io.ddr.valid.poke(true.B)
         dut.io.ddr.dout.poke(n.U)
-        dut.io.gfx.valid.expect(true.B)
-        dut.io.gfx.dout.expect(n.U)
+        dut.io.tileRom.valid.expect(true.B)
+        dut.io.tileRom.dout.expect(n.U)
         dut.clock.step()
       }
-      dut.io.gfx.burstDone.expect(true.B)
+      dut.io.tileRom.burstDone.expect(true.B)
     }
   }
 

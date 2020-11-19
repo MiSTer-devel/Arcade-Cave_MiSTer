@@ -55,8 +55,8 @@ class DDRArbiter extends Module {
     val ddr = new BurstReadWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
     /** Cache port */
     val cache = Flipped(new CacheIO)
-    /** Graphics port */
-    val gfx = Flipped(new TileRomIO)
+    /** Tile ROM port */
+    val tileRom = Flipped(new TileRomIO)
     /** Frame buffer to DDR port */
     val fbToDDR = Flipped(BurstWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH))
     /** Frame buffer from DDR port */
@@ -133,10 +133,10 @@ class DDRArbiter extends Module {
   }
 
   // Latch graphics requests
-  when(io.gfx.rd) {
+  when(io.tileRom.rd) {
     gfxReqReg := true.B
-    gfxAddrReg := io.gfx.addr
-    gfxTinyBurstReg := io.gfx.tinyBurst
+    gfxAddrReg := io.tileRom.addr
+    gfxTinyBurstReg := io.tileRom.tinyBurst
   }.elsewhen(gfxBurstDone) {
     gfxReqReg := false.B
   }
@@ -253,9 +253,9 @@ class DDRArbiter extends Module {
   ))
   io.cache.valid := RegNext(cacheBurstDone, false.B)
   io.cache.dout := cacheDataReg.asUInt
-  io.gfx.burstDone := RegNext(gfxBurstDone, false.B)
-  io.gfx.valid := Mux(stateReg === gfxWaitState, io.ddr.valid, false.B)
-  io.gfx.dout := io.ddr.dout
+  io.tileRom.burstDone := RegNext(gfxBurstDone, false.B)
+  io.tileRom.valid := Mux(stateReg === gfxWaitState, io.ddr.valid, false.B)
+  io.tileRom.dout := io.ddr.dout
   io.fbFromDDR.waitReq := Mux(stateReg === fbFromDDRState, io.ddr.waitReq, true.B)
   io.fbFromDDR.valid := Mux(stateReg === fbFromDDRState, io.ddr.valid, false.B)
   io.fbFromDDR.dout := io.ddr.dout
@@ -274,7 +274,7 @@ class DDRArbiter extends Module {
   io.debug.fbToDDR := stateReg === fbToDDRState
   io.debug.download := stateReg === downloadState
 
-  printf(p"DDRArbiter(state: $stateReg, nextState: $nextState, cache: $cacheBurstValue ($cacheBurstDone), cacheValid: ${io.cache.valid}, gfx: $gfxBurstValue ($gfxBurstDone), gfxValid: ${io.gfx.valid}, fbFromDDR: $fbFromDDRBurstValue ($fbFromDDRBurstDone), fbFromDDRValid: ${io.fbFromDDR.valid}, fbToDDR: $fbToDDRBurstValue ($fbToDDRBurstDone), fbToDDRWaitReq: ${io.fbToDDR.waitReq})\n")
+  printf(p"DDRArbiter(state: $stateReg, nextState: $nextState, cache: $cacheBurstValue ($cacheBurstDone), cacheValid: ${io.cache.valid}, gfx: $gfxBurstValue ($gfxBurstDone), gfxValid: ${io.tileRom.valid}, fbFromDDR: $fbFromDDRBurstValue ($fbFromDDRBurstDone), fbFromDDRValid: ${io.fbFromDDR.valid}, fbToDDR: $fbToDDRBurstValue ($fbToDDRBurstDone), fbToDDRWaitReq: ${io.fbToDDR.waitReq})\n")
 }
 
 object DDRArbiter {

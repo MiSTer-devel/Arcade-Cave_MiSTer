@@ -139,7 +139,7 @@ class Main extends Module {
   cave.io.cpuReset := io.cpuReset
   cave.io.player := io.player
   cave.io.progRom <> cacheMem.io.in
-  cave.io.tileRom <> arbiter.io.gfx
+  cave.io.tileRom <> arbiter.io.tileRom
   cave.io.video := videoTiming.io
   cave.io.frameBuffer <> fbDMA.io.frameBuffer
   fbDMA.io.start := cave.io.frameDone
