@@ -389,12 +389,6 @@ logic sreset_68k;
 logic [31:0]  tg68_data;
 logic         tg68_write;
 
-// Frame Buffer Interface for FB DMA
-logic [14:0]  fb_addr;
-logic [63:0]  fb_data;
-logic         fb_dma_transfer;
-logic         fb_dma_hi_nlo;
-
 always_ff @(posedge clk_68k) begin
     sreset_68k_0 <= core_sreset;
     sreset_68k_1 <= sreset_68k_0;
@@ -414,12 +408,6 @@ Main main (
     .io_player_player1({player_1_coin, player_1_start, player_1_button_3, player_1_button_2, player_1_button_1, player_1_right, player_1_left, player_1_down, player_1_up}),
     .io_player_player2({player_2_coin, player_2_start, player_2_button_3, player_2_button_2, player_2_button_1, player_2_right, player_2_left, player_2_down, player_2_up}),
     .io_player_pause(player_1_pause | player_2_pause),
-    // Frame buffer
-    .io_frameBuffer_dmaStart(fb_dma_transfer),
-    .io_frameBuffer_dmaDone(fb_to_ddr3_done),
-    .io_frameBuffer_data(fb_data),
-    .io_frameBuffer_addr(fb_addr),
-    .io_frameBuffer_swap(fb_dma_hi_nlo),
     // Video signals
     .io_video_pos_x(hc),
     .io_video_pos_y(vc),
@@ -444,41 +432,14 @@ Main main (
     .io_download_waitReq(ioctl_wait_arbiter),
     .io_download_addr(ioctl_addr),
     .io_download_dout(ioctl_dout),
-    // FB -> DDR3
-    .io_fbToDDR_wr(fb_to_ddr3_write),
-    .io_fbToDDR_addr(fb_to_ddr3_address),
-    .io_fbToDDR_din(fb_to_ddr3_writedata),
-    .io_fbToDDR_waitReq(fb_to_ddr3_waitrequest),
-    .io_fbToDDR_burstCount(fb_to_ddr3_burstcount),
-    // DDR3 -> FB
-    .io_fbFromDDR_rd(fb_from_ddr3_read),
-    .io_fbFromDDR_addr(fb_from_ddr3_address),
-    .io_fbFromDDR_dout(fb_from_ddr3_data),
-    .io_fbFromDDR_waitReq(fb_from_ddr3_waitrequest),
-    .io_fbFromDDR_valid(fb_from_ddr3_data_valid),
-    .io_fbFromDDR_burstCount(fb_from_ddr3_burstcount),
+    // Pixel port
+    .io_pixelData_ready(video_fifo_ready),
+    .io_pixelData_valid(video_fifo_write),
+    .io_pixelData_bits(video_fifo_data_in),
     // Debug
     .io_debug_pc(tg68_data),
     .io_debug_pcw(tg68_write)
 );
-
-////////////////////////////////////////////////////////////////////////////////
-// DDR3 ARBITER
-////////////////////////////////////////////////////////////////////////////////
-//
-logic [31:0] fb_to_ddr3_address;
-logic [7:0]  fb_to_ddr3_burstcount;
-logic        fb_to_ddr3_write;
-logic [63:0] fb_to_ddr3_writedata;
-logic        fb_to_ddr3_waitrequest;
-logic        fb_to_ddr3_done;
-
-logic [31:0] fb_from_ddr3_address;
-logic [7:0]  fb_from_ddr3_burstcount;
-logic        fb_from_ddr3_read;
-logic        fb_from_ddr3_waitrequest;
-logic [63:0] fb_from_ddr3_data;
-logic        fb_from_ddr3_data_valid;
 
 ////////////////////////////////////////////////////////////////////////////////
 // VIDEO DMA
@@ -517,48 +478,6 @@ video_fifo output_video_fifo (
     .q(video_fifo_pixel),
     .rdempty(video_fifo_empty),
     .wrusedw(video_fifo_contents)
-);
-
-// Frame buffer address
-logic [31:0] frame_buffer_address; // = 32'h02000000; // would not work with Quartus for some reason (check RTL viewer)
-assign frame_buffer_address = 32'h02000000;
-
-fb_to_ddr3_dma fb2ddr (
-    .clk_i(clk_sys),
-    .rst_i(RESET),
-    //
-    .address_i(frame_buffer_address),
-    .transfer_i(fb_dma_transfer),
-    .hi_nlo_i(fb_dma_hi_nlo),
-    .busy_o(),
-    .done_o(fb_to_ddr3_done),
-    //
-    .fb_addr_o(fb_addr),
-    .fb_data_i(fb_data), // This is not the correct width for the moment // Seems OK, TODO check
-    .address_ddr3_o(fb_to_ddr3_address),
-    .burstcount_ddr3_o(fb_to_ddr3_burstcount),
-    .write_ddr3_o(fb_to_ddr3_write),
-    .writedata_ddr3_o(fb_to_ddr3_writedata),
-    .waitrequest_ddr3_i(fb_to_ddr3_waitrequest)
-);
-
-fb_from_ddr3_dma ddr2fb (
-    .clk_i(clk_sys),
-    .rst_i(RESET),
-    //
-    .address_i(frame_buffer_address),
-    .hi_nlo_i(~fb_dma_hi_nlo),
-    //
-    .fifo_ready_i(video_fifo_ready),
-    .data_o(video_fifo_data_in),
-    .write_fifo_o(video_fifo_write),
-    //
-    .addr_ddr3_o(fb_from_ddr3_address),
-    .burstcount_ddr3_o(fb_from_ddr3_burstcount),
-    .waitrequest_ddr3_i(fb_from_ddr3_waitrequest),
-    .read_ddr3_o(fb_from_ddr3_read),
-    .data_ddr3_i(fb_from_ddr3_data),
-    .data_valid_ddr3_i(fb_from_ddr3_data_valid)
 );
 
 ////////////////////////////////////////////////////////////////////////////////

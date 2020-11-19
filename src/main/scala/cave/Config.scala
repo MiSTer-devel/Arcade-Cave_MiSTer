@@ -93,8 +93,12 @@ object Config {
 
   val SOUND_NUM_REGS = 4
 
+  val FRAME_BUFFER_BPP = 16
+  val FRAME_BUFFER_OFFSET = 0x2000000L
   val FRAME_BUFFER_ADDR_WIDTH = 17
   val FRAME_BUFFER_DATA_WIDTH = 15
+  val FRAME_BUFFER_DMA_NUM_WORDS = SCREEN_WIDTH*SCREEN_HEIGHT*FRAME_BUFFER_BPP/DDRArbiter.DATA_WIDTH
+  val FRAME_BUFFER_DMA_BURST_LENGTH = 128
 
   /** Video timing configuration */
   val videoTimingConfig = VideoTimingConfig(

@@ -62,29 +62,14 @@ class Main extends Module {
     val cpuReset = Input(Bool())
     /** Player port */
     val player = new PlayerIO
-    /** Frame buffer port */
-    val frameBuffer = new Bundle {
-      /** DMA start flag */
-      val dmaStart = Output(Bool())
-      /** DMA done flag */
-      val dmaDone = Input(Bool())
-      /** Address bus */
-      val addr = Input(UInt(15.W))
-      /** Data bus */
-      val data = Output(Bits(64.W))
-      /** Swap flag */
-      val swap = Output(Bool())
-    }
     /** Video port */
     val video = Output(new VideoIO)
     /** DDR port */
     val ddr = new BurstReadWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
     /** Download port */
     val download = DownloadIO()
-    /** Frame buffer to DDR port */
-    val fbToDDR = Flipped(BurstWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH))
-    /** Frame buffer from DDR port */
-    val fbFromDDR = Flipped(BurstReadMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH))
+    /** Pixel data port */
+    val pixelData = DecoupledIO(Bits(DDRArbiter.DATA_WIDTH.W))
     /** Debug port */
     val debug = Output(new Bundle {
       val pc = UInt()
@@ -99,8 +84,25 @@ class Main extends Module {
   val arbiter = Module(new DDRArbiter)
   arbiter.io.ddr <> io.ddr
   arbiter.io.download <> io.download
-  arbiter.io.fbToDDR <> io.fbToDDR
-  arbiter.io.fbFromDDR <> io.fbFromDDR
+
+  // Frame buffer read DMA
+  val fbReadDMA = Module(new FrameBufferReadDMA(
+    addr = Config.FRAME_BUFFER_OFFSET,
+    numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
+    burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
+  ))
+  fbReadDMA.io.swap := swapReg
+  fbReadDMA.io.pixelData <> io.pixelData
+  fbReadDMA.io.ddr <> arbiter.io.fbFromDDR
+
+  // Frame buffer write DMA
+  val fbWriteDMA = Module(new FrameBufferWriteDMA(
+    addr = Config.FRAME_BUFFER_OFFSET,
+    numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
+    burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
+  ))
+  fbWriteDMA.io.swap := !swapReg
+  fbWriteDMA.io.ddr <> arbiter.io.fbToDDR
 
   // Video timing
   //
@@ -137,12 +139,13 @@ class Main extends Module {
   cave.io.player := io.player
   cave.io.progRom <> cacheMem.io.in
   cave.io.tileRom <> arbiter.io.gfx
-  cave.io.frameBuffer.dmaDone := io.frameBuffer.dmaDone
+  cave.io.frameBuffer.dmaDone := fbWriteDMA.io.done
+  fbWriteDMA.io.start := cave.io.frameBuffer.dmaStart
   cave.io.video := videoTiming.io
 
   // Convert the X and Y values to a linear address
   //
-  // TODO: Use a Vec2 data type instead of an address.
+  // TODO: Can the video layers do this conversion and use linear addressing?
   val frameBufferAddr = {
     val x = cave.io.frameBuffer.addr.head(log2Up(Config.SCREEN_WIDTH))
     val y = cave.io.frameBuffer.addr.tail(log2Up(Config.SCREEN_WIDTH))
@@ -152,7 +155,7 @@ class Main extends Module {
   // Frame buffer
   //
   // The first port of the frame buffer is used by the GPU to buffer pixel data, as the tiles and sprites are rendered.
-  // The second port is used to read pixel data, when a new frame is required by the video front-end.
+  // The second port is used to read pixel data, when pixel data is required by the video FIFO.
   val frameBuffer = Module(new DualPortRam(
     addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
     dataWidthA = Config.FRAME_BUFFER_DATA_WIDTH,
@@ -166,25 +169,13 @@ class Main extends Module {
   frameBuffer.io.portA.addr := RegNext(frameBufferAddr)
   frameBuffer.io.portA.mask := 0.U
   frameBuffer.io.portA.din := RegNext(cave.io.frameBuffer.din)
-  frameBuffer.io.portB.rd := true.B
-  frameBuffer.io.portB.addr := io.frameBuffer.addr
-
-  // Pack four 15-bit pixels into the 64-bit frame buffer data bus
-  val frameBufferData = Cat(
-    0.U ## frameBuffer.io.portB.dout(59, 45),
-    0.U ## frameBuffer.io.portB.dout(44, 30),
-    0.U ## frameBuffer.io.portB.dout(29, 15),
-    0.U ## frameBuffer.io.portB.dout(14, 0)
-  )
+  frameBuffer.io.portB <> fbWriteDMA.io.frameBuffer
 
   // Toggle the swap register on the rising edge of the vertical blank signal
   val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)
   when(Util.rising(vBlank)) { swapReg := !swapReg }
 
   // Outputs
-  io.frameBuffer.dmaStart := cave.io.frameBuffer.dmaStart
-  io.frameBuffer.data := frameBufferData
-  io.frameBuffer.swap := swapReg
   io.debug.pc := cave.io.debug.pc
   io.debug.pcw := cave.io.debug.pcw
 }
