@@ -39,6 +39,7 @@ package cave.types
 
 import cave.Config
 import chisel3._
+import chisel3.util._
 
 /** Tile ROM IO */
 class TileRomIO extends ValidReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH) {
@@ -55,13 +56,34 @@ class TileRomIO extends ValidReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_R
    * @param f The transform function.
    */
   override def mapAddr(f: UInt => UInt): TileRomIO = {
-    val mem = Wire(this.cloneType)
+    val mem = Wire(chiselTypeOf(this))
     mem.rd := this.rd
     mem.tinyBurst := this.tinyBurst
     mem.addr := f(this.addr)
     this.dout := mem.dout
     this.valid := mem.valid
     this.burstDone := mem.burstDone
+    mem
+  }
+}
+
+object TileRomIO {
+  /**
+   * Multiplexes requests from multiple write-only memory interface to a single write-only memory interfaces. The
+   * request is routed to the first enabled interface.
+   *
+   * @param outs A list of enable-interface pairs.
+   */
+  def mux(outs: Seq[(Bool, TileRomIO)]): TileRomIO = {
+    val mem = Wire(chiselTypeOf(outs.head._2))
+    mem.tinyBurst := MuxCase(false.B, outs.map(a => a._1 -> a._2.tinyBurst))
+    mem.rd := MuxCase(false.B, outs.map(a => a._1 -> a._2.rd))
+    mem.addr := MuxCase(DontCare, outs.map(a => a._1 -> a._2.addr))
+    outs.foreach { case (enable, out) =>
+      out.dout := mem.dout
+      out.valid := mem.valid && enable
+      out.burstDone := mem.burstDone && enable
+    }
     mem
   }
 }
