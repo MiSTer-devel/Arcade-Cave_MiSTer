@@ -58,6 +58,19 @@ class ReadMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWid
   val dout = Input(UInt(dataWidth.W))
 
   override def cloneType: this.type = new ReadMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  def mapAddr(f: UInt => UInt): ReadMemIO = {
+    val mem = Wire(this.cloneType)
+    mem.rd := this.rd
+    mem.addr := f(this.addr)
+    this.dout := mem.dout
+    mem
+  }
 }
 
 object ReadMemIO {
