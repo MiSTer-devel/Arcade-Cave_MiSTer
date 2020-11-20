@@ -94,6 +94,20 @@ class WriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWi
   val din = Output(UInt(dataWidth.W))
 
   override def cloneType: this.type = new WriteMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  def mapAddr(f: UInt => UInt): WriteMemIO = {
+    val mem = Wire(this.cloneType)
+    mem.wr := this.wr
+    mem.addr := f(this.addr)
+    mem.mask := this.mask
+    mem.din := this.din
+    mem
+  }
 }
 
 object WriteMemIO {
