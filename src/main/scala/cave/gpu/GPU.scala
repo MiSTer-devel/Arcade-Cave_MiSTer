@@ -37,16 +37,17 @@
 
 package cave.gpu
 
-import axon.mem.{DualPortRam, ReadMemIO, WriteMemIO}
+import axon.mem._
 import cave._
 import cave.types._
 import chisel3._
 import chisel3.util._
+import axon.util.Counter
 
 /** Graphics Processor */
 class GPU extends Module {
   val io = IO(new Bundle {
-    /** Strobe to indicate that a new frame should be generated */
+    /** Generate a new frame */
     val generateFrame = Input(Bool())
     /** Asserted when the frame is complete */
     val frameDone = Output(Bool())
@@ -74,59 +75,64 @@ class GPU extends Module {
     val frameBuffer = Flipped(new FrameBufferIO)
   })
 
-  class GPUBlackBox extends BlackBox {
-    val io = IO(new Bundle {
-      val clk_i = Input(Clock())
-      val rst_i = Input(Reset())
-      val generateFrame = Input(Bool())
-      val frameDone = Output(Bool())
-      val spriteBank = Input(Bool())
-      val layer0Info = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
-      val layer1Info = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
-      val layer2Info = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
-      val tileRom = new TileRomIO
-      val spriteRam = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
-      val layer0Ram = ReadMemIO(Config.LAYER_0_RAM_GPU_ADDR_WIDTH, Config.LAYER_0_RAM_GPU_DATA_WIDTH)
-      val layer1Ram = ReadMemIO(Config.LAYER_1_RAM_GPU_ADDR_WIDTH, Config.LAYER_1_RAM_GPU_DATA_WIDTH)
-      val layer2Ram = ReadMemIO(Config.LAYER_2_RAM_GPU_ADDR_WIDTH, Config.LAYER_2_RAM_GPU_DATA_WIDTH)
-      val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
-      val frameBuffer = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH)
-    })
-
-    override def desiredName = "graphic_processor"
+  // States
+  object State {
+    val idle :: clear :: sprite :: layer0 :: layer1 :: layer2 :: done :: Nil = Enum(7)
   }
 
-  // Set the sprite bank
-  val spriteBank = io.videoRegs(4)(0)
+  // Wires
+  val nextState = Wire(UInt())
 
-  val gpu = Module(new GPUBlackBox)
-  gpu.io.clk_i := clock
-  gpu.io.rst_i := reset
-  gpu.io.generateFrame := io.generateFrame
-  gpu.io.spriteBank := spriteBank
-  gpu.io.layer0Info <> io.layer0Regs
-  gpu.io.layer1Info <> io.layer1Regs
-  gpu.io.layer2Info <> io.layer2Regs
-  gpu.io.tileRom <> io.tileRom
-  gpu.io.spriteRam <> io.spriteRam
-  gpu.io.layer0Ram <> io.layer0Ram
-  gpu.io.layer1Ram <> io.layer1Ram
-  gpu.io.layer2Ram <> io.layer2Ram
-  gpu.io.paletteRam <> io.paletteRam
+  // Registers
+  val stateReg = RegNext(nextState, State.idle)
 
-  // Convert the X and Y values to a linear address
+  // Counters
+  val (x, xWrap) = Counter.static(Config.SCREEN_WIDTH, enable = stateReg === State.clear)
+  val (y, clearDone) = Counter.static(Config.SCREEN_HEIGHT, enable = xWrap)
+
+  // Layer processor
+  val layerProcessor = Module(new LayerProcessor)
+  layerProcessor.io.start := RegNext(
+    (stateReg =/= State.layer0 && nextState === State.layer0) ||
+    (stateReg =/= State.layer1 && nextState === State.layer1) ||
+    (stateReg =/= State.layer2 && nextState === State.layer2)
+  )
+  layerProcessor.io.layerIndex := MuxLookup(stateReg, 0.U, Seq(State.layer0 -> 0.U, State.layer1 -> 1.U, State.layer2 -> 2.U))
+  layerProcessor.io.layerRegs := MuxLookup(stateReg, DontCare, Seq(State.layer0 -> io.layer0Regs, State.layer1 -> io.layer1Regs, State.layer2 -> io.layer2Regs))
+  layerProcessor.io.layerRam <> ReadMemIO.demux(stateReg, Seq(State.layer0 -> io.layer0Ram, State.layer1 -> io.layer1Ram, State.layer2 -> io.layer2Ram))
+
+  // Sprite processor
+  val spriteProcessor = Module(new SpriteProcessor)
+  spriteProcessor.io.start := RegNext(stateReg =/= State.sprite && nextState === State.sprite)
+  spriteProcessor.io.spriteBank := io.videoRegs(4)(0)
+  spriteProcessor.io.spriteRam <> io.spriteRam
+
+  // The clear memory interface is used for writing blank pixels
+  val clearMem = GPU.clearMem(x ## y)
+
+  // Priority RAM
   //
-  // TODO: Can the video layers do this conversion and use linear addressing?
-  val frameBufferAddr = {
-    val x = gpu.io.frameBuffer.addr.head(log2Up(Config.SCREEN_WIDTH))
-    val y = gpu.io.frameBuffer.addr.tail(log2Up(Config.SCREEN_WIDTH))
-    (y*Config.SCREEN_WIDTH.U)+x
-  }
+  // The priority RAM is used by the sprite and tilemap layers for reading/writing pixel priority data during rendering.
+  val priorityRam = Module(new DualPortRam(
+    addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
+    dataWidthA = Config.FRAME_BUFFER_PRIO_WIDTH,
+    addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH,
+    dataWidthB = Config.FRAME_BUFFER_PRIO_WIDTH,
+    maskEnable = false
+  ))
+  priorityRam.io.portA <> WriteMemIO.mux(stateReg, Seq(
+    State.clear -> clearMem,
+    State.sprite -> spriteProcessor.io.priority.write,
+    State.layer0 -> layerProcessor.io.priority.write,
+    State.layer1 -> layerProcessor.io.priority.write,
+    State.layer2 -> layerProcessor.io.priority.write,
+  ))
+  priorityRam.io.portB <> ReadMemIO.mux(stateReg === State.sprite, spriteProcessor.io.priority.read, layerProcessor.io.priority.read)
 
   // Frame buffer
   //
-  // The first port of the frame buffer is used by the GPU to buffer pixel data, as the tiles and sprites are rendered.
-  // The second port is used to read pixel data, when pixel data is required by the video FIFO.
+  // The frame buffer is used by the sprite and tilemap layers for writing pixel data during rendering. Port A is
+  // registered to have better timing, due to the address linearization (which requires a multiplier).
   val frameBuffer = Module(new DualPortRam(
     addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
     dataWidthA = Config.FRAME_BUFFER_DATA_WIDTH,
@@ -136,14 +142,88 @@ class GPU extends Module {
     depthB = Some(Config.SCREEN_WIDTH*Config.SCREEN_HEIGHT/4),
     maskEnable = false
   ))
-  frameBuffer.io.portA.wr := RegNext(gpu.io.frameBuffer.wr)
-  frameBuffer.io.portA.addr := RegNext(frameBufferAddr)
-  frameBuffer.io.portA.mask := 0.U
-  frameBuffer.io.portA.din := RegNext(gpu.io.frameBuffer.din)
-  frameBuffer.io.portB.rd := io.frameBuffer.rd
-  frameBuffer.io.portB.addr := io.frameBuffer.addr
+  frameBuffer.io.portA <> RegNext(WriteMemIO.mux(stateReg, Seq(
+    State.clear -> clearMem,
+    State.sprite -> spriteProcessor.io.frameBuffer,
+    State.layer0 -> layerProcessor.io.frameBuffer,
+    State.layer1 -> layerProcessor.io.frameBuffer,
+    State.layer2 -> layerProcessor.io.frameBuffer,
+  )).mapAddr(GPU.linearizeAddr))
+  frameBuffer.io.portB <> io.frameBuffer
+
+  // Default to the previous state
+  nextState := stateReg
+
+  // FSM
+  switch(stateReg) {
+    // Wait for a new frame
+    is(State.idle) {
+      when(io.generateFrame) { nextState := State.clear }
+    }
+
+    // Clears the frame buffer
+    is(State.clear) {
+      when(clearDone) { nextState := State.sprite }
+    }
+
+    // Renders the sprites
+    is(State.sprite) {
+      when(spriteProcessor.io.done) { nextState := State.layer0 }
+    }
+
+    // Renders layer 0
+    is(State.layer0) {
+      when(layerProcessor.io.done) { nextState := State.layer1 }
+    }
+
+    // Renders layer 1
+    is(State.layer1) {
+      when(layerProcessor.io.done) { nextState := State.layer2 }
+    }
+
+    // Renders layer 2
+    is(State.layer2) {
+      when(layerProcessor.io.done) { nextState := State.done }
+    }
+
+    // All done
+    is(State.done) { nextState := State.idle }
+  }
 
   // Outputs
-  io.frameDone := gpu.io.frameDone
-  io.frameBuffer.dout := frameBuffer.io.portB.dout
+  io.frameDone := stateReg === State.done
+  io.paletteRam <> ReadMemIO.mux(stateReg === State.sprite, spriteProcessor.io.paletteRam, layerProcessor.io.paletteRam)
+  io.tileRom <> TileRomIO.mux(Seq(
+    (stateReg === State.sprite) -> spriteProcessor.io.tileRom,
+    (stateReg === State.layer0 || stateReg === State.layer1 || stateReg === State.layer2) -> layerProcessor.io.tileRom
+  ))
+  io.tileRom.addr := MuxLookup(stateReg, DontCare, Seq(
+    State.sprite -> (spriteProcessor.io.tileRom.addr+Config.SPRITE_ROM_OFFSET.U),
+    State.layer0 -> (layerProcessor.io.tileRom.addr+Config.LAYER_0_ROM_OFFSET.U),
+    State.layer1 -> (layerProcessor.io.tileRom.addr+Config.LAYER_1_ROM_OFFSET.U),
+    State.layer2 -> (layerProcessor.io.tileRom.addr+Config.LAYER_2_ROM_OFFSET.U)
+  ))
+}
+
+object GPU {
+  /** Converts an X/Y address to a linear address. */
+  def linearizeAddr(addr: UInt): UInt = {
+    val x = addr.head(log2Up(Config.SCREEN_WIDTH))
+    val y = addr.tail(log2Up(Config.SCREEN_WIDTH))
+    (y*Config.SCREEN_WIDTH.U)+x
+  }
+
+  /**
+   * Creates a virtual write-only memory interface that writes blank pixels at the given address.
+   *
+   * @param addr The address value.
+   **/
+  def clearMem(addr: UInt): WriteMemIO = {
+    val mem = Wire(WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH))
+    mem.wr := true.B
+    mem.addr := addr
+    mem.mask := 0.U
+    mem.din := 0.U
+    mem
+  }
 }
