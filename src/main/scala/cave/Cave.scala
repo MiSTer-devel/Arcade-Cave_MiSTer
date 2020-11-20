@@ -158,15 +158,15 @@ class Cave extends Module {
   paletteRam.io.clockB := clock
 
   // Layer registers
-  val layer0Regs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_NUM_REGS)) }
-  val layer1Regs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_NUM_REGS)) }
-  val layer2Regs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_NUM_REGS)) }
+  val layer0Regs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_REGS_COUNT)) }
+  val layer1Regs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_REGS_COUNT)) }
+  val layer2Regs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.LAYER_REGS_COUNT)) }
 
   // Video registers
-  val videoRegs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.VIDEO_NUM_REGS)) }
+  val videoRegs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.VIDEO_REGS_COUNT)) }
 
   // Sound registers
-  val soundRegs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.SOUND_NUM_REGS)) }
+  val soundRegs = withClockAndReset(io.cpuClock, io.cpuReset) { Module(new RegisterFile(Config.SOUND_REGS_COUNT)) }
 
   // GPU
   val gpu = Module(new GPU)

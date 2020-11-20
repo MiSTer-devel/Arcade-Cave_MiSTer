@@ -51,21 +51,21 @@ class GPU extends Module {
     /** Asserted when the frame is complete */
     val frameDone = Output(Bool())
     /** Video registers port */
-    val videoRegs = Input(Bits(Config.VIDEO_GPU_DATA_WIDTH.W))
+    val videoRegs = Input(Bits(Config.VIDEO_REGS_GPU_DATA_WIDTH.W))
     /** Layer 0 registers port */
-    val layer0Regs = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
+    val layer0Regs = Input(Bits(Config.LAYER_REGS_GPU_DATA_WIDTH.W))
     /** Layer 1 registers port */
-    val layer1Regs = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
+    val layer1Regs = Input(Bits(Config.LAYER_REGS_GPU_DATA_WIDTH.W))
     /** Layer 2 registers port */
-    val layer2Regs = Input(Bits(Config.LAYER_GPU_DATA_WIDTH.W))
+    val layer2Regs = Input(Bits(Config.LAYER_REGS_GPU_DATA_WIDTH.W))
     /** Sprite RAM port */
     val spriteRam = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
     /** Layer 0 RAM port */
-    val layer0Ram = ReadMemIO(Config.LAYER_0_RAM_GPU_ADDR_WIDTH, Config.LAYER_0_RAM_GPU_DATA_WIDTH)
+    val layer0Ram = ReadMemIO(Config.LAYER_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
     /** Layer 1 RAM port */
-    val layer1Ram = ReadMemIO(Config.LAYER_1_RAM_GPU_ADDR_WIDTH, Config.LAYER_1_RAM_GPU_DATA_WIDTH)
+    val layer1Ram = ReadMemIO(Config.LAYER_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
     /** Layer 2 RAM port */
-    val layer2Ram = ReadMemIO(Config.LAYER_2_RAM_GPU_ADDR_WIDTH, Config.LAYER_2_RAM_GPU_DATA_WIDTH)
+    val layer2Ram = ReadMemIO(Config.LAYER_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
     /** Palette RAM port */
     val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
     /** Tile ROM port */
