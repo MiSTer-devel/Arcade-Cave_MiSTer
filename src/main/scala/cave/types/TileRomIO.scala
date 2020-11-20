@@ -48,4 +48,20 @@ class TileRomIO extends ValidReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_R
   val burstDone = Input(Bool())
 
   override def cloneType: this.type = new TileRomIO().asInstanceOf[this.type]
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  override def mapAddr(f: UInt => UInt): TileRomIO = {
+    val mem = Wire(this.cloneType)
+    mem.rd := this.rd
+    mem.tinyBurst := this.tinyBurst
+    mem.addr := f(this.addr)
+    this.dout := mem.dout
+    this.valid := mem.valid
+    this.burstDone := mem.burstDone
+    mem
+  }
 }
