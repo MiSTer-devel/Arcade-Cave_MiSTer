@@ -61,7 +61,7 @@ object DownloadIO {
   /** The width of the address bus */
   val ADDR_WIDTH = 27
   /** The width of the data bus */
-  val DATA_WIDTH = 8
+  val DATA_WIDTH = 16
 
   def apply() = new DownloadIO
 }
