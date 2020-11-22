@@ -48,9 +48,6 @@ import chisel3.util._
  * Ths video FIFO fetches pixel data from DDR memory, using a DMA transfer.
  */
 class VideoFIFO extends Module {
-  /** The number of bits per color channel */
-  val BITS_PER_COLOR = 5
-
   /** The depth at which the FIFO is considered to be almost empty */
   val ALMOST_EMPTY_THRESHOLD = 120
 
@@ -64,7 +61,7 @@ class VideoFIFO extends Module {
     /** Pixel data port */
     val pixelData = Flipped(DecoupledIO(Bits(DDRArbiter.DATA_WIDTH.W)))
     /** RGB output */
-    val rgb = Output(new RGB(BITS_PER_COLOR))
+    val rgb = Output(new RGB(Config.SCREEN_BITS_PER_CHANNEL))
   })
 
   class VideoFIFOBlackBox extends BlackBox {
@@ -97,7 +94,7 @@ class VideoFIFO extends Module {
   when(io.video.hBlank && io.video.vBlank && !fifo.io.rdempty) { videoLockReg := true.B }
 
   // Set RGB output
-  io.rgb := fifo.io.q.asTypeOf(new RGB(BITS_PER_COLOR))
+  io.rgb := fifo.io.q.asTypeOf(new RGB(Config.SCREEN_BITS_PER_CHANNEL))
 
   // Fetch pixel data if the FIFO is almost empty
   io.pixelData.ready := fifo.io.wrusedw < ALMOST_EMPTY_THRESHOLD.U

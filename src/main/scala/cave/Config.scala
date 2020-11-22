@@ -45,6 +45,7 @@ object Config {
 
   val SCREEN_WIDTH = 320
   val SCREEN_HEIGHT = 240
+  val SCREEN_BITS_PER_CHANNEL = 5
 
   val CACHE_ADDR_WIDTH = 20
   val CACHE_DATA_WIDTH = 256

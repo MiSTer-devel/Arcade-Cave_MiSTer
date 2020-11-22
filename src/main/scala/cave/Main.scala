@@ -72,7 +72,7 @@ class Main extends Module {
     /** Download port */
     val download = DownloadIO()
     /** RGB output */
-    val rgb = Output(new RGB(5))
+    val rgb = Output(new RGB(Config.SCREEN_BITS_PER_CHANNEL))
     /** Debug port */
     val debug = Output(new Bundle {
       val pc = UInt()
