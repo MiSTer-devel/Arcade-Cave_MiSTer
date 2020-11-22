@@ -215,21 +215,17 @@ assign debug = status[7];
 
 wire [8:0] hc;
 wire [8:0] vc;
-wire [7:0] r, g, b;
+wire [4:0] r, g, b;
 wire hsync, vsync;
 wire hblank, vblank;
 wire video_enable;
 
-assign r = (debug && hc < 64 && vc < 10) ? pixel_dd[7:0] : {video_fifo_pixel[14:10], video_fifo_pixel[14:12]};
-assign g = (debug && hc < 64 && vc < 10) ? pixel_dd[7:0] : {video_fifo_pixel[9:5], video_fifo_pixel[9:7]};
-assign b = (debug && hc < 64 && vc < 10) ? pixel_dd[7:0] : {video_fifo_pixel[4:0], video_fifo_pixel[4:2]};
-
 assign VGA_DE = video_enable;
 assign VGA_HS = hsync;
 assign VGA_VS = vsync;
-assign VGA_R  = r;
-assign VGA_G  = g;
-assign VGA_B  = b;
+assign VGA_R  = (debug && hc < 64 && vc < 10) ? pixel_dd[7:0] : {r[4:0], r[4:2]};
+assign VGA_G  = (debug && hc < 64 && vc < 10) ? pixel_dd[7:0] : {g[4:0], g[4:2]};
+assign VGA_B  = (debug && hc < 64 && vc < 10) ? pixel_dd[7:0] : {b[4:0], b[4:2]};
 
 assign CE_PIXEL = '1;
 
@@ -397,10 +393,11 @@ end
 
 Main main (
     // Fast clock domain
-    .reset(RESET),
     .clock(clk_sys),
+    .reset(RESET),
     // Video clock domain
     .io_videoClock(CLK_VIDEO),
+    .io_videoReset(core_sreset),
     // CPU clock domain
     .io_cpuClock(clk_68k),
     .io_cpuReset(sreset_68k),
@@ -432,52 +429,13 @@ Main main (
     .io_download_waitReq(ioctl_wait_arbiter),
     .io_download_addr(ioctl_addr),
     .io_download_dout(ioctl_dout),
-    // Pixel port
-    .io_pixelData_ready(video_fifo_ready),
-    .io_pixelData_valid(video_fifo_write),
-    .io_pixelData_bits(video_fifo_data_in),
+    // RGB output
+    .io_rgb_r(r),
+    .io_rgb_g(g),
+    .io_rgb_b(b),
     // Debug
     .io_debug_pc(tg68_data),
     .io_debug_pcw(tg68_write)
-);
-
-////////////////////////////////////////////////////////////////////////////////
-// VIDEO DMA
-////////////////////////////////////////////////////////////////////////////////
-
-logic [63:0] video_fifo_data_in;
-logic [7:0]  video_fifo_contents;
-logic        video_fifo_ready;
-logic        video_fifo_write;
-logic        video_fifo_empty;
-logic        video_fifo_read;
-logic [15:0] video_fifo_pixel; // TODO: Check color correction
-
-logic lock_on_video;
-
-assign video_fifo_ready = (video_fifo_contents < 120) ? 1'b1 : 1'b0;
-
-// Read the video FIFO only when non empty and locked on video and on visible game area
-assign video_fifo_read = ~video_fifo_empty & lock_on_video & video_enable;
-
-// If in blanking region and the video FIFO has some contents we lock
-always_ff @(posedge CLK_VIDEO) begin
-    if (core_sreset)
-        lock_on_video <= 1'b0;
-    else if (hblank && vblank && ~video_fifo_empty)
-        lock_on_video <= 1'b1;
-end
-
-video_fifo output_video_fifo (
-    .aclr(RESET),
-    .data(video_fifo_data_in),
-    .rdclk(CLK_VIDEO),
-    .rdreq(video_fifo_read),
-    .wrclk(clk_sys),
-    .wrreq(video_fifo_write),
-    .q(video_fifo_pixel),
-    .rdempty(video_fifo_empty),
-    .wrusedw(video_fifo_contents)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
