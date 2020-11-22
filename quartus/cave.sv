@@ -172,7 +172,7 @@ wire        direct_video;
 wire        debug;
 
 wire [24:0] ioctl_addr;
-wire [7:0]  ioctl_dout;
+wire [15:0] ioctl_dout;
 wire        ioctl_wr;
 wire        ioctl_wait;
 wire        ioctl_download;
@@ -181,7 +181,7 @@ wire  [7:0] ioctl_index;
 wire [10:0] ps2_key;
 wire  [9:0] joystick_0, joystick_1;
 
-hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io (
+hps_io #(.STRLEN($size(CONF_STR)>>3), .WIDE(1)) hps_io (
     .clk_sys(clk_sys),
     .HPS_BUS(HPS_BUS),
 
@@ -427,7 +427,7 @@ Main main (
     .io_ddr_valid(ddr3_read_data_valid_arbiter),
     .io_ddr_burstCount(ddr3_burstcount_arbiter),
     // Download
-    .io_download_enable(ioctl_download),
+    .io_download_cs(ioctl_download),
     .io_download_wr(ioctl_wr),
     .io_download_waitReq(ioctl_wait_arbiter),
     .io_download_addr(ioctl_addr),

@@ -97,9 +97,9 @@ class DDRArbiter extends Module {
   val gfxAddrReg = RegInit(0.U)
   val gfxTinyBurstReg = RegInit(false.B)
 
-  // Set download data and mask
-  val downloadData = Cat(Seq.tabulate(8) { _ => io.download.dout })
-  val downloadMask = 1.U << io.download.addr(2, 0)
+  // Set download data and byte mask
+  val downloadData = Cat(Seq.tabulate(4) { _ => io.download.dout })
+  val downloadMask = 3.U << io.download.addr(2, 0)
 
   // Set the graphics burst length
   val gfxBurstLength = Mux(gfxTinyBurstReg, 8.U, 16.U)
@@ -159,7 +159,7 @@ class DDRArbiter extends Module {
     is(State.check1) {
       nextState := MuxCase(stateReg, Seq(
         io.fbFromDDR.rd -> State.fbFromDDR,
-        io.download.enable -> State.download,
+        io.download.cs -> State.download,
         cacheReqReg -> State.cacheReq,
         gfxReqReg -> State.gfxReq,
         io.fbToDDR.wr -> State.fbToDDR
@@ -169,7 +169,7 @@ class DDRArbiter extends Module {
     is(State.check2) {
       nextState := MuxCase(stateReg, Seq(
         io.fbFromDDR.rd -> State.fbFromDDR,
-        io.download.enable -> State.download,
+        io.download.cs -> State.download,
         gfxReqReg -> State.gfxReq,
         io.fbToDDR.wr -> State.fbToDDR,
         cacheReqReg -> State.cacheReq
@@ -179,7 +179,7 @@ class DDRArbiter extends Module {
     is(State.check3) {
       nextState := MuxCase(stateReg, Seq(
         io.fbFromDDR.rd -> State.fbFromDDR,
-        io.download.enable -> State.download,
+        io.download.cs -> State.download,
         io.fbToDDR.wr -> State.fbToDDR,
         gfxReqReg -> State.gfxReq,
         cacheReqReg -> State.cacheReq
@@ -189,7 +189,7 @@ class DDRArbiter extends Module {
     is(State.check4) {
       nextState := MuxCase(stateReg, Seq(
         io.fbFromDDR.rd -> State.fbFromDDR,
-        io.download.enable -> State.download,
+        io.download.cs -> State.download,
         gfxReqReg -> State.gfxReq,
         cacheReqReg -> State.cacheReq,
         io.fbToDDR.wr -> State.fbToDDR
@@ -221,7 +221,7 @@ class DDRArbiter extends Module {
     }
 
     is(State.download) {
-      when(!io.download.enable) { nextState := State.idle }
+      when(!io.download.cs) { nextState := State.idle }
     }
   }
 
@@ -276,7 +276,7 @@ class DDRArbiter extends Module {
   io.debug.fbToDDR := stateReg === State.fbToDDR
   io.debug.download := stateReg === State.download
 
-  printf(p"DDRArbiter(state: $stateReg, nextState: $nextState, cache: $cacheBurstValue ($cacheBurstDone), cacheValid: ${io.cache.valid}, gfx: $gfxBurstValue ($gfxBurstDone), gfxValid: ${io.tileRom.valid}, fbFromDDR: $fbFromDDRBurstValue ($fbFromDDRBurstDone), fbFromDDRValid: ${io.fbFromDDR.valid}, fbToDDR: $fbToDDRBurstValue ($fbToDDRBurstDone), fbToDDRWaitReq: ${io.fbToDDR.waitReq})\n")
+  printf(p"DDRArbiter(state: $stateReg, nextState: $nextState, cache: $cacheBurstValue ($cacheBurstDone), cacheValid: ${io.cache.valid}, gfx: $gfxBurstValue ($gfxBurstDone), gfxValid: ${io.tileRom.valid}, fbFromDDR: $fbFromDDRBurstValue ($fbFromDDRBurstDone), fbFromDDRValid: ${io.fbFromDDR.valid}, fbToDDR: $fbToDDRBurstValue ($fbToDDRBurstDone), fbToDDRWaitReq: ${io.fbToDDR.waitReq}, download: 0x${Hexadecimal(downloadData)} (0x${Hexadecimal(downloadMask)})\n")
 }
 
 object DDRArbiter {

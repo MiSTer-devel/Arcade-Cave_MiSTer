@@ -157,7 +157,7 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
 
   it should "move to the download state" in {
     test(new DDRArbiter) { dut =>
-      dut.io.download.enable.poke(true.B)
+      dut.io.download.cs.poke(true.B)
       waitForIdle(dut)
       dut.clock.step(2)
       dut.io.debug.download.expect(true.B)
@@ -272,18 +272,42 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
 
   behavior of "download"
 
-  it should "write data to DDR" in {
+  it should "write DDR data" in {
     test(new DDRArbiter) { dut =>
-      dut.io.download.enable.poke(true.B)
-      dut.io.download.addr.poke(1.U)
+      dut.io.download.cs.poke(true.B)
       waitForDownload(dut)
       dut.io.ddr.wr.expect(false.B)
       dut.io.download.wr.poke(true.B)
-      dut.io.download.dout.poke(0x12.U)
+      dut.io.download.dout.poke(0x1234.U)
       dut.io.ddr.wr.expect(true.B)
-      dut.io.ddr.addr.expect(1.U)
-      dut.io.ddr.mask.expect(0x02.U)
-      dut.io.ddr.din.expect(0x1212121212121212L.U)
+      dut.io.ddr.din.expect(0x1234123412341234L.U)
+    }
+  }
+
+  it should "set DDR address and byte mask" in {
+    test(new DDRArbiter) { dut =>
+      dut.io.download.cs.poke(true.B)
+      dut.io.download.wr.poke(true.B)
+      waitForDownload(dut)
+      dut.io.download.addr.poke(0.U)
+      dut.io.ddr.addr.expect(0.U)
+      dut.io.ddr.mask.expect(0x03.U)
+      dut.clock.step()
+      dut.io.download.addr.poke(2.U)
+      dut.io.ddr.addr.expect(2.U)
+      dut.io.ddr.mask.expect(0x0c.U)
+      dut.clock.step()
+      dut.io.download.addr.poke(4.U)
+      dut.io.ddr.addr.expect(4.U)
+      dut.io.ddr.mask.expect(0x30.U)
+      dut.clock.step()
+      dut.io.download.addr.poke(6.U)
+      dut.io.ddr.addr.expect(6.U)
+      dut.io.ddr.mask.expect(0xc0.U)
+      dut.clock.step()
+      dut.io.download.addr.poke(8.U)
+      dut.io.ddr.addr.expect(8.U)
+      dut.io.ddr.mask.expect(0x03.U)
     }
   }
 }
