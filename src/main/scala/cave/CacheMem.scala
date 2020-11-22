@@ -74,6 +74,7 @@ class CacheMem(inAddrWidth: Int, inDataWidth: Int, outAddrWidth: Int, outDataWid
   }
 
   val cache = Module(new CacheMemBlackBox)
+
   cache.io.rst_i := reset
   cache.io.clk_i := clock
 
