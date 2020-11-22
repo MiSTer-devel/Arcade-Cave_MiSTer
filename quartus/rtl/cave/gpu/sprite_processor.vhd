@@ -61,31 +61,35 @@ entity sprite_processor is
         rst_i                     : in  std_logic;
         -- Control signals
         start_i                   : in  std_logic; -- Start drawing sprites
-        sprite_bank_i             : in  std_logic; -- Which sprites to draw
         done_o                    : out std_logic;
+        sprite_bank_i             : in  std_logic; -- Which sprites to draw
         -- Sprite RAM interface (Do not delay ! It expects data the next cycle)
-        sprite_ram_addr_o         : out sprite_ram_info_access_t;
-        sprite_ram_info_i         : in  sprite_ram_line_t;
+        spriteRam_rd              : out std_logic;
+        spriteRam_addr            : out sprite_ram_info_access_t;
+        spriteRam_dout            : in  sprite_ram_line_t;
         -- Sprite ROM interface
-        sprite_rom_addr_o         : out gfx_rom_addr_t;
-        sprite_burst_read_o       : out std_logic;
-        sprite_data_i             : in  gfx_rom_data_t;
-        sprite_data_valid_i       : in  std_logic;
-        sprite_data_burst_done_i  : in  std_logic; -- Asserted when last word
-                                                   -- arrives
+        tileRom_rd                : out std_logic;
+        tileRom_addr              : out gfx_rom_addr_t;
+        tileRom_dout              : in  gfx_rom_data_t;
+        tileRom_valid             : in  std_logic;
+        tileRom_tinyBurst         : out std_logic;
+        tileRom_burstDone         : in  std_logic; -- Asserted when last word arrives
         -- Priority RAM interface (Do not delay ! It expects data the next cycle)
-        priority_ram_read_addr_o  : out priority_ram_addr_t;
-        priority_ram_data_i       : in  priority_t;
-        priority_ram_write_addr_o : out priority_ram_addr_t;
-        priority_ram_data_o       : out priority_t;
-        priority_ram_write_o      : out std_logic;
+        priority_read_rd          : out std_logic;
+        priority_read_addr        : out priority_ram_addr_t;
+        priority_read_dout        : in  priority_t;
+        priority_write_wr         : out std_logic;
+        priority_write_addr       : out priority_ram_addr_t;
+        priority_write_din        : out priority_t;
         -- Palette RAM interface (Do not delay ! It expects data the next cycle)
-        palette_ram_addr_o        : out palette_ram_addr_t;
-        palette_ram_data_i        : in  palette_ram_data_t;
+        paletteRam_rd             : out std_logic;
+        paletteRam_addr           : out palette_ram_addr_t;
+        paletteRam_dout           : in  palette_ram_data_t;
         -- Frame Buffer interface
-        frame_buffer_addr_o       : out frame_buffer_addr_t;
-        frame_buffer_color_o      : out color_t;
-        frame_buffer_write_o      : out std_logic
+        frameBuffer_addr          : out frame_buffer_addr_t;
+        frameBuffer_mask          : out std_logic_vector(0 downto 0);
+        frameBuffer_din           : out std_logic_vector(DDP_WORD_WIDTH-2 downto 0);
+        frameBuffer_wr            : out std_logic
         );
 end entity sprite_processor;
 
@@ -145,10 +149,11 @@ architecture struct of sprite_processor is
 
     signal palette_color_select_s       : palette_color_select_t;
 
+    signal frame_buffer_color_s         : color_t;
 begin
 
     -- The sprite info from the sprite RAM
-    sprite_info_s <= extract_sprite_info_from_sprite_ram_line(sprite_ram_info_i);
+    sprite_info_s <= extract_sprite_info_from_sprite_ram_line(spriteRam_dout);
 
     -- There is no sprite in the ram line if the magic is in pos_x or if one of
     -- the tile sizes is 0.
@@ -202,7 +207,7 @@ begin
                 if sprite_burst_read_s = '1' then
                     burst_ready_s <= '0';
                 else
-                    if sprite_data_burst_done_i = '1' then
+                    if tileRom_burstDone = '1' then
                         burst_ready_s <= '1';
                     end if;
                 end if; -- Burst Ready
@@ -276,9 +281,9 @@ begin
     tile_fifo_inst : entity work.tile_fifo
         port map (
             clock       => clk_i,
-            data        => sprite_data_i,
+            data        => tileRom_dout,
             rdreq       => read_fifo_s,
-            wrreq       => sprite_data_valid_i,
+            wrreq       => tileRom_valid,
             almost_full => fifo_prog_full_s,
             empty       => fifo_empty_s,
             q           => data_to_pipeline_s);
@@ -296,16 +301,18 @@ begin
             sprite_burst_fifo_read_o  => read_fifo_s,
             sprite_burst_fifo_empty_i => fifo_empty_s,
             palette_color_select_o    => palette_color_select_s,
-            palette_color_i           => extract_color_from_palette_data(palette_ram_data_i),
-            priority_ram_read_addr_o  => priority_ram_read_addr_o,
-            priority_ram_priority_i   => priority_ram_data_i,
-            priority_ram_write_addr_o => priority_ram_write_addr_o,
-            priority_ram_priority_o   => priority_ram_data_o,
-            priority_ram_write_o      => priority_ram_write_o,
-            frame_buffer_addr_o       => frame_buffer_addr_o,
-            frame_buffer_color_o      => frame_buffer_color_o,
-            frame_buffer_write_o      => frame_buffer_write_o,
+            palette_color_i           => extract_color_from_palette_data(paletteRam_dout),
+            priority_ram_read_addr_o  => priority_read_addr,
+            priority_ram_priority_i   => priority_read_dout,
+            priority_ram_write_addr_o => priority_write_addr,
+            priority_ram_priority_o   => priority_write_din,
+            priority_ram_write_o      => priority_write_wr,
+            frame_buffer_addr_o       => frameBuffer_addr,
+            frame_buffer_color_o      => frame_buffer_color_s,
+            frame_buffer_write_o      => frameBuffer_wr,
             done_blitting_sprite_o    => pipeline_done_blitting_s);
+
+    frameBuffer_din <= frame_buffer_color_s.r & frame_buffer_color_s.g & frame_buffer_color_s.b;
 
     ---------
     -- FSM --
@@ -347,16 +354,21 @@ begin
     -------------
     -- Outputs --
     -------------
-    sprite_burst_read_o <= sprite_burst_read_s;
+    tileRom_rd <= sprite_burst_read_s;
     done_o              <= work_done_s;
     -- Address by line (1024 lines) and buffer_select says which group of
     -- lines, the first or the second group.
-    sprite_ram_addr_o <= resize(sprite_bank_i & sprite_info_counter_s(9 downto 0), sprite_ram_addr_o'length);
+    spriteRam_addr <= resize(sprite_bank_i & sprite_info_counter_s(9 downto 0), spriteRam_addr'length);
     -- The sprite rom address is the (code + burst counter) * byte_per_tile
     -- since the code indicates the first tile and the burst counter bursts by
     -- the same amount of bytes than a 16x16 tile.
-    sprite_rom_addr_o <= resize((sprite_info_reg_s.code+burst_counter_s)*DDP_BYTES_PER_16x16_TILE, sprite_rom_addr_o'length);
+    tileRom_addr <= resize((sprite_info_reg_s.code+burst_counter_s)*DDP_BYTES_PER_16x16_TILE, tileRom_addr'length);
 
-    palette_ram_addr_o <= palette_ram_addr_from_palette_color_select(palette_color_select_s);
+    paletteRam_addr <= palette_ram_addr_from_palette_color_select(palette_color_select_s);
 
+    tileRom_tinyBurst <= '0';
+    spriteRam_rd <= '1';
+    paletteRam_rd <= '1';
+    priority_read_rd <= '1';
+    frameBuffer_mask <= "0";
 end struct;

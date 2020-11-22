@@ -37,53 +37,41 @@
 
 package cave.types
 
-import cave.Config
+import axon.Util
 import chisel3._
-import chisel3.util._
 
-/** Tile ROM IO */
-class TileRomIO extends ValidReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH) {
-  /** Tiny burst flag */
-  val tinyBurst = Output(Bool())
-  /** Burst done flag */
-  val burstDone = Input(Bool())
+/** Represents a tile descriptor. */
+class Tile extends Bundle {
+  /** Priority */
+  val priority = UInt(2.W)
+  /** Color code */
+  val colorCode = UInt(6.W)
+  /** Tile code */
+  val code = UInt(24.W)
+}
 
-  override def cloneType: this.type = new TileRomIO().asInstanceOf[this.type]
-
+object Tile {
   /**
-   * Maps the address using the given function.
+   * Decodes a tile from the given data.
    *
-   * @param f The transform function.
+   * {{{
+   * word   bits                  description
+   * -----+-fedc-ba98-7654-3210-+----------------
+   *    0 | xx-- ---- ---- ---  | priority
+   *      | --xx xxxx ---- ---- | color
+   *      | ---- ---- xxxx xxxx | code hi
+   *    1 | xxxx xxxx xxxx xxxx | code lo
+   * }}}
+   *
+   * @param data The tile data.
    */
-  override def mapAddr(f: UInt => UInt): TileRomIO = {
-    val mem = Wire(chiselTypeOf(this))
-    mem.rd := this.rd
-    mem.tinyBurst := this.tinyBurst
-    mem.addr := f(this.addr)
-    this.dout := mem.dout
-    this.valid := mem.valid
-    this.burstDone := mem.burstDone
-    mem
+  def decode(data: Bits): Tile = {
+    val words = Util.decode(data, 2, 16)
+    val tile = Wire(new Tile)
+    tile.priority := words(0)(15, 14)
+    tile.colorCode := words(0)(13, 8)
+    tile.code := words(0)(7, 0) ## words(1)(15, 0)
+    tile
   }
 }
 
-object TileRomIO {
-  /**
-   * Multiplexes requests from multiple write-only memory interface to a single write-only memory interfaces. The
-   * request is routed to the first enabled interface.
-   *
-   * @param outs A list of enable-interface pairs.
-   */
-  def mux(outs: Seq[(Bool, TileRomIO)]): TileRomIO = {
-    val mem = Wire(chiselTypeOf(outs.head._2))
-    mem.tinyBurst := MuxCase(false.B, outs.map(a => a._1 -> a._2.tinyBurst))
-    mem.rd := MuxCase(false.B, outs.map(a => a._1 -> a._2.rd))
-    mem.addr := MuxCase(DontCare, outs.map(a => a._1 -> a._2.addr))
-    outs.foreach { case (enable, out) =>
-      out.dout := mem.dout
-      out.valid := mem.valid && enable
-      out.burstDone := mem.burstDone && enable
-    }
-    mem
-  }
-}

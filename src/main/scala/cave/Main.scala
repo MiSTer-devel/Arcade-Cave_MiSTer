@@ -106,10 +106,12 @@ class Main extends Module {
   fbDMA.io.ddr <> arbiter.io.fbToDDR
 
   // Video timing
-  //
-  // The video timing runs in the video clock domain.
   val videoTiming = withClock(io.videoClock) { Module(new VideoTiming(Config.videoTimingConfig)) }
-  io.video := videoTiming.io
+  videoTiming.io <> io.video
+
+  // Toggle the swap register on the rising edge of the vertical blank signal
+  val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)
+  when(Util.rising(vBlank)) { swapReg := !swapReg }
 
   // Cache memory
   //
@@ -142,11 +144,9 @@ class Main extends Module {
   cave.io.tileRom <> arbiter.io.tileRom
   cave.io.video := videoTiming.io
   cave.io.frameBuffer <> fbDMA.io.frameBuffer
-  fbDMA.io.start := cave.io.frameDone
 
-  // Toggle the swap register on the rising edge of the vertical blank signal
-  val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)
-  when(Util.rising(vBlank)) { swapReg := !swapReg }
+  // Start the frame buffer DMA when a frame is complete
+  fbDMA.io.start := cave.io.frameDone
 
   // Outputs
   io.debug.pc := cave.io.debug.pc

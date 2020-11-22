@@ -37,53 +37,67 @@
 
 package cave.types
 
-import cave.Config
+import axon.Util
+import axon.types.Vec2
 import chisel3._
-import chisel3.util._
 
-/** Tile ROM IO */
-class TileRomIO extends ValidReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH) {
-  /** Tiny burst flag */
-  val tinyBurst = Output(Bool())
-  /** Burst done flag */
-  val burstDone = Input(Bool())
+/** Represents a sprite descriptor. */
+class Sprite extends Bundle {
+  /** Priority */
+  val priority = UInt(2.W)
+  /** Color code */
+  val colorCode = UInt(6.W)
+  /** Tile code */
+  val code = UInt(18.W)
+  /** Horizontal flip */
+  val flipX = Bool()
+  /** Vertical flip */
+  val flipY = Bool()
+  /** Position */
+  val pos = new Vec2(10)
+  /** Tile size */
+  val tileSize = new Vec2(8)
+  /** Zoom */
+  val zoom = new Vec2(16)
+}
 
-  override def cloneType: this.type = new TileRomIO().asInstanceOf[this.type]
-
+object Sprite {
   /**
-   * Maps the address using the given function.
+   * Decodes a sprite from the given data.
    *
-   * @param f The transform function.
+   * {{{
+   * word   bits                  description
+   * -----+-fedc-ba98-7654-3210-+----------------
+   *    0 | --xx xxxx ---- ---- | color
+   *      | ---- ---- --xx ---- | priority
+   *      | ---- ---- ---- x--- | flip x
+   *      | ---- ---- ---- -x-- | flip y
+   *      | ---- ---- ---- --xx | code hi
+   *    1 | xxxx xxxx xxxx xxxx | code lo
+   *    2 | ---- --xx xxxx xxxx | x position
+   *    3 | ---- --xx xxxx xxxx | y position
+   *    4 | xxxx xxxx ---- ---- | tile size x
+   *      | ---- ---- xxxx xxxx | tile size y
+   *    5 | ---- ---- ---- - -- |
+   *    6 | xxxx xxxx xxxx xxxx | zoom x
+   *    7 | xxxx xxxx xxxx xxxx | zoom y
+   * }}}
+   *
+   * @param data The sprite data.
    */
-  override def mapAddr(f: UInt => UInt): TileRomIO = {
-    val mem = Wire(chiselTypeOf(this))
-    mem.rd := this.rd
-    mem.tinyBurst := this.tinyBurst
-    mem.addr := f(this.addr)
-    this.dout := mem.dout
-    this.valid := mem.valid
-    this.burstDone := mem.burstDone
-    mem
+  def decode(data: Bits): Sprite = {
+    val words = Util.decode(data, 8, 16)
+    val sprite = Wire(new Sprite)
+    sprite.priority := words(0)(5, 4)
+    sprite.colorCode := words(0)(13, 8)
+    sprite.code := words(0)(1, 0) ## words(1)(15, 0)
+    sprite.flipX := words(0)(3)
+    sprite.flipY := words(0)(2)
+    sprite.pos := Vec2(words(2)(9, 0), words(3)(9, 0))
+    sprite.tileSize := Vec2(words(4)(15, 8), words(4)(7, 0))
+    sprite.zoom := Vec2(words(6)(15, 0), words(7)(15, 0))
+    sprite
   }
 }
 
-object TileRomIO {
-  /**
-   * Multiplexes requests from multiple write-only memory interface to a single write-only memory interfaces. The
-   * request is routed to the first enabled interface.
-   *
-   * @param outs A list of enable-interface pairs.
-   */
-  def mux(outs: Seq[(Bool, TileRomIO)]): TileRomIO = {
-    val mem = Wire(chiselTypeOf(outs.head._2))
-    mem.tinyBurst := MuxCase(false.B, outs.map(a => a._1 -> a._2.tinyBurst))
-    mem.rd := MuxCase(false.B, outs.map(a => a._1 -> a._2.rd))
-    mem.addr := MuxCase(DontCare, outs.map(a => a._1 -> a._2.addr))
-    outs.foreach { case (enable, out) =>
-      out.dout := mem.dout
-      out.valid := mem.valid && enable
-      out.burstDone := mem.burstDone && enable
-    }
-    mem
-  }
-}
+

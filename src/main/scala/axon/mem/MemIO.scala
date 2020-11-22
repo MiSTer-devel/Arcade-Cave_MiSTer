@@ -38,6 +38,7 @@
 package axon.mem
 
 import chisel3._
+import chisel3.util._
 
 abstract class MemIO(val addrWidth: Int, val dataWidth: Int) extends Bundle {
   def maskWidth = dataWidth/8
@@ -58,10 +59,57 @@ class ReadMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWid
   val dout = Input(UInt(dataWidth.W))
 
   override def cloneType: this.type = new ReadMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  def mapAddr(f: UInt => UInt): ReadMemIO = {
+    val mem = Wire(chiselTypeOf(this))
+    mem.rd := this.rd
+    mem.addr := f(this.addr)
+    this.dout := mem.dout
+    mem
+  }
 }
 
 object ReadMemIO {
   def apply(addrWidth: Int, dataWidth: Int): ReadMemIO = new ReadMemIO(addrWidth, dataWidth)
+
+  /**
+   * Multiplexes requests from two read-only memory interfaces to a single read-only memory interface.
+   *
+   * @param select Selects between the two memory interfaces.
+   * @param a The first interface.
+   * @param b The second interface.
+   */
+  def mux(select: Bool, a: ReadMemIO, b: ReadMemIO): ReadMemIO = {
+    val mem = Wire(chiselTypeOf(a))
+    mem.rd := Mux(select, a.rd, b.rd)
+    mem.addr := Mux(select, a.addr, b.addr)
+    a.dout := mem.dout
+    b.dout := mem.dout
+    mem
+  }
+
+  /**
+   * Demultiplexes requests from a single read-only memory interface to multiple read-only memory interfaces. The
+   * request is routed to the interface matching a given key.
+   *
+   * @param key The key to used to select the interface.
+   * @param outs A list of key-interface pairs.
+   */
+  def demux[K <: UInt](key: K, outs: Seq[(K, ReadMemIO)]): ReadMemIO = {
+    val mem = Wire(chiselTypeOf(outs.head._2))
+    outs.foreach { case (_, out) =>
+      out.rd := mem.rd
+      out.addr := mem.addr
+    }
+    val doutMap = outs.map(a => a._1 -> a._2.dout)
+    mem.dout := MuxLookup(key, 0.U, doutMap)
+    mem
+  }
 }
 
 /**
@@ -81,10 +129,43 @@ class WriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWi
   val din = Output(UInt(dataWidth.W))
 
   override def cloneType: this.type = new WriteMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  def mapAddr(f: UInt => UInt): WriteMemIO = {
+    val mem = Wire(chiselTypeOf(this))
+    mem.wr := this.wr
+    mem.addr := f(this.addr)
+    mem.mask := this.mask
+    mem.din := this.din
+    mem
+  }
 }
 
 object WriteMemIO {
   def apply(addrWidth: Int, dataWidth: Int): WriteMemIO = new WriteMemIO(addrWidth, dataWidth)
+
+  /**
+   * Multiplexes requests from multiple write-only memory interface to a single write-only memory interfaces. The
+   * request is routed to the first enabled interface.
+   *
+   * @param outs A list of enable-interface pairs.
+   */
+def mux[K <: UInt](key: K, outs: Seq[(K, WriteMemIO)]): WriteMemIO = {
+    val mem = Wire(chiselTypeOf(outs.head._2))
+    val writeMap = outs.map(a => a._1 -> a._2.wr)
+    val addrMap = outs.map(a => a._1 -> a._2.addr)
+    val maskMap = outs.map(a => a._1 -> a._2.mask)
+    val dataMap = outs.map(a => a._1 -> a._2.din)
+    mem.wr := MuxLookup(key, false.B, writeMap)
+    mem.addr := MuxLookup(key, DontCare, addrMap)
+    mem.mask := MuxLookup(key, DontCare, maskMap)
+    mem.din := MuxLookup(key, DontCare, dataMap)
+    mem
+  }
 }
 
 /**
@@ -115,8 +196,8 @@ class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, da
     rd := wire.rd
     wr := false.B
     addr := wire.addr
-    mask := 0.U
-    din := 0.U
+    mask := DontCare
+    din := DontCare
     wire.dout := dout
     wire
   }
