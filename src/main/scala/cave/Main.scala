@@ -83,10 +83,24 @@ class Main extends Module {
   // Registers
   val swapReg = RegInit(false.B)
 
+  // Video timing
+  //
+  // The video timing module runs in the video clock domain. It doesn't use the video reset signal, as the video timing
+  // signals should always be generated. Otherwise, the progress bar won't be visible while the core is loading.
+  val videoTiming = withClock(io.videoClock) { Module(new VideoTiming(Config.videoTimingConfig)) }
+  io.video <> videoTiming.io
+
+  // The swap register selects which frame buffer is being used for reading/writing pixel data. While one frame buffer
+  // is being written to, the other is being read from.
+  //
+  // It gets toggled on the rising edge of the vertical blank signal.
+  val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)
+  when(Util.rising(vBlank)) { swapReg := !swapReg }
+
   // DDR arbiter
   val arbiter = Module(new DDRArbiter)
-  arbiter.io.ddr <> io.ddr
-  arbiter.io.download <> io.download
+  io.download <> arbiter.io.download
+  io.ddr <> arbiter.io.ddr
 
   // Video DMA
   val videoDMA = Module(new VideoDMA(
@@ -106,10 +120,6 @@ class Main extends Module {
   fbDMA.io.swap := !swapReg
   fbDMA.io.ddr <> arbiter.io.fbToDDR
 
-  // Video timing
-  val videoTiming = withClock(io.videoClock) { Module(new VideoTiming(Config.videoTimingConfig)) }
-  videoTiming.io <> io.video
-
   // Video FIFO
   val videoFIFO = Module(new VideoFIFO)
   videoFIFO.io.videoClock := io.videoClock
@@ -118,9 +128,14 @@ class Main extends Module {
   videoFIFO.io.pixelData <> videoDMA.io.pixelData
   io.rgb := videoFIFO.io.rgb
 
-  // Toggle the swap register on the rising edge of the vertical blank signal
-  val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)
-  when(Util.rising(vBlank)) { swapReg := !swapReg }
+  // Data freezer
+  val dataFreezer = Module(new DataFreezer(
+    addrWidth = Config.CACHE_ADDR_WIDTH,
+    dataWidth = Config.CACHE_DATA_WIDTH
+  ))
+  dataFreezer.io.targetClock := io.cpuClock
+  dataFreezer.io.targetReset := io.cpuReset
+  dataFreezer.io.out <> arbiter.io.cache
 
   // Cache memory
   //
@@ -133,16 +148,7 @@ class Main extends Module {
       outDataWidth = Config.CACHE_DATA_WIDTH
     ))
   }
-
-  // Data freezer
-  val dataFreezer = Module(new DataFreezer(
-    addrWidth = Config.CACHE_ADDR_WIDTH,
-    dataWidth = Config.CACHE_DATA_WIDTH
-  ))
-  dataFreezer.io.targetClock := io.cpuClock
-  dataFreezer.io.targetReset := io.cpuReset
-  dataFreezer.io.in <> cacheMem.io.out
-  dataFreezer.io.out <> arbiter.io.cache
+  cacheMem.io.out <> dataFreezer.io.in
 
   // Cave
   val cave = Module(new Cave)

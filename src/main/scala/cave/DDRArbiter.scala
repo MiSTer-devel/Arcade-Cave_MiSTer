@@ -51,8 +51,8 @@ import axon.util.Counter
  */
 class DDRArbiter extends Module {
   val io = IO(new Bundle {
-    /** DDR port */
-    val ddr = new BurstReadWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
+    /** Download port */
+    val download = DownloadIO()
     /** Cache port */
     val cache = Flipped(new CacheIO)
     /** Tile ROM port */
@@ -61,8 +61,8 @@ class DDRArbiter extends Module {
     val fbToDDR = Flipped(BurstWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH))
     /** Frame buffer from DDR port */
     val fbFromDDR = Flipped(BurstReadMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH))
-    /** Download port */
-    val download = DownloadIO()
+    /** DDR port */
+    val ddr = new BurstReadWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
     /** Debug port */
     val debug = new Bundle {
       val idle = Output(Bool())
