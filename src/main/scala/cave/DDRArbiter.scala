@@ -38,8 +38,8 @@
 package cave
 
 import axon.mem._
-import axon.types.DownloadIO
-import cave.types.{CacheIO, TileRomIO}
+import axon.types._
+import cave.types._
 import chisel3._
 import chisel3.util._
 import axon.util.Counter
@@ -81,13 +81,15 @@ class DDRArbiter extends Module {
   })
 
   // States
-  val idleState :: check1State :: check2State :: check3State :: check4State :: cacheReqState :: gfxReqState :: cacheWaitState :: gfxWaitState :: fbFromDDRState :: fbToDDRState :: downloadState :: Nil = Enum(12)
+  object State {
+    val idle :: check1 :: check2 :: check3 :: check4 :: cacheReq :: cacheWait :: gfxReq :: gfxWait :: fbFromDDR :: fbToDDR :: download :: Nil = Enum(12)
+  }
 
   // Wires
   val nextState = Wire(UInt())
 
   // Registers
-  val stateReg = RegNext(nextState, idleState)
+  val stateReg = RegNext(nextState, State.idle)
   val cacheReqReg = RegInit(false.B)
   val cacheAddrReg = RegInit(0.U)
   val cacheDataReg = Reg(Vec(DDRArbiter.CACHE_BURST_LENGTH, Bits(DDRArbiter.DATA_WIDTH.W)))
@@ -103,22 +105,22 @@ class DDRArbiter extends Module {
   val gfxBurstLength = Mux(gfxTinyBurstReg, 8.U, 16.U)
 
   // Counters
-  val (rrCounterValue, _) = Counter.static(4, enable = stateReg === idleState && nextState =/= idleState)
+  val (rrCounterValue, _) = Counter.static(4, enable = stateReg === State.idle && nextState =/= State.idle)
   val (cacheBurstValue, cacheBurstDone) = Counter.static(DDRArbiter.CACHE_BURST_LENGTH,
-    enable = stateReg === cacheWaitState && io.ddr.valid,
-    reset = stateReg === cacheReqState
+    enable = stateReg === State.cacheWait && io.ddr.valid,
+    reset = stateReg === State.cacheReq
   )
   val (gfxBurstValue, gfxBurstDone) = Counter.dynamic(gfxBurstLength,
-    enable = stateReg === gfxWaitState && io.ddr.valid,
-    reset = stateReg === gfxReqState
+    enable = stateReg === State.gfxWait && io.ddr.valid,
+    reset = stateReg === State.gfxReq
   )
   val (fbFromDDRBurstValue, fbFromDDRBurstDone) = Counter.dynamic(io.fbFromDDR.burstCount,
-    enable = stateReg === fbFromDDRState && io.ddr.valid,
-    reset = stateReg =/= fbFromDDRState
+    enable = stateReg === State.fbFromDDR && io.ddr.valid,
+    reset = stateReg =/= State.fbFromDDR
   )
   val (fbToDDRBurstValue, fbToDDRBurstDone) = Counter.dynamic(io.fbToDDR.burstCount,
-    enable = stateReg === fbToDDRState && io.fbToDDR.wr && !io.ddr.waitReq,
-    reset = stateReg =/= fbToDDRState
+    enable = stateReg === State.fbToDDR && io.fbToDDR.wr && !io.ddr.waitReq,
+    reset = stateReg =/= State.fbToDDR
   )
 
   // Shift the DDR output data into the data register
@@ -146,133 +148,133 @@ class DDRArbiter extends Module {
 
   // FSM
   switch(stateReg) {
-    is(idleState) {
-      nextState := MuxLookup(rrCounterValue, check4State, Seq(
-        0.U -> check1State,
-        1.U -> check2State,
-        2.U -> check3State
+    is(State.idle) {
+      nextState := MuxLookup(rrCounterValue, State.check4, Seq(
+        0.U -> State.check1,
+        1.U -> State.check2,
+        2.U -> State.check3
       ))
     }
 
-    is(check1State) {
+    is(State.check1) {
       nextState := MuxCase(stateReg, Seq(
-        io.fbFromDDR.rd -> fbFromDDRState,
-        io.download.enable -> downloadState,
-        cacheReqReg -> cacheReqState,
-        gfxReqReg -> gfxReqState,
-        io.fbToDDR.wr -> fbToDDRState
+        io.fbFromDDR.rd -> State.fbFromDDR,
+        io.download.enable -> State.download,
+        cacheReqReg -> State.cacheReq,
+        gfxReqReg -> State.gfxReq,
+        io.fbToDDR.wr -> State.fbToDDR
       ))
     }
 
-    is(check2State) {
+    is(State.check2) {
       nextState := MuxCase(stateReg, Seq(
-        io.fbFromDDR.rd -> fbFromDDRState,
-        io.download.enable -> downloadState,
-        gfxReqReg -> gfxReqState,
-        io.fbToDDR.wr -> fbToDDRState,
-        cacheReqReg -> cacheReqState
+        io.fbFromDDR.rd -> State.fbFromDDR,
+        io.download.enable -> State.download,
+        gfxReqReg -> State.gfxReq,
+        io.fbToDDR.wr -> State.fbToDDR,
+        cacheReqReg -> State.cacheReq
       ))
     }
 
-    is(check3State) {
+    is(State.check3) {
       nextState := MuxCase(stateReg, Seq(
-        io.fbFromDDR.rd -> fbFromDDRState,
-        io.download.enable -> downloadState,
-        io.fbToDDR.wr -> fbToDDRState,
-        gfxReqReg -> gfxReqState,
-        cacheReqReg -> cacheReqState
+        io.fbFromDDR.rd -> State.fbFromDDR,
+        io.download.enable -> State.download,
+        io.fbToDDR.wr -> State.fbToDDR,
+        gfxReqReg -> State.gfxReq,
+        cacheReqReg -> State.cacheReq
       ))
     }
 
-    is(check4State) {
+    is(State.check4) {
       nextState := MuxCase(stateReg, Seq(
-        io.fbFromDDR.rd -> fbFromDDRState,
-        io.download.enable -> downloadState,
-        gfxReqReg -> gfxReqState,
-        cacheReqReg -> cacheReqState,
-        io.fbToDDR.wr -> fbToDDRState
+        io.fbFromDDR.rd -> State.fbFromDDR,
+        io.download.enable -> State.download,
+        gfxReqReg -> State.gfxReq,
+        cacheReqReg -> State.cacheReq,
+        io.fbToDDR.wr -> State.fbToDDR
       ))
     }
 
-    is(cacheReqState) {
-      when(!io.ddr.waitReq) { nextState := cacheWaitState }
+    is(State.cacheReq) {
+      when(!io.ddr.waitReq) { nextState := State.cacheWait }
     }
 
-    is(cacheWaitState) {
-      when(cacheBurstDone) { nextState := idleState }
+    is(State.cacheWait) {
+      when(cacheBurstDone) { nextState := State.idle }
     }
 
-    is(gfxReqState) {
-      when(!io.ddr.waitReq) { nextState := gfxWaitState }
+    is(State.gfxReq) {
+      when(!io.ddr.waitReq) { nextState := State.gfxWait }
     }
 
-    is(gfxWaitState) {
-      when(gfxBurstDone) { nextState := idleState }
+    is(State.gfxWait) {
+      when(gfxBurstDone) { nextState := State.idle }
     }
 
-    is(fbFromDDRState) {
-      when(fbFromDDRBurstDone) { nextState := idleState }
+    is(State.fbFromDDR) {
+      when(fbFromDDRBurstDone) { nextState := State.idle }
     }
 
-    is(fbToDDRState) {
-      when(fbToDDRBurstDone) { nextState := idleState }
+    is(State.fbToDDR) {
+      when(fbToDDRBurstDone) { nextState := State.idle }
     }
 
-    is(downloadState) {
-      when(!io.download.enable) { nextState := idleState }
+    is(State.download) {
+      when(!io.download.enable) { nextState := State.idle }
     }
   }
 
   // Outputs
   io.ddr.rd := MuxLookup(stateReg, false.B, Seq(
-    cacheReqState -> true.B,
-    gfxReqState -> true.B,
-    fbFromDDRState -> io.fbFromDDR.rd
+    State.cacheReq -> true.B,
+    State.gfxReq -> true.B,
+    State.fbFromDDR -> io.fbFromDDR.rd
   ))
   io.ddr.wr := MuxLookup(stateReg, false.B, Seq(
-    fbToDDRState -> io.fbToDDR.wr,
-    downloadState -> io.download.wr
+    State.fbToDDR -> io.fbToDDR.wr,
+    State.download -> io.download.wr
   ))
   io.ddr.addr := MuxLookup(stateReg, 0.U, Seq(
-    cacheReqState -> cacheAddrReg,
-    gfxReqState -> gfxAddrReg,
-    fbFromDDRState -> io.fbFromDDR.addr,
-    fbToDDRState -> io.fbToDDR.addr,
-    downloadState -> io.download.addr
+    State.cacheReq -> cacheAddrReg,
+    State.gfxReq -> gfxAddrReg,
+    State.fbFromDDR -> io.fbFromDDR.addr,
+    State.fbToDDR -> io.fbToDDR.addr,
+    State.download -> io.download.addr
   ))
   io.ddr.burstCount := MuxLookup(stateReg, 1.U, Seq(
-    cacheReqState -> DDRArbiter.CACHE_BURST_LENGTH.U,
-    gfxReqState -> gfxBurstLength,
-    fbFromDDRState -> io.fbFromDDR.burstCount,
-    fbToDDRState -> io.fbToDDR.burstCount
+    State.cacheReq -> DDRArbiter.CACHE_BURST_LENGTH.U,
+    State.gfxReq -> gfxBurstLength,
+    State.fbFromDDR -> io.fbFromDDR.burstCount,
+    State.fbToDDR -> io.fbToDDR.burstCount
   ))
-  io.ddr.mask := Mux(stateReg === downloadState, downloadMask, 0xff.U)
+  io.ddr.mask := Mux(stateReg === State.download, downloadMask, 0xff.U)
   io.ddr.din := MuxLookup(stateReg, 0.U, Seq(
-    fbToDDRState -> io.fbToDDR.din,
-    downloadState -> downloadData
+    State.fbToDDR -> io.fbToDDR.din,
+    State.download -> downloadData
   ))
   io.cache.valid := RegNext(cacheBurstDone, false.B)
   io.cache.dout := cacheDataReg.asUInt
   io.tileRom.burstDone := RegNext(gfxBurstDone, false.B)
-  io.tileRom.valid := Mux(stateReg === gfxWaitState, io.ddr.valid, false.B)
+  io.tileRom.valid := Mux(stateReg === State.gfxWait, io.ddr.valid, false.B)
   io.tileRom.dout := io.ddr.dout
-  io.fbFromDDR.waitReq := Mux(stateReg === fbFromDDRState, io.ddr.waitReq, true.B)
-  io.fbFromDDR.valid := Mux(stateReg === fbFromDDRState, io.ddr.valid, false.B)
+  io.fbFromDDR.waitReq := Mux(stateReg === State.fbFromDDR, io.ddr.waitReq, true.B)
+  io.fbFromDDR.valid := Mux(stateReg === State.fbFromDDR, io.ddr.valid, false.B)
   io.fbFromDDR.dout := io.ddr.dout
-  io.fbToDDR.waitReq := Mux(stateReg === fbToDDRState, io.ddr.waitReq, true.B)
-  io.download.waitReq := Mux(stateReg === downloadState, io.download.wr && io.ddr.waitReq, io.download.wr)
-  io.debug.idle := stateReg === idleState
-  io.debug.check1 := stateReg === check1State
-  io.debug.check2 := stateReg === check2State
-  io.debug.check3 := stateReg === check3State
-  io.debug.check4 := stateReg === check4State
-  io.debug.cacheReq := stateReg === cacheReqState
-  io.debug.gfxReq := stateReg === gfxReqState
-  io.debug.cacheWait := stateReg === cacheWaitState
-  io.debug.gfxWait := stateReg === gfxWaitState
-  io.debug.fbFromDDR := stateReg === fbFromDDRState
-  io.debug.fbToDDR := stateReg === fbToDDRState
-  io.debug.download := stateReg === downloadState
+  io.fbToDDR.waitReq := Mux(stateReg === State.fbToDDR, io.ddr.waitReq, true.B)
+  io.download.waitReq := Mux(stateReg === State.download, io.download.wr && io.ddr.waitReq, io.download.wr)
+  io.debug.idle := stateReg === State.idle
+  io.debug.check1 := stateReg === State.check1
+  io.debug.check2 := stateReg === State.check2
+  io.debug.check3 := stateReg === State.check3
+  io.debug.check4 := stateReg === State.check4
+  io.debug.cacheReq := stateReg === State.cacheReq
+  io.debug.gfxReq := stateReg === State.gfxReq
+  io.debug.cacheWait := stateReg === State.cacheWait
+  io.debug.gfxWait := stateReg === State.gfxWait
+  io.debug.fbFromDDR := stateReg === State.fbFromDDR
+  io.debug.fbToDDR := stateReg === State.fbToDDR
+  io.debug.download := stateReg === State.download
 
   printf(p"DDRArbiter(state: $stateReg, nextState: $nextState, cache: $cacheBurstValue ($cacheBurstDone), cacheValid: ${io.cache.valid}, gfx: $gfxBurstValue ($gfxBurstDone), gfxValid: ${io.tileRom.valid}, fbFromDDR: $fbFromDDRBurstValue ($fbFromDDRBurstDone), fbFromDDRValid: ${io.fbFromDDR.valid}, fbToDDR: $fbToDDRBurstValue ($fbToDDRBurstDone), fbToDDRWaitReq: ${io.fbToDDR.waitReq})\n")
 }
