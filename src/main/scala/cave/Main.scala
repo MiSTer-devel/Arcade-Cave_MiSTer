@@ -57,6 +57,8 @@ class Main extends Module {
   val io = IO(new Bundle {
     /** Video clock domain */
     val videoClock = Input(Clock())
+    /** Video reset */
+    val videoReset = Input(Bool())
     /** CPU clock domain */
     val cpuClock = Input(Clock())
     /** CPU reset */
@@ -69,8 +71,8 @@ class Main extends Module {
     val ddr = new BurstReadWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
     /** Download port */
     val download = DownloadIO()
-    /** Pixel data port */
-    val pixelData = DecoupledIO(Bits(DDRArbiter.DATA_WIDTH.W))
+    /** RGB output */
+    val rgb = Output(new RGB(5))
     /** Debug port */
     val debug = Output(new Bundle {
       val pc = UInt()
@@ -93,7 +95,6 @@ class Main extends Module {
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
   videoDMA.io.swap := swapReg
-  videoDMA.io.pixelData <> io.pixelData
   videoDMA.io.ddr <> arbiter.io.fbFromDDR
 
   // Frame buffer DMA
@@ -108,6 +109,14 @@ class Main extends Module {
   // Video timing
   val videoTiming = withClock(io.videoClock) { Module(new VideoTiming(Config.videoTimingConfig)) }
   videoTiming.io <> io.video
+
+  // Video FIFO
+  val videoFIFO = Module(new VideoFIFO)
+  videoFIFO.io.videoClock := io.videoClock
+  videoFIFO.io.videoReset := io.videoReset
+  videoFIFO.io.video <> videoTiming.io
+  videoFIFO.io.pixelData <> videoDMA.io.pixelData
+  io.rgb := videoFIFO.io.rgb
 
   // Toggle the swap register on the rising edge of the vertical blank signal
   val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)
@@ -148,7 +157,7 @@ class Main extends Module {
   // Start the frame buffer DMA when a frame is complete
   fbDMA.io.start := cave.io.frameDone
 
-  // Outputs
+  // Debug outputs
   io.debug.pc := cave.io.debug.pc
   io.debug.pcw := cave.io.debug.pcw
 }

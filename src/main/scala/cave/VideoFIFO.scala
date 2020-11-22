@@ -41,7 +41,6 @@ import axon.gpu.VideoIO
 import axon.types.RGB
 import chisel3._
 import chisel3.util._
-import axon.util.Counter
 
 /**
  * A queue for buffering pixel data that is ready to be output to the display.
