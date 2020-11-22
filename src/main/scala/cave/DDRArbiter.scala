@@ -159,7 +159,7 @@ class DDRArbiter extends Module {
     is(State.check1) {
       nextState := MuxCase(stateReg, Seq(
         io.fbFromDDR.rd -> State.fbFromDDR,
-        io.download.enable -> State.download,
+        io.download.cs -> State.download,
         cacheReqReg -> State.cacheReq,
         gfxReqReg -> State.gfxReq,
         io.fbToDDR.wr -> State.fbToDDR
@@ -169,7 +169,7 @@ class DDRArbiter extends Module {
     is(State.check2) {
       nextState := MuxCase(stateReg, Seq(
         io.fbFromDDR.rd -> State.fbFromDDR,
-        io.download.enable -> State.download,
+        io.download.cs -> State.download,
         gfxReqReg -> State.gfxReq,
         io.fbToDDR.wr -> State.fbToDDR,
         cacheReqReg -> State.cacheReq
@@ -179,7 +179,7 @@ class DDRArbiter extends Module {
     is(State.check3) {
       nextState := MuxCase(stateReg, Seq(
         io.fbFromDDR.rd -> State.fbFromDDR,
-        io.download.enable -> State.download,
+        io.download.cs -> State.download,
         io.fbToDDR.wr -> State.fbToDDR,
         gfxReqReg -> State.gfxReq,
         cacheReqReg -> State.cacheReq
@@ -189,7 +189,7 @@ class DDRArbiter extends Module {
     is(State.check4) {
       nextState := MuxCase(stateReg, Seq(
         io.fbFromDDR.rd -> State.fbFromDDR,
-        io.download.enable -> State.download,
+        io.download.cs -> State.download,
         gfxReqReg -> State.gfxReq,
         cacheReqReg -> State.cacheReq,
         io.fbToDDR.wr -> State.fbToDDR
@@ -221,7 +221,7 @@ class DDRArbiter extends Module {
     }
 
     is(State.download) {
-      when(!io.download.enable) { nextState := State.idle }
+      when(!io.download.cs) { nextState := State.idle }
     }
   }
 

@@ -41,11 +41,11 @@ import chisel3._
 
 /** A flow control interface used to download data into the core. */
 class DownloadIO private extends Bundle {
-  /** Enable flag */
-  val enable = Input(Bool())
+  /** Chip select */
+  val cs = Input(Bool())
   /** Write enable */
   val wr = Input(Bool())
-  /** Flag to indicate that the device isn't ready to proceed with the request  */
+  /** Asserted when the core isn't ready to proceed with the request  */
   val waitReq = Output(Bool())
   /** Index */
   val index = Input(UInt(DownloadIO.INDEX_WIDTH.W))

@@ -157,7 +157,7 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
 
   it should "move to the download state" in {
     test(new DDRArbiter) { dut =>
-      dut.io.download.enable.poke(true.B)
+      dut.io.download.cs.poke(true.B)
       waitForIdle(dut)
       dut.clock.step(2)
       dut.io.debug.download.expect(true.B)
@@ -274,8 +274,7 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
 
   it should "write data to DDR" in {
     test(new DDRArbiter) { dut =>
-      dut.io.download.enable.poke(true.B)
-      dut.io.download.addr.poke(1.U)
+      dut.io.download.cs.poke(true.B)
       waitForDownload(dut)
       dut.io.ddr.wr.expect(false.B)
       dut.io.download.wr.poke(true.B)
