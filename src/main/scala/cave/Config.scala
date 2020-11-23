@@ -42,13 +42,13 @@ import axon.snd.YMZ280BConfig
 
 object Config {
   /** System clock frequency (Hz) */
-  val CLOCK_FREQ = 96000000D
+  val CLOCK_FREQ = 96000000
 
   /** CPU clock frequency (Hz) */
   val CPU_CLOCK_FREQ = 16000000
 
   /** Sample frequency (Hz) */
-  val SAMPLE_FREQ = 88200D
+  val SAMPLE_FREQ = 88200
 
   val SAMPLE_WIDTH = 16
 
