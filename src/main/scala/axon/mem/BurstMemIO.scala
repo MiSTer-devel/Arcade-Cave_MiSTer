@@ -40,12 +40,12 @@ package axon.mem
 import chisel3._
 
 trait BurstIO {
-  /** Burst count */
+  /** The number of words to transfer during a burst */
   val burstCount = Output(UInt(8.W))
 }
 
 /**
- * A flow control interface for bursted reading to memory.
+ * A flow control interface for reading from bursted memory.
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
@@ -59,7 +59,7 @@ object BurstReadMemIO {
 }
 
 /**
- * A flow control interface for bursted writing to memory.
+ * A flow control interface for writing to bursted memory.
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
@@ -73,7 +73,7 @@ object BurstWriteMemIO {
 }
 
 /**
- * A flow control interface for bursted reading and writing to memory.
+ * A flow control interface for reading and writing to bursted memory.
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.

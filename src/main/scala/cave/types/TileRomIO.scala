@@ -37,6 +37,7 @@
 
 package cave.types
 
+import axon.mem.ValidReadMemIO
 import cave.Config
 import chisel3._
 import chisel3.util._

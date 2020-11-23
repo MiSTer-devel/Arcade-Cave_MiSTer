@@ -35,9 +35,7 @@
  *  SOFTWARE.
  */
 
-package cave.types
-
-import axon.mem.{ReadMemIO, ValidIO}
+package axon.mem
 
 /**
  * A simple flow control interface for reading from asynchronous memory.

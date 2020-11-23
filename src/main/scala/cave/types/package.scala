@@ -35,12 +35,40 @@
  *  SOFTWARE.
  */
 
-package cave.types
+package cave
 
-import axon.mem.ReadMemIO
-import cave.Config
+import axon.mem._
+import chisel3._
 
-/** Frame buffer IO */
-class FrameBufferIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH-2, Config.FRAME_BUFFER_DATA_WIDTH*4) {
-  override def cloneType: this.type = new FrameBufferIO().asInstanceOf[this.type]
+package object types {
+  /** Cache IO */
+  class CacheIO extends ValidReadMemIO(Config.CACHE_ADDR_WIDTH, Config.CACHE_DATA_WIDTH) {
+    override def cloneType: this.type = new CacheIO().asInstanceOf[this.type]
+  }
+
+  /** Frame buffer IO */
+  class FrameBufferIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH-2, Config.FRAME_BUFFER_DATA_WIDTH*4) {
+    override def cloneType: this.type = new FrameBufferIO().asInstanceOf[this.type]
+  }
+
+  /** Player IO */
+  class PlayerIO extends Bundle {
+    /** Player 1 input */
+    val player1 = Input(Bits(9.W))
+    /** Player 2 input */
+    val player2 = Input(Bits(9.W))
+    /** Pause flag */
+    val pause = Input(Bool())
+  }
+
+  /** Priority IO */
+  class PriorityIO extends Bundle {
+    /** Write-only port */
+    val write = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_PRIO_WIDTH)
+    /** Read-only port */
+    val read = ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_PRIO_WIDTH)
+  }
+
+  /** Program ROM IO */
+  class ProgRomIO extends ValidReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH)
 }
