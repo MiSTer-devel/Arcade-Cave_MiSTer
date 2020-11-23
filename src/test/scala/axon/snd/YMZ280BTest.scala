@@ -123,6 +123,7 @@ class YMZ280BTest extends FlatSpec with ChiselScalatestTester with Matchers with
 
   it should "allow reading the status of the channels" in {
     test(mkADPCM) { dut =>
+      dut.io.mem.valid.poke(true.B)
       writeReg(dut, 0x00, 0xff) // channel 0 pitch
       writeReg(dut, 0x63, 0x01) // channel 0 end address
       writeReg(dut, 0x01, 0x80) // channel 0 key on
@@ -155,6 +156,7 @@ class YMZ280BTest extends FlatSpec with ChiselScalatestTester with Matchers with
 
   it should "assert the IRQ signal for channels that are done" in {
     test(mkADPCM) { dut =>
+      dut.io.mem.valid.poke(true.B)
       writeReg(dut, 0x00, 0xff) // channel 0 pitch
       writeReg(dut, 0x63, 0x01) // channel 0 end address
       writeReg(dut, 0x01, 0x80) // channel 0 key on
@@ -167,6 +169,7 @@ class YMZ280BTest extends FlatSpec with ChiselScalatestTester with Matchers with
 
   it should "not assert the IRQ signal for masked channels" in {
     test(mkADPCM) { dut =>
+      dut.io.mem.valid.poke(true.B)
       writeReg(dut, 0x00, 0xff) // channel 0 pitch
       writeReg(dut, 0x63, 0x01) // channel 0 end address
       writeReg(dut, 0x01, 0x80) // channel 0 key on

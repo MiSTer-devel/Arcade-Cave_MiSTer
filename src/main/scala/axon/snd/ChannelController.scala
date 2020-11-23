@@ -37,10 +37,11 @@
 
 package axon.snd
 
-import axon.mem.ReadMemIO
+import axon.Util
+import axon.mem.ValidReadMemIO
+import axon.util.Counter
 import chisel3._
 import chisel3.util._
-import axon.util.Counter
 
 /**
  * Manages the channels.
@@ -63,7 +64,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
     /** Audio output */
     val audio = ValidIO(new Audio(config.sampleWidth))
     /** External memory port */
-    val mem = ReadMemIO(config.memAddrWidth, config.memDataWidth)
+    val mem = ValidReadMemIO(config.memAddrWidth, config.memDataWidth)
     /** Debug port */
     val debug = new Bundle {
       val init = Output(Bool())
@@ -80,26 +81,28 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   })
 
   // States
-  val initState :: idleState :: readState :: latchState :: checkState :: readyState :: processState :: writeState :: nextState :: doneState :: Nil = Enum(10)
+  object State {
+    val init :: idle :: read :: latch :: check :: ready :: process :: write :: next :: done :: Nil = Enum(10)
+  }
 
   // Registers
-  val stateReg = RegInit(initState)
+  val stateReg = RegInit(State.init)
   val accumulatorReg = Reg(new Audio(config.sampleWidth))
   val channelStateReg = Reg(new ChannelState(config))
 
   // Counters
-  val (channelCounterValue, channelCounterWrap) = Counter.static(config.numChannels, enable = stateReg === initState || stateReg === nextState)
+  val (channelCounterValue, channelCounterWrap) = Counter.static(config.numChannels, enable = stateReg === State.init || stateReg === State.next)
   val (_, outputCounterWrap) = Counter.static((config.clockFreq/config.sampleFreq).round.toInt)
 
   // Register aliases
   val channelReg = io.channelRegs(channelCounterValue)
 
   // Channel state memory
-  val mem = SyncReadMem(config.numChannels, new ChannelState(config))
+  val channelStateMem = SyncReadMem(config.numChannels, new ChannelState(config))
 
   // Audio pipeline
   val audioPipeline = Module(new AudioPipeline(config))
-  audioPipeline.io.in.valid := stateReg === readyState
+  audioPipeline.io.in.valid := stateReg === State.ready
   audioPipeline.io.in.bits.state := channelStateReg.audioPipelineState
   audioPipeline.io.in.bits.pitch := channelReg.pitch
   audioPipeline.io.in.bits.level := channelReg.level
@@ -109,27 +112,25 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   val start = !channelStateReg.enable && !channelStateReg.done && channelReg.flags.keyOn
   val stop = !channelReg.flags.keyOn
   val active = channelStateReg.enable || start
-  val pcmFetch = stateReg === processState && audioPipeline.io.pcmData.ready
-  val pipelineValid = stateReg === processState && audioPipeline.io.out.valid
 
   // PCM data is valid during the clock cycle following a fetch
-  audioPipeline.io.pcmData.valid := RegNext(pcmFetch)
-  audioPipeline.io.pcmData.bits := Mux(channelStateReg.nibble, io.mem.dout(7, 4), io.mem.dout(3, 0))
+  audioPipeline.io.pcmData.valid := io.mem.valid
+  audioPipeline.io.pcmData.bits := Mux(channelStateReg.nibble, io.mem.dout(3, 0), io.mem.dout(7, 4))
 
   // Initialize channel states
-  when(stateReg === initState) { mem.write(channelCounterValue, ChannelState.default(config)) }
+  when(stateReg === State.init) { channelStateMem.write(channelCounterValue, ChannelState.default(config)) }
 
   // Clear accumulator
-  when(stateReg === idleState) { accumulatorReg := Audio.zero }
+  when(stateReg === State.idle) { accumulatorReg := Audio.zero }
 
   // Read channel state from memory
-  val channelState = mem.read(channelCounterValue, stateReg === readState)
+  val channelState = channelStateMem.read(channelCounterValue, stateReg === State.read)
 
   // Latch channel state
-  when(stateReg === latchState) { channelStateReg := channelState }
+  when(stateReg === State.latch) { channelStateReg := channelState }
 
   // Start/stop channel
-  when(stateReg === checkState) {
+  when(stateReg === State.check) {
     when(start) {
       channelStateReg.start(channelReg.startAddr)
     }.elsewhen(stop) {
@@ -137,18 +138,20 @@ class ChannelController(config: YMZ280BConfig) extends Module {
     }
   }
 
-  when(pcmFetch) {
-    // Toggle nibble flag
+  // PCM data has been fetched
+  when(audioPipeline.io.pcmData.fire()) {
+    // Toggle high/low nibble
     channelStateReg.nibble := !channelStateReg.nibble
 
-    // Update sample address after the high nibble has been fetched
+    // Move to next sample address after the high nibble has been processed
     when(channelStateReg.nibble) {
       val done = channelStateReg.nextAddr(channelReg)
       when(done) { channelStateReg.markAsDone() }
     }
   }
 
-  when(pipelineValid) {
+  // Audio pipeline has produced valid output
+  when(audioPipeline.io.out.valid) {
     // Sum pipeline audio output with the accumulator
     accumulatorReg := accumulatorReg + audioPipeline.io.out.bits.audio
 
@@ -157,69 +160,69 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   }
 
   // Write channels state to memory
-  when(stateReg === writeState) { mem.write(channelCounterValue, channelStateReg) }
+  when(stateReg === State.write) { channelStateMem.write(channelCounterValue, channelStateReg) }
 
   // FSM
   switch(stateReg) {
     // Initialize channel states
-    is(initState) {
-      when(outputCounterWrap) { stateReg := idleState }
+    is(State.init) {
+      when(outputCounterWrap) { stateReg := State.idle }
     }
 
     // Clear accumulator
-    is(idleState) {
-      when(io.enable) { stateReg := readState }
+    is(State.idle) {
+      when(io.enable) { stateReg := State.read }
     }
 
     // Read channel state from memory
-    is(readState) { stateReg := latchState }
+    is(State.read) { stateReg := State.latch }
 
     // Latch channel state
-    is(latchState) { stateReg := checkState }
+    is(State.latch) { stateReg := State.check }
 
     // Check whether the channel is active
-    is(checkState) { stateReg := Mux(active, readyState, writeState) }
+    is(State.check) { stateReg := Mux(active, State.ready, State.write) }
 
     // Wait for the pipeline to be ready
-    is(readyState) {
-      when(audioPipeline.io.in.ready) { stateReg := processState }
+    is(State.ready) {
+      when(audioPipeline.io.in.ready) { stateReg := State.process }
     }
 
     // Process channel through audio pipeline
-    is(processState) {
-      when(audioPipeline.io.out.valid) { stateReg := writeState }
+    is(State.process) {
+      when(audioPipeline.io.out.valid) { stateReg := State.write }
     }
 
     // Write channel state to memory
-    is(writeState) { stateReg := nextState }
+    is(State.write) { stateReg := State.next }
 
     // Increment channel index
-    is(nextState) { stateReg := Mux(channelCounterWrap, doneState, readState) }
+    is(State.next) { stateReg := Mux(channelCounterWrap, State.done, State.read) }
 
     // All channels processed, write audio output
-    is(doneState) {
-      when(outputCounterWrap) { stateReg := idleState }
+    is(State.done) {
+      when(outputCounterWrap) { stateReg := State.idle }
     }
   }
 
   // Outputs
-  io.channelState.valid := stateReg === writeState
+  io.channelState.valid := stateReg === State.write
   io.channelState.bits := channelStateReg
   io.channelIndex := channelCounterValue
   io.audio.valid := outputCounterWrap
   io.audio.bits := accumulatorReg
   io.mem.addr := channelStateReg.addr
-  io.mem.rd := pcmFetch
-  io.debug.init := stateReg === initState
-  io.debug.idle := stateReg === idleState
-  io.debug.read := stateReg === readState
-  io.debug.latch := stateReg === latchState
-  io.debug.check := stateReg === checkState
-  io.debug.ready := stateReg === readyState
-  io.debug.process := stateReg === processState
-  io.debug.write := stateReg === writeState
-  io.debug.next := stateReg === nextState
-  io.debug.done := stateReg === doneState
+  io.mem.rd := Util.rising(audioPipeline.io.pcmData.ready)
+  io.debug.init := stateReg === State.init
+  io.debug.idle := stateReg === State.idle
+  io.debug.read := stateReg === State.read
+  io.debug.latch := stateReg === State.latch
+  io.debug.check := stateReg === State.check
+  io.debug.ready := stateReg === State.ready
+  io.debug.process := stateReg === State.process
+  io.debug.write := stateReg === State.write
+  io.debug.next := stateReg === State.next
+  io.debug.done := stateReg === State.done
 
   printf(p"ChannelController(state: $stateReg, index: $channelCounterValue ($channelCounterWrap), channelState: $channelStateReg, audio: $accumulatorReg ($outputCounterWrap))\n")
 }

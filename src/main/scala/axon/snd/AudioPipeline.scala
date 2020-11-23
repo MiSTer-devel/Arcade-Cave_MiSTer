@@ -91,18 +91,16 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
   })
 
   // States
-  val idleState :: checkState :: fetchState :: decodeState :: interpolateState :: levelState :: panState :: doneState :: Nil = Enum(8)
+  object State {
+    val idle :: check :: fetch :: decode :: interpolate :: level :: pan :: done :: Nil = Enum(8)
+  }
 
   // Registers
-  val stateReg = RegInit(idleState)
-  val inputReg = RegEnable(io.in.bits, stateReg === idleState && io.in.valid)
+  val stateReg = RegInit(State.idle)
+  val inputReg = RegEnable(io.in.bits, io.in.fire())
   val sampleReg = Reg(SInt(config.sampleWidth.W))
   val audioReg = Reg(new Audio(config.sampleWidth))
-  val pcmDataReg = RegEnable(io.pcmData.bits, stateReg === fetchState && io.pcmData.valid)
-
-  // Control signals
-  val underflow = inputReg.state.underflow
-  val ready = stateReg === checkState && underflow
+  val pcmDataReg = RegEnable(io.pcmData.bits, io.pcmData.fire())
 
   // ADPCM decoder
   val adpcm = Module(new ADPCM(
@@ -122,23 +120,23 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
   lerp.io.index := inputReg.state.lerpIndex
 
   // Decode ADPCM data
-  when(stateReg === decodeState) {
+  when(stateReg === State.decode) {
     inputReg.state.adpcm(adpcm.io.out.step, adpcm.io.out.sample)
   }
 
   // Interpolate sample values
-  when(stateReg === interpolateState) {
+  when(stateReg === State.interpolate) {
     inputReg.state.interpolate(inputReg.pitch)
     sampleReg := lerp.io.out
   }
 
   // Apply level
-  when(stateReg === levelState) {
+  when(stateReg === State.level) {
     sampleReg := sampleReg*(inputReg.level+&1.U) >> 8
   }
 
   // Apply pan
-  when(stateReg === panState) {
+  when(stateReg === State.pan) {
     val s = sampleReg
     val t = inputReg.pan(2, 0)
     val left = WireInit(s)
@@ -154,48 +152,48 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
   // FSM
   switch(stateReg) {
     // Wait for a request
-    is(idleState) {
-      when(io.in.valid) { stateReg := checkState }
+    is(State.idle) {
+      when(io.in.valid) { stateReg := State.check }
     }
 
     // Check whether PCM data is required
-    is(checkState) { stateReg := Mux(underflow, fetchState, interpolateState) }
+    is(State.check) { stateReg := Mux(inputReg.state.underflow, State.fetch, State.interpolate) }
 
     // Fetch sample data
-    is(fetchState) {
-      when(io.pcmData.valid) { stateReg := decodeState }
+    is(State.fetch) {
+      when(io.pcmData.valid) { stateReg := State.decode }
     }
 
     // Decode ADPCM sample
-    is(decodeState) { stateReg := interpolateState }
+    is(State.decode) { stateReg := State.interpolate }
 
     // Interpolate sample
-    is(interpolateState) { stateReg := levelState }
+    is(State.interpolate) { stateReg := State.level }
 
     // Apply level
-    is(levelState) { stateReg := panState }
+    is(State.level) { stateReg := State.pan }
 
     // Apply pan
-    is(panState) { stateReg := doneState }
+    is(State.pan) { stateReg := State.done }
 
     // Done
-    is(doneState) { stateReg := idleState }
+    is(State.done) { stateReg := State.idle }
   }
 
   // Outputs
-  io.in.ready := stateReg === idleState
-  io.out.valid := stateReg === doneState
+  io.in.ready := stateReg === State.idle
+  io.out.valid := stateReg === State.done
   io.out.bits.state := inputReg.state
   io.out.bits.audio := audioReg
-  io.pcmData.ready := ready
-  io.debug.idle := stateReg === idleState
-  io.debug.check := stateReg === checkState
-  io.debug.fetch := stateReg === fetchState
-  io.debug.decode := stateReg === decodeState
-  io.debug.interpolate := stateReg === interpolateState
-  io.debug.level := stateReg === levelState
-  io.debug.pan := stateReg === panState
-  io.debug.done := stateReg === doneState
+  io.pcmData.ready := stateReg === State.fetch
+  io.debug.idle := stateReg === State.idle
+  io.debug.check := stateReg === State.check
+  io.debug.fetch := stateReg === State.fetch
+  io.debug.decode := stateReg === State.decode
+  io.debug.interpolate := stateReg === State.interpolate
+  io.debug.level := stateReg === State.level
+  io.debug.pan := stateReg === State.pan
+  io.debug.done := stateReg === State.done
 
-  printf(p"AudioPipeline(state: $stateReg, pcmData: $pcmDataReg, pipelineState: ${inputReg.state})\n")
+  printf(p"AudioPipeline(state: $stateReg, pcmData: 0x${Hexadecimal(pcmDataReg)}, pipelineState: ${inputReg.state})\n")
 }

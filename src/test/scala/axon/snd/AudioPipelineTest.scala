@@ -174,7 +174,7 @@ class AudioPipelineTest extends FlatSpec with ChiselScalatestTester with Matcher
     test(mkChannelPipeline) { dut =>
       startPipeline(dut, underflow = true, lerpIndex = 64, pitch = 63)
       dut.io.pcmData.ready.expect(false.B)
-      waitForCheck(dut)
+      waitForFetch(dut)
       dut.io.pcmData.ready.expect(true.B)
     }
   }

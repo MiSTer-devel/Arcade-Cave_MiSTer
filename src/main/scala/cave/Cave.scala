@@ -180,9 +180,7 @@ class Cave extends Module {
 
     // YMZ280B
     val ymz = Module(new YMZ280B(Config.ymzConfig))
-    io.soundRom.rd := ymz.io.mem.rd
-    io.soundRom.addr := ymz.io.mem.addr+Config.SOUND_ROM_OFFSET.U
-    ymz.io.mem.dout := io.soundRom.dout
+    io.soundRom <> ymz.io.mem.mapAddr(_+Config.SOUND_ROM_OFFSET.U)
     io.audio <> RegEnable(ymz.io.audio.bits, ymz.io.audio.valid)
 
     // Memory map

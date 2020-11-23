@@ -198,15 +198,32 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
 
   behavior of "PCM data"
 
+  it should "assert the memory read enable when the pipeline needs PCM data" in {
+    test(mkChannelController()) { dut =>
+      // Start
+      dut.io.enable.poke(true.B)
+      startChannel(dut, channelIndex = 0)
+
+      // Fetch
+      waitForProcess(dut)
+      dut.clock.step()
+      dut.io.mem.rd.expect(true.B)
+      dut.clock.step()
+      dut.io.mem.rd.expect(false.B)
+    }
+  }
+
   it should "fetch PCM data for the channels" in {
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true.B)
+      dut.io.mem.valid.poke(true.B)
       startChannel(dut, channelIndex = 0, pitch = 127, startAddress = 1)
 
       Seq(1, 1, 2, 2).foreach { n =>
         // Fetch
         waitForProcess(dut)
+        dut.clock.step()
         dut.io.mem.rd.expect(true.B)
         dut.io.mem.addr.expect(n.U)
         waitForNext(dut)
@@ -230,15 +247,17 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
 
       // Fetch (channel 0)
       waitForMemRead(dut)
-      dut.clock.step()
-      dut.io.mem.dout.poke(16.U)
+      dut.io.mem.valid.poke(true.B)
+      dut.io.mem.dout.poke(0x10.U)
       waitForNext(dut)
+      dut.io.mem.valid.poke(false.B)
 
       // Fetch (channel 1)
       waitForMemRead(dut)
-      dut.clock.step()
-      dut.io.mem.dout.poke(32.U)
+      dut.io.mem.valid.poke(true.B)
+      dut.io.mem.dout.poke(0x20.U)
       waitForNext(dut)
+      dut.io.mem.valid.poke(false.B)
 
       // Valid
       waitForAudioValid(dut)
@@ -257,6 +276,7 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true.B)
+      dut.io.mem.valid.poke(true.B)
       startChannel(dut, channelIndex = 0, endAddress = 1)
 
       // Status
@@ -279,6 +299,7 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true.B)
+      dut.io.mem.valid.poke(true.B)
       startChannel(dut, channelIndex = 0, loop = true, loopEndAddr = 1, endAddress = 1)
 
       // Status
@@ -296,6 +317,7 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true.B)
+      dut.io.mem.valid.poke(true.B)
       startChannel(dut, channelIndex = 0, endAddress = 1)
 
       // Stop
