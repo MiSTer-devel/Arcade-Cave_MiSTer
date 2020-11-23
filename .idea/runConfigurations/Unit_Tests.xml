@@ -5,18 +5,175 @@
     <option name="selectedOptions">
       <set />
     </option>
-    <option name="testKind" value="All in package" />
-    <option name="classBuf">
-      <list>
-        <option value="cave.DDRArbiterTest" />
-        <option value="cave.dma.VideoDMATest" />
-        <option value="cave.dma.FrameBufferDMATest" />
-        <option value="cave.gpu.RegisterFileTest" />
-        <option value="axon.UtilTest" />
-        <option value="axon.util.CounterTest" />
-      </list>
+    <option name="testKind" value="Regular expression" />
+    <option name="classRegexps">
+      <array>
+        <option value=".*Test" />
+      </array>
     </option>
     <option name="searchTest" value="In single module" />
+    <option name="testRegexps">
+      <array>
+        <option value="" />
+      </array>
+    </option>
+    <option name="testsBuf">
+      <map>
+        <entry key="axon.UtilTest">
+          <value>
+            <set>
+              <option value="decode should split a bitvector value into a sequence of bitvectors" />
+              <option value="edge should detect edges" />
+              <option value="falling should detect falling edges" />
+              <option value="hold should hold a signal" />
+              <option value="latch should latch a signal" />
+              <option value="latch should latch a signal when the trigger is asserted" />
+              <option value="padWords should pad words packed into a bitvector" />
+              <option value="rising should detect rising edges" />
+              <option value="rotateLeft should rotate the bits to the left" />
+              <option value="rotateRight should rotate the bits to the right" />
+              <option value="sync should generate a sync pulse for rising edges of the target clock" />
+              <option value="toggle should toggle a bit" />
+            </set>
+          </value>
+        </entry>
+        <entry key="axon.snd.ADPCMTest">
+          <value>
+            <set>
+              <option value="should decode sample values" />
+            </set>
+          </value>
+        </entry>
+        <entry key="axon.snd.AudioPipelineTest">
+          <value>
+            <set>
+              <option value="FSM should assert the ready signal during the idle state" />
+              <option value="FSM should assert the valid signal during the done state" />
+              <option value="FSM should move to the check state after receiving a request" />
+              <option value="FSM should move to the done state after applying the pan" />
+              <option value="FSM should move to the interpolate state when the pipeline has not underflowed" />
+              <option value="FSM should move to the latch state when the pipeline has underflowed" />
+              <option value="FSM should move to the level state after interpolating the sample" />
+              <option value="FSM should move to the pan state after applying the level" />
+              <option value="pipeline should apply level" />
+              <option value="pipeline should apply pan" />
+              <option value="pipeline should decode ADPCM data" />
+              <option value="pipeline should fetch ADPCM data when the pipeline has underflowed" />
+              <option value="pipeline should not fetch ADPCM data when the pipeline has not underflowed" />
+              <option value="pipeline should update linear interpolation index and set underflow flag" />
+            </set>
+          </value>
+        </entry>
+        <entry key="axon.snd.ChannelControllerTest">
+          <value>
+            <set>
+              <option value="FSM should assert the channel state valid signal during the write state" />
+              <option value="FSM should move to the check state after latch the channel state" />
+              <option value="FSM should move to the done state after processing all channels" />
+              <option value="FSM should move to the idle state after setting the audio output" />
+              <option value="FSM should move to the latch state after reading the channel state" />
+              <option value="FSM should move to the read state after initializing" />
+              <option value="FSM should move to the ready state after checking an enabled channel" />
+              <option value="FSM should move to the write state after checking a disabled channel" />
+              <option value="FSM should remain in the init state when the channel controller is disabled" />
+              <option value="PCM data should fetch PCM data for the channels" />
+              <option value="playing should assert the done signal when a channel has reached the end address" />
+              <option value="playing should not assert the done signal when a channel has reached the loop end address" />
+              <option value="playing should not assert the done signal when a channel is stopped" />
+              <option value="playing should sum the channel outputs" />
+            </set>
+          </value>
+        </entry>
+        <entry key="axon.snd.LERPTest">
+          <value>
+            <set>
+              <option value="should handle min/max sample values" />
+              <option value="should interpolate sample values" />
+            </set>
+          </value>
+        </entry>
+        <entry key="axon.snd.YMZ280BTest">
+          <value>
+            <set>
+              <option value="IRQ should assert the IRQ signal for channels that are done" />
+              <option value="IRQ should not assert the IRQ signal for masked channels" />
+              <option value="function register should allow writing the channel level" />
+              <option value="function register should allow writing the channel pitch" />
+              <option value="function register should allow writing the end address" />
+              <option value="function register should allow writing the loop end address" />
+              <option value="function register should allow writing the loop start address" />
+              <option value="function register should allow writing the start address" />
+              <option value="status register should allow reading the status of the channels" />
+              <option value="utility register should allow writing the IRQ mask" />
+              <option value="utility register should allow writing the enable flags" />
+            </set>
+          </value>
+        </entry>
+        <entry key="axon.util.CounterTest">
+          <value>
+            <set>
+              <option value="should increment a dynamic counter" />
+              <option value="should increment a static counter" />
+              <option value="should wrap a dynamic counter with zero length" />
+              <option value="should wrap a static counter with zero length" />
+            </set>
+          </value>
+        </entry>
+        <entry key="cave.DDRArbiterTest">
+          <value>
+            <set>
+              <option value="FSM should move to the cache request state" />
+              <option value="FSM should move to the cache wait state" />
+              <option value="FSM should move to the check state" />
+              <option value="FSM should move to the download state" />
+              <option value="FSM should move to the graphics request state" />
+              <option value="FSM should move to the graphics wait state" />
+              <option value="FSM should return to the idle state after reading a cache line" />
+              <option value="FSM should return to the idle state after reading graphics data" />
+              <option value="FSM should return to the idle state after reading the frame buffer from DDR" />
+              <option value="FSM should return to the idle state after writing the frame buffer to DDR" />
+              <option value="download should set DDR address and byte mask" />
+              <option value="download should write DDR data" />
+              <option value="frame buffer should read the frame buffer from DDR" />
+              <option value="frame buffer should write the frame buffer to DDR" />
+              <option value="program ROM should read a cache line from DDR" />
+              <option value="sound ROM should read a cache line from DDR" />
+              <option value="tile ROM should read a large tile from DDR" />
+              <option value="tile ROM should read a small tile from DDR" />
+            </set>
+          </value>
+        </entry>
+        <entry key="cave.dma.FrameBufferDMATest">
+          <value>
+            <set>
+              <option value="should assert the write enable signal during a transfer" />
+              <option value="should not increment the address while the wait signal is asserted" />
+              <option value="should offset the DDR address when swapping frames" />
+              <option value="should pad the pixel data" />
+              <option value="should write frame buffer data to DDR memory" />
+            </set>
+          </value>
+        </entry>
+        <entry key="cave.dma.VideoDMATest">
+          <value>
+            <set>
+              <option value="should assert the read enable signal at the start of a transfer" />
+              <option value="should not start a transfer while the wait signal is asserted" />
+              <option value="should offset the DDR address when swapping frames" />
+              <option value="should read frame buffer data from DDR memory" />
+            </set>
+          </value>
+        </entry>
+        <entry key="cave.gpu.RegisterFileTest">
+          <value>
+            <set>
+              <option value="should allow writing masked bytes" />
+              <option value="should output the registers" />
+            </set>
+          </value>
+        </entry>
+      </map>
+    </option>
     <option name="workingDirectory" value="$PROJECT_DIR$" />
     <method v="2">
       <option name="Make" enabled="true" />
