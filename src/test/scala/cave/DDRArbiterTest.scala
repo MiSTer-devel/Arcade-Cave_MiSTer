@@ -80,7 +80,7 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
 
   it should "move to the cache request state" in {
     test(new DDRArbiter) { dut =>
-      dut.io.cache.rd.poke(true.B)
+      dut.io.progRom.rd.poke(true.B)
       waitForIdle(dut)
       dut.clock.step(2)
       dut.io.debug.cacheReq.expect(true.B)
@@ -89,7 +89,7 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
 
   it should "move to the cache wait state" in {
     test(new DDRArbiter) { dut =>
-      dut.io.cache.rd.poke(true.B)
+      dut.io.progRom.rd.poke(true.B)
       waitForIdle(dut)
       dut.clock.step(3)
       dut.io.debug.cacheWait.expect(true.B)
@@ -116,7 +116,7 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
 
   it should "return to the idle state after reading a cache line" in {
     test(new DDRArbiter) { dut =>
-      dut.io.cache.rd.poke(true.B)
+      dut.io.progRom.rd.poke(true.B)
       dut.io.ddr.valid.poke(true.B)
       waitForIdle(dut)
       dut.clock.step(7)
@@ -164,12 +164,12 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
     }
   }
 
-  behavior of "cache"
+  behavior of "program ROM"
 
   it should "read a cache line from DDR" in {
     test(new DDRArbiter) { dut =>
-      dut.io.cache.rd.poke(true.B)
-      dut.io.cache.addr.poke(1.U)
+      dut.io.progRom.rd.poke(true.B)
+      dut.io.progRom.addr.poke(1.U)
       waitForCacheReq(dut)
       dut.io.ddr.rd.expect(true.B)
       dut.io.ddr.addr.expect(1.U)
@@ -181,8 +181,8 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
         dut.io.ddr.dout.poke(n.U)
         dut.clock.step()
       }
-      dut.io.cache.valid.expect(true.B)
-      dut.io.cache.dout.expect("h0000000000000003000000000000000200000000000000010000000000000000".U)
+      dut.io.progRom.valid.expect(true.B)
+      dut.io.progRom.dout.expect("h0000000000000003000000000000000200000000000000010000000000000000".U)
     }
   }
 

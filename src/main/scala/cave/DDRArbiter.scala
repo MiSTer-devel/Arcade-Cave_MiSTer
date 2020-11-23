@@ -53,8 +53,8 @@ class DDRArbiter extends Module {
   val io = IO(new Bundle {
     /** Download port */
     val download = DownloadIO()
-    /** Cache port */
-    val cache = Flipped(new CacheIO)
+    /** Program ROM port */
+    val progRom = Flipped(new CacheIO)
     /** Tile ROM port */
     val tileRom = Flipped(new TileRomIO)
     /** Frame buffer to DDR port */
@@ -127,9 +127,9 @@ class DDRArbiter extends Module {
   when(io.ddr.valid) { cacheDataReg := cacheDataReg.tail :+ io.ddr.dout }
 
   // Latch cache requests
-  when(io.cache.rd) {
+  when(io.progRom.rd) {
     cacheReqReg := true.B
-    cacheAddrReg := io.cache.addr
+    cacheAddrReg := io.progRom.addr
   }.elsewhen(cacheBurstDone) {
     cacheReqReg := false.B
   }
@@ -253,8 +253,8 @@ class DDRArbiter extends Module {
     State.fbToDDR -> io.fbToDDR.din,
     State.download -> downloadData
   ))
-  io.cache.valid := RegNext(cacheBurstDone, false.B)
-  io.cache.dout := cacheDataReg.asUInt
+  io.progRom.valid := RegNext(cacheBurstDone, false.B)
+  io.progRom.dout := cacheDataReg.asUInt
   io.tileRom.burstDone := RegNext(gfxBurstDone, false.B)
   io.tileRom.valid := Mux(stateReg === State.gfxWait, io.ddr.valid, false.B)
   io.tileRom.dout := io.ddr.dout
@@ -276,7 +276,7 @@ class DDRArbiter extends Module {
   io.debug.fbToDDR := stateReg === State.fbToDDR
   io.debug.download := stateReg === State.download
 
-  printf(p"DDRArbiter(state: $stateReg, nextState: $nextState, cache: $cacheBurstValue ($cacheBurstDone), cacheValid: ${io.cache.valid}, gfx: $gfxBurstValue ($gfxBurstDone), gfxValid: ${io.tileRom.valid}, fbFromDDR: $fbFromDDRBurstValue ($fbFromDDRBurstDone), fbFromDDRValid: ${io.fbFromDDR.valid}, fbToDDR: $fbToDDRBurstValue ($fbToDDRBurstDone), fbToDDRWaitReq: ${io.fbToDDR.waitReq}, download: 0x${Hexadecimal(downloadData)} (0x${Hexadecimal(downloadMask)})\n")
+  printf(p"DDRArbiter(state: $stateReg, nextState: $nextState, cache: $cacheBurstValue ($cacheBurstDone), cacheValid: ${io.progRom.valid}, gfx: $gfxBurstValue ($gfxBurstDone), gfxValid: ${io.tileRom.valid}, fbFromDDR: $fbFromDDRBurstValue ($fbFromDDRBurstDone), fbFromDDRValid: ${io.fbFromDDR.valid}, fbToDDR: $fbToDDRBurstValue ($fbToDDRBurstDone), fbToDDRWaitReq: ${io.fbToDDR.waitReq}, download: 0x${Hexadecimal(downloadData)} (0x${Hexadecimal(downloadMask)})\n")
 }
 
 object DDRArbiter {

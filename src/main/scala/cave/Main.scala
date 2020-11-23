@@ -135,7 +135,7 @@ class Main extends Module {
   ))
   progRomFreezer.io.targetClock := io.cpuClock
   progRomFreezer.io.targetReset := io.cpuReset
-  progRomFreezer.io.out <> arbiter.io.cache
+  progRomFreezer.io.out <> arbiter.io.progRom
 
   // Cache memory
   //
