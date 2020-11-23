@@ -82,10 +82,12 @@ class Cave extends Module {
   val clearIRQ = WireInit(false.B)
 
   // GPU
+  //
+  // The GPU runs in the system clock domain.
   val gpu = Module(new GPU)
   gpu.io.generateFrame := Util.rising(ShiftRegister(generateFrame, 2))
   io.frameDone := gpu.io.frameDone
-  io.tileRom <> gpu.io.tileRom.mapAddr(_+Config.TILE_ROM_OFFSET.U)
+  io.tileRom <> gpu.io.tileRom
   io.frameBuffer <> gpu.io.frameBuffer
 
   // The CPU and registers run in the CPU clock domain
@@ -193,9 +195,7 @@ class Cave extends Module {
     cpu.memMap(0x700000 to 0x70ffff).readWriteMem(layer2Ram.io.portA)
     cpu.memMap(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
     cpu.memMap(0x800000 to 0x800007).r { (addr, _) =>
-      when(addr === 0x800004.U) {
-        clearIRQ := true.B
-      }
+      when(addr === 0x800004.U) { clearIRQ := true.B }
       3.U
     }
     cpu.memMap(0x800004).w { (_, _, data) => generateFrame := data === 0x01f0.U }
