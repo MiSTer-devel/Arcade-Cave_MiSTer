@@ -40,6 +40,7 @@ package cave
 import axon.Util
 import axon.gpu._
 import axon.mem._
+import axon.snd.Audio
 import axon.types._
 import cave.dma._
 import cave.types._
@@ -73,6 +74,8 @@ class Main extends Module {
     val download = DownloadIO()
     /** RGB output */
     val rgb = Output(new RGB(Config.SCREEN_BITS_PER_CHANNEL))
+    /** Audio port */
+    val audio = Output(new Audio(Config.SAMPLE_WIDTH))
     /** Debug port */
     val debug = Output(new Bundle {
       val pc = UInt()
@@ -184,6 +187,7 @@ class Main extends Module {
   cave.io.tileRom <> arbiter.io.tileRom
   cave.io.video := videoTiming.io
   cave.io.frameBuffer <> fbDMA.io.frameBuffer
+  io.audio <> cave.io.audio
 
   // Start the frame buffer DMA when a frame is complete
   fbDMA.io.start := cave.io.frameDone

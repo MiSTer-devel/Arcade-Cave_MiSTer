@@ -118,7 +118,6 @@ module emu (
 assign VGA_F1 = 0;
 
 assign AUDIO_S   = 1;
-assign AUDIO_R   = AUDIO_L;
 assign AUDIO_MIX = 0;
 
 assign LED_DISK  = 0;
@@ -433,6 +432,9 @@ Main main (
     .io_rgb_r(r),
     .io_rgb_g(g),
     .io_rgb_b(b),
+    // Audio output
+    .io_audio_left(AUDIO_L),
+    .io_audio_right(AUDIO_R),
     // Debug
     .io_debug_pc(tg68_data),
     .io_debug_pcw(tg68_write)

@@ -41,6 +41,7 @@ import axon.Util
 import axon.cpu.m68k._
 import axon.gpu._
 import axon.mem._
+import axon.snd.{Audio, YMZ280B}
 import cave.gpu._
 import cave.types._
 import chisel3._
@@ -67,6 +68,8 @@ class Cave extends Module {
     val frameBuffer = Flipped(new FrameBufferIO)
     /** Video port */
     val video = Input(new VideoIO)
+    /** Audio port */
+    val audio = Output(new Audio(Config.SAMPLE_WIDTH))
     /** Debug port */
     val debug = new Bundle {
       val pc = Output(UInt())
@@ -162,9 +165,6 @@ class Cave extends Module {
     // Video registers
     val videoRegs = Module(new RegisterFile(Config.VIDEO_REGS_COUNT))
 
-    // Sound registers
-    val soundRegs = Module(new RegisterFile(Config.SOUND_REGS_COUNT))
-
     // GPU
     gpu.io.videoRegs := videoRegs.io.regs.asUInt
     gpu.io.layer0Regs := layer0Regs.io.regs.asUInt
@@ -176,10 +176,17 @@ class Cave extends Module {
     gpu.io.layer2Ram <> layer2Ram.io.portB
     gpu.io.paletteRam <> paletteRam.io.portB
 
+    // YMZ280B
+    val ymz = Module(new YMZ280B(Config.ymzConfig))
+    io.soundRom.rd := ymz.io.mem.rd
+    io.soundRom.addr := ymz.io.mem.addr+Config.SOUND_ROM_OFFSET.U
+    ymz.io.mem.dout := io.soundRom.dout
+    io.audio <> RegEnable(ymz.io.audio.bits, ymz.io.audio.valid)
+
     // Memory map
     cpu.memMap(0x000000 to 0x0fffff).readMemT(io.progRom) { _+Config.PROG_ROM_OFFSET.U }
     cpu.memMap(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-    cpu.memMap(0x300000 to 0x300003).writeMem(soundRegs.io.mem.asWriteMemIO)
+    cpu.memMap(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
     cpu.memMap(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     cpu.memMap(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
     cpu.memMap(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
@@ -213,8 +220,5 @@ class Cave extends Module {
     // Debug outputs
     io.debug.pc := cpu.io.debug.pc
     io.debug.pcw := cpu.io.debug.pcw
-
-    io.soundRom.rd := false.B
-    io.soundRom.addr := DontCare
   }
 }
