@@ -48,13 +48,13 @@ use work.log_pkg.all;
 
 entity cache_memory is
     generic (
-        REGISTER_OUT_G          : boolean := false; -- Register on the outputs
-        ADDRESS_BITS_G          : natural := 24;
-        LOG_CACHE_LINES_G       : natural := 9;
-        WORD_BYTE_SIZE_G        : natural := 2;
-        CACHE_LINE_WORDS_G      : natural := 16;
-        PERF_COUNT_EN_G         : boolean := false -- Perf Counters are tied to
-                                                   -- 0 if false, leave them open
+        REGISTER_OUT          : boolean := false; -- Register on the outputs
+        ADDRESS_BITS          : natural := 24;
+        LOG_CACHE_LINES       : natural := 9;
+        WORD_BYTE_SIZE        : natural := 2;
+        CACHE_LINE_WORDS      : natural := 16;
+        PERF_COUNT_EN         : boolean := false -- Perf Counters are tied to
+                                                 -- 0 if false, leave them open
         );
     port (
         clk_i                   : in  std_logic;
@@ -62,14 +62,14 @@ entity cache_memory is
         -- Agent - Cache
         -- Address should be stable from when read is asserted and remain
         -- stable until valid is asserted
-        agent_to_cache_addr_i   : in  unsigned(ADDRESS_BITS_G-1 downto 0);
+        agent_to_cache_addr_i   : in  unsigned(ADDRESS_BITS-1 downto 0);
         agent_to_cache_read_i   : in  std_logic;
-        cache_to_agent_data_o   : out std_logic_vector(WORD_BYTE_SIZE_G*8-1 downto 0);
+        cache_to_agent_data_o   : out std_logic_vector(WORD_BYTE_SIZE*8-1 downto 0);
         cache_to_agent_valid_o  : out std_logic;
         -- Cache - Memory
-        cache_to_memory_addr_o  : out unsigned(ADDRESS_BITS_G-1 downto 0);
+        cache_to_memory_addr_o  : out unsigned(ADDRESS_BITS-1 downto 0);
         cache_to_memory_read_o  : out std_logic;
-        memory_to_cache_data_i  : in  std_logic_vector(WORD_BYTE_SIZE_G*8*CACHE_LINE_WORDS_G-1 downto 0);
+        memory_to_cache_data_i  : in  std_logic_vector(WORD_BYTE_SIZE*8*CACHE_LINE_WORDS-1 downto 0);
         memory_to_cache_valid_i : in  std_logic;
         -- Perf Counters
         req_counter_o           : out std_logic_vector(31 downto 0);
@@ -82,15 +82,15 @@ architecture rtl of cache_memory is
     ---------------
     -- Constants --
     ---------------
-    constant CACHE_LINES_C      : natural := 2**LOG_CACHE_LINES_G;
+    constant CACHE_LINES_C      : natural := 2**LOG_CACHE_LINES;
 
     -- Using an integer log rounded up or down should not change anything here
     -- since these must be powers of two (there are assertions below).
-    constant BYTE_SELECT_BITS_C : natural := ilogup(WORD_BYTE_SIZE_G);
-    constant WORD_SELECT_BITS_C : natural := ilogup(CACHE_LINE_WORDS_G);
-    constant LINE_SELECT_BITS_C : natural := LOG_CACHE_LINES_G;
-    constant TAG_SIZE_C         : natural := ADDRESS_BITS_G - (BYTE_SELECT_BITS_C + WORD_SELECT_BITS_C + LINE_SELECT_BITS_C);
-    constant WORD_SIZE_C        : natural := WORD_BYTE_SIZE_G*8;
+    constant BYTE_SELECT_BITS_C : natural := ilogup(WORD_BYTE_SIZE);
+    constant WORD_SELECT_BITS_C : natural := ilogup(CACHE_LINE_WORDS);
+    constant LINE_SELECT_BITS_C : natural := LOG_CACHE_LINES;
+    constant TAG_SIZE_C         : natural := ADDRESS_BITS - (BYTE_SELECT_BITS_C + WORD_SELECT_BITS_C + LINE_SELECT_BITS_C);
+    constant WORD_SIZE_C        : natural := WORD_BYTE_SIZE*8;
 
     -----------
     -- Types --
@@ -99,7 +99,7 @@ architecture rtl of cache_memory is
     subtype cache_word_index_t is unsigned(WORD_SELECT_BITS_C-1 downto 0);
     subtype cache_word_t       is std_logic_vector(WORD_SIZE_C-1 downto 0);
     subtype cache_line_index_t is unsigned(LINE_SELECT_BITS_C-1 downto 0);
-    subtype cache_line_t       is std_logic_vector(WORD_SIZE_C*CACHE_LINE_WORDS_G-1 downto 0);
+    subtype cache_line_t       is std_logic_vector(WORD_SIZE_C*CACHE_LINE_WORDS-1 downto 0);
     subtype tag_t              is unsigned(TAG_SIZE_C-1 downto 0);
     -- BRAM Line is [valid, tag, cache line]
     subtype bram_line_t        is std_logic_vector(TAG_SIZE_C+cache_line_t'length downto 0);
@@ -123,7 +123,7 @@ architecture rtl of cache_memory is
     ---------------
 
     -- Extract tag, line, word from address
-    function request_addr_to_info(addr_i : unsigned(ADDRESS_BITS_G-1 downto 0)) return data_request_info_t is
+    function request_addr_to_info(addr_i : unsigned(ADDRESS_BITS-1 downto 0)) return data_request_info_t is
         variable result_v : data_request_info_t;
     begin
 
@@ -159,7 +159,7 @@ architecture rtl of cache_memory is
     -- Registers --
     ---------------
     signal state_reg_s         : state_t;
-    signal validity_bits_s     : std_logic_vector(2**LOG_CACHE_LINES_G-1 downto 0);
+    signal validity_bits_s     : std_logic_vector(2**LOG_CACHE_LINES-1 downto 0);
     signal valid_s             : std_logic;
 
     ----------
@@ -168,23 +168,23 @@ architecture rtl of cache_memory is
 
     -- Initialized for simulation purposes (can be anything on real board, does
     -- not matter...)
-    signal bram_s              : bram_line_array_t(2**LOG_CACHE_LINES_G-1 downto 0) := (others => (others => '0'));
+    signal bram_s              : bram_line_array_t(2**LOG_CACHE_LINES-1 downto 0) := (others => (others => '0'));
     signal bram_write_enable_s : std_logic;
     signal bram_data_in_s      : bram_line_t;
     signal bram_data_out_s     : bram_line_t;
 
-    signal read_index_s        : integer range 0 to 2**LOG_CACHE_LINES_G-1;
-    signal write_index_s       : integer range 0 to 2**LOG_CACHE_LINES_G-1;
+    signal read_index_s        : integer range 0 to 2**LOG_CACHE_LINES-1;
+    signal write_index_s       : integer range 0 to 2**LOG_CACHE_LINES-1;
 
 begin
 
     ----------------
     -- Assertions --
     ----------------
-    assert (2**(ilogup(WORD_BYTE_SIZE_G)) = WORD_BYTE_SIZE_G) report "Word Byte Size is not a power of two." severity failure;
-    assert (2**(ilogup(CACHE_LINE_WORDS_G)) = CACHE_LINE_WORDS_G) report "The number of words in a cache line is not a power of two." severity failure;
+    assert (2**(ilogup(WORD_BYTE_SIZE)) = WORD_BYTE_SIZE) report "Word Byte Size is not a power of two." severity failure;
+    assert (2**(ilogup(CACHE_LINE_WORDS)) = CACHE_LINE_WORDS) report "The number of words in a cache line is not a power of two." severity failure;
     assert (2**(ilogup(CACHE_LINES_C)) = CACHE_LINES_C) report "The number of lines in the cache is not a power of two." severity failure;
-    assert (ADDRESS_BITS_G > (LINE_SELECT_BITS_C + WORD_SELECT_BITS_C + BYTE_SELECT_BITS_C)) report "The cache must be smaller than the memory" severity failure;
+    assert (ADDRESS_BITS > (LINE_SELECT_BITS_C + WORD_SELECT_BITS_C + BYTE_SELECT_BITS_C)) report "The cache must be smaller than the memory" severity failure;
 
     -- Extract the cache info (tag, line, word) we need from address
     req_info_s <= request_addr_to_info(agent_to_cache_addr_i);
@@ -313,7 +313,7 @@ begin
 
     cache_to_agent_valid_s <= hit_s;
 
-    dbg_gen : if REGISTER_OUT_G generate
+    dbg_gen : if REGISTER_OUT generate
         process(clk_i) is
         begin
             if rising_edge(clk_i) then
@@ -333,7 +333,7 @@ begin
     -------------------
     -- Perf Counters --
     -------------------
-    perf_counter_generate : if PERF_COUNT_EN_G generate
+    perf_counter_generate : if PERF_COUNT_EN generate
         perf_counter_block : block
             signal req_counter_s  : unsigned(31 downto 0);
             signal miss_counter_s : unsigned(31 downto 0);

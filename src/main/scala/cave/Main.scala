@@ -129,33 +129,34 @@ class Main extends Module {
   io.rgb := videoFIFO.io.rgb
 
   // Data freezer
-  val dataFreezer = Module(new DataFreezer(
+  val progRomFreezer = Module(new DataFreezer(
     addrWidth = Config.CACHE_ADDR_WIDTH,
     dataWidth = Config.CACHE_DATA_WIDTH
   ))
-  dataFreezer.io.targetClock := io.cpuClock
-  dataFreezer.io.targetReset := io.cpuReset
-  dataFreezer.io.out <> arbiter.io.cache
+  progRomFreezer.io.targetClock := io.cpuClock
+  progRomFreezer.io.targetReset := io.cpuReset
+  progRomFreezer.io.out <> arbiter.io.cache
 
   // Cache memory
   //
   // The cache memory runs in the CPU clock domain.
-  val cacheMem = withClockAndReset(io.cpuClock, io.cpuReset) {
+  val progRomCache = withClockAndReset(io.cpuClock, io.cpuReset) {
     Module(new CacheMem(
       inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
       inDataWidth = Config.PROG_ROM_DATA_WIDTH,
       outAddrWidth = Config.CACHE_ADDR_WIDTH,
-      outDataWidth = Config.CACHE_DATA_WIDTH
+      outDataWidth = Config.CACHE_DATA_WIDTH,
+      depth = 512
     ))
   }
-  cacheMem.io.out <> dataFreezer.io.in
+  progRomCache.io.out <> progRomFreezer.io.in
 
   // Cave
   val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.player := io.player
-  cave.io.progRom <> cacheMem.io.in
+  cave.io.progRom <> progRomCache.io.in
   cave.io.tileRom <> arbiter.io.tileRom
   cave.io.video := videoTiming.io
   cave.io.frameBuffer <> fbDMA.io.frameBuffer
