@@ -37,6 +37,8 @@
 
 package axon.mem
 
+import chisel3._
+
 /**
  * A simple flow control interface for reading from asynchronous memory.
  *
@@ -45,6 +47,20 @@ package axon.mem
  */
 class ValidReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth, dataWidth) with ValidIO {
   override def cloneType: this.type = new ValidReadMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  override def mapAddr(f: UInt => UInt): ValidReadMemIO = {
+    val mem = Wire(chiselTypeOf(this))
+    mem.rd := this.rd
+    mem.addr := f(this.addr)
+    this.valid := mem.valid
+    this.dout := mem.dout
+    mem
+  }
 }
 
 object ValidReadMemIO {
