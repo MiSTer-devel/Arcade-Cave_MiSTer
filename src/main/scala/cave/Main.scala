@@ -151,12 +151,36 @@ class Main extends Module {
   }
   progRomCache.io.out <> progRomFreezer.io.in
 
+  // Data freezer
+  val soundRomFreezer = Module(new DataFreezer(
+    addrWidth = Config.CACHE_ADDR_WIDTH,
+    dataWidth = Config.CACHE_DATA_WIDTH
+  ))
+  soundRomFreezer.io.targetClock := io.cpuClock
+  soundRomFreezer.io.targetReset := io.cpuReset
+  soundRomFreezer.io.out <> arbiter.io.soundRom
+
+  // Cache memory
+  //
+  // The cache memory runs in the CPU clock domain.
+  val soundRomCache = withClockAndReset(io.cpuClock, io.cpuReset) {
+    Module(new CacheMem(
+      inAddrWidth = Config.SOUND_ROM_ADDR_WIDTH,
+      inDataWidth = Config.SOUND_ROM_DATA_WIDTH,
+      outAddrWidth = Config.CACHE_ADDR_WIDTH,
+      outDataWidth = Config.CACHE_DATA_WIDTH,
+      depth = 256
+    ))
+  }
+  soundRomCache.io.out <> soundRomFreezer.io.in
+
   // Cave
   val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.player := io.player
   cave.io.progRom <> progRomCache.io.in
+  cave.io.soundRom <> soundRomCache.io.in
   cave.io.tileRom <> arbiter.io.tileRom
   cave.io.video := videoTiming.io
   cave.io.frameBuffer <> fbDMA.io.frameBuffer

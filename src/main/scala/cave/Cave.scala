@@ -59,6 +59,8 @@ class Cave extends Module {
     val player = new PlayerIO
     /** Program ROM port */
     val progRom = new ProgRomIO
+    /** Sound ROM port */
+    val soundRom = new SoundRomIO
     /** Tile ROM port */
     val tileRom = new TileRomIO
     /** Frame buffer DMA port */
@@ -211,5 +213,8 @@ class Cave extends Module {
     // Debug outputs
     io.debug.pc := cpu.io.debug.pc
     io.debug.pcw := cpu.io.debug.pcw
+
+    io.soundRom.rd := false.B
+    io.soundRom.addr := DontCare
   }
 }

@@ -55,6 +55,8 @@ class DDRArbiter extends Module {
     val download = DownloadIO()
     /** Program ROM port */
     val progRom = Flipped(new CacheIO)
+    /** Sound ROM port */
+    val soundRom = Flipped(new CacheIO)
     /** Tile ROM port */
     val tileRom = Flipped(new TileRomIO)
     /** Frame buffer to DDR port */
@@ -70,10 +72,12 @@ class DDRArbiter extends Module {
       val check2 = Output(Bool())
       val check3 = Output(Bool())
       val check4 = Output(Bool())
-      val cacheReq = Output(Bool())
-      val gfxReq = Output(Bool())
-      val cacheWait = Output(Bool())
-      val gfxWait = Output(Bool())
+      val progRomReq = Output(Bool())
+      val progRomWait = Output(Bool())
+      val soundRomReq = Output(Bool())
+      val soundRomWait = Output(Bool())
+      val tileRomReq = Output(Bool())
+      val tileRomWait = Output(Bool())
       val fbToDDR = Output(Bool())
       val fbFromDDR = Output(Bool())
       val download = Output(Bool())
@@ -82,7 +86,7 @@ class DDRArbiter extends Module {
 
   // States
   object State {
-    val idle :: check1 :: check2 :: check3 :: check4 :: cacheReq :: cacheWait :: gfxReq :: gfxWait :: fbFromDDR :: fbToDDR :: download :: Nil = Enum(12)
+    val idle :: check1 :: check2 :: check3 :: check4 :: progRomReq :: progRomWait :: soundRomReq :: soundRomWait :: tileRomReq :: tileRomWait :: fbFromDDR :: fbToDDR :: download :: Nil = Enum(14)
   }
 
   // Wires
@@ -90,29 +94,35 @@ class DDRArbiter extends Module {
 
   // Registers
   val stateReg = RegNext(nextState, State.idle)
-  val cacheReqReg = RegInit(false.B)
-  val cacheAddrReg = RegInit(0.U)
   val cacheDataReg = Reg(Vec(DDRArbiter.CACHE_BURST_LENGTH, Bits(DDRArbiter.DATA_WIDTH.W)))
-  val gfxReqReg = RegInit(false.B)
-  val gfxAddrReg = RegInit(0.U)
-  val gfxTinyBurstReg = RegInit(false.B)
+  val progRomReqReg = RegInit(false.B)
+  val progRomAddrReg = RegInit(0.U)
+  val soundRomReqReg = RegInit(false.B)
+  val soundRomAddrReg = RegInit(0.U)
+  val tileRomReqReg = RegInit(false.B)
+  val tileRomAddrReg = RegInit(0.U)
+  val tileRomTinyBurstReg = RegInit(false.B)
 
   // Set download data and byte mask
   val downloadData = Cat(Seq.tabulate(4) { _ => io.download.dout })
   val downloadMask = 3.U << io.download.addr(2, 0)
 
   // Set the graphics burst length
-  val gfxBurstLength = Mux(gfxTinyBurstReg, 8.U, 16.U)
+  val tileRomBurstLength = Mux(tileRomTinyBurstReg, 8.U, 16.U)
 
   // Counters
   val (rrCounterValue, _) = Counter.static(4, enable = stateReg === State.idle && nextState =/= State.idle)
-  val (cacheBurstValue, cacheBurstDone) = Counter.static(DDRArbiter.CACHE_BURST_LENGTH,
-    enable = stateReg === State.cacheWait && io.ddr.valid,
-    reset = stateReg === State.cacheReq
+  val (progRomBurstValue, progRomBurstDone) = Counter.static(DDRArbiter.CACHE_BURST_LENGTH,
+    enable = stateReg === State.progRomWait && io.ddr.valid,
+    reset = stateReg === State.progRomReq
   )
-  val (gfxBurstValue, gfxBurstDone) = Counter.dynamic(gfxBurstLength,
-    enable = stateReg === State.gfxWait && io.ddr.valid,
-    reset = stateReg === State.gfxReq
+  val (soundRomBurstValue, soundRomBurstDone) = Counter.static(DDRArbiter.CACHE_BURST_LENGTH,
+    enable = stateReg === State.soundRomWait && io.ddr.valid,
+    reset = stateReg === State.soundRomReq
+  )
+  val (tileRomBurstValue, tileRomBurstDone) = Counter.dynamic(tileRomBurstLength,
+    enable = stateReg === State.tileRomWait && io.ddr.valid,
+    reset = stateReg === State.tileRomReq
   )
   val (fbFromDDRBurstValue, fbFromDDRBurstDone) = Counter.dynamic(io.fbFromDDR.burstCount,
     enable = stateReg === State.fbFromDDR && io.ddr.valid,
@@ -123,24 +133,32 @@ class DDRArbiter extends Module {
     reset = stateReg =/= State.fbToDDR
   )
 
-  // Shift the DDR output data into the data register
+  // Shift the DDR output data into the cache data register
   when(io.ddr.valid) { cacheDataReg := cacheDataReg.tail :+ io.ddr.dout }
 
-  // Latch cache requests
+  // Latch program ROM requests
   when(io.progRom.rd) {
-    cacheReqReg := true.B
-    cacheAddrReg := io.progRom.addr
-  }.elsewhen(cacheBurstDone) {
-    cacheReqReg := false.B
+    progRomReqReg := true.B
+    progRomAddrReg := io.progRom.addr
+  }.elsewhen(progRomBurstDone) {
+    progRomReqReg := false.B
+  }
+
+  // Latch sound ROM requests
+  when(io.soundRom.rd) {
+    soundRomReqReg := true.B
+    soundRomAddrReg := io.soundRom.addr
+  }.elsewhen(soundRomBurstDone) {
+    soundRomReqReg := false.B
   }
 
   // Latch graphics requests
   when(io.tileRom.rd) {
-    gfxReqReg := true.B
-    gfxAddrReg := io.tileRom.addr
-    gfxTinyBurstReg := io.tileRom.tinyBurst
-  }.elsewhen(gfxBurstDone) {
-    gfxReqReg := false.B
+    tileRomReqReg := true.B
+    tileRomAddrReg := io.tileRom.addr
+    tileRomTinyBurstReg := io.tileRom.tinyBurst
+  }.elsewhen(tileRomBurstDone) {
+    tileRomReqReg := false.B
   }
 
   // Default to the previous state
@@ -160,8 +178,9 @@ class DDRArbiter extends Module {
       nextState := MuxCase(stateReg, Seq(
         io.fbFromDDR.rd -> State.fbFromDDR,
         io.download.cs -> State.download,
-        cacheReqReg -> State.cacheReq,
-        gfxReqReg -> State.gfxReq,
+        progRomReqReg -> State.progRomReq,
+        soundRomReqReg -> State.soundRomReq,
+        tileRomReqReg -> State.tileRomReq,
         io.fbToDDR.wr -> State.fbToDDR
       ))
     }
@@ -170,9 +189,10 @@ class DDRArbiter extends Module {
       nextState := MuxCase(stateReg, Seq(
         io.fbFromDDR.rd -> State.fbFromDDR,
         io.download.cs -> State.download,
-        gfxReqReg -> State.gfxReq,
+        tileRomReqReg -> State.tileRomReq,
         io.fbToDDR.wr -> State.fbToDDR,
-        cacheReqReg -> State.cacheReq
+        progRomReqReg -> State.progRomReq,
+        soundRomReqReg -> State.soundRomReq
       ))
     }
 
@@ -181,8 +201,9 @@ class DDRArbiter extends Module {
         io.fbFromDDR.rd -> State.fbFromDDR,
         io.download.cs -> State.download,
         io.fbToDDR.wr -> State.fbToDDR,
-        gfxReqReg -> State.gfxReq,
-        cacheReqReg -> State.cacheReq
+        tileRomReqReg -> State.tileRomReq,
+        progRomReqReg -> State.progRomReq,
+        soundRomReqReg -> State.soundRomReq
       ))
     }
 
@@ -190,26 +211,35 @@ class DDRArbiter extends Module {
       nextState := MuxCase(stateReg, Seq(
         io.fbFromDDR.rd -> State.fbFromDDR,
         io.download.cs -> State.download,
-        gfxReqReg -> State.gfxReq,
-        cacheReqReg -> State.cacheReq,
+        tileRomReqReg -> State.tileRomReq,
+        progRomReqReg -> State.progRomReq,
+        soundRomReqReg -> State.soundRomReq,
         io.fbToDDR.wr -> State.fbToDDR
       ))
     }
 
-    is(State.cacheReq) {
-      when(!io.ddr.waitReq) { nextState := State.cacheWait }
+    is(State.progRomReq) {
+      when(!io.ddr.waitReq) { nextState := State.progRomWait }
     }
 
-    is(State.cacheWait) {
-      when(cacheBurstDone) { nextState := State.idle }
+    is(State.progRomWait) {
+      when(progRomBurstDone) { nextState := State.idle }
     }
 
-    is(State.gfxReq) {
-      when(!io.ddr.waitReq) { nextState := State.gfxWait }
+    is(State.soundRomReq) {
+      when(!io.ddr.waitReq) { nextState := State.soundRomWait }
     }
 
-    is(State.gfxWait) {
-      when(gfxBurstDone) { nextState := State.idle }
+    is(State.soundRomWait) {
+      when(soundRomBurstDone) { nextState := State.idle }
+    }
+
+    is(State.tileRomReq) {
+      when(!io.ddr.waitReq) { nextState := State.tileRomWait }
+    }
+
+    is(State.tileRomWait) {
+      when(tileRomBurstDone) { nextState := State.idle }
     }
 
     is(State.fbFromDDR) {
@@ -227,8 +257,9 @@ class DDRArbiter extends Module {
 
   // Outputs
   io.ddr.rd := MuxLookup(stateReg, false.B, Seq(
-    State.cacheReq -> true.B,
-    State.gfxReq -> true.B,
+    State.progRomReq -> true.B,
+    State.soundRomReq -> true.B,
+    State.tileRomReq -> true.B,
     State.fbFromDDR -> io.fbFromDDR.rd
   ))
   io.ddr.wr := MuxLookup(stateReg, false.B, Seq(
@@ -236,15 +267,17 @@ class DDRArbiter extends Module {
     State.download -> io.download.wr
   ))
   io.ddr.addr := MuxLookup(stateReg, 0.U, Seq(
-    State.cacheReq -> cacheAddrReg,
-    State.gfxReq -> gfxAddrReg,
+    State.progRomReq -> progRomAddrReg,
+    State.soundRomReq -> soundRomAddrReg,
+    State.tileRomReq -> tileRomAddrReg,
     State.fbFromDDR -> io.fbFromDDR.addr,
     State.fbToDDR -> io.fbToDDR.addr,
     State.download -> io.download.addr
   ))
   io.ddr.burstCount := MuxLookup(stateReg, 1.U, Seq(
-    State.cacheReq -> DDRArbiter.CACHE_BURST_LENGTH.U,
-    State.gfxReq -> gfxBurstLength,
+    State.progRomReq -> DDRArbiter.CACHE_BURST_LENGTH.U,
+    State.soundRomReq -> DDRArbiter.CACHE_BURST_LENGTH.U,
+    State.tileRomReq -> tileRomBurstLength,
     State.fbFromDDR -> io.fbFromDDR.burstCount,
     State.fbToDDR -> io.fbToDDR.burstCount
   ))
@@ -253,10 +286,12 @@ class DDRArbiter extends Module {
     State.fbToDDR -> io.fbToDDR.din,
     State.download -> downloadData
   ))
-  io.progRom.valid := RegNext(cacheBurstDone, false.B)
+  io.progRom.valid := RegNext(progRomBurstDone, false.B)
   io.progRom.dout := cacheDataReg.asUInt
-  io.tileRom.burstDone := RegNext(gfxBurstDone, false.B)
-  io.tileRom.valid := Mux(stateReg === State.gfxWait, io.ddr.valid, false.B)
+  io.soundRom.valid := RegNext(soundRomBurstDone, false.B)
+  io.soundRom.dout := cacheDataReg.asUInt
+  io.tileRom.burstDone := RegNext(tileRomBurstDone, false.B)
+  io.tileRom.valid := Mux(stateReg === State.tileRomWait, io.ddr.valid, false.B)
   io.tileRom.dout := io.ddr.dout
   io.fbFromDDR.waitReq := Mux(stateReg === State.fbFromDDR, io.ddr.waitReq, true.B)
   io.fbFromDDR.valid := Mux(stateReg === State.fbFromDDR, io.ddr.valid, false.B)
@@ -268,15 +303,17 @@ class DDRArbiter extends Module {
   io.debug.check2 := stateReg === State.check2
   io.debug.check3 := stateReg === State.check3
   io.debug.check4 := stateReg === State.check4
-  io.debug.cacheReq := stateReg === State.cacheReq
-  io.debug.gfxReq := stateReg === State.gfxReq
-  io.debug.cacheWait := stateReg === State.cacheWait
-  io.debug.gfxWait := stateReg === State.gfxWait
+  io.debug.progRomReq := stateReg === State.progRomReq
+  io.debug.progRomWait := stateReg === State.progRomWait
+  io.debug.soundRomReq := stateReg === State.soundRomReq
+  io.debug.soundRomWait := stateReg === State.soundRomWait
+  io.debug.tileRomReq := stateReg === State.tileRomReq
+  io.debug.tileRomWait := stateReg === State.tileRomWait
   io.debug.fbFromDDR := stateReg === State.fbFromDDR
   io.debug.fbToDDR := stateReg === State.fbToDDR
   io.debug.download := stateReg === State.download
 
-  printf(p"DDRArbiter(state: $stateReg, nextState: $nextState, cache: $cacheBurstValue ($cacheBurstDone), cacheValid: ${io.progRom.valid}, gfx: $gfxBurstValue ($gfxBurstDone), gfxValid: ${io.tileRom.valid}, fbFromDDR: $fbFromDDRBurstValue ($fbFromDDRBurstDone), fbFromDDRValid: ${io.fbFromDDR.valid}, fbToDDR: $fbToDDRBurstValue ($fbToDDRBurstDone), fbToDDRWaitReq: ${io.fbToDDR.waitReq}, download: 0x${Hexadecimal(downloadData)} (0x${Hexadecimal(downloadMask)})\n")
+  printf(p"DDRArbiter(state: $stateReg, nextState: $nextState, progRom: $progRomBurstValue ($progRomBurstDone), progRomValid: ${io.progRom.valid}, tileRom: $tileRomBurstValue ($tileRomBurstDone), tileRomValid: ${io.tileRom.valid}, fbFromDDR: $fbFromDDRBurstValue ($fbFromDDRBurstDone), fbFromDDRValid: ${io.fbFromDDR.valid}, fbToDDR: $fbToDDRBurstValue ($fbToDDRBurstDone), fbToDDRWaitReq: ${io.fbToDDR.waitReq}, download: 0x${Hexadecimal(downloadData)} (0x${Hexadecimal(downloadMask)})\n")
 }
 
 object DDRArbiter {
