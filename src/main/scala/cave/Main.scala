@@ -182,9 +182,9 @@ class Main extends Module {
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.player := io.player
-  cave.io.progRom <> progRomCache.io.in
-  cave.io.soundRom <> soundRomCache.io.in
-  cave.io.tileRom <> arbiter.io.tileRom
+  cave.io.progRom.mapAddr(_+Config.PROG_ROM_OFFSET.U) <> progRomCache.io.in
+  cave.io.soundRom.mapAddr(_+Config.SOUND_ROM_OFFSET.U) <> soundRomCache.io.in
+  cave.io.tileRom.mapAddr(_+Config.TILE_ROM_OFFSET.U) <> arbiter.io.tileRom
   cave.io.video := videoTiming.io
   cave.io.frameBuffer <> fbDMA.io.frameBuffer
   io.audio <> cave.io.audio
