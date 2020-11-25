@@ -63,7 +63,7 @@ class CacheMem(inAddrWidth: Int,
   })
 
   class CacheMemBlackBox extends BlackBox(Map(
-    "ADDRESS_BITS" -> 25,
+    "ADDRESS_BITS" -> 24,
     "LOG_CACHE_LINES" -> log2Ceil(depth),
     "WORD_BYTE_SIZE" -> inDataWidth/8,
     "CACHE_LINE_WORDS" -> outDataWidth/inDataWidth

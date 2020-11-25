@@ -64,7 +64,7 @@ class DDRArbiter extends Module {
     /** Frame buffer from DDR port */
     val fbFromDDR = Flipped(BurstReadMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH))
     /** DDR port */
-    val ddr = new BurstReadWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
+    val ddr = BurstReadWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
     /** Debug port */
     val debug = new Bundle {
       val idle = Output(Bool())

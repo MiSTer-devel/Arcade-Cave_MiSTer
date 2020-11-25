@@ -152,7 +152,7 @@ class Main extends Module {
       depth = 512
     ))
   }
-  progRomCache.io.out <> progRomFreezer.io.in
+  progRomCache.io.out.mapAddr(_+Config.PROG_ROM_OFFSET.U) <> progRomFreezer.io.in
 
   // Data freezer
   val soundRomFreezer = Module(new DataFreezer(
@@ -175,15 +175,15 @@ class Main extends Module {
       depth = 256
     ))
   }
-  soundRomCache.io.out <> soundRomFreezer.io.in
+  soundRomCache.io.out.mapAddr(_+Config.SOUND_ROM_OFFSET.U) <> soundRomFreezer.io.in
 
   // Cave
   val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.player := io.player
-  cave.io.progRom.mapAddr(_+Config.PROG_ROM_OFFSET.U) <> progRomCache.io.in
-  cave.io.soundRom.mapAddr(_+Config.SOUND_ROM_OFFSET.U) <> soundRomCache.io.in
+  cave.io.progRom <> progRomCache.io.in
+  cave.io.soundRom <> soundRomCache.io.in
   cave.io.tileRom.mapAddr(_+Config.TILE_ROM_OFFSET.U) <> arbiter.io.tileRom
   cave.io.video := videoTiming.io
   cave.io.frameBuffer <> fbDMA.io.frameBuffer
