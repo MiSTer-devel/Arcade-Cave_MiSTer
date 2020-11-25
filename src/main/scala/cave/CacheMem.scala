@@ -39,6 +39,7 @@ package cave
 
 import axon.mem.ValidReadMemIO
 import chisel3._
+import chisel3.util._
 
 /**
  * A direct-mapped cache memory.
@@ -47,8 +48,13 @@ import chisel3._
  * @param inDataWidth The width of the input data bus.
  * @param outAddrWidth The width of the output address bus.
  * @param outDataWidth The width of the output data bus.
+ * @param depth The number of entries in the cache.
  */
-class CacheMem(inAddrWidth: Int, inDataWidth: Int, outAddrWidth: Int, outDataWidth: Int) extends Module {
+class CacheMem(inAddrWidth: Int,
+               inDataWidth: Int,
+               outAddrWidth: Int,
+               outDataWidth: Int,
+               depth: Int) extends Module {
   val io = IO(new Bundle {
     /** Input port */
     val in = Flipped(ValidReadMemIO(inAddrWidth, inDataWidth))
@@ -56,7 +62,12 @@ class CacheMem(inAddrWidth: Int, inDataWidth: Int, outAddrWidth: Int, outDataWid
     val out = ValidReadMemIO(outAddrWidth, outDataWidth)
   })
 
-  class CacheMemBlackBox extends BlackBox {
+  class CacheMemBlackBox extends BlackBox(Map(
+    "ADDRESS_BITS" -> 25,
+    "LOG_CACHE_LINES" -> log2Ceil(depth),
+    "WORD_BYTE_SIZE" -> inDataWidth/8,
+    "CACHE_LINE_WORDS" -> outDataWidth/inDataWidth
+  )) {
     val io = IO(new Bundle {
       val rst_i = Input(Reset())
       val clk_i = Input(Clock())

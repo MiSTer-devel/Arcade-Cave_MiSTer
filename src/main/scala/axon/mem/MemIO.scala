@@ -40,7 +40,7 @@ package axon.mem
 import chisel3._
 import chisel3.util._
 
-abstract class MemIO(val addrWidth: Int, val dataWidth: Int) extends Bundle {
+abstract class MemIO protected (val addrWidth: Int, val dataWidth: Int) extends Bundle {
   def maskWidth = dataWidth/8
 }
 
@@ -50,7 +50,7 @@ abstract class MemIO(val addrWidth: Int, val dataWidth: Int) extends Bundle {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class ReadMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
+class ReadMemIO protected (addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
   /** Read enable */
   val rd = Output(Bool())
   /** Address bus */
@@ -118,7 +118,7 @@ object ReadMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class WriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
+class WriteMemIO protected (addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
   /** Write enable */
   val wr = Output(Bool())
   /** Address bus */
@@ -174,7 +174,7 @@ def mux[K <: UInt](key: K, outs: Seq[(K, WriteMemIO)]): WriteMemIO = {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
+class ReadWriteMemIO protected (addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
   /** Read enable */
   val rd = Output(Bool())
   /** Write enable */

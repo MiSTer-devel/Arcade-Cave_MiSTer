@@ -35,43 +35,70 @@
  *  SOFTWARE.
  */
 
-package cave
+package axon.snd
 
-import axon.mem._
 import chisel3._
 
-package object types {
-  /** Cache IO */
-  class CacheIO extends ValidReadMemIO(Config.CACHE_ADDR_WIDTH, Config.CACHE_DATA_WIDTH) {
-    override def cloneType: this.type = new CacheIO().asInstanceOf[this.type]
+/** Represents the state of a channel. */
+class ChannelState(private val config: YMZ280BConfig) extends Bundle {
+  /** Asserted when the channel is enabled */
+  val enable = Bool()
+  /** Asserted when the channel has reached the end address */
+  val done = Bool()
+  /** Asserted when the channel is processing the high ADPCM nibble */
+  val nibble = Bool()
+  /** Sample address */
+  val addr = UInt(config.memAddrWidth.W)
+  /** Audio pipeline state */
+  val audioPipelineState = new AudioPipelineState(config)
+
+  /** Starts the channel at the given address. */
+  def start(startAddr: UInt) = {
+    enable := true.B
+    done := false.B
+    addr := startAddr
+    audioPipelineState := AudioPipelineState.default(config)
   }
 
-  /** Frame buffer IO */
-  class FrameBufferIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH-2, Config.FRAME_BUFFER_DATA_WIDTH*4) {
-    override def cloneType: this.type = new FrameBufferIO().asInstanceOf[this.type]
+  /** Stops the channel. */
+  def stop() = {
+    enable := false.B
+    done := false.B
   }
 
-  /** Player IO */
-  class PlayerIO extends Bundle {
-    /** Player 1 input */
-    val player1 = Input(Bits(9.W))
-    /** Player 2 input */
-    val player2 = Input(Bits(9.W))
-    /** Pause flag */
-    val pause = Input(Bool())
+  /** Marks the channel as done. */
+  def markAsDone() = {
+    enable := false.B
+    done := true.B
   }
 
-  /** Priority IO */
-  class PriorityIO extends Bundle {
-    /** Write-only port */
-    val write = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_PRIO_WIDTH)
-    /** Read-only port */
-    val read = ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_PRIO_WIDTH)
+  /**
+   * Move the channel to the next address using the values from the given channel register.
+   *
+   * @return A [[Bool]] value indicating whether the channel has reached the end address.
+   */
+  def nextAddr(channelReg: ChannelReg): Bool = {
+    val done = WireInit(false.B)
+    when(channelReg.flags.loop && addr === channelReg.loopEndAddr) {
+      addr := channelReg.loopStartAddr
+    }.elsewhen(addr =/= channelReg.endAddr) {
+      addr := addr+1.U
+    }.otherwise {
+      done := true.B
+    }
+    done
   }
+}
 
-  /** Program ROM IO */
-  class ProgRomIO extends ValidReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH)
-
-  /** Sound ROM IO */
-  class SoundRomIO extends ValidReadMemIO(Config.SOUND_ROM_ADDR_WIDTH, Config.SOUND_ROM_DATA_WIDTH)
+object ChannelState {
+  /** Returns the default channel state. */
+  def default(config: YMZ280BConfig): ChannelState = {
+    val state = Wire(new ChannelState(config))
+    state.enable := false.B
+    state.done := false.B
+    state.nibble := false.B
+    state.addr := 0.U
+    state.audioPipelineState := AudioPipelineState.default(config)
+    state
+  }
 }

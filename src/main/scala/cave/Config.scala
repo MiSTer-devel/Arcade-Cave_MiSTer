@@ -38,28 +38,43 @@
 package cave
 
 import axon.gpu.VideoTimingConfig
+import axon.snd.YMZ280BConfig
 
 object Config {
-  /** The system clock frequency (Hz) */
-  val CLOCK_FREQ = 96000000D
+  /** System clock frequency (Hz) */
+  val CLOCK_FREQ = 96000000
+
+  /** CPU clock frequency (Hz) */
+  val CPU_CLOCK_FREQ = 16000000
+
+  /** Sample frequency (Hz) */
+  val SAMPLE_FREQ = 88200
+
+  val SAMPLE_WIDTH = 16
 
   val SCREEN_WIDTH = 320
   val SCREEN_HEIGHT = 240
   val SCREEN_BITS_PER_CHANNEL = 5
 
-  val CACHE_ADDR_WIDTH = 20
+  val CACHE_ADDR_WIDTH = 32
   val CACHE_DATA_WIDTH = 256
 
-  val PROG_ROM_OFFSET = 0x000000
-  val TILE_ROM_OFFSET = 0x100000
-  val SPRITE_ROM_OFFSET = 0x000000
-  val LAYER_0_ROM_OFFSET = 0x800000
-  val LAYER_1_ROM_OFFSET = 0xa00000
-  val LAYER_2_ROM_OFFSET = 0xc00000
-  val FRAME_BUFFER_OFFSET = 0x2000000L
+  val PROG_ROM_OFFSET = 0x0000000
+  val TILE_ROM_OFFSET = 0x0100000
+  val SOUND_ROM_OFFSET = 0x0f00000
+  val FRAME_BUFFER_OFFSET = 0x2000000
+
+  // Layer offsets
+  val SPRITE_ROM_OFFSET = 0x0000000
+  val LAYER_0_ROM_OFFSET = 0x0800000
+  val LAYER_1_ROM_OFFSET = 0x0a00000
+  val LAYER_2_ROM_OFFSET = 0x0c00000
 
   val PROG_ROM_ADDR_WIDTH = 24
   val PROG_ROM_DATA_WIDTH = 16
+
+  val SOUND_ROM_ADDR_WIDTH = 25
+  val SOUND_ROM_DATA_WIDTH = 8
 
   val TILE_ROM_ADDR_WIDTH = 32
   val TILE_ROM_DATA_WIDTH = 64
@@ -101,8 +116,6 @@ object Config {
   val VIDEO_REGS_COUNT = 8
   val VIDEO_REGS_GPU_DATA_WIDTH = 128
 
-  val SOUND_REGS_COUNT = 4
-
   val FRAME_BUFFER_BPP = 16
   val FRAME_BUFFER_ADDR_WIDTH = 17
   val FRAME_BUFFER_DATA_WIDTH = 15
@@ -120,5 +133,12 @@ object Config {
     vFrontPorch = 12,
     vRetrace = 2,
     vBackPorch = 19
+  )
+
+  /** YMZ280B configuration */
+  val ymzConfig = YMZ280BConfig(
+    clockFreq = CPU_CLOCK_FREQ,
+    sampleFreq = SAMPLE_FREQ,
+    sampleWidth = SAMPLE_WIDTH
   )
 }

@@ -45,17 +45,23 @@ trait DDRArbiterHelpers {
   protected def waitForIdle(dut: DDRArbiter) =
     while(!dut.io.debug.idle.peek().litToBoolean) { dut.clock.step() }
 
-  protected def waitForCacheReq(dut: DDRArbiter) =
-    while(!dut.io.debug.cacheReq.peek().litToBoolean) { dut.clock.step() }
+  protected def waitForProgRomReq(dut: DDRArbiter) =
+    while(!dut.io.debug.progRomReq.peek().litToBoolean) { dut.clock.step() }
 
-  protected def waitForCacheWait(dut: DDRArbiter) =
-    while(!dut.io.debug.cacheWait.peek().litToBoolean) { dut.clock.step() }
+  protected def waitForProgRomWait(dut: DDRArbiter) =
+    while(!dut.io.debug.progRomWait.peek().litToBoolean) { dut.clock.step() }
 
-  protected def waitForGfxReq(dut: DDRArbiter) =
-    while(!dut.io.debug.gfxReq.peek().litToBoolean) { dut.clock.step() }
+  protected def waitForSoundRomReq(dut: DDRArbiter) =
+    while(!dut.io.debug.soundRomReq.peek().litToBoolean) { dut.clock.step() }
 
-  protected def waitForGfxWait(dut: DDRArbiter) =
-    while(!dut.io.debug.gfxWait.peek().litToBoolean) { dut.clock.step() }
+  protected def waitForSoundRomWait(dut: DDRArbiter) =
+    while(!dut.io.debug.soundRomWait.peek().litToBoolean) { dut.clock.step() }
+
+  protected def waitForTileRomReq(dut: DDRArbiter) =
+    while(!dut.io.debug.tileRomReq.peek().litToBoolean) { dut.clock.step() }
+
+  protected def waitForTileRomWait(dut: DDRArbiter) =
+    while(!dut.io.debug.tileRomWait.peek().litToBoolean) { dut.clock.step() }
 
   protected def waitForFbToDDR(dut: DDRArbiter) =
     while(!dut.io.debug.fbToDDR.peek().litToBoolean) { dut.clock.step() }
@@ -80,19 +86,19 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
 
   it should "move to the cache request state" in {
     test(new DDRArbiter) { dut =>
-      dut.io.cache.rd.poke(true.B)
+      dut.io.progRom.rd.poke(true.B)
       waitForIdle(dut)
       dut.clock.step(2)
-      dut.io.debug.cacheReq.expect(true.B)
+      dut.io.debug.progRomReq.expect(true.B)
     }
   }
 
   it should "move to the cache wait state" in {
     test(new DDRArbiter) { dut =>
-      dut.io.cache.rd.poke(true.B)
+      dut.io.progRom.rd.poke(true.B)
       waitForIdle(dut)
       dut.clock.step(3)
-      dut.io.debug.cacheWait.expect(true.B)
+      dut.io.debug.progRomWait.expect(true.B)
     }
   }
 
@@ -101,7 +107,7 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
       dut.io.tileRom.rd.poke(true.B)
       waitForIdle(dut)
       dut.clock.step(2)
-      dut.io.debug.gfxReq.expect(true.B)
+      dut.io.debug.tileRomReq.expect(true.B)
     }
   }
 
@@ -110,13 +116,13 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
       dut.io.tileRom.rd.poke(true.B)
       waitForIdle(dut)
       dut.clock.step(3)
-      dut.io.debug.gfxWait.expect(true.B)
+      dut.io.debug.tileRomWait.expect(true.B)
     }
   }
 
   it should "return to the idle state after reading a cache line" in {
     test(new DDRArbiter) { dut =>
-      dut.io.cache.rd.poke(true.B)
+      dut.io.progRom.rd.poke(true.B)
       dut.io.ddr.valid.poke(true.B)
       waitForIdle(dut)
       dut.clock.step(7)
@@ -164,16 +170,16 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
     }
   }
 
-  behavior of "cache"
+  behavior of "program ROM"
 
   it should "read a cache line from DDR" in {
     test(new DDRArbiter) { dut =>
-      dut.io.cache.rd.poke(true.B)
-      dut.io.cache.addr.poke(1.U)
-      waitForCacheReq(dut)
+      dut.io.progRom.rd.poke(true.B)
+      dut.io.progRom.addr.poke(1.U)
+      waitForProgRomReq(dut)
       dut.io.ddr.rd.expect(true.B)
       dut.io.ddr.addr.expect(1.U)
-      waitForCacheWait(dut)
+      waitForProgRomWait(dut)
       dut.io.ddr.rd.expect(false.B)
       dut.io.ddr.addr.expect(0.U)
       0.to(3).foreach { n =>
@@ -181,21 +187,43 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
         dut.io.ddr.dout.poke(n.U)
         dut.clock.step()
       }
-      dut.io.cache.valid.expect(true.B)
-      dut.io.cache.dout.expect("h0000000000000003000000000000000200000000000000010000000000000000".U)
+      dut.io.progRom.valid.expect(true.B)
+      dut.io.progRom.dout.expect("h0000000000000003000000000000000200000000000000010000000000000000".U)
     }
   }
 
-  behavior of "graphics"
+  behavior of "sound ROM"
+
+  it should "read a cache line from DDR" in {
+    test(new DDRArbiter) { dut =>
+      dut.io.soundRom.rd.poke(true.B)
+      dut.io.soundRom.addr.poke(1.U)
+      waitForSoundRomReq(dut)
+      dut.io.ddr.rd.expect(true.B)
+      dut.io.ddr.addr.expect(1.U)
+      waitForSoundRomWait(dut)
+      dut.io.ddr.rd.expect(false.B)
+      dut.io.ddr.addr.expect(0.U)
+      0.to(3).foreach { n =>
+        dut.io.ddr.valid.poke(true.B)
+        dut.io.ddr.dout.poke(n.U)
+        dut.clock.step()
+      }
+      dut.io.soundRom.valid.expect(true.B)
+      dut.io.soundRom.dout.expect("h0000000000000003000000000000000200000000000000010000000000000000".U)
+    }
+  }
+
+  behavior of "tile ROM"
 
   it should "read a large tile from DDR" in {
     test(new DDRArbiter) { dut =>
       dut.io.tileRom.rd.poke(true.B)
       dut.io.tileRom.addr.poke(1.U)
-      waitForGfxReq(dut)
+      waitForTileRomReq(dut)
       dut.io.ddr.rd.expect(true.B)
       dut.io.ddr.addr.expect(1.U)
-      waitForGfxWait(dut)
+      waitForTileRomWait(dut)
       dut.io.ddr.rd.expect(false.B)
       dut.io.ddr.addr.expect(0.U)
       0.to(15).foreach { n =>
@@ -214,10 +242,10 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
       dut.io.tileRom.rd.poke(true.B)
       dut.io.tileRom.tinyBurst.poke(true.B)
       dut.io.tileRom.addr.poke(1.U)
-      waitForGfxReq(dut)
+      waitForTileRomReq(dut)
       dut.io.ddr.rd.expect(true.B)
       dut.io.ddr.addr.expect(1.U)
-      waitForGfxWait(dut)
+      waitForTileRomWait(dut)
       dut.io.ddr.rd.expect(false.B)
       dut.io.ddr.addr.expect(0.U)
       0.to(7).foreach { n =>

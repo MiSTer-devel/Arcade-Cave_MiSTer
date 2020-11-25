@@ -205,4 +205,13 @@ object Util {
     val s = withClock(targetClock) { toggle() }
     edge(s)
   }
+
+  /**
+   * Clamps a given number between two values.
+   *
+   * @param n The number to be clamped.
+   * @param a The minimum value.
+   * @param b The maximum value.
+   */
+  def clamp(n: SInt, a: Int, b: Int): SInt = n.max(a.S).min(b.S)
 }

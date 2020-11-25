@@ -35,43 +35,43 @@
  *  SOFTWARE.
  */
 
-package cave
+package axon.snd
 
-import axon.mem._
 import chisel3._
 
-package object types {
-  /** Cache IO */
-  class CacheIO extends ValidReadMemIO(Config.CACHE_ADDR_WIDTH, Config.CACHE_DATA_WIDTH) {
-    override def cloneType: this.type = new CacheIO().asInstanceOf[this.type]
+/** Represents the state of an audio pipeline. */
+class AudioPipelineState(private val config: YMZ280BConfig) extends Bundle {
+  /** Sample values */
+  val samples = Vec(2, SInt(config.sampleWidth.W))
+  /** Asserted when a new sample is required */
+  val underflow = Bool()
+  /** ADPCM step value */
+  val adpcmStep = SInt(config.sampleWidth.W)
+  /** Interpolation index */
+  val lerpIndex = UInt(config.lerpIndexWidth.W)
+
+  /** Updates the ADPCM state with the given step and sample values. */
+  def adpcm(step: SInt, sample: SInt) = {
+    adpcmStep := step
+    samples := VecInit(samples(1), sample)
   }
 
-  /** Frame buffer IO */
-  class FrameBufferIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH-2, Config.FRAME_BUFFER_DATA_WIDTH*4) {
-    override def cloneType: this.type = new FrameBufferIO().asInstanceOf[this.type]
+  /** Updates the interpolation index with the given pitch value. */
+  def interpolate(pitch: UInt) = {
+    val index = lerpIndex+pitch+1.U
+    underflow := index.head(1)
+    lerpIndex := index.tail(1)
   }
+}
 
-  /** Player IO */
-  class PlayerIO extends Bundle {
-    /** Player 1 input */
-    val player1 = Input(Bits(9.W))
-    /** Player 2 input */
-    val player2 = Input(Bits(9.W))
-    /** Pause flag */
-    val pause = Input(Bool())
+object AudioPipelineState {
+  /** Returns the default audio pipeline state. */
+  def default(config: YMZ280BConfig): AudioPipelineState = {
+    val state = Wire(new AudioPipelineState(config))
+    state.samples := VecInit(0.S, 0.S)
+    state.adpcmStep := 127.S
+    state.lerpIndex := 0.U
+    state.underflow := true.B
+    state
   }
-
-  /** Priority IO */
-  class PriorityIO extends Bundle {
-    /** Write-only port */
-    val write = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_PRIO_WIDTH)
-    /** Read-only port */
-    val read = ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_PRIO_WIDTH)
-  }
-
-  /** Program ROM IO */
-  class ProgRomIO extends ValidReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH)
-
-  /** Sound ROM IO */
-  class SoundRomIO extends ValidReadMemIO(Config.SOUND_ROM_ADDR_WIDTH, Config.SOUND_ROM_DATA_WIDTH)
 }

@@ -35,43 +35,53 @@
  *  SOFTWARE.
  */
 
-package cave
+package axon.snd
 
-import axon.mem._
+import axon.Util
 import chisel3._
 
-package object types {
-  /** Cache IO */
-  class CacheIO extends ValidReadMemIO(Config.CACHE_ADDR_WIDTH, Config.CACHE_DATA_WIDTH) {
-    override def cloneType: this.type = new CacheIO().asInstanceOf[this.type]
+/**
+ * Decodes adaptive differential pulse-code modulation (ADPCM) samples.
+ *
+ * @param sampleWidth The width of the sample words.
+ * @param dataWidth The width of the ADPCM data.
+ *
+ * @see https://en.wikipedia.org/wiki/Adaptive_differential_pulse-code_modulation
+ */
+class ADPCM(sampleWidth: Int = 16, dataWidth: Int = 4) extends Module {
+  /** Calculate the step size for the current ADPCM value */
+  val STEP_LUT = VecInit(230.S, 230.S, 230.S, 230.S, 307.S, 409.S, 512.S, 614.S)
+
+  /** Calculate the delta for the current sample value */
+  val DELTA_LUT = VecInit.tabulate(16) { n =>
+    val value = (n&7)*2+1
+    if (n >= 8) (-value).S else value.S
   }
 
-  /** Frame buffer IO */
-  class FrameBufferIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH-2, Config.FRAME_BUFFER_DATA_WIDTH*4) {
-    override def cloneType: this.type = new FrameBufferIO().asInstanceOf[this.type]
-  }
+  val io = IO(new Bundle {
+    /** ADPCM data */
+    val data = Input(Bits(dataWidth.W))
+    /** Input port */
+    val in = Input(new Bundle {
+      /** ADPCM step value */
+      val step = SInt(sampleWidth.W)
+      /** ADPCM sample value */
+      val sample = SInt(sampleWidth.W)
+    })
+    /** Output port */
+    val out = Output(new Bundle {
+      /** ADPCM step value */
+      val step = SInt(sampleWidth.W)
+      /** ADPCM sample value */
+      val sample = SInt(sampleWidth.W)
+    })
+  })
 
-  /** Player IO */
-  class PlayerIO extends Bundle {
-    /** Player 1 input */
-    val player1 = Input(Bits(9.W))
-    /** Player 2 input */
-    val player2 = Input(Bits(9.W))
-    /** Pause flag */
-    val pause = Input(Bool())
-  }
+  // Calculate step value
+  val step = ((io.in.step * STEP_LUT(io.data)) >> 8).asSInt
+  io.out.step := Util.clamp(step, 127, 24576)
 
-  /** Priority IO */
-  class PriorityIO extends Bundle {
-    /** Write-only port */
-    val write = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_PRIO_WIDTH)
-    /** Read-only port */
-    val read = ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_PRIO_WIDTH)
-  }
-
-  /** Program ROM IO */
-  class ProgRomIO extends ValidReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH)
-
-  /** Sound ROM IO */
-  class SoundRomIO extends ValidReadMemIO(Config.SOUND_ROM_ADDR_WIDTH, Config.SOUND_ROM_DATA_WIDTH)
+  // Calculate sample value
+  val delta = ((io.in.step * DELTA_LUT(io.data)) >> 3).asSInt
+  io.out.sample := Util.clamp(io.in.sample+&delta, -32768, 32767)
 }

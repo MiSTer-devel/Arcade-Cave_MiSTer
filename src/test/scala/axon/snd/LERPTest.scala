@@ -35,43 +35,48 @@
  *  SOFTWARE.
  */
 
-package cave
+package axon.snd
 
-import axon.mem._
 import chisel3._
+import chiseltest._
+import org.scalatest._
 
-package object types {
-  /** Cache IO */
-  class CacheIO extends ValidReadMemIO(Config.CACHE_ADDR_WIDTH, Config.CACHE_DATA_WIDTH) {
-    override def cloneType: this.type = new CacheIO().asInstanceOf[this.type]
+class LERPTest extends FlatSpec with ChiselScalatestTester with Matchers {
+  it should "interpolate sample values" in {
+    test(new LERP) { dut =>
+      dut.io.samples(0).poke(0.S)
+      dut.io.samples(1).poke(16.S)
+
+      dut.io.index.poke(0.U)
+      dut.io.out.expect(0.S)
+
+      dut.io.index.poke(64.U)
+      dut.io.out.expect(4.S)
+
+      dut.io.index.poke(128.U)
+      dut.io.out.expect(8.S)
+
+      dut.io.index.poke(192.U)
+      dut.io.out.expect(12.S)
+
+      dut.io.index.poke(256.U)
+      dut.io.out.expect(16.S)
+    }
   }
 
-  /** Frame buffer IO */
-  class FrameBufferIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH-2, Config.FRAME_BUFFER_DATA_WIDTH*4) {
-    override def cloneType: this.type = new FrameBufferIO().asInstanceOf[this.type]
+  it should "handle min/max sample values" in {
+    test(new LERP) { dut =>
+      dut.io.samples(0).poke(-32767.S)
+      dut.io.samples(1).poke(32767.S)
+
+      dut.io.index.poke(0.U)
+      dut.io.out.expect(-32767.S)
+
+      dut.io.index.poke(128.U)
+      dut.io.out.expect(0.S)
+
+      dut.io.index.poke(256.U)
+      dut.io.out.expect(32767.S)
+    }
   }
-
-  /** Player IO */
-  class PlayerIO extends Bundle {
-    /** Player 1 input */
-    val player1 = Input(Bits(9.W))
-    /** Player 2 input */
-    val player2 = Input(Bits(9.W))
-    /** Pause flag */
-    val pause = Input(Bool())
-  }
-
-  /** Priority IO */
-  class PriorityIO extends Bundle {
-    /** Write-only port */
-    val write = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_PRIO_WIDTH)
-    /** Read-only port */
-    val read = ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_PRIO_WIDTH)
-  }
-
-  /** Program ROM IO */
-  class ProgRomIO extends ValidReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH)
-
-  /** Sound ROM IO */
-  class SoundRomIO extends ValidReadMemIO(Config.SOUND_ROM_ADDR_WIDTH, Config.SOUND_ROM_DATA_WIDTH)
 }

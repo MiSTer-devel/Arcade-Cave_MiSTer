@@ -40,6 +40,7 @@ package cave
 import axon.Util
 import axon.gpu._
 import axon.mem._
+import axon.snd.Audio
 import axon.types._
 import cave.dma._
 import cave.types._
@@ -68,11 +69,13 @@ class Main extends Module {
     /** Video port */
     val video = Output(new VideoIO)
     /** DDR port */
-    val ddr = new BurstReadWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
+    val ddr = BurstReadWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
     /** Download port */
     val download = DownloadIO()
     /** RGB output */
     val rgb = Output(new RGB(Config.SCREEN_BITS_PER_CHANNEL))
+    /** Audio port */
+    val audio = Output(new Audio(Config.SAMPLE_WIDTH))
     /** Debug port */
     val debug = Output(new Bundle {
       val pc = UInt()
@@ -129,36 +132,62 @@ class Main extends Module {
   io.rgb := videoFIFO.io.rgb
 
   // Data freezer
-  val dataFreezer = Module(new DataFreezer(
+  val progRomFreezer = Module(new DataFreezer(
     addrWidth = Config.CACHE_ADDR_WIDTH,
     dataWidth = Config.CACHE_DATA_WIDTH
   ))
-  dataFreezer.io.targetClock := io.cpuClock
-  dataFreezer.io.targetReset := io.cpuReset
-  dataFreezer.io.out <> arbiter.io.cache
+  progRomFreezer.io.targetClock := io.cpuClock
+  progRomFreezer.io.targetReset := io.cpuReset
+  progRomFreezer.io.out <> arbiter.io.progRom
 
   // Cache memory
   //
   // The cache memory runs in the CPU clock domain.
-  val cacheMem = withClockAndReset(io.cpuClock, io.cpuReset) {
+  val progRomCache = withClockAndReset(io.cpuClock, io.cpuReset) {
     Module(new CacheMem(
       inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
       inDataWidth = Config.PROG_ROM_DATA_WIDTH,
       outAddrWidth = Config.CACHE_ADDR_WIDTH,
-      outDataWidth = Config.CACHE_DATA_WIDTH
+      outDataWidth = Config.CACHE_DATA_WIDTH,
+      depth = 512
     ))
   }
-  cacheMem.io.out <> dataFreezer.io.in
+  progRomCache.io.out <> progRomFreezer.io.in
+
+  // Data freezer
+  val soundRomFreezer = Module(new DataFreezer(
+    addrWidth = Config.CACHE_ADDR_WIDTH,
+    dataWidth = Config.CACHE_DATA_WIDTH
+  ))
+  soundRomFreezer.io.targetClock := io.cpuClock
+  soundRomFreezer.io.targetReset := io.cpuReset
+  soundRomFreezer.io.out <> arbiter.io.soundRom
+
+  // Cache memory
+  //
+  // The cache memory runs in the CPU clock domain.
+  val soundRomCache = withClockAndReset(io.cpuClock, io.cpuReset) {
+    Module(new CacheMem(
+      inAddrWidth = Config.SOUND_ROM_ADDR_WIDTH,
+      inDataWidth = Config.SOUND_ROM_DATA_WIDTH,
+      outAddrWidth = Config.CACHE_ADDR_WIDTH,
+      outDataWidth = Config.CACHE_DATA_WIDTH,
+      depth = 256
+    ))
+  }
+  soundRomCache.io.out <> soundRomFreezer.io.in
 
   // Cave
   val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.player := io.player
-  cave.io.progRom <> cacheMem.io.in
-  cave.io.tileRom <> arbiter.io.tileRom
+  cave.io.progRom.mapAddr(_+Config.PROG_ROM_OFFSET.U) <> progRomCache.io.in
+  cave.io.soundRom.mapAddr(_+Config.SOUND_ROM_OFFSET.U) <> soundRomCache.io.in
+  cave.io.tileRom.mapAddr(_+Config.TILE_ROM_OFFSET.U) <> arbiter.io.tileRom
   cave.io.video := videoTiming.io
   cave.io.frameBuffer <> fbDMA.io.frameBuffer
+  io.audio <> cave.io.audio
 
   // Start the frame buffer DMA when a frame is complete
   fbDMA.io.start := cave.io.frameDone

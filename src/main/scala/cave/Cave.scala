@@ -41,6 +41,7 @@ import axon.Util
 import axon.cpu.m68k._
 import axon.gpu._
 import axon.mem._
+import axon.snd.{Audio, YMZ280B}
 import cave.gpu._
 import cave.types._
 import chisel3._
@@ -59,12 +60,16 @@ class Cave extends Module {
     val player = new PlayerIO
     /** Program ROM port */
     val progRom = new ProgRomIO
+    /** Sound ROM port */
+    val soundRom = new SoundRomIO
     /** Tile ROM port */
     val tileRom = new TileRomIO
     /** Frame buffer DMA port */
     val frameBuffer = Flipped(new FrameBufferIO)
     /** Video port */
     val video = Input(new VideoIO)
+    /** Audio port */
+    val audio = Output(new Audio(Config.SAMPLE_WIDTH))
     /** Debug port */
     val debug = new Bundle {
       val pc = Output(UInt())
@@ -77,10 +82,12 @@ class Cave extends Module {
   val clearIRQ = WireInit(false.B)
 
   // GPU
+  //
+  // The GPU runs in the system clock domain.
   val gpu = Module(new GPU)
   gpu.io.generateFrame := Util.rising(ShiftRegister(generateFrame, 2))
   io.frameDone := gpu.io.frameDone
-  io.tileRom <> gpu.io.tileRom.mapAddr(_+Config.TILE_ROM_OFFSET.U)
+  io.tileRom <> gpu.io.tileRom
   io.frameBuffer <> gpu.io.frameBuffer
 
   // The CPU and registers run in the CPU clock domain
@@ -160,9 +167,6 @@ class Cave extends Module {
     // Video registers
     val videoRegs = Module(new RegisterFile(Config.VIDEO_REGS_COUNT))
 
-    // Sound registers
-    val soundRegs = Module(new RegisterFile(Config.SOUND_REGS_COUNT))
-
     // GPU
     gpu.io.videoRegs := videoRegs.io.regs.asUInt
     gpu.io.layer0Regs := layer0Regs.io.regs.asUInt
@@ -174,19 +178,22 @@ class Cave extends Module {
     gpu.io.layer2Ram <> layer2Ram.io.portB
     gpu.io.paletteRam <> paletteRam.io.portB
 
+    // YMZ280B
+    val ymz = Module(new YMZ280B(Config.ymzConfig))
+    io.soundRom <> ymz.io.mem
+    io.audio <> RegEnable(ymz.io.audio.bits, ymz.io.audio.valid)
+
     // Memory map
-    cpu.memMap(0x000000 to 0x0fffff).readMemT(io.progRom) { _+Config.PROG_ROM_OFFSET.U }
+    cpu.memMap(0x000000 to 0x0fffff).readMem(io.progRom)
     cpu.memMap(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-    cpu.memMap(0x300000 to 0x300003).writeMem(soundRegs.io.mem.asWriteMemIO)
+    cpu.memMap(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
     cpu.memMap(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     cpu.memMap(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
     cpu.memMap(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
     cpu.memMap(0x700000 to 0x70ffff).readWriteMem(layer2Ram.io.portA)
     cpu.memMap(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
     cpu.memMap(0x800000 to 0x800007).r { (addr, _) =>
-      when(addr === 0x800004.U) {
-        clearIRQ := true.B
-      }
+      when(addr === 0x800004.U) { clearIRQ := true.B }
       3.U
     }
     cpu.memMap(0x800004).w { (_, _, data) => generateFrame := data === 0x01f0.U }
