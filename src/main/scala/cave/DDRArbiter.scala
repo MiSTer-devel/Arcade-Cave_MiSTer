@@ -189,10 +189,10 @@ class DDRArbiter extends Module {
       nextState := MuxCase(stateReg, Seq(
         io.fbFromDDR.rd -> State.fbFromDDR,
         io.download.cs -> State.download,
+        soundRomReqReg -> State.soundRomReq,
         tileRomReqReg -> State.tileRomReq,
         io.fbToDDR.wr -> State.fbToDDR,
-        progRomReqReg -> State.progRomReq,
-        soundRomReqReg -> State.soundRomReq
+        progRomReqReg -> State.progRomReq
       ))
     }
 
@@ -200,8 +200,8 @@ class DDRArbiter extends Module {
       nextState := MuxCase(stateReg, Seq(
         io.fbFromDDR.rd -> State.fbFromDDR,
         io.download.cs -> State.download,
-        io.fbToDDR.wr -> State.fbToDDR,
         tileRomReqReg -> State.tileRomReq,
+        io.fbToDDR.wr -> State.fbToDDR,
         progRomReqReg -> State.progRomReq,
         soundRomReqReg -> State.soundRomReq
       ))
@@ -211,10 +211,10 @@ class DDRArbiter extends Module {
       nextState := MuxCase(stateReg, Seq(
         io.fbFromDDR.rd -> State.fbFromDDR,
         io.download.cs -> State.download,
-        tileRomReqReg -> State.tileRomReq,
+        io.fbToDDR.wr -> State.fbToDDR,
         progRomReqReg -> State.progRomReq,
         soundRomReqReg -> State.soundRomReq,
-        io.fbToDDR.wr -> State.fbToDDR
+        tileRomReqReg -> State.tileRomReq
       ))
     }
 
