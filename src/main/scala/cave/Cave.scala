@@ -92,16 +92,17 @@ class Cave extends Module {
 
   // The CPU and registers run in the CPU clock domain
   withClockAndReset(io.cpuClock, io.cpuReset) {
+    // Interrupt priority level register
+    val iplReg = RegInit(0.U)
+
+    // Trigger an interrupt request on the rising edge of the vertical blank signal
+    val vBlank = ShiftRegister(io.video.vBlank, 2)
+
     // M68000 CPU
     val cpu = Module(new CPU)
     cpu.io.cen := true.B
     cpu.io.dtack := false.B
     cpu.io.din := 0.U
-
-    // Trigger an interrupt request on the rising edge of the vertical blank signal
-    val vBlank = ShiftRegister(io.video.vBlank, 2)
-    val iplReg = RegInit(0.U)
-    when(Util.rising(vBlank)) { iplReg := 1.U }.elsewhen(clearIRQ) { iplReg := 0.U }
     cpu.io.ipl := iplReg
 
     // Main RAM
@@ -182,6 +183,9 @@ class Cave extends Module {
     val ymz = Module(new YMZ280B(Config.ymzConfig))
     io.soundRom <> ymz.io.mem
     io.audio <> RegEnable(ymz.io.audio.bits, ymz.io.audio.valid)
+
+    // Update the IPL register based on all possible causes
+    when(Util.rising(vBlank) || ymz.io.irq) { iplReg := 1.U }.elsewhen(clearIRQ) { iplReg := 0.U }
 
     // Memory map
     cpu.memMap(0x000000 to 0x0fffff).readMem(io.progRom)
