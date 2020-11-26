@@ -45,7 +45,7 @@ object Config {
   val CLOCK_FREQ = 96000000
 
   /** CPU clock frequency (Hz) */
-  val CPU_CLOCK_FREQ = 16000000
+  val CPU_CLOCK_FREQ = 32000000
 
   /** Sample frequency (Hz) */
   val SAMPLE_FREQ = 88200
