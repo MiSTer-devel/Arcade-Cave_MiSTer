@@ -79,7 +79,7 @@ class Cave extends Module {
 
   // Wires
   val generateFrame = WireInit(false.B)
-  val clearIRQ = WireInit(false.B)
+  val intAck = Wire(Bool())
 
   // GPU
   //
@@ -92,18 +92,18 @@ class Cave extends Module {
 
   // The CPU and registers run in the CPU clock domain
   withClockAndReset(io.cpuClock, io.cpuReset) {
-    // Interrupt priority level register
+    // Registers
+    val vBlankReg = ShiftRegister(io.video.vBlank, 2)
+    val pauseReg = ShiftRegister(io.player.pause, 2)
     val iplReg = RegInit(0.U)
 
-    // Trigger an interrupt request on the rising edge of the vertical blank signal
-    val vBlank = ShiftRegister(io.video.vBlank, 2)
-
-    // M68000 CPU
+    // M68K CPU
     val cpu = Module(new CPU)
-    cpu.io.cen := true.B
+    cpu.io.halt := Util.toggle(Util.rising(pauseReg))
     cpu.io.dtack := false.B
-    cpu.io.din := 0.U
+    cpu.io.vpa := intAck // Autovectored interrupts
     cpu.io.ipl := iplReg
+    cpu.io.din := 0.U
 
     // Main RAM
     val mainRam = Module(new SinglePortRam(
@@ -184,8 +184,11 @@ class Cave extends Module {
     io.soundRom <> ymz.io.mem
     io.audio <> RegEnable(ymz.io.audio.bits, ymz.io.audio.valid)
 
-    // Update the IPL register based on all possible causes
-    when(Util.rising(vBlank) || ymz.io.irq) { iplReg := 1.U }.elsewhen(clearIRQ) { iplReg := 0.U }
+    // Interrupt acknowledge
+    intAck := cpu.io.fc === 7.U && cpu.io.as
+
+    // Set and clear interrupt priority level register
+    when(Util.rising(vBlankReg || ymz.io.irq)) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
 
     // Memory map
     cpu.memMap(0x000000 to 0x0fffff).readMem(io.progRom)
@@ -193,21 +196,6 @@ class Cave extends Module {
     cpu.memMap(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
     cpu.memMap(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     cpu.memMap(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
-    cpu.memMap(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
-    cpu.memMap(0x700000 to 0x70ffff).readWriteMem(layer2Ram.io.portA)
-    cpu.memMap(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
-    cpu.memMap(0x800000 to 0x800007).r { (addr, _) =>
-      when(addr === 0x800004.U) { clearIRQ := true.B }
-      3.U
-    }
-    cpu.memMap(0x800004).w { (_, _, data) => generateFrame := data === 0x01f0.U }
-    cpu.memMap(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
-    cpu.memMap(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
-    cpu.memMap(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
-    cpu.memMap(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-    cpu.memMap(0xd00000 to 0xd00001).r { (_, _) => "b1111111".U ## ~io.player.player1 }
-    cpu.memMap(0xd00002 to 0xd00003).r { (_, _) => "b1111011".U ## ~io.player.player2 }
-    cpu.memMap(0xe00000).w { (_, _, _) => /* TODO: EEPROM */}
     // Access to 0x5fxxxx appears in DoDonPachi on attract loop when showing the air stage on frame 9355 (i.e. after
     // roughly 2 min 30 sec). The game is accessing data relative to a Layer 1 address and underflows. These accesses do
     // nothing, but should be acknowledged in order not to block the CPU.
@@ -215,9 +203,18 @@ class Cave extends Module {
     // The reason these accesses appear is probably because it made the layer update routine simpler to write (no need
     // to handle edge cases). These accesses are simply ignored by the hardware.
     cpu.memMap(0x5f0000 to 0x5fffff).ignore()
-    // Acknowledge accesses outside the M680000 memory range
-    // TODO: This hack shouldn't be required by the CPU, but there is something wrong with the CPU implementation.
-    when(cpu.io.addr(31, 28) === 0xf.U && cpu.io.rw) { cpu.io.dtack := true.B }
+    cpu.memMap(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
+    cpu.memMap(0x700000 to 0x70ffff).readWriteMem(layer2Ram.io.portA)
+    cpu.memMap(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+    cpu.memMap(0x800000 to 0x800007).r { (_, _) => 3.U /* IRQ cause */ }
+    cpu.memMap(0x800004).w { (_, _, data) => generateFrame := data === 0x01f0.U }
+    cpu.memMap(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
+    cpu.memMap(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
+    cpu.memMap(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
+    cpu.memMap(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
+    cpu.memMap(0xd00000 to 0xd00001).r { (_, _) => "b1111111".U ## ~io.player.player1 }
+    cpu.memMap(0xd00002 to 0xd00003).r { (_, _) => "b1111011".U ## ~io.player.player2 }
+    cpu.memMap(0xe00000).w { (_, _, _) => /* TODO: EEPROM */ }
 
     // Debug outputs
     io.debug.pc := cpu.io.debug.pc
