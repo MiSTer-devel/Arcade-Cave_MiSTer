@@ -96,10 +96,11 @@ class MemMap(cpu: CPUIO, r: Range) {
   def readMemT(mem: ProgRomIO)(f: UInt => UInt): Unit = {
     val cs = Util.between(cpu.addr, r)
     mem.rd := cs && readStrobe
+    // FIXME: It would be nice if this address was consistent with the other methods. It's only use for the program ROM.
     mem.addr := f(cpu.addr)
-    when(cs && cpu.rw) {
+    when(cs && cpu.rw && mem.valid) {
       cpu.din := mem.dout
-      cpu.dtack := mem.valid
+      cpu.dtack := true.B
     }
   }
 
@@ -135,8 +136,7 @@ class MemMap(cpu: CPUIO, r: Range) {
     val cs = Util.between(cpu.addr, r)
     val offset = cpu.addr - r.start.U
     when(cs) {
-      when(cpu.rw) { cpu.din := f(cpu.addr, offset) }
-      when(!cpu.rw) { g(cpu.addr, offset, cpu.dout) }
+      when(cpu.rw) { cpu.din := f(cpu.addr, offset) }.otherwise { g(cpu.addr, offset, cpu.dout) }
       cpu.dtack := true.B
     }
   }
