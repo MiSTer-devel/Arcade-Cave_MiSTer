@@ -125,7 +125,7 @@ class GPU extends Module {
     State.sprite -> spriteProcessor.io.priority.write,
     State.layer0 -> layerProcessor.io.priority.write,
     State.layer1 -> layerProcessor.io.priority.write,
-    State.layer2 -> layerProcessor.io.priority.write,
+    State.layer2 -> layerProcessor.io.priority.write
   ))
   priorityRam.io.portB <> ReadMemIO.mux(stateReg === State.sprite, spriteProcessor.io.priority.read, layerProcessor.io.priority.read)
 
@@ -147,7 +147,7 @@ class GPU extends Module {
     State.sprite -> spriteProcessor.io.frameBuffer,
     State.layer0 -> layerProcessor.io.frameBuffer,
     State.layer1 -> layerProcessor.io.frameBuffer,
-    State.layer2 -> layerProcessor.io.frameBuffer,
+    State.layer2 -> layerProcessor.io.frameBuffer
   )).mapAddr(GPU.linearizeAddr))
   frameBuffer.io.portB <> io.frameBuffer
 
