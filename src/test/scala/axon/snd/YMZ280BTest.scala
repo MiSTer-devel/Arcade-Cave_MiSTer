@@ -42,7 +42,7 @@ import chiseltest._
 import org.scalatest._
 
 trait YMZ280BTestHelpers {
-  protected val config = YMZ280BConfig(clockFreq = 44100, numChannels = 1)
+  protected val config = YMZ280BConfig(clockFreq = 44100, numChannels = 2)
 
   protected def mkADPCM = new YMZ280B(config)
 
@@ -157,10 +157,10 @@ class YMZ280BTest extends FlatSpec with ChiselScalatestTester with Matchers with
   it should "assert the IRQ signal for channels that are done" in {
     test(mkADPCM) { dut =>
       dut.io.mem.valid.poke(true.B)
-      writeReg(dut, 0x00, 0xff) // channel 0 pitch
-      writeReg(dut, 0x63, 0x01) // channel 0 end address
-      writeReg(dut, 0x01, 0x80) // channel 0 key on
-      writeReg(dut, 0xfe, 0x01) // IRQ mask
+      writeReg(dut, 0x04, 0xff) // channel 1 pitch
+      writeReg(dut, 0x67, 0x01) // channel 1 end address
+      writeReg(dut, 0x05, 0x80) // channel 1 key on
+      writeReg(dut, 0xfe, 0x02) // IRQ mask
       writeReg(dut, 0xff, 0x90) // key on & IRQ enable
       dut.clock.step(100)
       dut.io.irq.expect(true.B)
@@ -170,9 +170,9 @@ class YMZ280BTest extends FlatSpec with ChiselScalatestTester with Matchers with
   it should "not assert the IRQ signal for masked channels" in {
     test(mkADPCM) { dut =>
       dut.io.mem.valid.poke(true.B)
-      writeReg(dut, 0x00, 0xff) // channel 0 pitch
-      writeReg(dut, 0x63, 0x01) // channel 0 end address
-      writeReg(dut, 0x01, 0x80) // channel 0 key on
+      writeReg(dut, 0x04, 0xff) // channel 1 pitch
+      writeReg(dut, 0x67, 0x01) // channel 1 end address
+      writeReg(dut, 0x05, 0x80) // channel 1 key on
       writeReg(dut, 0xfe, 0x00) // IRQ mask
       writeReg(dut, 0xff, 0x90) // key on & IRQ enable
       dut.clock.step(100)
