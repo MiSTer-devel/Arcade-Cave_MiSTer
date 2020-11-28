@@ -53,6 +53,7 @@ class MemMap(cpu: CPUIO, r: Range) {
   private val readStrobe = Util.rising(cpu.as) && cpu.rw
   private val upperWriteStrobe = Util.rising(cpu.uds) && !cpu.rw
   private val lowerWriteStrobe = Util.rising(cpu.lds) && !cpu.rw
+  private val addr = cpu.addr ## 0.U
 
   /**
    * Maps an address range to the given read-write memory port.
@@ -68,10 +69,10 @@ class MemMap(cpu: CPUIO, r: Range) {
    * @param f The address transform function.
    */
   def readWriteMemT(mem: ReadWriteMemIO)(f: UInt => UInt): Unit = {
-    val cs = Util.between(cpu.addr, r)
+    val cs = Util.between(addr, r)
     mem.rd := cs && readStrobe
     mem.wr := cs && (upperWriteStrobe || lowerWriteStrobe)
-    mem.addr := f(cpu.addr)(mem.addrWidth, 1)
+    mem.addr := f(cpu.addr)
     mem.mask := cpu.uds ## cpu.lds
     mem.din := cpu.dout
     when(cs) {
@@ -85,7 +86,7 @@ class MemMap(cpu: CPUIO, r: Range) {
    *
    * @param mem The memory port.
    */
-  def readMem(mem: ProgRomIO): Unit = readMemT(mem)(identity)
+  def readMem(mem: ValidReadMemIO): Unit = readMemT(mem)(identity)
 
   /**
    * Maps an address range to the given read-only memory port, with an address transform.
@@ -93,11 +94,10 @@ class MemMap(cpu: CPUIO, r: Range) {
    * @param mem The memory port.
    * @param f The address transform function.
    */
-  def readMemT(mem: ProgRomIO)(f: UInt => UInt): Unit = {
-    val cs = Util.between(cpu.addr, r)
+  def readMemT(mem: ValidReadMemIO)(f: UInt => UInt): Unit = {
+    val cs = Util.between(addr, r)
     mem.rd := cs && readStrobe
-    // FIXME: It would be nice if this address was consistent with the other methods. It's only use for the program ROM.
-    mem.addr := f(cpu.addr)
+    mem.addr := f(cpu.addr)##0.U // FIXME
     when(cs && cpu.rw && mem.valid) {
       cpu.din := mem.dout
       cpu.dtack := true.B
@@ -118,9 +118,9 @@ class MemMap(cpu: CPUIO, r: Range) {
    * @param f The address transform function.
    */
   def writeMemT(mem: WriteMemIO)(f: UInt => UInt): Unit = {
-    val cs = Util.between(cpu.addr, r)
+    val cs = Util.between(addr, r)
     mem.wr := cs && (upperWriteStrobe || lowerWriteStrobe)
-    mem.addr := f(cpu.addr)(mem.addrWidth, 1)
+    mem.addr := f(cpu.addr)
     mem.mask := cpu.uds ## cpu.lds
     mem.din := cpu.dout
     when(cs && !cpu.rw) { cpu.dtack := true.B }
@@ -133,8 +133,8 @@ class MemMap(cpu: CPUIO, r: Range) {
    * @param g The setter function.
    */
   def rw(f: (UInt, UInt) => UInt)(g: (UInt, UInt, UInt) => Unit): Unit = {
-    val cs = Util.between(cpu.addr, r)
-    val offset = cpu.addr - r.start.U
+    val cs = Util.between(addr, r)
+    val offset = addr - r.start.U
     when(cs) {
       when(cpu.rw) { cpu.din := f(cpu.addr, offset) }.otherwise { g(cpu.addr, offset, cpu.dout) }
       cpu.dtack := true.B
@@ -147,8 +147,8 @@ class MemMap(cpu: CPUIO, r: Range) {
    * @param f The getter function.
    */
   def r(f: (UInt, UInt) => UInt): Unit = {
-    val cs = Util.between(cpu.addr, r)
-    val offset = cpu.addr - r.start.U
+    val cs = Util.between(addr, r)
+    val offset = addr - r.start.U
     when(cs && cpu.rw) {
       cpu.din := f(cpu.addr, offset)
       cpu.dtack := true.B
@@ -161,8 +161,8 @@ class MemMap(cpu: CPUIO, r: Range) {
    * @param f The setter function.
    */
   def w(f: (UInt, UInt, UInt) => Unit): Unit = {
-    val cs = Util.between(cpu.addr, r)
-    val offset = cpu.addr - r.start.U
+    val cs = Util.between(addr, r)
+    val offset = addr - r.start.U
     when(cs && !cpu.rw) {
       f(cpu.addr, offset, cpu.dout)
       cpu.dtack := true.B

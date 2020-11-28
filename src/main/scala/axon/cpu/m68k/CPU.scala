@@ -125,10 +125,10 @@ class CPU extends Module {
       val FC1 = Output(Bool())
       val FC2 = Output(Bool())
       // Address bus
-      val eab = Output(UInt(23.W))
+      val eab = Output(UInt(CPU.ADDR_WIDTH.W))
       // Data bus
-      val iEdb = Input(Bits(16.W))
-      val oEdb = Output(Bits(16.W))
+      val iEdb = Input(Bits(CPU.DATA_WIDTH.W))
+      val oEdb = Output(Bits(CPU.DATA_WIDTH.W))
     })
 
     override def desiredName = "fx68k"
@@ -168,7 +168,7 @@ class CPU extends Module {
   cpu.io.IPL1n := !io.ipl(1)
   cpu.io.IPL2n := !io.ipl(2)
   io.fc := Cat(cpu.io.FC2, cpu.io.FC1, cpu.io.FC0)
-  io.addr := cpu.io.eab ## 0.U
+  io.addr := cpu.io.eab
   cpu.io.iEdb := dinReg
   io.dout := cpu.io.oEdb
   io.debug.pc := 0.U
@@ -185,7 +185,7 @@ class CPU extends Module {
 
 object CPU {
   /** The width of the CPU address bus. */
-  val ADDR_WIDTH = 24
+  val ADDR_WIDTH = 23
 
   /** The width of the CPU data bus. */
   val DATA_WIDTH = 16
