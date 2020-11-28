@@ -97,7 +97,7 @@ class MemMap(cpu: CPUIO, r: Range) {
   def readMemT(mem: ValidReadMemIO)(f: UInt => UInt): Unit = {
     val cs = Util.between(addr, r)
     mem.rd := cs && readStrobe
-    mem.addr := f(cpu.addr)##0.U // FIXME
+    mem.addr := f(cpu.addr)
     when(cs && cpu.rw && mem.valid) {
       cpu.din := mem.dout
       cpu.dtack := true.B
