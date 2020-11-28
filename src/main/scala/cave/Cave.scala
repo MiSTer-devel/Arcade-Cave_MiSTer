@@ -191,30 +191,31 @@ class Cave extends Module {
     when(Util.rising(vBlankReg)) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
 
     // Memory map
-    cpu.memMap(0x000000 to 0x0fffff).readMem(io.progRom)
-    cpu.memMap(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-    cpu.memMap(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
-    cpu.memMap(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-    cpu.memMap(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
+    val memMap = new MemMap(cpu.io)
+    memMap(0x000000 to 0x0fffff).readMem(io.progRom)
+    memMap(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
+    memMap(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
+    memMap(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
+    memMap(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
     // Access to 0x5fxxxx appears in DoDonPachi on attract loop when showing the air stage on frame 9355 (i.e. after
     // roughly 2 min 30 sec). The game is accessing data relative to a Layer 1 address and underflows. These accesses do
     // nothing, but should be acknowledged in order not to block the CPU.
     //
     // The reason these accesses appear is probably because it made the layer update routine simpler to write (no need
     // to handle edge cases). These accesses are simply ignored by the hardware.
-    cpu.memMap(0x5f0000 to 0x5fffff).ignore()
-    cpu.memMap(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
-    cpu.memMap(0x700000 to 0x70ffff).readWriteMem(layer2Ram.io.portA)
-    cpu.memMap(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
-    cpu.memMap(0x800000 to 0x800007).r { (_, _) => 3.U /* IRQ cause */ }
-    cpu.memMap(0x800004).w { (_, _, data) => generateFrame := data === 0x01f0.U }
-    cpu.memMap(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
-    cpu.memMap(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
-    cpu.memMap(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
-    cpu.memMap(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-    cpu.memMap(0xd00000 to 0xd00001).r { (_, _) => "b1111111".U ## ~io.player.player1 }
-    cpu.memMap(0xd00002 to 0xd00003).r { (_, _) => "b1111011".U ## ~io.player.player2 }
-    cpu.memMap(0xe00000).w { (_, _, _) => /* TODO: EEPROM */ }
+    memMap(0x5f0000 to 0x5fffff).ignore()
+    memMap(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
+    memMap(0x700000 to 0x70ffff).readWriteMem(layer2Ram.io.portA)
+    memMap(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+    memMap(0x800000 to 0x800007).r { (_, _) => 3.U /* IRQ cause */ }
+    memMap(0x800004).w { (_, _, data) => generateFrame := data === 0x01f0.U }
+    memMap(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
+    memMap(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
+    memMap(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
+    memMap(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
+    memMap(0xd00000 to 0xd00001).r { (_, _) => "b1111111".U ## ~io.player.player1 }
+    memMap(0xd00002 to 0xd00003).r { (_, _) => "b1111011".U ## ~io.player.player2 }
+    memMap(0xe00000).w { (_, _, _) => /* TODO: EEPROM */ }
 
     // Debug outputs
     io.debug.pc := cpu.io.debug.pc
