@@ -37,18 +37,14 @@
 
 package axon.cpu.m68k
 
+import axon.Util
 import chisel3._
+import chisel3.util._
 
 /** An interface for the M68000 CPU. */
 class CPUIO extends Bundle {
-  /** Clock enable */
-  val cen = Input(Bool())
-  /** Address bus */
-  val addr = Output(UInt(CPU.ADDR_WIDTH.W))
-  /** Data input bus */
-  val din = Input(Bits(CPU.DATA_WIDTH.W))
-  /** Data output bus */
-  val dout = Output(Bits(CPU.DATA_WIDTH.W))
+  /** Halt */
+  val halt = Input(Bool())
   /** Address strobe */
   val as = Output(Bool())
   /** Read/write */
@@ -59,8 +55,18 @@ class CPUIO extends Bundle {
   val lds = Output(Bool())
   /** Data transfer acknowledge */
   val dtack = Input(Bool())
+  /** Valid peripheral address */
+  val vpa = Input(Bool())
   /** Interrupt priority level */
   val ipl = Input(UInt(CPU.IPL_WIDTH.W))
+  /** Function code */
+  val fc = Output(UInt(CPU.FC_WIDTH.W))
+  /** Address bus */
+  val addr = Output(UInt(CPU.ADDR_WIDTH.W))
+  /** Data input bus */
+  val din = Input(Bits(CPU.DATA_WIDTH.W))
+  /** Data output bus */
+  val dout = Output(Bits(CPU.DATA_WIDTH.W))
   /** Debug port */
   val debug = new Bundle {
     val pc = Output(UInt())
@@ -86,53 +92,107 @@ class CPU extends Module {
 
   val io = IO(new CPUIO)
 
-  class TG68 extends BlackBox {
+  class FX68K extends BlackBox {
     val io = IO(new Bundle {
+      // System control
       val clk = Input(Bool())
-      val reset = Input(Bool())
-      val clkena_in = Input(Bool())
-      val data_in = Input(Bits(CPU.DATA_WIDTH.W))
-      val IPL = Input(UInt(CPU.IPL_WIDTH.W))
-      val dtack = Input(Bool())
-      val addr = Output(UInt(CPU.ADDR_WIDTH.W))
-      val data_out = Output(Bits(CPU.DATA_WIDTH.W))
-      val as = Output(Bool())
-      val uds = Output(Bool())
-      val lds = Output(Bool())
-      val rw = Output(Bool())
-      val TG68_PC_o = Output(UInt(CPU.ADDR_WIDTH.W))
-      val TG68_PCW_o = Output(Bool())
+      val enPhi1 = Input(Bool())
+      val enPhi2 = Input(Bool())
+      val extReset = Input(Bool())
+      val pwrUp = Input(Bool())
+      val HALTn = Input(Bool())
+      // Asynchronous bus control
+      val ASn = Output(Bool())
+      val eRWn = Output(Bool())
+      val UDSn = Output(Bool())
+      val LDSn = Output(Bool())
+      val DTACKn = Input(Bool())
+      val BERRn = Input(Bool())
+      // Synchronous bus control
+      val E = Output(Bool())
+      val VPAn = Input(Bool())
+      val VMAn = Output(Bool())
+      // Bus arbitration control
+      val BRn = Input(Bool())
+      val BGn = Output(Bool())
+      val BGACKn = Input(Bool())
+      // Interrupt control
+      val IPL0n = Input(Bool())
+      val IPL1n = Input(Bool())
+      val IPL2n = Input(Bool())
+      // Function code
+      val FC0 = Output(Bool())
+      val FC1 = Output(Bool())
+      val FC2 = Output(Bool())
+      // Address bus
+      val eab = Output(UInt(CPU.ADDR_WIDTH.W))
+      // Data bus
+      val iEdb = Input(Bits(CPU.DATA_WIDTH.W))
+      val oEdb = Output(Bits(CPU.DATA_WIDTH.W))
     })
+
+    override def desiredName = "fx68k"
   }
 
-  val cpu = Module(new TG68)
+  // Registers
+  val dinReg = RegInit(0.U(CPU.DATA_WIDTH.W))
+  val dtackReg = RegInit(false.B)
+
+  // Clock enable signals
+  //
+  // The FX68K module requires an input clock that is twice the frequency of the desired clock speed. It has two clock
+  // enable signals (PHI1 and PHI2) that trigger the rising and falling edges of the CPU clock.
+  //
+  // To generate the PHI1 and PHI2 clock enable signals, we toggle a bit and use the normal and inverted values.
+  val phi1 = Util.toggle()
+  val phi2 = !phi1
+
+  // CPU
+  val cpu = Module(new FX68K)
   cpu.io.clk := clock.asBool
-  cpu.io.reset := !reset.asBool
-  cpu.io.clkena_in := io.cen
-  cpu.io.data_in := io.din
-  cpu.io.IPL := ~io.ipl
-  cpu.io.dtack := !io.dtack
-  io.addr := cpu.io.addr
-  io.dout := cpu.io.data_out
-  io.as := !cpu.io.as
-  io.uds := !cpu.io.uds
-  io.lds := !cpu.io.lds
-  io.rw := cpu.io.rw
-  io.debug.pc := cpu.io.TG68_PC_o
-  io.debug.pcw := cpu.io.TG68_PCW_o
+  cpu.io.enPhi1 := phi1
+  cpu.io.enPhi2 := phi2
+  cpu.io.extReset := reset.asBool
+  cpu.io.pwrUp := reset.asBool
+  cpu.io.HALTn := !io.halt
+  io.as := !cpu.io.ASn
+  io.rw := cpu.io.eRWn
+  io.uds := !cpu.io.UDSn
+  io.lds := !cpu.io.LDSn
+  cpu.io.DTACKn := !dtackReg
+  cpu.io.BERRn := true.B
+  cpu.io.BRn := true.B
+  cpu.io.BGACKn := true.B
+  cpu.io.VPAn := !io.vpa
+  cpu.io.IPL0n := !io.ipl(0)
+  cpu.io.IPL1n := !io.ipl(1)
+  cpu.io.IPL2n := !io.ipl(2)
+  io.fc := Cat(cpu.io.FC2, cpu.io.FC1, cpu.io.FC0)
+  io.addr := cpu.io.eab
+  cpu.io.iEdb := dinReg
+  io.dout := cpu.io.oEdb
+  io.debug.pc := 0.U
+  io.debug.pcw := 0.U
+
+  // FIXME: This shouldn't be in the CPU module
+  when(io.dtack) {
+    dinReg := io.din
+    dtackReg := true.B
+  }.elsewhen(cpu.io.ASn) {
+    dtackReg := false.B
+  }
 }
 
 object CPU {
-  /**
-   * The width of the CPU address bus.
-   *
-   * TODO: Lies! The M68K does not have a 32-bit address bus, this should be fixed.
-   */
-  val ADDR_WIDTH = 32
+  /** The width of the CPU address bus. */
+  val ADDR_WIDTH = 23
 
   /** The width of the CPU data bus. */
   val DATA_WIDTH = 16
 
   /** The width of the CPU interrupt priority level value. */
   val IPL_WIDTH = 3
+
+  /** The width of the function code value. */
+  val FC_WIDTH = 3
 }

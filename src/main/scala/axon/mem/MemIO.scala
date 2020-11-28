@@ -192,25 +192,41 @@ class ReadWriteMemIO protected (addrWidth: Int, dataWidth: Int) extends MemIO(ad
 
   /** Converts the interface to read-only */
   def asReadMemIO: ReadMemIO = {
-    val wire = Wire(Flipped(ReadMemIO(addrWidth, dataWidth)))
-    rd := wire.rd
+    val mem = Wire(Flipped(ReadMemIO(addrWidth, dataWidth)))
+    rd := mem.rd
     wr := false.B
-    addr := wire.addr
+    addr := mem.addr
     mask := DontCare
     din := DontCare
-    wire.dout := dout
-    wire
+    mem.dout := dout
+    mem
   }
 
   /** Converts the interface to write-only */
   def asWriteMemIO: WriteMemIO = {
-    val wire = Wire(Flipped(WriteMemIO(addrWidth, dataWidth)))
+    val mem = Wire(Flipped(WriteMemIO(addrWidth, dataWidth)))
     rd := false.B
-    wr := wire.wr
-    addr := wire.addr
-    mask := wire.mask
-    din := wire.din
-    wire
+    wr := mem.wr
+    addr := mem.addr
+    mask := mem.mask
+    din := mem.din
+    mem
+  }
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  def mapAddr(f: UInt => UInt): ReadWriteMemIO = {
+    val mem = Wire(chiselTypeOf(this))
+    mem.rd := this.rd
+    mem.wr := this.wr
+    mem.addr := f(this.addr)
+    mem.mask := this.mask
+    mem.din := this.din
+    this.dout := mem.dout
+    mem
   }
 }
 

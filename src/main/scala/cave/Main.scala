@@ -145,7 +145,7 @@ class Main extends Module {
   // The cache memory runs in the CPU clock domain.
   val progRomCache = withClockAndReset(io.cpuClock, io.cpuReset) {
     Module(new CacheMem(
-      inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
+      inAddrWidth = Config.PROG_ROM_ADDR_WIDTH+1, // byte addressing
       inDataWidth = Config.PROG_ROM_DATA_WIDTH,
       outAddrWidth = Config.CACHE_ADDR_WIDTH,
       outDataWidth = Config.CACHE_DATA_WIDTH,
@@ -182,7 +182,8 @@ class Main extends Module {
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.player := io.player
-  cave.io.progRom <> progRomCache.io.in
+  // Convert program ROM address to a byte address
+  cave.io.progRom.mapAddr(_ ## 0.U) <> progRomCache.io.in
   cave.io.soundRom <> soundRomCache.io.in
   cave.io.tileRom.mapAddr(_+Config.TILE_ROM_OFFSET.U) <> arbiter.io.tileRom
   cave.io.video := videoTiming.io

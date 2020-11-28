@@ -152,10 +152,10 @@ wire locked;
 pll pll (
     .refclk(CLK_50M),
     .rst(RESET),
-    .outclk_0(clk_sys), // 100MHz
+    .outclk_0(clk_sys),
     .outclk_1(SDRAM_CLK),
-    .outclk_2(CLK_VIDEO), // 6MHz
-    .outclk_3(clk_68k), // 16MHz
+    .outclk_2(CLK_VIDEO),
+    .outclk_3(clk_68k),
     .locked(locked)
 );
 

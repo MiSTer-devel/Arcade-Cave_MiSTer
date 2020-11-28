@@ -45,7 +45,7 @@ object Config {
   val CLOCK_FREQ = 96000000
 
   /** CPU clock frequency (Hz) */
-  val CPU_CLOCK_FREQ = 16000000
+  val CPU_CLOCK_FREQ = 32000000
 
   /** Sample frequency (Hz) */
   val SAMPLE_FREQ = 88200
@@ -70,7 +70,7 @@ object Config {
   val LAYER_1_ROM_OFFSET = 0x0a00000
   val LAYER_2_ROM_OFFSET = 0x0c00000
 
-  val PROG_ROM_ADDR_WIDTH = 24
+  val PROG_ROM_ADDR_WIDTH = 19
   val PROG_ROM_DATA_WIDTH = 16
 
   val SOUND_ROM_ADDR_WIDTH = 25
