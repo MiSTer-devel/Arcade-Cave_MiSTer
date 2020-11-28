@@ -145,7 +145,7 @@ class Main extends Module {
   // The cache memory runs in the CPU clock domain.
   val progRomCache = withClockAndReset(io.cpuClock, io.cpuReset) {
     Module(new CacheMem(
-      inAddrWidth = Config.PROG_ROM_ADDR_WIDTH+1, // byte addressing
+      inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
       inDataWidth = Config.PROG_ROM_DATA_WIDTH,
       outAddrWidth = Config.CACHE_ADDR_WIDTH,
       outDataWidth = Config.CACHE_DATA_WIDTH,
