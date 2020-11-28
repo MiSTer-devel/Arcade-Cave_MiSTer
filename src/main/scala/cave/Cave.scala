@@ -188,7 +188,7 @@ class Cave extends Module {
     intAck := cpu.io.fc === 7.U && cpu.io.as
 
     // Set and clear interrupt priority level register
-    when(Util.rising(vBlankReg || ymz.io.irq)) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
+    when(Util.rising(vBlankReg)) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
 
     // Memory map
     cpu.memMap(0x000000 to 0x0fffff).readMem(io.progRom)
