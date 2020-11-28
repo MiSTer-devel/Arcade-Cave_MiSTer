@@ -120,10 +120,6 @@ class CPU extends Module {
     override def desiredName = "fx68k"
   }
 
-  // Registers
-  val dinReg = RegInit(0.U(CPU.DATA_WIDTH.W))
-  val dtackReg = RegInit(false.B)
-
   // Clock enable signals
   //
   // The FX68K module requires an input clock that is twice the frequency of the desired clock speed. It has two clock
@@ -145,7 +141,7 @@ class CPU extends Module {
   io.rw := cpu.io.eRWn
   io.uds := !cpu.io.UDSn
   io.lds := !cpu.io.LDSn
-  cpu.io.DTACKn := !dtackReg
+  cpu.io.DTACKn := !io.dtack
   cpu.io.BERRn := true.B
   cpu.io.BRn := true.B
   cpu.io.BGACKn := true.B
@@ -155,18 +151,10 @@ class CPU extends Module {
   cpu.io.IPL2n := !io.ipl(2)
   io.fc := Cat(cpu.io.FC2, cpu.io.FC1, cpu.io.FC0)
   io.addr := cpu.io.eab
-  cpu.io.iEdb := dinReg
+  cpu.io.iEdb := io.din
   io.dout := cpu.io.oEdb
   io.debug.pc := 0.U
   io.debug.pcw := 0.U
-
-  // FIXME: This shouldn't be in the CPU module
-  when(io.dtack) {
-    dinReg := io.din
-    dtackReg := true.B
-  }.elsewhen(cpu.io.ASn) {
-    dtackReg := false.B
-  }
 }
 
 object CPU {

@@ -49,10 +49,19 @@ import chisel3._
  * @param cpu The CPU IO port.
  */
 class MemMap(cpu: CPUIO) {
-  private val readStrobe = Util.rising(cpu.as) && cpu.rw
-  private val upperWriteStrobe = Util.rising(cpu.uds) && !cpu.rw
-  private val lowerWriteStrobe = Util.rising(cpu.lds) && !cpu.rw
-  private val addr = cpu.addr ## 0.U
+  // Registers
+  val dinReg = RegInit(0.U(CPU.DATA_WIDTH.W))
+  val dtackReg = RegInit(false.B)
+  val readStrobe = Util.rising(cpu.as) && cpu.rw
+  val upperWriteStrobe = Util.rising(cpu.uds) && !cpu.rw
+  val lowerWriteStrobe = Util.rising(cpu.lds) && !cpu.rw
+
+  // Clear data transfer acknowledge register
+  when(!cpu.as) { dtackReg := false.B }
+
+  // Set the CPU input data bus and data transfer acknowledge from the registered values
+  cpu.din := dinReg
+  cpu.dtack := dtackReg
 
   /**
    * Create a memory map for the given address.
@@ -75,6 +84,16 @@ class MemMap(cpu: CPUIO) {
    * @param r   The address range.
    */
   class Mapping(cpu: CPUIO, r: Range) {
+    // The CPU address bus is only 23 bits, because the LSB is inferred from the UDS and LDS signals. However, we still
+    // need to use a 24-bit value when comparing the address to a byte range.
+    val addr = cpu.addr ## 0.U
+
+    // Address offset
+    val offset = addr - r.start.U
+
+    // Chip select
+    val cs = Util.between(addr, r)
+
     /**
      * Maps an address range to the given read-write memory port.
      *
@@ -89,15 +108,14 @@ class MemMap(cpu: CPUIO) {
      * @param f   The address transform function.
      */
     def readWriteMemT(mem: ReadWriteMemIO)(f: UInt => UInt): Unit = {
-      val cs = Util.between(addr, r)
       mem.rd := cs && readStrobe
       mem.wr := cs && (upperWriteStrobe || lowerWriteStrobe)
       mem.addr := f(cpu.addr)
       mem.mask := cpu.uds ## cpu.lds
       mem.din := cpu.dout
       when(cs) {
-        cpu.din := mem.dout
-        cpu.dtack := true.B
+        dinReg := mem.dout
+        dtackReg := true.B
       }
     }
 
@@ -115,12 +133,11 @@ class MemMap(cpu: CPUIO) {
      * @param f   The address transform function.
      */
     def readMemT(mem: ValidReadMemIO)(f: UInt => UInt): Unit = {
-      val cs = Util.between(addr, r)
       mem.rd := cs && readStrobe
       mem.addr := f(cpu.addr)
       when(cs && cpu.rw && mem.valid) {
-        cpu.din := mem.dout
-        cpu.dtack := true.B
+        dinReg := mem.dout
+        dtackReg := true.B
       }
     }
 
@@ -138,13 +155,12 @@ class MemMap(cpu: CPUIO) {
      * @param f   The address transform function.
      */
     def writeMemT(mem: WriteMemIO)(f: UInt => UInt): Unit = {
-      val cs = Util.between(addr, r)
       mem.wr := cs && (upperWriteStrobe || lowerWriteStrobe)
       mem.addr := f(cpu.addr)
       mem.mask := cpu.uds ## cpu.lds
       mem.din := cpu.dout
       when(cs && !cpu.rw) {
-        cpu.dtack := true.B
+        dtackReg := true.B
       }
     }
 
@@ -155,15 +171,13 @@ class MemMap(cpu: CPUIO) {
      * @param g The setter function.
      */
     def rw(f: (UInt, UInt) => UInt)(g: (UInt, UInt, UInt) => Unit): Unit = {
-      val cs = Util.between(addr, r)
-      val offset = addr - r.start.U
       when(cs) {
         when(cpu.rw) {
-          cpu.din := f(cpu.addr, offset)
+          dinReg := f(cpu.addr, offset)
         }.otherwise {
           g(cpu.addr, offset, cpu.dout)
         }
-        cpu.dtack := true.B
+        dtackReg := true.B
       }
     }
 
@@ -173,11 +187,9 @@ class MemMap(cpu: CPUIO) {
      * @param f The getter function.
      */
     def r(f: (UInt, UInt) => UInt): Unit = {
-      val cs = Util.between(addr, r)
-      val offset = addr - r.start.U
       when(cs && cpu.rw) {
-        cpu.din := f(cpu.addr, offset)
-        cpu.dtack := true.B
+        dinReg := f(cpu.addr, offset)
+        dtackReg := true.B
       }
     }
 
@@ -187,11 +199,9 @@ class MemMap(cpu: CPUIO) {
      * @param f The setter function.
      */
     def w(f: (UInt, UInt, UInt) => Unit): Unit = {
-      val cs = Util.between(addr, r)
-      val offset = addr - r.start.U
       when(cs && !cpu.rw) {
         f(cpu.addr, offset, cpu.dout)
-        cpu.dtack := true.B
+        dtackReg := true.B
       }
     }
 
