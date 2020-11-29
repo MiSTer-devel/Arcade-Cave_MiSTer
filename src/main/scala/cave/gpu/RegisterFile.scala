@@ -51,9 +51,6 @@ class RegisterFile(numRegs: Int) extends Module {
   /** The width of the address bus. */
   val ADDR_WIDTH = log2Up(numRegs)
 
-  /** The width of a byte. */
-  val BYTE_WIDTH = 8
-
   val io = IO(new Bundle {
     /** Memory port */
     val mem = Flipped(ReadWriteMemIO(ADDR_WIDTH, CPU.DATA_WIDTH))
@@ -68,11 +65,11 @@ class RegisterFile(numRegs: Int) extends Module {
   val data = regs(io.mem.addr)
 
   // Split data register into a vector of bytes
-  val bytes = data.asTypeOf(Vec(io.mem.maskWidth, Bits(BYTE_WIDTH.W)))
+  val bytes = data.asTypeOf(Vec(io.mem.maskWidth, Bits(8.W)))
 
   // Write masked bytes to the data register
   0.until(io.mem.maskWidth).foreach { n =>
-    when(io.mem.wr && io.mem.mask(n)) { bytes(n) := io.mem.din((n+1)*BYTE_WIDTH-1, n*BYTE_WIDTH) }
+    when(io.mem.wr && io.mem.mask(n)) { bytes(n) := io.mem.din((n+1)*8-1, n*8) }
   }
 
   // Concatenate the bytes and update the data register
