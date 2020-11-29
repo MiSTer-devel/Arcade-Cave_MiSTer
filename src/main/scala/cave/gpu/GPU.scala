@@ -104,7 +104,7 @@ class GPU extends Module {
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
   spriteProcessor.io.start := RegNext(stateReg =/= State.sprite && nextState === State.sprite)
-  spriteProcessor.io.spriteBank := io.videoRegs(4)(0)
+  spriteProcessor.io.spriteBank := io.videoRegs(64)
   spriteProcessor.io.spriteRam <> io.spriteRam
 
   // The clear memory interface is used for writing blank pixels
