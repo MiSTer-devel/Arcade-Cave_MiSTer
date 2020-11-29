@@ -70,11 +70,6 @@ class Cave extends Module {
     val video = Input(new VideoIO)
     /** Audio port */
     val audio = Output(new Audio(Config.SAMPLE_WIDTH))
-    /** Debug port */
-    val debug = new Bundle {
-      val pc = Output(UInt())
-      val pcw = Output(Bool())
-    }
   })
 
   // Wires
@@ -216,9 +211,5 @@ class Cave extends Module {
     memMap(0xd00000 to 0xd00001).r { (_, _) => "b1111111".U ## ~io.player.player1 }
     memMap(0xd00002 to 0xd00003).r { (_, _) => "b1111011".U ## ~io.player.player2 }
     memMap(0xe00000).w { (_, _, _) => /* TODO: EEPROM */ }
-
-    // Debug outputs
-    io.debug.pc := cpu.io.debug.pc
-    io.debug.pcw := cpu.io.debug.pcw
   }
 }

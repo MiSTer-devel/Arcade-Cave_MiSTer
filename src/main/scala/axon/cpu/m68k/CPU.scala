@@ -67,11 +67,6 @@ class CPUIO extends Bundle {
   val din = Input(Bits(CPU.DATA_WIDTH.W))
   /** Data output bus */
   val dout = Output(Bits(CPU.DATA_WIDTH.W))
-  /** Debug port */
-  val debug = new Bundle {
-    val pc = Output(UInt())
-    val pcw = Output(Bool())
-  }
 }
 
 /** M68000 CPU */
@@ -153,8 +148,6 @@ class CPU extends Module {
   io.addr := cpu.io.eab
   cpu.io.iEdb := io.din
   io.dout := cpu.io.oEdb
-  io.debug.pc := 0.U
-  io.debug.pcw := 0.U
 }
 
 object CPU {

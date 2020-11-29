@@ -76,11 +76,6 @@ class Main extends Module {
     val rgb = Output(new RGB(Config.SCREEN_BITS_PER_CHANNEL))
     /** Audio port */
     val audio = Output(new Audio(Config.SAMPLE_WIDTH))
-    /** Debug port */
-    val debug = Output(new Bundle {
-      val pc = UInt()
-      val pcw = Bool()
-    })
   })
 
   // Registers
@@ -192,10 +187,6 @@ class Main extends Module {
 
   // Start the frame buffer DMA when a frame is complete
   fbDMA.io.start := cave.io.frameDone
-
-  // Debug outputs
-  io.debug.pc := cave.io.debug.pc
-  io.debug.pcw := cave.io.debug.pcw
 }
 
 object Main extends App {
