@@ -67,29 +67,10 @@ class CPUIO extends Bundle {
   val din = Input(Bits(CPU.DATA_WIDTH.W))
   /** Data output bus */
   val dout = Output(Bits(CPU.DATA_WIDTH.W))
-  /** Debug port */
-  val debug = new Bundle {
-    val pc = Output(UInt())
-    val pcw = Output(Bool())
-  }
 }
 
 /** M68000 CPU */
 class CPU extends Module {
-  /**
-   * Create a memory map for the given address.
-   *
-   * @param a The address.
-   */
-  def memMap(a: Int) = new MemMap(io, Range(a, a))
-
-  /**
-   * Create a memory map for the given address range.
-   *
-   * @param r The address range.
-   */
-  def memMap(r: Range) = new MemMap(io, r)
-
   val io = IO(new CPUIO)
 
   class FX68K extends BlackBox {
@@ -134,10 +115,6 @@ class CPU extends Module {
     override def desiredName = "fx68k"
   }
 
-  // Registers
-  val dinReg = RegInit(0.U(CPU.DATA_WIDTH.W))
-  val dtackReg = RegInit(false.B)
-
   // Clock enable signals
   //
   // The FX68K module requires an input clock that is twice the frequency of the desired clock speed. It has two clock
@@ -159,7 +136,7 @@ class CPU extends Module {
   io.rw := cpu.io.eRWn
   io.uds := !cpu.io.UDSn
   io.lds := !cpu.io.LDSn
-  cpu.io.DTACKn := !dtackReg
+  cpu.io.DTACKn := !io.dtack
   cpu.io.BERRn := true.B
   cpu.io.BRn := true.B
   cpu.io.BGACKn := true.B
@@ -169,18 +146,8 @@ class CPU extends Module {
   cpu.io.IPL2n := !io.ipl(2)
   io.fc := Cat(cpu.io.FC2, cpu.io.FC1, cpu.io.FC0)
   io.addr := cpu.io.eab
-  cpu.io.iEdb := dinReg
+  cpu.io.iEdb := io.din
   io.dout := cpu.io.oEdb
-  io.debug.pc := 0.U
-  io.debug.pcw := 0.U
-
-  // FIXME: This shouldn't be in the CPU module
-  when(io.dtack) {
-    dinReg := io.din
-    dtackReg := true.B
-  }.elsewhen(cpu.io.ASn) {
-    dtackReg := false.B
-  }
 }
 
 object CPU {

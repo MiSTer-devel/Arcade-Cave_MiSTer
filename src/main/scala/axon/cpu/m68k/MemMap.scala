@@ -39,138 +39,169 @@ package axon.cpu.m68k
 
 import axon.Util
 import axon.mem._
-import cave.types.ProgRomIO
 import chisel3._
 
 /**
- * Represents a memory mapped address range.
+ * A memory map.
+ *
+ * Allows a CPU address space to be mapped to different memory devices.
  *
  * @param cpu The CPU IO port.
- * @param r The address range.
  */
-class MemMap(cpu: CPUIO, r: Range) {
-  // TODO: These registers will be duplicated for every mapping. Can they be shared somehow?
-  private val readStrobe = Util.rising(cpu.as) && cpu.rw
-  private val upperWriteStrobe = Util.rising(cpu.uds) && !cpu.rw
-  private val lowerWriteStrobe = Util.rising(cpu.lds) && !cpu.rw
-  private val addr = cpu.addr ## 0.U
+class MemMap(cpu: CPUIO) {
+  // Registers
+  val dinReg = RegInit(0.U(CPU.DATA_WIDTH.W))
+  val dtackReg = RegInit(false.B)
+  val readStrobe = Util.rising(cpu.as) && cpu.rw
+  val upperWriteStrobe = Util.rising(cpu.uds) && !cpu.rw
+  val lowerWriteStrobe = Util.rising(cpu.lds) && !cpu.rw
+
+  // Clear data transfer acknowledge register
+  when(!cpu.as) { dtackReg := false.B }
+
+  // Set the CPU input data bus and data transfer acknowledge from the registered values
+  cpu.din := dinReg
+  cpu.dtack := dtackReg
 
   /**
-   * Maps an address range to the given read-write memory port.
+   * Create a memory map for the given address.
    *
-   * @param mem The memory port.
+   * @param a The address.
    */
-  def readWriteMem(mem: ReadWriteMemIO): Unit = readWriteMemT(mem)(identity)
+  def apply(a: Int) = new Mapping(cpu, Range(a, a))
 
   /**
-   * Maps an address range to the given read-write memory port, with an address transform.
+   * Create a memory map for the given address range.
    *
-   * @param mem The memory port.
-   * @param f The address transform function.
+   * @param r The address range.
    */
-  def readWriteMemT(mem: ReadWriteMemIO)(f: UInt => UInt): Unit = {
-    val cs = Util.between(addr, r)
-    mem.rd := cs && readStrobe
-    mem.wr := cs && (upperWriteStrobe || lowerWriteStrobe)
-    mem.addr := f(cpu.addr)
-    mem.mask := cpu.uds ## cpu.lds
-    mem.din := cpu.dout
-    when(cs) {
-      cpu.din := mem.dout
-      cpu.dtack := true.B
-    }
-  }
+  def apply(r: Range) = new Mapping(cpu, r)
 
   /**
-   * Maps an address range to the given read-only memory port.
+   * Represents a memory mapped address range.
    *
-   * @param mem The memory port.
+   * @param cpu The CPU IO port.
+   * @param r   The address range.
    */
-  def readMem(mem: ValidReadMemIO): Unit = readMemT(mem)(identity)
+  class Mapping(cpu: CPUIO, r: Range) {
+    // The CPU address bus is only 23 bits, because the LSB is inferred from the UDS and LDS signals. However, we still
+    // need to use a 24-bit value when comparing the address to a byte range.
+    val addr = cpu.addr ## 0.U
 
-  /**
-   * Maps an address range to the given read-only memory port, with an address transform.
-   *
-   * @param mem The memory port.
-   * @param f The address transform function.
-   */
-  def readMemT(mem: ValidReadMemIO)(f: UInt => UInt): Unit = {
-    val cs = Util.between(addr, r)
-    mem.rd := cs && readStrobe
-    mem.addr := f(cpu.addr)
-    when(cs && cpu.rw && mem.valid) {
-      cpu.din := mem.dout
-      cpu.dtack := true.B
-    }
-  }
-
-  /**
-   * Maps an address range to the given write-only memory port.
-   *
-   * @param mem The memory port.
-   */
-  def writeMem(mem: WriteMemIO): Unit = writeMemT(mem)(identity)
-
-  /**
-   * Maps an address range to the given write-only memory port, with an address transform.
-   *
-   * @param mem The memory port.
-   * @param f The address transform function.
-   */
-  def writeMemT(mem: WriteMemIO)(f: UInt => UInt): Unit = {
-    val cs = Util.between(addr, r)
-    mem.wr := cs && (upperWriteStrobe || lowerWriteStrobe)
-    mem.addr := f(cpu.addr)
-    mem.mask := cpu.uds ## cpu.lds
-    mem.din := cpu.dout
-    when(cs && !cpu.rw) { cpu.dtack := true.B }
-  }
-
-  /**
-   * Maps an address range to the given getter and setter functions.
-   *
-   * @param f The getter function.
-   * @param g The setter function.
-   */
-  def rw(f: (UInt, UInt) => UInt)(g: (UInt, UInt, UInt) => Unit): Unit = {
-    val cs = Util.between(addr, r)
+    // Address offset
     val offset = addr - r.start.U
-    when(cs) {
-      when(cpu.rw) { cpu.din := f(cpu.addr, offset) }.otherwise { g(cpu.addr, offset, cpu.dout) }
-      cpu.dtack := true.B
-    }
-  }
 
-  /**
-   * Maps an address range to the given getter function.
-   *
-   * @param f The getter function.
-   */
-  def r(f: (UInt, UInt) => UInt): Unit = {
+    // Chip select
     val cs = Util.between(addr, r)
-    val offset = addr - r.start.U
-    when(cs && cpu.rw) {
-      cpu.din := f(cpu.addr, offset)
-      cpu.dtack := true.B
-    }
-  }
 
-  /**
-   * Maps an address range to the given setter function.
-   *
-   * @param f The setter function.
-   */
-  def w(f: (UInt, UInt, UInt) => Unit): Unit = {
-    val cs = Util.between(addr, r)
-    val offset = addr - r.start.U
-    when(cs && !cpu.rw) {
-      f(cpu.addr, offset, cpu.dout)
-      cpu.dtack := true.B
-    }
-  }
+    /**
+     * Maps an address range to the given read-write memory port.
+     *
+     * @param mem The memory port.
+     */
+    def readWriteMem(mem: ReadWriteMemIO): Unit = readWriteMemT(mem)(identity)
 
-  /** Ignores the address range. Read/write operations will still be acknowledged. */
-  def ignore(): Unit = {
-    rw((_, _) => 0.U)((_, _, _) => {})
+    /**
+     * Maps an address range to the given read-write memory port, with an address transform.
+     *
+     * @param mem The memory port.
+     * @param f   The address transform function.
+     */
+    def readWriteMemT(mem: ReadWriteMemIO)(f: UInt => UInt): Unit = {
+      mem.rd := cs && readStrobe
+      mem.wr := cs && (upperWriteStrobe || lowerWriteStrobe)
+      mem.addr := f(cpu.addr)
+      mem.mask := cpu.uds ## cpu.lds
+      mem.din := cpu.dout
+      when(cs) {
+        dinReg := mem.dout
+        dtackReg := true.B
+      }
+    }
+
+    /**
+     * Maps an address range to the given read-only memory port.
+     *
+     * @param mem The memory port.
+     */
+    def readMem(mem: ValidReadMemIO): Unit = readMemT(mem)(identity)
+
+    /**
+     * Maps an address range to the given read-only memory port, with an address transform.
+     *
+     * @param mem The memory port.
+     * @param f   The address transform function.
+     */
+    def readMemT(mem: ValidReadMemIO)(f: UInt => UInt): Unit = {
+      mem.rd := cs && readStrobe
+      mem.addr := f(cpu.addr)
+      when(cs && cpu.rw && mem.valid) {
+        dinReg := mem.dout
+        dtackReg := true.B
+      }
+    }
+
+    /**
+     * Maps an address range to the given write-only memory port.
+     *
+     * @param mem The memory port.
+     */
+    def writeMem(mem: WriteMemIO): Unit = writeMemT(mem)(identity)
+
+    /**
+     * Maps an address range to the given write-only memory port, with an address transform.
+     *
+     * @param mem The memory port.
+     * @param f   The address transform function.
+     */
+    def writeMemT(mem: WriteMemIO)(f: UInt => UInt): Unit = {
+      mem.wr := cs && (upperWriteStrobe || lowerWriteStrobe)
+      mem.addr := f(cpu.addr)
+      mem.mask := cpu.uds ## cpu.lds
+      mem.din := cpu.dout
+      when(cs && !cpu.rw) { dtackReg := true.B }
+    }
+
+    /**
+     * Maps an address range to the given getter and setter functions.
+     *
+     * @param f The getter function.
+     * @param g The setter function.
+     */
+    def rw(f: (UInt, UInt) => UInt)(g: (UInt, UInt, UInt) => Unit): Unit = {
+      when(cs) {
+        when(cpu.rw) { dinReg := f(addr, offset) }.otherwise { g(addr, offset, cpu.dout) }
+        dtackReg := true.B
+      }
+    }
+
+    /**
+     * Maps an address range to the given getter function.
+     *
+     * @param f The getter function.
+     */
+    def r(f: (UInt, UInt) => UInt): Unit = {
+      when(cs && cpu.rw) {
+        dinReg := f(addr, offset)
+        dtackReg := true.B
+      }
+    }
+
+    /**
+     * Maps an address range to the given setter function.
+     *
+     * @param f The setter function.
+     */
+    def w(f: (UInt, UInt, UInt) => Unit): Unit = {
+      when(cs && !cpu.rw) {
+        f(addr, offset, cpu.dout)
+        dtackReg := true.B
+      }
+    }
+
+    /** Ignores the address range. Read/write operations will still be acknowledged. */
+    def ignore(): Unit = {
+      rw((_, _) => 0.U)((_, _, _) => {})
+    }
   }
 }

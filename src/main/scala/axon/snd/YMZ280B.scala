@@ -145,7 +145,7 @@ class YMZ280B(config: YMZ280BConfig) extends Module {
   // Outputs
   io.cpu.dout := dataReg
   io.audio <> channelCtrl.io.audio
-  io.irq := statusReg & utilReg.irqMask & utilReg.flags.irqEnable
+  io.irq := utilReg.flags.irqEnable && (statusReg & utilReg.irqMask).orR
   io.debug.channels := channelRegs
   io.debug.utilReg := utilReg
   io.debug.statusReg := statusReg

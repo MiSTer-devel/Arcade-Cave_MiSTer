@@ -76,11 +76,6 @@ class Main extends Module {
     val rgb = Output(new RGB(Config.SCREEN_BITS_PER_CHANNEL))
     /** Audio port */
     val audio = Output(new Audio(Config.SAMPLE_WIDTH))
-    /** Debug port */
-    val debug = Output(new Bundle {
-      val pc = UInt()
-      val pcw = Bool()
-    })
   })
 
   // Registers
@@ -145,7 +140,7 @@ class Main extends Module {
   // The cache memory runs in the CPU clock domain.
   val progRomCache = withClockAndReset(io.cpuClock, io.cpuReset) {
     Module(new CacheMem(
-      inAddrWidth = Config.PROG_ROM_ADDR_WIDTH+1, // byte addressing
+      inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
       inDataWidth = Config.PROG_ROM_DATA_WIDTH,
       outAddrWidth = Config.CACHE_ADDR_WIDTH,
       outDataWidth = Config.CACHE_DATA_WIDTH,
@@ -192,10 +187,6 @@ class Main extends Module {
 
   // Start the frame buffer DMA when a frame is complete
   fbDMA.io.start := cave.io.frameDone
-
-  // Debug outputs
-  io.debug.pc := cave.io.debug.pc
-  io.debug.pcw := cave.io.debug.pcw
 }
 
 object Main extends App {

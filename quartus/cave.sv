@@ -222,9 +222,9 @@ wire video_enable;
 assign VGA_DE = video_enable;
 assign VGA_HS = hsync;
 assign VGA_VS = vsync;
-assign VGA_R  = (debug && hc < 64 && vc < 10) ? pixel_dd[7:0] : {r[4:0], r[4:2]};
-assign VGA_G  = (debug && hc < 64 && vc < 10) ? pixel_dd[7:0] : {g[4:0], g[4:2]};
-assign VGA_B  = (debug && hc < 64 && vc < 10) ? pixel_dd[7:0] : {b[4:0], b[4:2]};
+assign VGA_R  = {r[4:0], r[4:2]};
+assign VGA_G  = {g[4:0], g[4:2]};
+assign VGA_B  = {b[4:0], b[4:2]};
 
 assign CE_PIXEL = '1;
 
@@ -380,10 +380,6 @@ logic sreset_68k_0;
 logic sreset_68k_1;
 logic sreset_68k;
 
-// Interface to debug PC trace circular buffer
-logic [31:0]  tg68_data;
-logic         tg68_write;
-
 always_ff @(posedge clk_68k) begin
     sreset_68k_0 <= core_sreset;
     sreset_68k_1 <= sreset_68k_0;
@@ -434,52 +430,7 @@ Main main (
     .io_rgb_b(b),
     // Audio output
     .io_audio_left(AUDIO_L),
-    .io_audio_right(AUDIO_R),
-    // Debug
-    .io_debug_pc(tg68_data),
-    .io_debug_pcw(tg68_write)
-);
-
-////////////////////////////////////////////////////////////////////////////////
-// DEBUG DISPLAY
-////////////////////////////////////////////////////////////////////////////////
-
-logic [31:0]  debug_display_pc;
-wire [23:0] pixel_dd;
-
-always_ff @(posedge clk_68k) begin
-    if (core_sreset) begin
-        debug_display_pc <= '0;
-    end
-    else begin
-        if (tg68_write) begin
-            // Show the 68k PC
-            debug_display_pc[23:0] <= tg68_data[23:0];
-        end
-        if (tg68_write && (tg68_data[31:24] != 8'b0)) begin
-            debug_display_pc[31:24] <= 8'hFF;
-        end else begin
-            // Show some inputs for debug
-            debug_display_pc[31:24] <= joystick_0[7:0];
-        end
-    end
-end // always_ff @ (posedge clk_68k)
-
-logic [31:0] debug_display_pc_ffv1;
-logic [31:0] debug_display_pc_ffv2;
-
-// Synchronization
-always_ff @(posedge CLK_VIDEO) begin
-    debug_display_pc_ffv1 <= debug_display_pc;
-    debug_display_pc_ffv2 <= debug_display_pc_ffv1;
-end
-
-debug_display dd (
-    .clk_i(CLK_VIDEO),
-    .value_i(debug_display_pc_ffv2),
-    .x_i(hc[5:0]),
-    .y_i(vc[3:0]),
-    .pixel_o(pixel_dd)
+    .io_audio_right(AUDIO_R)
 );
 
 endmodule
