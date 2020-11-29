@@ -88,13 +88,14 @@ class Cave extends Module {
   // The CPU and registers run in the CPU clock domain
   withClockAndReset(io.cpuClock, io.cpuReset) {
     // Registers
-    val vBlankReg = ShiftRegister(io.video.vBlank, 2)
-    val pauseReg = ShiftRegister(io.player.pause, 2)
+    val vBlank = Util.rising(ShiftRegister(io.video.vBlank, 2))
+    val pause = Util.rising(ShiftRegister(io.player.pause, 2))
+    val vBlankIRQ = RegInit(false.B)
     val iplReg = RegInit(0.U)
 
     // M68K CPU
     val cpu = Module(new CPU)
-    cpu.io.halt := Util.toggle(Util.rising(pauseReg))
+    cpu.io.halt := Util.toggle(pause)
     cpu.io.dtack := false.B
     cpu.io.vpa := intAck // Autovectored interrupts
     cpu.io.ipl := iplReg
@@ -183,7 +184,10 @@ class Cave extends Module {
     intAck := cpu.io.fc === 7.U && cpu.io.as
 
     // Set and clear interrupt priority level register
-    when(Util.rising(vBlankReg)) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
+    when(vBlank || Util.rising(ymz.io.irq)) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
+
+    // Set vertical blank IRQ
+    when(vBlank) { vBlankIRQ := true.B }
 
     // Memory map
     val memMap = new MemMap(cpu.io)
@@ -201,8 +205,13 @@ class Cave extends Module {
     memMap(0x5f0000 to 0x5fffff).ignore()
     memMap(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
     memMap(0x700000 to 0x70ffff).readWriteMem(layer2Ram.io.portA)
+    // IRQ cause
+    memMap(0x800000 to 0x800007).r { (_, offset) =>
+      when(offset === 4.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
+      val result = WireInit(3.U)
+      result.bitSet(0.U, !vBlankIRQ) // clear bit 0 during a vertical blank
+    }
     memMap(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
-    memMap(0x800000 to 0x800007).r { (_, _) => 3.U /* IRQ cause */ }
     memMap(0x800004).w { (_, _, data) => generateFrame := data === 0x01f0.U }
     memMap(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
     memMap(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
