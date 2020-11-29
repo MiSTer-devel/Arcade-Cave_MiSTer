@@ -159,9 +159,7 @@ class MemMap(cpu: CPUIO) {
       mem.addr := f(cpu.addr)
       mem.mask := cpu.uds ## cpu.lds
       mem.din := cpu.dout
-      when(cs && !cpu.rw) {
-        dtackReg := true.B
-      }
+      when(cs && !cpu.rw) { dtackReg := true.B }
     }
 
     /**
@@ -172,11 +170,7 @@ class MemMap(cpu: CPUIO) {
      */
     def rw(f: (UInt, UInt) => UInt)(g: (UInt, UInt, UInt) => Unit): Unit = {
       when(cs) {
-        when(cpu.rw) {
-          dinReg := f(cpu.addr, offset)
-        }.otherwise {
-          g(cpu.addr, offset, cpu.dout)
-        }
+        when(cpu.rw) { dinReg := f(addr, offset) }.otherwise { g(addr, offset, cpu.dout) }
         dtackReg := true.B
       }
     }
@@ -188,7 +182,7 @@ class MemMap(cpu: CPUIO) {
      */
     def r(f: (UInt, UInt) => UInt): Unit = {
       when(cs && cpu.rw) {
-        dinReg := f(cpu.addr, offset)
+        dinReg := f(addr, offset)
         dtackReg := true.B
       }
     }
@@ -200,7 +194,7 @@ class MemMap(cpu: CPUIO) {
      */
     def w(f: (UInt, UInt, UInt) => Unit): Unit = {
       when(cs && !cpu.rw) {
-        f(cpu.addr, offset, cpu.dout)
+        f(addr, offset, cpu.dout)
         dtackReg := true.B
       }
     }
