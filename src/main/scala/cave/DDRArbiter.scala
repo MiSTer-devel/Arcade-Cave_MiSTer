@@ -44,6 +44,7 @@ import chisel3._
 import chisel3.util._
 import axon.util.Counter
 
+/** An interface for reading and writing to DDR memory. */
 class DDRIO protected extends AsyncReadWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH) with BurstIO
 
 object DDRIO {
