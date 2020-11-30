@@ -42,6 +42,8 @@ import chisel3._
 trait BurstIO {
   /** The number of words to transfer during a burst */
   val burstCount = Output(UInt(8.W))
+  /** A flag indicating whether the burst has finished */
+  val burstDone = Input(Bool())
 }
 
 /**
