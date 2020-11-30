@@ -69,7 +69,7 @@ class Main extends Module {
     /** Video port */
     val video = Output(new VideoIO)
     /** DDR port */
-    val ddr = BurstReadWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
+    val ddr = DDRIO()
     /** Download port */
     val download = DownloadIO()
     /** RGB output */

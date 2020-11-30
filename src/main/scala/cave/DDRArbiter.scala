@@ -44,6 +44,12 @@ import chisel3._
 import chisel3.util._
 import axon.util.Counter
 
+class DDRIO protected extends AsyncReadWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH) with BurstIO
+
+object DDRIO {
+  def apply() = new DDRIO
+}
+
 /**
  * A DDR memory arbiter.
  *
@@ -64,7 +70,7 @@ class DDRArbiter extends Module {
     /** Frame buffer from DDR port */
     val fbFromDDR = Flipped(BurstReadMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH))
     /** DDR port */
-    val ddr = BurstReadWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
+    val ddr = DDRIO()
     /** Debug port */
     val debug = new Bundle {
       val idle = Output(Bool())
