@@ -38,10 +38,13 @@
 package axon.mem
 
 import chisel3._
+import chisel3.util._
 
 trait BurstIO {
   /** The number of words to transfer during a burst */
   val burstCount = Output(UInt(8.W))
+  /** A flag indicating whether the burst has finished */
+  val burstDone = Input(Bool())
 }
 
 /**
@@ -52,10 +55,47 @@ trait BurstIO {
  */
 class BurstReadMemIO protected (addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addrWidth, dataWidth) with BurstIO {
   override def cloneType: this.type = new BurstReadMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  override def mapAddr(f: UInt => UInt): BurstReadMemIO = {
+    val mem = Wire(chiselTypeOf(this))
+    mem.rd := this.rd
+    mem.burstCount := this.burstCount
+    mem.addr := f(this.addr)
+    this.burstDone := mem.burstDone
+    this.waitReq := mem.waitReq
+    this.valid := mem.valid
+    this.dout := mem.dout
+    mem
+  }
 }
 
 object BurstReadMemIO {
   def apply(addrWidth: Int, dataWidth: Int) = new BurstReadMemIO(addrWidth, dataWidth)
+
+  /**
+   * Multiplexes requests from multiple write-only memory interface to a single write-only memory interfaces. The
+   * request is routed to the first enabled interface.
+   *
+   * @param outs A list of enable-interface pairs.
+   */
+  def mux(outs: Seq[(Bool, BurstReadMemIO)]): BurstReadMemIO = {
+    val mem = Wire(chiselTypeOf(outs.head._2))
+    mem.burstCount := MuxCase(0.U, outs.map(a => a._1 -> a._2.burstCount))
+    mem.rd := MuxCase(false.B, outs.map(a => a._1 -> a._2.rd))
+    mem.addr := MuxCase(DontCare, outs.map(a => a._1 -> a._2.addr))
+    outs.foreach { case (selected, out) =>
+      out.burstDone := mem.burstDone && selected
+      out.waitReq := mem.waitReq || !selected
+      out.valid := mem.valid && selected
+      out.dout := mem.dout
+    }
+    mem
+  }
 }
 
 /**

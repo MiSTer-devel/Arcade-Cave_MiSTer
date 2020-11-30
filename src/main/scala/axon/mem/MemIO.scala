@@ -154,7 +154,7 @@ object WriteMemIO {
    *
    * @param outs A list of enable-interface pairs.
    */
-def mux[K <: UInt](key: K, outs: Seq[(K, WriteMemIO)]): WriteMemIO = {
+  def mux[K <: UInt](key: K, outs: Seq[(K, WriteMemIO)]): WriteMemIO = {
     val mem = Wire(chiselTypeOf(outs.head._2))
     val writeMap = outs.map(a => a._1 -> a._2.wr)
     val addrMap = outs.map(a => a._1 -> a._2.addr)

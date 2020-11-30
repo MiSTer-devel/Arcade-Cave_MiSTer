@@ -65,8 +65,9 @@ entity layer_processor is
         tileRom_rd                : out std_logic;
         tileRom_addr              : out gfx_rom_addr_t;
         tileRom_dout              : in  gfx_rom_data_t;
+        tileRom_waitReq           : in  std_logic;
         tileRom_valid             : in  std_logic;
-        tileRom_tinyBurst         : out std_logic;
+        tileRom_burstCount        : out std_logic_vector(7 downto 0);
         tileRom_burstDone         : in  std_logic;
         -- Priority RAM interface (Do not delay ! It expects data the next cycle)
         priority_read_rd          : out std_logic;
@@ -427,7 +428,7 @@ begin
 
     -- The small tile need tiny bursts (they require half the data of the big
     -- tiles)
-    tileRom_tinyBurst <= '1' when layer_info_reg_s.small_tile = '1' else '0';
+    tileRom_burstCount <= x"08" when layer_info_reg_s.small_tile = '1' else x"10";
 
     tileRom_rd <= tile_burst_read_s;
 

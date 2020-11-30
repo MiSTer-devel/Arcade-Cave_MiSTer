@@ -193,7 +193,7 @@ class GPU extends Module {
   // Outputs
   io.frameDone := stateReg === State.done
   io.paletteRam <> ReadMemIO.mux(stateReg === State.sprite, spriteProcessor.io.paletteRam, layerProcessor.io.paletteRam)
-  io.tileRom <> TileRomIO.mux(Seq(
+  io.tileRom <> BurstReadMemIO.mux(Seq(
     (stateReg === State.sprite) -> spriteProcessor.io.tileRom,
     (stateReg === State.layer0 || stateReg === State.layer1 || stateReg === State.layer2) -> layerProcessor.io.tileRom
   ))
