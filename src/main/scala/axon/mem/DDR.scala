@@ -49,6 +49,12 @@ object DDRIO {
   def apply(config: DDRConfig) = new DDRIO(config: DDRConfig)
 }
 
+/**
+ * Represents the DDR memory configuration.
+ *
+ * @param addrWidth The width of the address bus.
+ * @param dataWidth The width of the data bus.
+ */
 case class DDRConfig(addrWidth: Int = 32, dataWidth: Int = 64)
 
 /**
@@ -69,7 +75,7 @@ class DDR(config: DDRConfig) extends Module {
   })
 
   object State {
-    val idle :: waitRead :: waitWrite :: Nil = Enum(3)
+    val idle :: readWait :: writeWait :: Nil = Enum(3)
   }
 
   // Registers
@@ -77,14 +83,14 @@ class DDR(config: DDRConfig) extends Module {
   val burstLength = Util.latch(io.mem.burstLength, stateReg === State.idle, stateReg === State.idle)
 
   // Read/write control signals
-  val read = stateReg === State.idle && io.mem.rd
+  val read = stateReg === State.idle && io.mem.rd && !io.ddr.waitReq
   val write = stateReg === State.idle && io.mem.wr && !io.ddr.waitReq
 
   // Burst counter enable flag
   val burstCounterEnable =
     write ||
-    (stateReg === State.waitWrite && !io.ddr.waitReq) ||
-    (stateReg === State.waitRead && io.ddr.valid)
+    (stateReg === State.writeWait && !io.ddr.waitReq) ||
+    (stateReg === State.readWait && io.ddr.valid)
 
   // Burst counter
   val (burstCounter, burstCounterDone) = Counter.dynamic(burstLength, burstCounterEnable)
@@ -92,8 +98,8 @@ class DDR(config: DDRConfig) extends Module {
   // FSM
   stateReg := MuxCase(stateReg, Seq(
     burstCounterDone -> State.idle,
-    read -> State.waitRead,
-    write -> State.waitWrite
+    read -> State.readWait,
+    write -> State.writeWait
   ))
 
   // Outputs
@@ -101,8 +107,8 @@ class DDR(config: DDRConfig) extends Module {
   io.mem.waitReq := io.ddr.waitReq
   io.mem.valid := io.ddr.valid
   io.ddr.burstLength := burstLength
-  io.ddr.rd := io.mem.rd && stateReg =/= State.waitRead
-  io.ddr.wr := io.mem.wr || stateReg === State.waitWrite
+  io.ddr.rd := io.mem.rd && stateReg =/= State.readWait
+  io.ddr.wr := io.mem.wr || stateReg === State.writeWait
   io.ddr.addr := io.mem.addr
   io.ddr.mask := io.mem.mask
   io.ddr.din := io.mem.din

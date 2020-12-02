@@ -51,9 +51,9 @@ class VideoDMATest extends FlatSpec with ChiselScalatestTester with Matchers wit
       dut.io.pixelData.ready.poke(true.B)
       dut.io.ddr.rd.expect(true.B)
       dut.clock.step()
-      dut.io.ddr.valid.poke(true.B)
       dut.io.ddr.rd.expect(false.B)
-      dut.clock.step(8)
+      dut.io.ddr.burstDone.poke(true.B)
+      dut.clock.step(2)
       dut.io.done.expect(true.B)
     }
   }
@@ -89,12 +89,14 @@ class VideoDMATest extends FlatSpec with ChiselScalatestTester with Matchers wit
       dut.clock.step()
       dut.io.ddr.rd.expect(false.B)
       0.to(3).foreach { n =>
+        if (n == 3) dut.io.ddr.burstDone.poke(true.B)
         dut.io.ddr.valid.poke(true.B)
         dut.io.ddr.dout.poke(n.U)
         dut.io.pixelData.valid.expect(true.B)
         dut.io.pixelData.bits.expect(n.U)
         dut.clock.step()
       }
+      dut.io.ddr.burstDone.poke(false.B)
 
       // Burst 2
       dut.io.ddr.rd.expect(true.B)

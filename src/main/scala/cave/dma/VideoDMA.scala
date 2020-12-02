@@ -68,30 +68,30 @@ class VideoDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
   // Registers
   val busyReg = RegInit(false.B)
 
-  // Assert the read enable unless the DMA is busy
-  val read = io.pixelData.ready && !busyReg
-
   // Counters
-  val (wordCounterValue, wordCounterDone) = Counter.static(burstLength, enable = io.ddr.valid)
-  val (burstCounterValue, burstCounterDone) = Counter.static(NUM_BURSTS, enable = wordCounterDone)
+  val (burstCounter, burstCounterDone) = Counter.static(NUM_BURSTS, enable = io.ddr.burstDone)
+
+  // Control signals
+  val read = io.pixelData.ready && !busyReg
+  val done = RegNext(burstCounterDone, false.B)
 
   // Calculate the DDR address
   val ddrAddr = {
     val mask = 0.U(log2Ceil(burstLength*8).W)
-    val offset = io.swap ## burstCounterValue ## mask
+    val offset = io.swap ## burstCounter ## mask
     addr.U + offset
   }
 
   // Toggle the busy register
-  when(read && !io.ddr.waitReq) { busyReg := true.B }.elsewhen(wordCounterDone) { busyReg := false.B }
+  when(read && !io.ddr.waitReq) { busyReg := true.B }.elsewhen(io.ddr.burstDone) { busyReg := false.B }
 
   // Outputs
-  io.done := RegNext(wordCounterDone, false.B)
+  io.done := done
   io.pixelData.bits := io.ddr.dout
   io.pixelData.valid := io.ddr.valid
   io.ddr.rd := read
   io.ddr.addr := ddrAddr
   io.ddr.burstLength := burstLength.U
 
-  printf(p"VideoDMA(busy: $busyReg, wordCounter: $wordCounterValue ($wordCounterDone), burstCounter: $burstCounterValue ($burstCounterDone))\n")
+  printf(p"VideoDMA(busy: $busyReg, burstCounter: $burstCounter ($burstCounterDone))\n")
 }
