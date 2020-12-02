@@ -73,7 +73,7 @@ entity sprite_processor is
         tileRom_dout              : in  gfx_rom_data_t;
         tileRom_waitReq           : in  std_logic;
         tileRom_valid             : in  std_logic;
-        tileRom_burstCount        : out std_logic_vector(7 downto 0);
+        tileRom_burstLength       : out std_logic_vector(7 downto 0);
         tileRom_burstDone         : in  std_logic; -- Asserted when last word arrives
         -- Priority RAM interface (Do not delay ! It expects data the next cycle)
         priority_read_rd          : out std_logic;
@@ -367,7 +367,7 @@ begin
 
     paletteRam_addr <= palette_ram_addr_from_palette_color_select(palette_color_select_s);
 
-    tileRom_burstCount <= x"10";
+    tileRom_burstLength <= x"10";
     spriteRam_rd <= '1';
     paletteRam_rd <= '1';
     priority_read_rd <= '1';

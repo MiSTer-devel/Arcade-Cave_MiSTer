@@ -417,7 +417,7 @@ Main main (
     .io_ddr_dout(ddr3_read_data_arbiter),
     .io_ddr_waitReq(ddr3_waitrequest_arbiter),
     .io_ddr_valid(ddr3_read_data_valid_arbiter),
-    .io_ddr_burstCount(ddr3_burstcount_arbiter),
+    .io_ddr_burstLength(ddr3_burstcount_arbiter),
     // Download
     .io_download_cs(ioctl_download),
     .io_download_wr(ioctl_wr),

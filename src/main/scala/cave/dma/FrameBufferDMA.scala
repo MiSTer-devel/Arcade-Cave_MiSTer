@@ -100,7 +100,7 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
   io.ddr.wr := busyReg
   io.ddr.addr := addr.U + offset
   io.ddr.mask := Fill(io.ddr.maskWidth, 1.U)
-  io.ddr.burstCount := burstLength.U
+  io.ddr.burstLength := burstLength.U
   io.ddr.din := pixelData
 
   printf(p"FrameBufferDMA(busy: $busyReg, wordCounter: $wordCounterValue ($wordCounterDone), burstCounter: $burstCounterValue ($burstCounterDone), totalCounter: $totalCounterValue ($totalCounterDone))\n")

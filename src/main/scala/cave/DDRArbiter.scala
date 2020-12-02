@@ -128,11 +128,11 @@ class DDRArbiter extends Module {
     enable = stateReg === State.tileRomWait && io.ddr.valid,
     reset = stateReg === State.tileRomReq
   )
-  val (fbFromDDRBurstValue, fbFromDDRBurstDone) = Counter.dynamic(io.fbFromDDR.burstCount,
+  val (fbFromDDRBurstValue, fbFromDDRBurstDone) = Counter.dynamic(io.fbFromDDR.burstLength,
     enable = stateReg === State.fbFromDDR && io.ddr.valid,
     reset = stateReg =/= State.fbFromDDR
   )
-  val (fbToDDRBurstValue, fbToDDRBurstDone) = Counter.dynamic(io.fbToDDR.burstCount,
+  val (fbToDDRBurstValue, fbToDDRBurstDone) = Counter.dynamic(io.fbToDDR.burstLength,
     enable = stateReg === State.fbToDDR && io.fbToDDR.wr && !io.ddr.waitReq,
     reset = stateReg =/= State.fbToDDR
   )
@@ -160,7 +160,7 @@ class DDRArbiter extends Module {
   when(io.tileRom.rd) {
     tileRomReqReg := true.B
     tileRomAddrReg := io.tileRom.addr
-    tileRomBurstCountReg := io.tileRom.burstCount
+    tileRomBurstCountReg := io.tileRom.burstLength
   }.elsewhen(tileRomBurstDone) {
     tileRomReqReg := false.B
   }
@@ -278,12 +278,12 @@ class DDRArbiter extends Module {
     State.fbToDDR -> io.fbToDDR.addr,
     State.download -> io.download.addr
   ))
-  io.ddr.burstCount := MuxLookup(stateReg, 1.U, Seq(
+  io.ddr.burstLength := MuxLookup(stateReg, 1.U, Seq(
     State.progRomReq -> DDRArbiter.CACHE_BURST_LENGTH.U,
     State.soundRomReq -> DDRArbiter.CACHE_BURST_LENGTH.U,
     State.tileRomReq -> tileRomBurstCountReg,
-    State.fbFromDDR -> io.fbFromDDR.burstCount,
-    State.fbToDDR -> io.fbToDDR.burstCount
+    State.fbFromDDR -> io.fbFromDDR.burstLength,
+    State.fbToDDR -> io.fbToDDR.burstLength
   ))
   io.ddr.mask := Mux(stateReg === State.download, downloadMask, 0xff.U)
   io.ddr.din := MuxLookup(stateReg, 0.U, Seq(
