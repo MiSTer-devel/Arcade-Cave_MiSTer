@@ -69,7 +69,7 @@ class Main extends Module {
     /** Video port */
     val video = Output(new VideoIO)
     /** DDR port */
-    val ddr = DDRIO()
+    val ddr = DDRIO(Config.ddrConfig)
     /** Download port */
     val download = DownloadIO()
     /** RGB output */

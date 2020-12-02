@@ -38,6 +38,7 @@
 package cave
 
 import axon.gpu.VideoTimingConfig
+import axon.mem.DDRConfig
 import axon.snd.YMZ280BConfig
 
 object Config {
@@ -141,4 +142,7 @@ object Config {
     sampleFreq = SAMPLE_FREQ,
     sampleWidth = SAMPLE_WIDTH
   )
+
+  /** DDR memory configuration */
+  val ddrConfig = DDRConfig()
 }
