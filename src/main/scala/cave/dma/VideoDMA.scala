@@ -75,9 +75,12 @@ class VideoDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
   val (wordCounterValue, wordCounterDone) = Counter.static(burstLength, enable = io.ddr.valid)
   val (burstCounterValue, burstCounterDone) = Counter.static(NUM_BURSTS, enable = wordCounterDone)
 
-  // Calculate the address offset value
-  val mask = 0.U(log2Ceil(burstLength*8).W)
-  val offset = io.swap ## burstCounterValue ## mask
+  // Calculate the DDR address
+  val ddrAddr = {
+    val mask = 0.U(log2Ceil(burstLength*8).W)
+    val offset = io.swap ## burstCounterValue ## mask
+    addr.U + offset
+  }
 
   // Toggle the busy register
   when(read && !io.ddr.waitReq) { busyReg := true.B }.elsewhen(wordCounterDone) { busyReg := false.B }
@@ -87,7 +90,7 @@ class VideoDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
   io.pixelData.bits := io.ddr.dout
   io.pixelData.valid := io.ddr.valid
   io.ddr.rd := read
-  io.ddr.addr := addr.U + offset
+  io.ddr.addr := ddrAddr
   io.ddr.burstLength := burstLength.U
 
   printf(p"VideoDMA(busy: $busyReg, wordCounter: $wordCounterValue ($wordCounterDone), burstCounter: $burstCounterValue ($burstCounterDone))\n")

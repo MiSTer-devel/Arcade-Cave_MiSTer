@@ -83,9 +83,12 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
   val (wordCounterValue, wordCounterDone) = Counter.static(burstLength, enable = effectiveWrite)
   val (burstCounterValue, burstCounterDone) = Counter.static(NUM_BURSTS, enable = wordCounterDone)
 
-  // Calculate the address offset value
-  val mask = 0.U(log2Ceil(burstLength*8).W)
-  val offset = io.swap ## burstCounterValue ## mask
+  // Calculate the DDR address
+  val ddrAddr = {
+    val mask = 0.U(log2Ceil(burstLength*8).W)
+    val offset = io.swap ## burstCounterValue ## mask
+    addr.U + offset
+  }
 
   // Pad the pixel data, so that four 15-bit pixels pack into a 64-bit DDR word
   val pixelData = Util.padWords(io.frameBuffer.dout, 4, Config.FRAME_BUFFER_DATA_WIDTH, DDRArbiter.DATA_WIDTH/4)
@@ -98,7 +101,7 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
   io.frameBuffer.rd := true.B
   io.frameBuffer.addr := Mux(effectiveWrite, totalCounterValue+&1.U, totalCounterValue)
   io.ddr.wr := busyReg
-  io.ddr.addr := addr.U + offset
+  io.ddr.addr := ddrAddr
   io.ddr.mask := Fill(io.ddr.maskWidth, 1.U)
   io.ddr.burstLength := burstLength.U
   io.ddr.din := pixelData
