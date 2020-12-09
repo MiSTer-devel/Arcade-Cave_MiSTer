@@ -69,7 +69,7 @@ class Main extends Module {
     /** Video port */
     val video = Output(new VideoIO)
     /** DDR port */
-    val ddr = DDRIO()
+    val ddr = DDRIO(Config.ddrConfig)
     /** Download port */
     val download = DownloadIO()
     /** RGB output */
@@ -95,10 +95,14 @@ class Main extends Module {
   val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)
   when(Util.rising(vBlank)) { swapReg := !swapReg }
 
+  // DDR memory controller
+  val ddr = Module(new DDR(Config.ddrConfig))
+  ddr.io.ddr <> io.ddr
+
   // DDR arbiter
   val arbiter = Module(new DDRArbiter)
-  io.download <> arbiter.io.download
-  io.ddr <> arbiter.io.ddr
+  arbiter.io.download <> io.download
+  arbiter.io.ddr <> ddr.io.mem
 
   // Video DMA
   val videoDMA = Module(new VideoDMA(
@@ -183,8 +187,7 @@ class Main extends Module {
   cave.io.tileRom.mapAddr(_+Config.TILE_ROM_OFFSET.U) <> arbiter.io.tileRom
   cave.io.video := videoTiming.io
   cave.io.frameBuffer <> fbDMA.io.frameBuffer
-  io.audio <> cave.io.audio
-
+  cave.io.audio <> io.audio
   // Start the frame buffer DMA when a frame is complete
   fbDMA.io.start := cave.io.frameDone
 }

@@ -44,13 +44,6 @@ import chisel3._
 import chisel3.util._
 import axon.util.Counter
 
-/** An interface for reading and writing to DDR memory. */
-class DDRIO protected extends AsyncReadWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH) with BurstIO
-
-object DDRIO {
-  def apply() = new DDRIO
-}
-
 /**
  * A DDR memory arbiter.
  *
@@ -71,7 +64,7 @@ class DDRArbiter extends Module {
     /** Frame buffer from DDR port */
     val fbFromDDR = Flipped(BurstReadMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH))
     /** DDR port */
-    val ddr = DDRIO()
+    val ddr = BurstReadWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
     /** Debug port */
     val debug = new Bundle {
       val idle = Output(Bool())
@@ -110,32 +103,19 @@ class DDRArbiter extends Module {
   val tileRomAddrReg = RegInit(0.U)
   val tileRomBurstCountReg = RegInit(0.U(8.W))
 
+  // Control signals
+  val progRomBurstDone = stateReg === State.progRomWait && io.ddr.burstDone
+  val soundRomBurstDone = stateReg === State.soundRomWait && io.ddr.burstDone
+  val tileRomBurstDone = stateReg === State.tileRomWait && io.ddr.burstDone
+  val fbFromDDRBurstDone = stateReg === State.fbFromDDR && io.ddr.burstDone
+  val fbToDDRBurstDone = stateReg === State.fbToDDR && io.ddr.burstDone
+
   // Set download data and byte mask
   val downloadData = Cat(Seq.tabulate(4) { _ => io.download.dout })
   val downloadMask = 3.U << io.download.addr(2, 0)
 
   // Counters
   val (rrCounterValue, _) = Counter.static(4, enable = stateReg === State.idle && nextState =/= State.idle)
-  val (progRomBurstValue, progRomBurstDone) = Counter.static(DDRArbiter.CACHE_BURST_LENGTH,
-    enable = stateReg === State.progRomWait && io.ddr.valid,
-    reset = stateReg === State.progRomReq
-  )
-  val (soundRomBurstValue, soundRomBurstDone) = Counter.static(DDRArbiter.CACHE_BURST_LENGTH,
-    enable = stateReg === State.soundRomWait && io.ddr.valid,
-    reset = stateReg === State.soundRomReq
-  )
-  val (tileRomBurstValue, tileRomBurstDone) = Counter.dynamic(tileRomBurstCountReg,
-    enable = stateReg === State.tileRomWait && io.ddr.valid,
-    reset = stateReg === State.tileRomReq
-  )
-  val (fbFromDDRBurstValue, fbFromDDRBurstDone) = Counter.dynamic(io.fbFromDDR.burstLength,
-    enable = stateReg === State.fbFromDDR && io.ddr.valid,
-    reset = stateReg =/= State.fbFromDDR
-  )
-  val (fbToDDRBurstValue, fbToDDRBurstDone) = Counter.dynamic(io.fbToDDR.burstLength,
-    enable = stateReg === State.fbToDDR && io.fbToDDR.wr && !io.ddr.waitReq,
-    reset = stateReg =/= State.fbToDDR
-  )
 
   // Shift the DDR output data into the cache data register
   when(io.ddr.valid) { cacheDataReg := cacheDataReg.tail :+ io.ddr.dout }
@@ -227,7 +207,7 @@ class DDRArbiter extends Module {
     }
 
     is(State.progRomWait) {
-      when(progRomBurstDone) { nextState := State.idle }
+      when(io.ddr.burstDone) { nextState := State.idle }
     }
 
     is(State.soundRomReq) {
@@ -235,7 +215,7 @@ class DDRArbiter extends Module {
     }
 
     is(State.soundRomWait) {
-      when(soundRomBurstDone) { nextState := State.idle }
+      when(io.ddr.burstDone) { nextState := State.idle }
     }
 
     is(State.tileRomReq) {
@@ -243,15 +223,15 @@ class DDRArbiter extends Module {
     }
 
     is(State.tileRomWait) {
-      when(tileRomBurstDone) { nextState := State.idle }
+      when(io.ddr.burstDone) { nextState := State.idle }
     }
 
     is(State.fbFromDDR) {
-      when(fbFromDDRBurstDone) { nextState := State.idle }
+      when(io.ddr.burstDone) { nextState := State.idle }
     }
 
     is(State.fbToDDR) {
-      when(fbToDDRBurstDone) { nextState := State.idle }
+      when(io.ddr.burstDone) { nextState := State.idle }
     }
 
     is(State.download) {
@@ -285,7 +265,10 @@ class DDRArbiter extends Module {
     State.fbFromDDR -> io.fbFromDDR.burstLength,
     State.fbToDDR -> io.fbToDDR.burstLength
   ))
-  io.ddr.mask := Mux(stateReg === State.download, downloadMask, 0xff.U)
+  io.ddr.mask := MuxLookup(stateReg, 0.U, Seq(
+    State.download -> downloadMask,
+    State.fbToDDR -> io.fbToDDR.mask
+  ))
   io.ddr.din := MuxLookup(stateReg, 0.U, Seq(
     State.fbToDDR -> io.fbToDDR.din,
     State.download -> downloadData
@@ -294,15 +277,15 @@ class DDRArbiter extends Module {
   io.progRom.dout := cacheDataReg.asUInt
   io.soundRom.valid := RegNext(soundRomBurstDone, false.B)
   io.soundRom.dout := cacheDataReg.asUInt
-  io.tileRom.burstDone := RegNext(tileRomBurstDone, false.B)
+  io.tileRom.burstDone := tileRomBurstDone
   io.tileRom.waitReq := Mux(stateReg === State.tileRomWait, io.ddr.waitReq, true.B)
   io.tileRom.valid := Mux(stateReg === State.tileRomWait, io.ddr.valid, false.B)
   io.tileRom.dout := io.ddr.dout
-  io.fbFromDDR.burstDone := RegNext(fbFromDDRBurstDone, false.B)
+  io.fbFromDDR.burstDone := fbFromDDRBurstDone
   io.fbFromDDR.waitReq := Mux(stateReg === State.fbFromDDR, io.ddr.waitReq, true.B)
   io.fbFromDDR.valid := Mux(stateReg === State.fbFromDDR, io.ddr.valid, false.B)
   io.fbFromDDR.dout := io.ddr.dout
-  io.fbToDDR.burstDone := RegNext(fbToDDRBurstDone, false.B)
+  io.fbToDDR.burstDone := fbToDDRBurstDone
   io.fbToDDR.waitReq := Mux(stateReg === State.fbToDDR, io.ddr.waitReq, true.B)
   io.download.waitReq := Mux(stateReg === State.download, io.download.wr && io.ddr.waitReq, io.download.wr)
   io.debug.idle := stateReg === State.idle
@@ -320,7 +303,7 @@ class DDRArbiter extends Module {
   io.debug.fbToDDR := stateReg === State.fbToDDR
   io.debug.download := stateReg === State.download
 
-  printf(p"DDRArbiter(state: $stateReg, nextState: $nextState, progRom: $progRomBurstValue ($progRomBurstDone), progRomValid: ${io.progRom.valid}, tileRom: $tileRomBurstValue ($tileRomBurstDone), tileRomValid: ${io.tileRom.valid}, fbFromDDR: $fbFromDDRBurstValue ($fbFromDDRBurstDone), fbFromDDRValid: ${io.fbFromDDR.valid}, fbToDDR: $fbToDDRBurstValue ($fbToDDRBurstDone), fbToDDRWaitReq: ${io.fbToDDR.waitReq}, download: 0x${Hexadecimal(downloadData)} (0x${Hexadecimal(downloadMask)})\n")
+  printf(p"DDRArbiter(state: $stateReg, nextState: $nextState, burstDone: ${io.ddr.burstDone} download: 0x${Hexadecimal(downloadData)} (0x${Hexadecimal(downloadMask)})\n")
 }
 
 object DDRArbiter {
