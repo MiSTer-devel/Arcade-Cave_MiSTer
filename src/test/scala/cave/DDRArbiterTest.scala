@@ -181,13 +181,14 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
       waitForProgRomWait(dut)
       dut.io.ddr.rd.expect(false.B)
       0.to(3).foreach { n =>
-        if (n == 3) dut.io.ddr.burstDone.poke(true.B)
         dut.io.ddr.valid.poke(true.B)
         dut.io.ddr.dout.poke(n.U)
+        dut.io.progRom.valid.expect(true.B)
+        dut.io.progRom.dout.expect(n.U)
         dut.clock.step()
       }
-      dut.io.progRom.valid.expect(true.B)
-      dut.io.progRom.dout.expect("h0000000000000003000000000000000200000000000000010000000000000000".U)
+      dut.io.ddr.burstDone.poke(true.B)
+      dut.io.progRom.burstDone.expect(true.B)
     }
   }
 
@@ -285,6 +286,7 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
     test(new DDRArbiter) { dut =>
       dut.io.fbToDDR.wr.poke(true.B)
       dut.io.fbToDDR.addr.poke(1.U)
+      dut.io.fbToDDR.mask.poke(0xff.U)
       dut.io.fbToDDR.burstLength.poke(4.U)
       waitForFbToDDR(dut)
       dut.io.ddr.wr.expect(true.B)

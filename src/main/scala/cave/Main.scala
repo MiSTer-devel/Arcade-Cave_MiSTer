@@ -130,28 +130,17 @@ class Main extends Module {
   videoFIFO.io.pixelData <> videoDMA.io.pixelData
   io.rgb := videoFIFO.io.rgb
 
-  // Data freezer
-  val progRomFreezer = Module(new DataFreezer(
-    addrWidth = Config.CACHE_ADDR_WIDTH,
-    dataWidth = Config.CACHE_DATA_WIDTH
-  ))
-  progRomFreezer.io.targetClock := io.cpuClock
-  progRomFreezer.io.targetReset := io.cpuReset
-  progRomFreezer.io.out <> arbiter.io.progRom
-
   // Cache memory
-  //
-  // The cache memory runs in the CPU clock domain.
-  val progRomCache = withClockAndReset(io.cpuClock, io.cpuReset) {
-    Module(new CacheMem(
-      inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
-      inDataWidth = Config.PROG_ROM_DATA_WIDTH,
-      outAddrWidth = Config.CACHE_ADDR_WIDTH,
-      outDataWidth = Config.CACHE_DATA_WIDTH,
-      depth = 512
-    ))
-  }
-  progRomCache.io.out.mapAddr(_+Config.PROG_ROM_OFFSET.U) <> progRomFreezer.io.in
+  val progRomCache = Module(new axon.mem.CacheMem(CacheConfig(
+    inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
+    inDataWidth = Config.PROG_ROM_DATA_WIDTH,
+    outAddrWidth = Config.ddrConfig.addrWidth,
+    outDataWidth = Config.ddrConfig.dataWidth,
+    lineWidth = 4,
+    depth = 512,
+    offset = Config.PROG_ROM_OFFSET
+  )))
+  progRomCache.io.out <> arbiter.io.progRom
 
   // Data freezer
   val soundRomFreezer = Module(new DataFreezer(
@@ -181,14 +170,12 @@ class Main extends Module {
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.player := io.player
-  // Convert program ROM address to a byte address
-  cave.io.progRom.mapAddr(_ ## 0.U) <> progRomCache.io.in
+  cave.io.progRom <> axon.DataFreezer.freeze(io.cpuClock) { progRomCache.io.in }.asAsyncReadMemIO
   cave.io.soundRom <> soundRomCache.io.in
   cave.io.tileRom.mapAddr(_+Config.TILE_ROM_OFFSET.U) <> arbiter.io.tileRom
   cave.io.video := videoTiming.io
   cave.io.frameBuffer <> fbDMA.io.frameBuffer
   cave.io.audio <> io.audio
-  // Start the frame buffer DMA when a frame is complete
   fbDMA.io.start := cave.io.frameDone
 }
 

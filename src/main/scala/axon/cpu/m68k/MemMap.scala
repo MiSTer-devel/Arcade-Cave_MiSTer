@@ -124,7 +124,7 @@ class MemMap(cpu: CPUIO) {
      *
      * @param mem The memory port.
      */
-    def readMem(mem: ValidReadMemIO): Unit = readMemT(mem)(identity)
+    def readMem(mem: AsyncReadMemIO): Unit = readMemT(mem)(identity)
 
     /**
      * Maps an address range to the given read-only memory port, with an address transform.
@@ -132,9 +132,9 @@ class MemMap(cpu: CPUIO) {
      * @param mem The memory port.
      * @param f   The address transform function.
      */
-    def readMemT(mem: ValidReadMemIO)(f: UInt => UInt): Unit = {
+    def readMemT(mem: AsyncReadMemIO)(f: UInt => UInt): Unit = {
       mem.rd := cs && readStrobe
-      mem.addr := f(cpu.addr)
+      mem.addr := f(cpu.addr ## 0.U) // FIXME: don't apply byte addressing here!
       when(cs && cpu.rw && mem.valid) {
         dinReg := mem.dout
         dtackReg := true.B
