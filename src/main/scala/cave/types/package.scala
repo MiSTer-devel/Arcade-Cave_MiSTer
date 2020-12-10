@@ -41,11 +41,6 @@ import axon.mem._
 import chisel3._
 
 package object types {
-  /** Cache IO */
-  class CacheIO extends ValidReadMemIO(Config.CACHE_ADDR_WIDTH, Config.CACHE_DATA_WIDTH) {
-    override def cloneType: this.type = new CacheIO().asInstanceOf[this.type]
-  }
-
   /** Frame buffer IO */
   class FrameBufferIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH-2, Config.FRAME_BUFFER_DATA_WIDTH*4) {
     override def cloneType: this.type = new FrameBufferIO().asInstanceOf[this.type]
