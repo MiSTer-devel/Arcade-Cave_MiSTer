@@ -102,17 +102,14 @@ class DDR(config: DDRConfig) extends Module {
     write -> State.writeWait
   ))
 
+  // Connect I/O ports
+  io.mem <> io.ddr
+
   // Outputs
   io.mem.burstDone := burstCounterDone
-  io.mem.waitReq := io.ddr.waitReq
-  io.mem.valid := io.ddr.valid
   io.ddr.burstLength := burstLength
   io.ddr.rd := io.mem.rd && stateReg =/= State.readWait
   io.ddr.wr := io.mem.wr || stateReg === State.writeWait
-  io.ddr.addr := io.mem.addr
-  io.ddr.mask := io.mem.mask
-  io.ddr.din := io.mem.din
-  io.mem.dout := io.ddr.dout
   io.debug.burstCounter := burstCounter
 
   printf(p"DDR(state: $stateReg, counter: $burstCounter ($burstCounterDone)\n")
