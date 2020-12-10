@@ -177,7 +177,7 @@ class Cave extends Module {
 
     // YMZ280B
     val ymz = Module(new YMZ280B(Config.ymzConfig))
-    io.soundRom <> ymz.io.mem
+    ymz.io.mem <> io.soundRom
     io.audio <> RegEnable(ymz.io.audio.bits, ymz.io.audio.valid)
 
     // Interrupt acknowledge
