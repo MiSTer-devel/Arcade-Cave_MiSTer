@@ -35,48 +35,42 @@
  *  SOFTWARE.
  */
 
-package cave
+package axon.mem
 
-import axon.mem._
 import chisel3._
 
-package object types {
-  /** Cache IO */
-  class CacheIO extends ValidReadMemIO(Config.CACHE_ADDR_WIDTH, Config.CACHE_DATA_WIDTH) {
-    override def cloneType: this.type = new CacheIO().asInstanceOf[this.type]
-  }
+/** Represents a memory request. */
+class MemRequest[S <: Data, T <: Data](s: S, t: T) extends Bundle {
+  /** Read enable */
+  val rd = Output(Bool())
+  /** Write enable */
+  val wr = Output(Bool())
+  /** Address bus */
+  val addr = Output(s)
+  /** Data bus */
+  val data = Output(t)
 
-  /** Frame buffer IO */
-  class FrameBufferIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH-2, Config.FRAME_BUFFER_DATA_WIDTH*4) {
-    override def cloneType: this.type = new FrameBufferIO().asInstanceOf[this.type]
-  }
+  /** Returns true if the read or write enable flag is asserted */
+  def valid: Bool = rd || wr
 
-  /** Player IO */
-  class PlayerIO extends Bundle {
-    /** Player 1 input */
-    val player1 = Input(Bits(9.W))
-    /** Player 2 input */
-    val player2 = Input(Bits(9.W))
-    /** Pause flag */
-    val pause = Input(Bool())
-  }
+  override def cloneType: this.type = new MemRequest(s, t).asInstanceOf[this.type]
+}
 
-  /** Priority IO */
-  class PriorityIO extends Bundle {
-    /** Write-only port */
-    val write = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_PRIO_WIDTH)
-    /** Read-only port */
-    val read = ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_PRIO_WIDTH)
-  }
-
-  /** Program ROM IO */
-  class ProgRomIO extends AsyncReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH)
-
-  /** Sound ROM IO */
-  class SoundRomIO extends ValidReadMemIO(Config.SOUND_ROM_ADDR_WIDTH, Config.SOUND_ROM_DATA_WIDTH)
-
-  /** Tile ROM IO */
-  class TileRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH) {
-    override def cloneType: this.type = new TileRomIO().asInstanceOf[this.type]
+object MemRequest {
+  /**
+   * Constructs a memory request.
+   *
+   * @param rd Read enable.
+   * @param wr Write enable.
+   * @param addr The address value.
+   * @param data The data value.
+   */
+  def apply[S <: Data, T <: Data](rd: Bool, wr: Bool, addr: S, data: T): MemRequest[S, T] = {
+    val req = Wire(new MemRequest(chiselTypeOf(addr), chiselTypeOf(data)))
+    req.rd := rd
+    req.wr := wr
+    req.addr := addr
+    req.data := data
+    req
   }
 }

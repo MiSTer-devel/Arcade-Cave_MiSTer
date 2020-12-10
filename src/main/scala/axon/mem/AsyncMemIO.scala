@@ -57,6 +57,20 @@ trait ValidIO {
  */
 class AsyncReadMemIO protected (addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth, dataWidth) with WaitIO with ValidIO {
   override def cloneType: this.type = new AsyncReadMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  override def mapAddr(f: UInt => UInt): AsyncReadMemIO = {
+    val mem = Wire(chiselTypeOf(this))
+    mem.rd := this.rd
+    this.valid := mem.valid
+    mem.addr := f(this.addr)
+    this.dout := mem.dout
+    mem
+  }
 }
 
 object AsyncReadMemIO {
@@ -94,6 +108,7 @@ class AsyncReadWriteMemIO protected (addrWidth: Int, dataWidth: Int) extends Rea
     wire.waitReq := waitReq
     wire.valid := valid
     addr := wire.addr
+    mask := 0.U
     din := 0.U
     wire.dout := dout
     wire

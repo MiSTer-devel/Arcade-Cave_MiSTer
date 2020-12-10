@@ -3,7 +3,7 @@
     <module name="cave-chisel" />
     <option name="allowRunningInParallel" value="false" />
     <option name="selectedOptions">
-      <set />
+      <list />
     </option>
     <option name="testKind" value="Regular expression" />
     <option name="classRegexps">
@@ -19,6 +19,17 @@
     </option>
     <option name="testsBuf">
       <map>
+        <entry key="axon.DataFreezerTest">
+          <value>
+            <set>
+              <option value="read should latch a read request" />
+              <option value="read should latch valid output data" />
+              <option value="valid should latch the valid signal" />
+              <option value="wait should latch the wait signal" />
+              <option value="write should latch a write request" />
+            </set>
+          </value>
+        </entry>
         <entry key="axon.UtilTest">
           <value>
             <set>
@@ -34,6 +45,83 @@
               <option value="rotateRight should rotate the bits to the right" />
               <option value="sync should generate a sync pulse for rising edges of the target clock" />
               <option value="toggle should toggle a bit" />
+            </set>
+          </value>
+        </entry>
+        <entry key="axon.mem.CacheMemTest">
+          <value>
+            <set>
+              <option value="FSM should move to the check state after latching a cache entry" />
+              <option value="FSM should move to the evict state after a dirty write hit" />
+              <option value="FSM should move to the fill state after a read miss" />
+              <option value="FSM should move to the fill state after a write miss" />
+              <option value="FSM should move to the fill state after an eviction" />
+              <option value="FSM should move to the latch state after a request" />
+              <option value="FSM should move to the merge state after a line fill" />
+              <option value="FSM should return to the idle state after a read hit" />
+              <option value="FSM should return to the idle state after a write hit" />
+              <option value="FSM should return to the idle state after writing a cache entry" />
+              <option value="FSM should return to the latch state after a read hit (chained)" />
+              <option value="FSM should return to the latch state after a write hit (chained)" />
+              <option value="FSM should return to the latch state after writing a cache entry (chained)" />
+              <option value="data width ratios should read a word (16:16)" />
+              <option value="data width ratios should read a word (16:8)" />
+              <option value="data width ratios should read a word (8:16)" />
+              <option value="data width ratios should read a word (8:8)" />
+              <option value="idle should deassert the wait signal" />
+              <option value="read should assert the wait signal" />
+              <option value="read should evict a dirty cache entry before a line fill" />
+              <option value="read should fill a cache line during a miss" />
+              <option value="read should fill a cache line during a miss (wrapping)" />
+              <option value="read should read from the cache during a hit" />
+              <option value="write should assert the wait signal" />
+              <option value="write should evict a dirty cache entry before writing to the cache" />
+              <option value="write should fill a cache line during a miss" />
+              <option value="write should write to the cache during a hit" />
+            </set>
+          </value>
+        </entry>
+        <entry key="axon.mem.DDRTest">
+          <value>
+            <set>
+              <option value="read should hold the burst counter when the wait signal is asserted" />
+              <option value="read should latch the burst length" />
+              <option value="read should read from DDR memory" />
+              <option value="write should hold the burst counter when the wait signal is asserted" />
+              <option value="write should latch the burst length" />
+              <option value="write should write to DDR memory" />
+            </set>
+          </value>
+        </entry>
+        <entry key="axon.mem.SDRAMTest">
+          <value>
+            <set>
+              <option value="FSM should move to the active state" />
+              <option value="FSM should move to the idle state after setting the mode" />
+              <option value="FSM should move to the mode state after initializing" />
+              <option value="FSM should move to the read state" />
+              <option value="FSM should move to the refresh state" />
+              <option value="FSM should move to the write state" />
+              <option value="FSM should return to the idle state from the read state" />
+              <option value="FSM should return to the idle state from the refresh state" />
+              <option value="FSM should return to the idle state from the write state" />
+              <option value="idle should deassert the wait signal" />
+              <option value="idle should perform a NOP" />
+              <option value="initialize should initialize the SDRAM" />
+              <option value="read should assert the burst done signal" />
+              <option value="read should assert the valid signal" />
+              <option value="read should assert the wait signal" />
+              <option value="read should read from the SDRAM (burst=1)" />
+              <option value="read should read from the SDRAM (burst=2)" />
+              <option value="read should read from the SDRAM (burst=4)" />
+              <option value="read should read from the SDRAM (burst=8)" />
+              <option value="refresh should assert the wait signal when a request is being processed" />
+              <option value="write should assert the burst done signal" />
+              <option value="write should assert the wait signal" />
+              <option value="write should write to the SDRAM (burst=1)" />
+              <option value="write should write to the SDRAM (burst=2)" />
+              <option value="write should write to the SDRAM (burst=4)" />
+              <option value="write should write to the SDRAM (burst=8)" />
             </set>
           </value>
         </entry>
