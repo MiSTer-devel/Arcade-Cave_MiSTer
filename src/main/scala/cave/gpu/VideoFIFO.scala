@@ -35,10 +35,11 @@
  *  SOFTWARE.
  */
 
-package cave
+package cave.gpu
 
 import axon.gpu.VideoIO
 import axon.types.RGB
+import cave.Config
 import chisel3._
 import chisel3.util._
 

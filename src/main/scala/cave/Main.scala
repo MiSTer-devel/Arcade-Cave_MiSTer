@@ -43,6 +43,7 @@ import axon.mem._
 import axon.snd.Audio
 import axon.types._
 import cave.dma._
+import cave.gpu.VideoFIFO
 import cave.types._
 import chisel3._
 import chisel3.util._
