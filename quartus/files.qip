@@ -2,9 +2,10 @@ set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
 set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
 
 set_global_assignment -name CDF_FILE jtag.cdf
+set_global_assignment -name QIP_FILE rtl/fx68k/fx68k.qip
 set_global_assignment -name QIP_FILE rtl/ip/tile_fifo.qip
 set_global_assignment -name QIP_FILE rtl/ip/video_fifo.qip
-set_global_assignment -name QIP_FILE rtl/fx68k/fx68k.qip
+set_global_assignment -name SDC_FILE rtl/sdram.sdc
 set_global_assignment -name SYSTEMVERILOG_FILE cave.sv
 set_global_assignment -name VERILOG_FILE rtl/ChiselTop.v
 set_global_assignment -name VHDL_FILE rtl/cave/cave_pkg.vhd
