@@ -39,7 +39,7 @@ package cave.dma
 
 import axon.mem.BurstReadMemIO
 import axon.util.Counter
-import cave.DDRArbiter
+import cave.Config
 import chisel3._
 import chisel3.util._
 
@@ -60,9 +60,9 @@ class VideoDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
     /** Done flag */
     val done = Output(Bool())
     /** Pixel data port */
-    val pixelData = DecoupledIO(Bits(DDRArbiter.DATA_WIDTH.W))
+    val pixelData = DecoupledIO(Bits(Config.DDR_DATA_WIDTH.W))
     /** DDR port */
-    val ddr = BurstReadMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
+    val ddr = BurstReadMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH)
   })
 
   // Registers

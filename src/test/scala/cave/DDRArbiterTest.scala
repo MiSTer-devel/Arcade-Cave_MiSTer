@@ -204,13 +204,14 @@ class DDRArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers w
       waitForSoundRomWait(dut)
       dut.io.ddr.rd.expect(false.B)
       0.to(3).foreach { n =>
-        if (n == 3) dut.io.ddr.burstDone.poke(true.B)
         dut.io.ddr.valid.poke(true.B)
         dut.io.ddr.dout.poke(n.U)
+        dut.io.soundRom.valid.expect(true.B)
+        dut.io.soundRom.dout.expect(n.U)
         dut.clock.step()
       }
-      dut.io.soundRom.valid.expect(true.B)
-      dut.io.soundRom.dout.expect("h0000000000000003000000000000000200000000000000010000000000000000".U)
+      dut.io.ddr.burstDone.poke(true.B)
+      dut.io.soundRom.burstDone.expect(true.B)
     }
   }
 

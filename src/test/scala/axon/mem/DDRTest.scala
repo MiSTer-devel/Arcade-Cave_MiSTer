@@ -42,7 +42,7 @@ import chiseltest._
 import org.scalatest._
 
 trait DDRTestHelpers {
-  protected val ddrConfig = DDRConfig()
+  protected val ddrConfig = DDRConfig(addrWidth = 16, dataWidth = 16)
 
   protected def mkDDR(config: DDRConfig = ddrConfig) = new DDR(config)
 }

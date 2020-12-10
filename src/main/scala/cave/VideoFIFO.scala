@@ -59,7 +59,7 @@ class VideoFIFO extends Module {
     /** Video port */
     val video = Input(new VideoIO)
     /** Pixel data port */
-    val pixelData = Flipped(DecoupledIO(Bits(DDRArbiter.DATA_WIDTH.W)))
+    val pixelData = Flipped(DecoupledIO(Bits(Config.DDR_DATA_WIDTH.W)))
     /** RGB output */
     val rgb = Output(new RGB(Config.SCREEN_BITS_PER_CHANNEL))
   })

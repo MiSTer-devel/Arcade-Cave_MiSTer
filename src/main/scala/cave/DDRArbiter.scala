@@ -54,17 +54,17 @@ class DDRArbiter extends Module {
     /** Download port */
     val download = DownloadIO()
     /** Program ROM port */
-    val progRom = Flipped(BurstReadWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
+    val progRom = Flipped(BurstReadWriteMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH))
     /** Sound ROM port */
-    val soundRom = Flipped(new CacheIO)
+    val soundRom = Flipped(BurstReadWriteMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH))
     /** Tile ROM port */
     val tileRom = Flipped(new TileRomIO)
     /** Frame buffer to DDR port */
-    val fbToDDR = Flipped(BurstWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH))
+    val fbToDDR = Flipped(BurstWriteMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH))
     /** Frame buffer from DDR port */
-    val fbFromDDR = Flipped(BurstReadMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH))
+    val fbFromDDR = Flipped(BurstReadMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH))
     /** DDR port */
-    val ddr = BurstReadWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
+    val ddr = BurstReadWriteMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH)
     /** Debug port */
     val debug = new Bundle {
       val idle = Output(Bool())
@@ -94,12 +94,12 @@ class DDRArbiter extends Module {
 
   // Registers
   val stateReg = RegNext(nextState, State.idle)
-  val cacheDataReg = Reg(Vec(DDRArbiter.CACHE_BURST_LENGTH, Bits(DDRArbiter.DATA_WIDTH.W)))
   val progRomReqReg = RegInit(false.B)
   val progRomAddrReg = RegInit(0.U)
   val progRomBurstCountReg = RegInit(0.U(8.W))
   val soundRomReqReg = RegInit(false.B)
   val soundRomAddrReg = RegInit(0.U)
+  val soundRomBurstCountReg = RegInit(0.U(8.W))
   val tileRomReqReg = RegInit(false.B)
   val tileRomAddrReg = RegInit(0.U)
   val tileRomBurstCountReg = RegInit(0.U(8.W))
@@ -118,9 +118,6 @@ class DDRArbiter extends Module {
   // Counters
   val (rrCounterValue, _) = Counter.static(4, enable = stateReg === State.idle && nextState =/= State.idle)
 
-  // Shift the DDR output data into the cache data register
-  when(io.ddr.valid) { cacheDataReg := cacheDataReg.tail :+ io.ddr.dout }
-
   // Latch program ROM requests
   when(io.progRom.rd) {
     progRomReqReg := true.B
@@ -134,6 +131,7 @@ class DDRArbiter extends Module {
   when(io.soundRom.rd) {
     soundRomReqReg := true.B
     soundRomAddrReg := io.soundRom.addr
+    soundRomBurstCountReg := io.soundRom.burstLength
   }.elsewhen(soundRomBurstDone) {
     soundRomReqReg := false.B
   }
@@ -262,7 +260,7 @@ class DDRArbiter extends Module {
   ))
   io.ddr.burstLength := MuxLookup(stateReg, 1.U, Seq(
     State.progRomReq -> progRomBurstCountReg,
-    State.soundRomReq -> DDRArbiter.CACHE_BURST_LENGTH.U,
+    State.soundRomReq -> soundRomBurstCountReg,
     State.tileRomReq -> tileRomBurstCountReg,
     State.fbFromDDR -> io.fbFromDDR.burstLength,
     State.fbToDDR -> io.fbToDDR.burstLength
@@ -279,8 +277,10 @@ class DDRArbiter extends Module {
   io.progRom.valid := Mux(stateReg === State.progRomWait, io.ddr.valid, false.B)
   io.progRom.burstDone := progRomBurstDone
   io.progRom.dout := io.ddr.dout
-  io.soundRom.valid := RegNext(soundRomBurstDone, false.B)
-  io.soundRom.dout := cacheDataReg.asUInt
+  io.soundRom.waitReq := Mux(stateReg === State.soundRomWait, io.ddr.waitReq, false.B)
+  io.soundRom.valid := Mux(stateReg === State.soundRomWait, io.ddr.valid, false.B)
+  io.soundRom.burstDone := soundRomBurstDone
+  io.soundRom.dout := io.ddr.dout
   io.tileRom.waitReq := Mux(stateReg === State.tileRomWait, io.ddr.waitReq, true.B)
   io.tileRom.valid := Mux(stateReg === State.tileRomWait, io.ddr.valid, false.B)
   io.tileRom.burstDone := tileRomBurstDone
@@ -308,13 +308,4 @@ class DDRArbiter extends Module {
   io.debug.download := stateReg === State.download
 
   printf(p"DDRArbiter(state: $stateReg, nextState: $nextState, burstDone: ${io.ddr.burstDone} download: 0x${Hexadecimal(downloadData)} (0x${Hexadecimal(downloadMask)})\n")
-}
-
-object DDRArbiter {
-  /** The width of the address bus */
-  val ADDR_WIDTH = 32
-  /** The width of the data bus */
-  val DATA_WIDTH = 64
-  /** The length of the cache burst */
-  val CACHE_BURST_LENGTH = 4
 }

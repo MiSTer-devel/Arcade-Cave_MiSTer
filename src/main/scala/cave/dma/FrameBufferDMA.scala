@@ -41,7 +41,7 @@ import axon.Util
 import axon.mem.BurstWriteMemIO
 import axon.util.Counter
 import cave.types.FrameBufferIO
-import cave.{Config, DDRArbiter}
+import cave.Config
 import chisel3._
 import chisel3.util._
 
@@ -66,7 +66,7 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
     /** Frame buffer port */
     val frameBuffer = new FrameBufferIO
     /** DDR port */
-    val ddr = BurstWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH)
+    val ddr = BurstWriteMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH)
   })
 
   // Registers
@@ -91,7 +91,7 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
   }
 
   // Pad the pixel data, so that four 15-bit pixels pack into a 64-bit DDR word
-  val pixelData = Util.padWords(io.frameBuffer.dout, 4, Config.FRAME_BUFFER_DATA_WIDTH, DDRArbiter.DATA_WIDTH/4)
+  val pixelData = Util.padWords(io.frameBuffer.dout, 4, Config.FRAME_BUFFER_DATA_WIDTH, Config.DDR_DATA_WIDTH/4)
 
   // Toggle the busy register
   when(io.start) { busyReg := true.B }.elsewhen(burstCounterDone) { busyReg := false.B }

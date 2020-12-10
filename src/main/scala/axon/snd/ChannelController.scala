@@ -38,7 +38,7 @@
 package axon.snd
 
 import axon.Util
-import axon.mem.ValidReadMemIO
+import axon.mem.AsyncReadMemIO
 import axon.util.Counter
 import chisel3._
 import chisel3.util._
@@ -64,7 +64,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
     /** Audio output */
     val audio = ValidIO(new Audio(config.sampleWidth))
     /** External memory port */
-    val mem = ValidReadMemIO(config.memAddrWidth, config.memDataWidth)
+    val mem = AsyncReadMemIO(config.memAddrWidth, config.memDataWidth)
     /** Debug port */
     val debug = new Bundle {
       val init = Output(Bool())
