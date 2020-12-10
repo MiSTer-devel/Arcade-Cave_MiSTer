@@ -17,7 +17,6 @@ set_global_assignment -name VHDL_FILE rtl/cave/mem/dual_port_ram.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/mem/eeprom_93c46.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/mem/single_port_ram.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/mem/true_dual_port_ram.vhd
-set_global_assignment -name VHDL_FILE rtl/data_freezer.vhd
 set_global_assignment -name VHDL_FILE rtl/debug/debug_display.vhd
 set_global_assignment -name VHDL_FILE rtl/debug/font_rom.vhd
 set_global_assignment -name VHDL_FILE rtl/log_pkg.vhd
