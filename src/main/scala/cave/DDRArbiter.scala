@@ -54,17 +54,17 @@ class DDRArbiter extends Module {
     /** Download port */
     val download = DownloadIO()
     /** Program ROM port */
-    val progRom = Flipped(BurstReadWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
+    val progRom = Flipped(BurstReadWriteMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH))
     /** Sound ROM port */
     val soundRom = Flipped(new CacheIO)
     /** Tile ROM port */
     val tileRom = Flipped(new TileRomIO)
     /** Frame buffer to DDR port */
-    val fbToDDR = Flipped(BurstWriteMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH))
+    val fbToDDR = Flipped(BurstWriteMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH))
     /** Frame buffer from DDR port */
-    val fbFromDDR = Flipped(BurstReadMemIO(DDRArbiter.ADDR_WIDTH, DDRArbiter.DATA_WIDTH))
+    val fbFromDDR = Flipped(BurstReadMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH))
     /** DDR port */
-    val ddr = BurstReadWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
+    val ddr = BurstReadWriteMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH)
     /** Debug port */
     val debug = new Bundle {
       val idle = Output(Bool())

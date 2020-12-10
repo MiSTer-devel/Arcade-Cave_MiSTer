@@ -117,10 +117,15 @@ object Config {
   val VIDEO_REGS_COUNT = 8
   val VIDEO_REGS_GPU_DATA_WIDTH = 128
 
+  /** The width of the DDR address bus */
+  val DDR_ADDR_WIDTH = 32
+  /** The width of the DDR data bus */
+  val DDR_DATA_WIDTH = 64
+
   val FRAME_BUFFER_BPP = 16
   val FRAME_BUFFER_ADDR_WIDTH = 17
   val FRAME_BUFFER_DATA_WIDTH = 15
-  val FRAME_BUFFER_DMA_NUM_WORDS = SCREEN_WIDTH*SCREEN_HEIGHT*FRAME_BUFFER_BPP/DDRArbiter.DATA_WIDTH
+  val FRAME_BUFFER_DMA_NUM_WORDS = SCREEN_WIDTH*SCREEN_HEIGHT*FRAME_BUFFER_BPP/DDR_DATA_WIDTH
   val FRAME_BUFFER_DMA_BURST_LENGTH = 128
   val FRAME_BUFFER_PRIO_WIDTH = 2
 
@@ -144,5 +149,5 @@ object Config {
   )
 
   /** DDR memory configuration */
-  val ddrConfig = DDRConfig()
+  val ddrConfig = DDRConfig(addrWidth = DDR_ADDR_WIDTH, dataWidth = DDR_DATA_WIDTH)
 }
