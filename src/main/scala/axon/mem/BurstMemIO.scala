@@ -120,6 +120,36 @@ object BurstWriteMemIO {
  */
 class BurstReadWriteMemIO protected (addrWidth: Int, dataWidth: Int) extends AsyncReadWriteMemIO(addrWidth, dataWidth) with BurstIO {
   override def cloneType: this.type = new BurstReadWriteMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
+
+  /** Converts the interface to read-only */
+  def asBurstReadMemIO: BurstReadMemIO = {
+    val mem = Wire(Flipped(BurstReadMemIO(addrWidth, dataWidth)))
+    rd := mem.rd
+    wr := false.B
+    burstLength := mem.burstLength
+    mem.waitReq := waitReq
+    mem.valid := valid
+    mem.burstDone := burstDone
+    addr := mem.addr
+    mask := DontCare
+    din := DontCare
+    mem.dout := dout
+    mem
+  }
+
+  /** Converts the interface to write-only */
+  def asBurstWriteMemIO: BurstWriteMemIO = {
+    val mem = Wire(Flipped(BurstWriteMemIO(addrWidth, dataWidth)))
+    rd := false.B
+    wr := mem.wr
+    burstLength := mem.burstLength
+    mem.waitReq := waitReq
+    mem.burstDone := burstDone
+    addr := mem.addr
+    mask := mem.mask
+    din := mem.din
+    mem
+  }
 }
 
 object BurstReadWriteMemIO {
