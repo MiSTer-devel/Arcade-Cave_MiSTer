@@ -43,7 +43,7 @@ import chisel3.util._
 trait BurstIO {
   /** The number of words to transfer during a burst */
   val burstLength = Output(UInt(8.W))
-  /** A flag indicating whether the burst has finished */
+  /** A flag indicating whether a burst has finished */
   val burstDone = Input(Bool())
 }
 
@@ -78,21 +78,21 @@ object BurstReadMemIO {
   def apply(addrWidth: Int, dataWidth: Int) = new BurstReadMemIO(addrWidth, dataWidth)
 
   /**
-   * Multiplexes requests from multiple write-only memory interface to a single write-only memory interfaces. The
-   * request is routed to the first enabled interface.
+   * Multiplexes requests from multiple write-only memory interface to a single write-only memory
+   * interfaces. The request is routed to the first enabled interface.
    *
-   * @param outs A list of enable-interface pairs.
+   * @param in A list of enable-interface pairs.
    */
-  def mux(outs: Seq[(Bool, BurstReadMemIO)]): BurstReadMemIO = {
-    val mem = Wire(chiselTypeOf(outs.head._2))
-    mem.burstLength := MuxCase(0.U, outs.map(a => a._1 -> a._2.burstLength))
-    mem.rd := MuxCase(false.B, outs.map(a => a._1 -> a._2.rd))
-    mem.addr := MuxCase(DontCare, outs.map(a => a._1 -> a._2.addr))
-    outs.foreach { case (selected, out) =>
-      out.burstDone := mem.burstDone && selected
-      out.waitReq := mem.waitReq || !selected
-      out.valid := mem.valid && selected
-      out.dout := mem.dout
+  def mux(in: Seq[(Bool, BurstReadMemIO)]): BurstReadMemIO = {
+    val mem = Wire(chiselTypeOf(in.head._2))
+    mem.rd := MuxCase(false.B, in.map(a => a._1 -> a._2.rd))
+    mem.burstLength := MuxCase(0.U, in.map(a => a._1 -> a._2.burstLength))
+    mem.addr := MuxCase(DontCare, in.map(a => a._1 -> a._2.addr))
+    for ((selected, port) <- in) {
+      port.waitReq := mem.waitReq || !selected
+      port.valid := mem.valid && selected
+      port.burstDone := mem.burstDone && selected
+      port.dout := mem.dout
     }
     mem
   }
@@ -180,4 +180,3 @@ object BurstReadWriteMemIO {
   def mux1H(sel: Seq[Bool], in: Seq[BurstReadWriteMemIO]): BurstReadWriteMemIO = mux1H(sel zip in)
   def mux1H(sel: UInt, in: Seq[BurstReadWriteMemIO]): BurstReadWriteMemIO = mux1H(in.indices.map(sel(_)), in)
 }
-
