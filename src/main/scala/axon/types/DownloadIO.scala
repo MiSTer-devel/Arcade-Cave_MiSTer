@@ -37,7 +37,9 @@
 
 package axon.types
 
+import axon.mem.AsyncReadWriteMemIO
 import chisel3._
+import chisel3.util._
 
 /** A flow control interface used to download data into the core. */
 class DownloadIO private extends Bundle {
@@ -53,6 +55,18 @@ class DownloadIO private extends Bundle {
   val addr = Input(UInt(DownloadIO.ADDR_WIDTH.W))
   /** Data bus */
   val dout = Input(Bits(DownloadIO.DATA_WIDTH.W))
+
+  /** Converts the download interface to an asynchronous read-write memory interface */
+  def asAsyncReadWriteMemIO: AsyncReadWriteMemIO = {
+    val wire = Wire(AsyncReadWriteMemIO(DownloadIO.ADDR_WIDTH, DownloadIO.DATA_WIDTH))
+    wire.rd := false.B
+    wire.wr := cs && wr
+    waitReq := wr && wire.waitReq
+    wire.addr := addr
+    wire.mask := Fill(wire.maskWidth, 1.U)
+    wire.din := dout
+    wire
+  }
 }
 
 object DownloadIO {

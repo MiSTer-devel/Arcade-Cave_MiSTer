@@ -126,6 +126,7 @@ architecture struct of sprite_processor is
     signal burst_counter_max_s          : unsigned(burst_counter_s'length-1 downto 0);
     signal done_bursting_s              : std_logic;
     signal sprite_burst_read_s          : std_logic;
+    signal effective_read_s             : std_logic;
     signal burst_ready_s                : std_logic;
 
     signal read_fifo_s                  : std_logic;
@@ -180,6 +181,7 @@ begin
     -- Issue a burst when ready and there is burst todo and the FIFO is ready
     -- for some feisty bursty data.
     sprite_burst_read_s <= '1' when (burst_todo_s = '1') and (burst_ready_s = '1') and (fifo_prog_full_s = '0') else '0';
+    effective_read_s <= '1' when sprite_burst_read_s = '1' and tileRom_waitReq = '0' else '0';
 
     register_processs : process(clk_i) is
     begin
@@ -205,7 +207,7 @@ begin
                     end if;
                 end if; -- Burst Todo
 
-                if sprite_burst_read_s = '1' then
+                if effective_read_s = '1' then
                     burst_ready_s <= '0';
                 else
                     if tileRom_burstDone = '1' then
@@ -268,7 +270,7 @@ begin
                 if update_sprite_info_s = '1' then
                     burst_counter_s <= (others => '0');
                 else
-                    if sprite_burst_read_s = '1' then
+                    if effective_read_s = '1' then
                         burst_counter_s <= burst_counter_s + 1;
                     end if; -- Increment
                 end if; -- Reset counter
@@ -356,7 +358,7 @@ begin
     -- Outputs --
     -------------
     tileRom_rd <= sprite_burst_read_s;
-    done_o              <= work_done_s;
+    done_o <= work_done_s;
     -- Address by line (1024 lines) and buffer_select says which group of
     -- lines, the first or the second group.
     spriteRam_addr <= resize(sprite_bank_i & sprite_info_counter_s(9 downto 0), spriteRam_addr'length);

@@ -107,6 +107,7 @@ architecture struct of layer_processor is
     signal tile_data_burst_done_s           : std_logic;
     signal update_tile_info_s               : std_logic;
     signal tile_burst_read_s                : std_logic;
+    signal effective_read_s                 : std_logic;
     -- TODO : Replace Magic
     signal work_done_s                      : std_logic;
     signal last_burst_s                     : std_logic;
@@ -160,9 +161,10 @@ begin
 
     -- Issue a burst
     tile_burst_read_s <= '1' when (burst_todo_s = '1') and (burst_ready_s = '1') and (fifo_prog_full_s = '0') else '0';
+    effective_read_s <= '1' when tile_burst_read_s = '1' and tileRom_waitReq = '0' else '0';
 
     -- Indicates the last burst
-    last_burst_s <= '1' when (tile_burst_read_s = '1') and (tile_counter_x_s = tile_counter_max_x_s) and (tile_counter_y_s = tile_counter_max_y_s) else '0';
+    last_burst_s <= '1' when (effective_read_s = '1') and (tile_counter_x_s = tile_counter_max_x_s) and (tile_counter_y_s = tile_counter_max_y_s) else '0';
 
     -- To compute the first tile index - TODO : This is not generic and will
     -- not work for all games, this should be adapted relative to the tile size
@@ -215,12 +217,12 @@ begin
                 if update_tile_info_s = '1' then
                     burst_todo_s <= '1';
                 else
-                    if tile_burst_read_s = '1' then
+                    if effective_read_s = '1' then
                         burst_todo_s <= '0';
                     end if;
                 end if; -- Burst todo
 
-                if tile_burst_read_s = '1' then
+                if effective_read_s = '1' then
                     burst_ready_s <= '0';
                 else
                     if tile_data_burst_done_s = '1' then
@@ -328,7 +330,7 @@ begin
                 tile_counter_y_s <= (others => '0');
             else
                 -- Update the counter when a burst is issued
-                if tile_burst_read_s = '1' then
+                if effective_read_s = '1' then
                     if tile_counter_x_s = tile_counter_max_x_s then
                         tile_counter_x_s <= (others => '0');
                         if tile_counter_y_s = tile_counter_max_y_s then

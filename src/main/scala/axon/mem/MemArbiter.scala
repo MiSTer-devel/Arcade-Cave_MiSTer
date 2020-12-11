@@ -35,41 +35,48 @@
  *  SOFTWARE.
  */
 
-package cave
+package axon.mem
 
-import axon.mem._
 import chisel3._
+import chisel3.util._
 
-package object types {
-  /** Frame buffer IO */
-  class FrameBufferIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH-2, Config.FRAME_BUFFER_DATA_WIDTH*4) {
-    override def cloneType: this.type = new FrameBufferIO().asInstanceOf[this.type]
+/**
+ * The memory arbiter routes memory requests from multiple input ports to a single output port.
+ *
+ * Priority is given to the first input port to make a request.
+ *
+ * @param n         Then number of inputs.
+ * @param addrWidth The width of the address bus.
+ * @param dataWidth The width of the data bus.
+ */
+class MemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
+  val io = IO(new Bundle {
+    /** Input port */
+    val in = Flipped(Vec(n, BurstReadWriteMemIO(addrWidth, dataWidth)))
+    /** Output port */
+    val out = BurstReadWriteMemIO(addrWidth, dataWidth)
+  })
+
+  // Registers
+  val pending = RegInit(false.B)
+  val pendingIndex = RegInit(0.U)
+
+  // Encode input requests to a one-hot encoded value
+  val index = VecInit(PriorityEncoderOH(io.in.map(mem => mem.rd || mem.wr))).asUInt
+
+  // Set the selected index value
+  val selectedIndex = Mux(pending, pendingIndex, index)
+
+  // Toggle the pending registers
+  when(!pending && index.orR && !io.out.waitReq) {
+    pending := true.B
+    pendingIndex := index
+  }.elsewhen(io.out.burstDone) {
+    pending := false.B
   }
 
-  /** Player IO */
-  class PlayerIO extends Bundle {
-    /** Player 1 input */
-    val player1 = Input(Bits(9.W))
-    /** Player 2 input */
-    val player2 = Input(Bits(9.W))
-    /** Pause flag */
-    val pause = Input(Bool())
-  }
+  // Mux the selected input port to the output port
+  io.out <> BurstReadWriteMemIO.mux1H(selectedIndex, io.in)
 
-  /** Priority IO */
-  class PriorityIO extends Bundle {
-    /** Write-only port */
-    val write = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_PRIO_WIDTH)
-    /** Read-only port */
-    val read = ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_PRIO_WIDTH)
-  }
-
-  /** Program ROM IO */
-  class ProgRomIO extends AsyncReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH)
-
-  /** Sound ROM IO */
-  class SoundRomIO extends AsyncReadMemIO(Config.SOUND_ROM_ADDR_WIDTH, Config.SOUND_ROM_DATA_WIDTH)
-
-  /** Tile ROM IO */
-  class TileRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH)
+  printf(p"MemArbiter(selectedIndex: $selectedIndex, pending: $pending)\n")
 }
