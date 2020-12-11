@@ -71,7 +71,5 @@ package object types {
   class SoundRomIO extends AsyncReadMemIO(Config.SOUND_ROM_ADDR_WIDTH, Config.SOUND_ROM_DATA_WIDTH)
 
   /** Tile ROM IO */
-  class TileRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH) {
-    override def cloneType: this.type = new TileRomIO().asInstanceOf[this.type]
-  }
+  class TileRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH)
 }
