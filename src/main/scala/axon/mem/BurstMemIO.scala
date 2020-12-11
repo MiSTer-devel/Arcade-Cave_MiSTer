@@ -154,5 +154,30 @@ class BurstReadWriteMemIO protected (addrWidth: Int, dataWidth: Int) extends Asy
 
 object BurstReadWriteMemIO {
   def apply(addrWidth: Int, dataWidth: Int) = new BurstReadWriteMemIO(addrWidth, dataWidth)
+
+  /**
+   * Multiplexes requests from multiple read-write memory interface to a single read-write memory
+   * interfaces. The request is routed to the first enabled interface.
+   *
+   * @param in A list of enable-interface pairs.
+   */
+  def mux1H(in: Seq[(Bool, BurstReadWriteMemIO)]): BurstReadWriteMemIO = {
+    val mem = Wire(chiselTypeOf(in.head._2))
+    mem.rd := Mux1H(in.map(a => a._1 -> a._2.rd))
+    mem.wr := Mux1H(in.map(a => a._1 -> a._2.wr))
+    mem.burstLength := Mux1H(in.map(a => a._1 -> a._2.burstLength))
+    mem.addr := Mux1H(in.map(a => a._1 -> a._2.addr))
+    mem.mask := Mux1H(in.map(a => a._1 -> a._2.mask))
+    mem.din := Mux1H(in.map(a => a._1 -> a._2.din))
+    for ((selected, port) <- in) {
+      port.waitReq := mem.waitReq || !selected
+      port.valid := mem.valid && selected
+      port.burstDone := mem.burstDone && selected
+      port.dout := mem.dout
+    }
+    mem
+  }
+  def mux1H(sel: Seq[Bool], in: Seq[BurstReadWriteMemIO]): BurstReadWriteMemIO = mux1H(sel zip in)
+  def mux1H(sel: UInt, in: Seq[BurstReadWriteMemIO]): BurstReadWriteMemIO = mux1H(in.indices.map(sel(_)), in)
 }
 
