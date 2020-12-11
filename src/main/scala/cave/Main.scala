@@ -46,8 +46,8 @@ import cave.dma._
 import cave.gpu.VideoFIFO
 import cave.types._
 import chisel3._
-import chisel3.util._
 import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
+import chisel3.util._
 
 /**
  * The top-level module.
@@ -84,13 +84,14 @@ class Main extends Module {
 
   // Video timing
   //
-  // The video timing module runs in the video clock domain. It doesn't use the video reset signal, as the video timing
-  // signals should always be generated. Otherwise, the progress bar won't be visible while the core is loading.
+  // The video timing module runs in the video clock domain. It doesn't use the video reset signal,
+  // because the video timing signals should always be generated. Otherwise, the progress bar won't
+  // be visible while the core is loading.
   val videoTiming = withClock(io.videoClock) { Module(new VideoTiming(Config.videoTimingConfig)) }
-  io.video <> videoTiming.io
+  videoTiming.io <> io.video
 
-  // The swap register selects which frame buffer is being used for reading/writing pixel data. While one frame buffer
-  // is being written to, the other is being read from.
+  // The swap register selects which frame buffer is being used for reading/writing pixel data.
+  // While one frame buffer is being written to, the other is being read from.
   //
   // It gets toggled on the rising edge of the vertical blank signal.
   val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)
