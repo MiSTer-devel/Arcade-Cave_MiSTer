@@ -37,51 +37,12 @@
 
 package cave
 
-import axon.mem._
-import axon.types._
 import chisel3._
-import chisel3.util._
+import chiseltest._
+import org.scalatest._
 
-/**
- * A DDR memory arbiter.
- *
- * The DDR memory arbiter routes requests from multiple input ports to a single output port.
- */
-class DDRArbiter extends Module {
-  val io = IO(new Bundle {
-    /** Download port */
-    val download = DownloadIO()
-    /** Program ROM port */
-    val progRom = Flipped(BurstReadWriteMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH))
-    /** Sound ROM port */
-    val soundRom = Flipped(BurstReadWriteMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH))
-    /** Tile ROM port */
-    val tileRom = Flipped(BurstReadMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH))
-    /** Frame buffer to DDR port */
-    val fbToDDR = Flipped(BurstWriteMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH))
-    /** Frame buffer from DDR port */
-    val fbFromDDR = Flipped(BurstReadMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH))
-    /** DDR port */
-    val ddr = BurstReadWriteMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH)
-  })
+trait DDRArbiterHelpers {
+}
 
-  val cache = Module(new CacheMem(CacheConfig(
-    inAddrWidth = DownloadIO.ADDR_WIDTH,
-    inDataWidth = DownloadIO.DATA_WIDTH,
-    outAddrWidth = Config.DDR_ADDR_WIDTH,
-    outDataWidth = Config.DDR_DATA_WIDTH,
-    lineWidth = 1,
-    depth = 1
-  )))
-  cache.io.in <> io.download.asAsyncReadWriteMemIO
-
-  // Arbiter
-  val arbiter = Module(new MemArbiter(6, Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH))
-  arbiter.io.in(0) <> cache.io.out
-  arbiter.io.in(1).asBurstReadMemIO <> io.fbFromDDR // high-priority required to burst data to the video FIFO
-  arbiter.io.in(2).asBurstWriteMemIO <> io.fbToDDR
-  arbiter.io.in(3).asBurstReadMemIO <> io.tileRom
-  arbiter.io.in(4) <> io.progRom
-  arbiter.io.in(5) <> io.soundRom
-  arbiter.io.out <> io.ddr
+class MemSysTest extends FlatSpec with ChiselScalatestTester with Matchers with DDRArbiterHelpers {
 }
