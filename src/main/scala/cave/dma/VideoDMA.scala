@@ -60,9 +60,9 @@ class VideoDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
     /** Done flag */
     val done = Output(Bool())
     /** Pixel data port */
-    val pixelData = DecoupledIO(Bits(Config.DDR_DATA_WIDTH.W))
+    val pixelData = DecoupledIO(Bits(Config.ddrConfig.dataWidth.W))
     /** DDR port */
-    val ddr = BurstReadMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH)
+    val ddr = BurstReadMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
   })
 
   // Registers
