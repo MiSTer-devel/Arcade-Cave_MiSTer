@@ -111,8 +111,8 @@ case class SDRAMConfig(clockFreq: Double,
                        tRP: Double = 18,
                        tWR: Double = 12,
                        tREFI: Double = 7800) {
-  /** The width of the address bus (i.e. the total width of all banks, rows, and columns). */
-  val addrWidth = bankWidth+rowWidth+colWidth
+  /** The width of the address bus (i.e. the byte width of all banks, rows, and columns). */
+  val addrWidth = bankWidth+rowWidth+colWidth+1
   /** The SDRAM clock period (ns). */
   val clockPeriod = 1/clockFreq*1000000000
   /** The number of clock cycles to wait before selecting the device. */
@@ -398,5 +398,4 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   io.debug.refresh := stateReg === State.refresh
 
   printf(p"SDRAM(state: $stateReg, nextState: $nextState, command: $commandReg, nextCommand: $nextCommand, waitCounter: $waitCounter, wait: $waitReq, valid: $valid, burstDone: $memBurstDone)\n")
-  printf(p"SDRAM(waitMax: ${config.waitCounterMax})\n")
 }
