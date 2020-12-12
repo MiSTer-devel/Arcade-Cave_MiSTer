@@ -89,7 +89,7 @@ object BurstReadMemIO {
     mem.burstLength := MuxCase(0.U, in.map(a => a._1 -> a._2.burstLength))
     mem.addr := MuxCase(DontCare, in.map(a => a._1 -> a._2.addr))
     for ((selected, port) <- in) {
-      port.waitReq := mem.waitReq || !selected
+      port.waitReq := (selected && mem.waitReq) || (!selected && port.rd)
       port.valid := mem.valid && selected
       port.burstDone := mem.burstDone && selected
       port.dout := mem.dout
@@ -170,7 +170,7 @@ object BurstReadWriteMemIO {
     mem.mask := Mux1H(in.map(a => a._1 -> a._2.mask))
     mem.din := Mux1H(in.map(a => a._1 -> a._2.din))
     for ((selected, port) <- in) {
-      port.waitReq := mem.waitReq || !selected
+      port.waitReq := (selected && mem.waitReq) || (!selected && (port.rd || port.wr))
       port.valid := mem.valid && selected
       port.burstDone := mem.burstDone && selected
       port.dout := mem.dout
