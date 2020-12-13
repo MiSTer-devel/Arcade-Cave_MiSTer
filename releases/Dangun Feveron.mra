@@ -1,0 +1,34 @@
+<misterromdescription>
+  <name>Dangun Feveron</name>
+  <mameversion>0220</mameversion>
+  <setname>dfeveron</setname>
+  <mratimestamp>20200617</mratimestamp>
+  <year>1990</year>
+  <manufacturer>CAVE</manufacturer>
+  <category>Shooter</category>
+  <rbf>cave</rbf>
+
+  <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,X,R,L,Start" />
+
+  <!-- ROM data -->
+  <rom index="0" zip="dfeveron.zip" md5="none">
+    <!-- main CPU -->
+    <interleave output="16">
+      <part name="cv01-u34.bin" crc="b5cdc8d3" map="10" />
+      <part name="cv01-u33.bin" crc="6bbb063a" map="01" />
+    </interleave>
+
+    <!-- sprites -->
+    <part name="cv01-u25.bin" crc="14b260ec" />
+    <part name="cv01-u26.bin" crc="e7ba8cce" />
+
+    <!-- layer 0 -->
+    <part name="cv01-u50.bin" crc="903096a7" />
+
+    <!-- layer 1 -->
+    <part name="cv01-u49.bin" crc="d89b7631" />
+
+    <!-- samples -->
+    <part name="cv01-u19.bin" crc="9dfdafaf" />
+  </rom>
+</misterromdescription>
