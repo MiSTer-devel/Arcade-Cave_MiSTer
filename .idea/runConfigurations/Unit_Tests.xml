@@ -219,6 +219,13 @@
             </set>
           </value>
         </entry>
+        <entry key="cave.MemSysTest">
+          <value>
+            <set>
+              <option value="should write download data to memory" />
+            </set>
+          </value>
+        </entry>
         <entry key="cave.dma.FrameBufferDMATest">
           <value>
             <set>
