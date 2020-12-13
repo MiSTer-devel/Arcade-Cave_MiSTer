@@ -49,10 +49,10 @@ import chisel3.util._
  * @param outDataWidth The width of the output data bus.
  * @param depth        The number of entries in the cache.
  * @param lineWidth    The number of words in a cache line.
+ * @param offset       The offset of the output address.
  * @param wrapping     A boolean indicating whether burst wrapping should be enabled for the cache.
  *                     When a wrapping burst reaches a burst boundary, the address wraps back to the
  *                     previous burst boundary.
- * @param offset       The offset of the output address.
  */
 case class CacheConfig(inAddrWidth: Int,
                        inDataWidth: Int,
@@ -60,8 +60,8 @@ case class CacheConfig(inAddrWidth: Int,
                        outDataWidth: Int,
                        lineWidth: Int,
                        depth: Int,
-                       wrapping: Boolean = false,
-                       offset: Int = 0) {
+                       offset: Int = 0,
+                       wrapping: Boolean = false) {
   /** The width of a cache address index */
   val indexWidth = log2Ceil(depth)
   /** The width of a cache address offset */

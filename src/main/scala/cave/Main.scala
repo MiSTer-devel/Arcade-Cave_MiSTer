@@ -37,13 +37,13 @@
 
 package cave
 
-import axon.Util
+import axon._
 import axon.gpu._
 import axon.mem._
-import axon.snd.Audio
+import axon.snd._
 import axon.types._
 import cave.dma._
-import cave.gpu.VideoFIFO
+import cave.gpu._
 import cave.types._
 import chisel3._
 import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
@@ -69,14 +69,16 @@ class Main extends Module {
     val player = new PlayerIO
     /** Video port */
     val video = Output(new VideoIO)
-    /** DDR port */
-    val ddr = DDRIO(Config.ddrConfig)
     /** Download port */
     val download = DownloadIO()
     /** RGB output */
     val rgb = Output(new RGB(Config.SCREEN_BITS_PER_CHANNEL))
     /** Audio port */
     val audio = Output(new Audio(Config.SAMPLE_WIDTH))
+    /** DDR port */
+    val ddr = DDRIO(Config.ddrConfig)
+    /** SDRAM port */
+    val sdram = SDRAMIO(Config.sdramConfig)
   })
 
   // Registers
@@ -97,14 +99,19 @@ class Main extends Module {
   val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)
   when(Util.rising(vBlank)) { swapReg := !swapReg }
 
-  // DDR memory controller
+  // DDR controller
   val ddr = Module(new DDR(Config.ddrConfig))
   ddr.io.ddr <> io.ddr
 
-  // DDR arbiter
-  val arbiter = Module(new DDRArbiter)
-  arbiter.io.download <> io.download
-  arbiter.io.ddr <> ddr.io.mem
+  // SDRAM controller
+  val sdram = Module(new SDRAM(Config.sdramConfig))
+  sdram.io.sdram <> io.sdram
+
+  // Memory subsystem
+  val mem = Module(new MemSys)
+  mem.io.download <> io.download
+  mem.io.ddr <> ddr.io.mem
+  mem.io.sdram <> sdram.io.mem
 
   // Video DMA
   val videoDMA = Module(new VideoDMA(
@@ -113,7 +120,7 @@ class Main extends Module {
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
   videoDMA.io.swap := swapReg
-  videoDMA.io.ddr <> arbiter.io.fbFromDDR
+  videoDMA.io.ddr <> mem.io.videoDMA
 
   // Frame buffer DMA
   val fbDMA = Module(new FrameBufferDMA(
@@ -122,7 +129,7 @@ class Main extends Module {
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
   fbDMA.io.swap := !swapReg
-  fbDMA.io.ddr <> arbiter.io.fbToDDR
+  fbDMA.io.ddr <> mem.io.fbDMA
 
   // Video FIFO
   val videoFIFO = Module(new VideoFIFO)
@@ -133,37 +140,39 @@ class Main extends Module {
   io.rgb := videoFIFO.io.rgb
 
   // Cache memory
-  val progRomCache = Module(new axon.mem.CacheMem(CacheConfig(
+  val progRomCache = Module(new CacheMem(CacheConfig(
     inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
     inDataWidth = Config.PROG_ROM_DATA_WIDTH,
-    outAddrWidth = Config.ddrConfig.addrWidth,
-    outDataWidth = Config.ddrConfig.dataWidth,
-    lineWidth = 4,
+    outAddrWidth = Config.sdramConfig.addrWidth,
+    outDataWidth = Config.sdramConfig.dataWidth,
+    lineWidth = Config.sdramConfig.burstLength,
     depth = 512,
-    offset = Config.PROG_ROM_OFFSET
+    offset = Config.PROG_ROM_OFFSET,
+    wrapping = true
   )))
-  progRomCache.io.out <> arbiter.io.progRom
+  progRomCache.io.out <> mem.io.progRom
 
   // Cache memory
-  val soundRomCache = Module(new axon.mem.CacheMem(CacheConfig(
+  val soundRomCache = Module(new CacheMem(CacheConfig(
     inAddrWidth = Config.SOUND_ROM_ADDR_WIDTH,
     inDataWidth = Config.SOUND_ROM_DATA_WIDTH,
-    outAddrWidth = Config.ddrConfig.addrWidth,
-    outDataWidth = Config.ddrConfig.dataWidth,
-    lineWidth = 4,
+    outAddrWidth = Config.sdramConfig.addrWidth,
+    outDataWidth = Config.sdramConfig.dataWidth,
+    lineWidth = Config.sdramConfig.burstLength,
     depth = 256,
-    offset = Config.SOUND_ROM_OFFSET
+    offset = Config.SOUND_ROM_OFFSET,
+    wrapping = true
   )))
-  soundRomCache.io.out <> arbiter.io.soundRom
+  soundRomCache.io.out <> mem.io.soundRom
 
   // Cave
   val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.player := io.player
-  cave.io.progRom <> axon.DataFreezer.freeze(io.cpuClock) { progRomCache.io.in }.asAsyncReadMemIO
-  cave.io.soundRom <> axon.DataFreezer.freeze(io.cpuClock) { soundRomCache.io.in }.asAsyncReadMemIO
-  cave.io.tileRom.mapAddr(_+Config.TILE_ROM_OFFSET.U) <> arbiter.io.tileRom
+  cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { progRomCache.io.in }.asAsyncReadMemIO
+  cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { soundRomCache.io.in }.asAsyncReadMemIO
+  cave.io.tileRom.mapAddr(_+Config.TILE_ROM_OFFSET.U) <> mem.io.tileRom
   cave.io.video := videoTiming.io
   cave.io.frameBuffer <> fbDMA.io.frameBuffer
   cave.io.audio <> io.audio

@@ -1,0 +1,41 @@
+<misterromdescription>
+  <name>ESP Ra. De.</name>
+  <mameversion>0220</mameversion>
+  <setname>dfeveron</setname>
+  <mratimestamp>20200617</mratimestamp>
+  <year>1990</year>
+  <manufacturer>CAVE</manufacturer>
+  <category>Shooter</category>
+  <rbf>cave</rbf>
+
+  <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,X,R,L,Start" />
+
+  <!-- ROM data -->
+  <rom index="0" zip="esprade.zip" md5="none">
+    <!-- main CPU -->
+    <interleave output="16">
+      <part name="u42.int" crc="b5cdc8d3" map="10" />
+      <part name="u41.int" crc="6bbb063a" map="01" />
+    </interleave>
+
+    <!-- sprites -->
+    <part name="esp_u63.u63" crc="14b260ec" />
+    <part name="esp_u64.u64" crc="14b260ec" />
+    <part name="esp_u65.u65" crc="14b260ec" />
+    <part name="esp_u66.u66" crc="14b260ec" />
+
+    <!-- layer 0 -->
+    <part name="esp_u54.u54" crc="903096a7" />
+    <part name="esp_u55.u55" crc="903096a7" />
+
+    <!-- layer 1 -->
+    <part name="esp_u52.u52" crc="903096a7" />
+    <part name="esp_u53.u53" crc="903096a7" />
+
+    <!-- layer 1 -->
+    <part name="esp_u51.u51" crc="903096a7" />
+
+    <!-- samples -->
+    <part name="esp_u19.u19" crc="9dfdafaf" />
+  </rom>
+</misterromdescription>

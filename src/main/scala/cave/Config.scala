@@ -38,7 +38,7 @@
 package cave
 
 import axon.gpu.VideoTimingConfig
-import axon.mem.DDRConfig
+import axon.mem.{DDRConfig, SDRAMConfig}
 import axon.snd.YMZ280BConfig
 
 object Config {
@@ -114,15 +114,10 @@ object Config {
   val VIDEO_REGS_COUNT = 8
   val VIDEO_REGS_GPU_DATA_WIDTH = 128
 
-  /** The width of the DDR address bus */
-  val DDR_ADDR_WIDTH = 32
-  /** The width of the DDR data bus */
-  val DDR_DATA_WIDTH = 64
-
   val FRAME_BUFFER_BPP = 16
   val FRAME_BUFFER_ADDR_WIDTH = 17
   val FRAME_BUFFER_DATA_WIDTH = 15
-  val FRAME_BUFFER_DMA_NUM_WORDS = SCREEN_WIDTH*SCREEN_HEIGHT*FRAME_BUFFER_BPP/DDR_DATA_WIDTH
+  val FRAME_BUFFER_DMA_NUM_WORDS = SCREEN_WIDTH*SCREEN_HEIGHT*FRAME_BUFFER_BPP/64
   val FRAME_BUFFER_DMA_BURST_LENGTH = 128
   val FRAME_BUFFER_PRIO_WIDTH = 2
 
@@ -145,6 +140,9 @@ object Config {
     sampleWidth = SAMPLE_WIDTH
   )
 
-  /** DDR memory configuration */
-  val ddrConfig = DDRConfig(addrWidth = DDR_ADDR_WIDTH, dataWidth = DDR_DATA_WIDTH)
+  /** DDR configuration */
+  val ddrConfig = DDRConfig()
+
+  /** SDRAM configuration */
+  val sdramConfig = SDRAMConfig(clockFreq = CLOCK_FREQ, burstLength = 4)
 }

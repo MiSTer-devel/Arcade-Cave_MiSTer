@@ -226,6 +226,22 @@ class SDRAMTest extends FlatSpec with ChiselScalatestTester with Matchers with S
     }
   }
 
+  behavior of "addressing"
+
+  it should "select a bank" in {
+    test(mkSDRAM()) { dut =>
+      waitForIdle(dut)
+
+      dut.io.mem.rd.poke(true.B)
+      dut.io.mem.addr.poke(0x1802003.U)
+      waitForActive(dut)
+      dut.io.sdram.addr.expect(8.U) // row
+      waitForRead(dut)
+      dut.io.sdram.addr.expect(0x401.U) // col
+      dut.io.sdram.bank.expect(3.U)
+    }
+  }
+
   behavior of "read"
 
   it should "read from the SDRAM (burst=1)" in {
@@ -239,6 +255,7 @@ class SDRAMTest extends FlatSpec with ChiselScalatestTester with Matchers with S
       dut.io.sdram.addr.expect(0.U)
       waitForRead(dut)
       dut.io.sdram.addr.expect(0x401.U)
+      dut.io.sdram.bank.expect(1.U)
 
       // CAS latency
       dut.clock.step(cycles = 2)

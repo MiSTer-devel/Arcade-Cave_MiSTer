@@ -66,7 +66,7 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
     /** Frame buffer port */
     val frameBuffer = new FrameBufferIO
     /** DDR port */
-    val ddr = BurstWriteMemIO(Config.DDR_ADDR_WIDTH, Config.DDR_DATA_WIDTH)
+    val ddr = BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
   })
 
   // Registers
@@ -91,7 +91,7 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
   }
 
   // Pad the pixel data, so that four 15-bit pixels pack into a 64-bit DDR word
-  val pixelData = Util.padWords(io.frameBuffer.dout, 4, Config.FRAME_BUFFER_DATA_WIDTH, Config.DDR_DATA_WIDTH/4)
+  val pixelData = Util.padWords(io.frameBuffer.dout, 4, Config.FRAME_BUFFER_DATA_WIDTH, Config.ddrConfig.dataWidth/4)
 
   // Toggle the busy register
   when(io.start) { busyReg := true.B }.elsewhen(burstCounterDone) { busyReg := false.B }

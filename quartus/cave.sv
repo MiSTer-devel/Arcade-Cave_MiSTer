@@ -386,6 +386,13 @@ always_ff @(posedge clk_68k) begin
     sreset_68k   <= sreset_68k_1;
 end
 
+wire        sdram_oe;
+wire [15:0] sdram_din;
+wire [15:0] sdram_dout;
+
+assign SDRAM_DQ = sdram_oe ? sdram_din : 16'bZ;
+assign sdram_dout = SDRAM_DQ;
+
 Main main (
     // Fast clock domain
     .clock(clk_sys),
@@ -408,7 +415,7 @@ Main main (
     .io_video_hBlank(hblank),
     .io_video_vBlank(vblank),
     .io_video_enable(video_enable),
-    // DDR arbiter
+    // DDR
     .io_ddr_rd(ddr3_read_arbiter),
     .io_ddr_wr(ddr3_write_arbiter),
     .io_ddr_addr(ddr3_address_arbiter),
@@ -418,6 +425,17 @@ Main main (
     .io_ddr_waitReq(ddr3_waitrequest_arbiter),
     .io_ddr_valid(ddr3_read_data_valid_arbiter),
     .io_ddr_burstLength(ddr3_burstcount_arbiter),
+    // SDRAM
+    .io_sdram_cke(SDRAM_CKE),
+    .io_sdram_cs_n(SDRAM_nCS),
+    .io_sdram_ras_n(SDRAM_nRAS),
+    .io_sdram_cas_n(SDRAM_nCAS),
+    .io_sdram_we_n(SDRAM_nWE),
+    .io_sdram_oe(sdram_oe),
+    .io_sdram_bank(SDRAM_BA),
+    .io_sdram_addr(SDRAM_A),
+    .io_sdram_din(sdram_din),
+    .io_sdram_dout(sdram_dout),
     // Download
     .io_download_cs(ioctl_download),
     .io_download_wr(ioctl_wr),
