@@ -53,7 +53,7 @@ class MemSys extends Module {
     /** Tile ROM port */
     val tileRom = Flipped(BurstReadMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
     /** Frame buffer DMA port */
-    val fbDMA = Flipped(BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
+    val frameBufferDMA = Flipped(BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
     /** Video DMA port */
     val videoDMA = Flipped(BurstReadMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
     /** DDR port */
@@ -115,7 +115,7 @@ class MemSys extends Module {
   val ddrArbiter = Module(new MemArbiter(4, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
   ddrArbiter.io.in(0) <> ddrDownloadCache.io.out
   ddrArbiter.io.in(1).asBurstReadMemIO <> io.videoDMA // high-priority required to burst data to the video FIFO
-  ddrArbiter.io.in(2).asBurstWriteMemIO <> io.fbDMA
+  ddrArbiter.io.in(2).asBurstWriteMemIO <> io.frameBufferDMA
   ddrArbiter.io.in(3).asBurstReadMemIO <> io.tileRom
   ddrArbiter.io.out <> io.ddr
 

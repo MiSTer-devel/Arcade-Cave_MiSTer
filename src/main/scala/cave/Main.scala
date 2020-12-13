@@ -123,13 +123,13 @@ class Main extends Module {
   videoDMA.io.ddr <> mem.io.videoDMA
 
   // Frame buffer DMA
-  val fbDMA = Module(new FrameBufferDMA(
+  val frameBufferDMA = Module(new FrameBufferDMA(
     addr = Config.FRAME_BUFFER_OFFSET,
     numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
-  fbDMA.io.swap := !swapReg
-  fbDMA.io.ddr <> mem.io.fbDMA
+  frameBufferDMA.io.swap := !swapReg
+  frameBufferDMA.io.ddr <> mem.io.frameBufferDMA
 
   // Video FIFO
   val videoFIFO = Module(new VideoFIFO)
@@ -148,9 +148,9 @@ class Main extends Module {
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }.asAsyncReadMemIO
   cave.io.tileRom <> mem.io.tileRom
   cave.io.video := videoTiming.io
-  cave.io.frameBuffer <> fbDMA.io.frameBuffer
+  cave.io.frameBuffer <> frameBufferDMA.io.frameBuffer
   cave.io.audio <> io.audio
-  fbDMA.io.start := cave.io.frameDone
+  frameBufferDMA.io.start := cave.io.frameDone
 }
 
 object Main extends App {
