@@ -87,15 +87,15 @@ class MemArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers {
       // Read 1
       dut.io.in(0).rd.poke(false.B)
       dut.io.in(1).rd.poke(true.B)
-      dut.io.in(0).waitReq.expect(true.B)
+      dut.io.in(0).waitReq.expect(false.B)
       dut.io.in(1).waitReq.expect(true.B)
 
       // Wait 1
       dut.io.out.waitReq.poke(false.B)
-      dut.io.in(0).waitReq.expect(true.B)
+      dut.io.in(0).waitReq.expect(false.B)
       dut.io.in(1).waitReq.expect(false.B)
       dut.io.out.waitReq.poke(true.B)
-      dut.io.in(0).waitReq.expect(true.B)
+      dut.io.in(0).waitReq.expect(false.B)
       dut.io.in(1).waitReq.expect(true.B)
     }
   }
