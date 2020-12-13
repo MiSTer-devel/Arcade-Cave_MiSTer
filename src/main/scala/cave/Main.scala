@@ -146,7 +146,7 @@ class Main extends Module {
   cave.io.player := io.player
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }.asAsyncReadMemIO
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }.asAsyncReadMemIO
-  cave.io.tileRom.mapAddr(_+Config.TILE_ROM_OFFSET.U) <> mem.io.tileRom
+  cave.io.tileRom <> mem.io.tileRom
   cave.io.video := videoTiming.io
   cave.io.frameBuffer <> fbDMA.io.frameBuffer
   cave.io.audio <> io.audio
