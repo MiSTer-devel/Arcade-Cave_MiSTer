@@ -37,11 +37,11 @@
 
 package cave
 
-import axon.Util
+import axon._
 import axon.cpu.m68k._
 import axon.gpu._
 import axon.mem._
-import axon.snd.{Audio, YMZ280B}
+import axon.snd._
 import cave.gpu._
 import cave.types._
 import chisel3._
@@ -77,8 +77,6 @@ class Cave extends Module {
   val intAck = Wire(Bool())
 
   // GPU
-  //
-  // The GPU runs in the system clock domain.
   val gpu = Module(new GPU)
   gpu.io.generateFrame := Util.rising(ShiftRegister(generateFrame, 2))
   io.frameDone := gpu.io.frameDone

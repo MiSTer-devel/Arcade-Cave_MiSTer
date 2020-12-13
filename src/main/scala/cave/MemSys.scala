@@ -39,19 +39,27 @@ package cave
 
 import axon.mem._
 import axon.types._
+import cave.types._
 import chisel3._
 
-/** The memory subsystem routes various memory ports to either DDR or SDRAM. */
+/**
+ * The memory subsystem routes memory requests to either DDR or SDRAM.
+ *
+ * The program and sound ROMs are stored in SDRAM, because they require low-latency memory access.
+ * ROM data is also cached to reduce the need to go to memory for every read request.
+ *
+ * Everything else is stored in DDR memory.
+ */
 class MemSys extends Module {
   val io = IO(new Bundle {
     /** Download port */
     val download = DownloadIO()
     /** Program ROM port */
-    val progRom = Flipped(AsyncReadWriteMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH))
+    val progRom = Flipped(new ProgRomIO)
     /** Sound ROM port */
-    val soundRom = Flipped(AsyncReadWriteMemIO(Config.SOUND_ROM_ADDR_WIDTH, Config.SOUND_ROM_DATA_WIDTH))
+    val soundRom = Flipped(new SoundRomIO)
     /** Tile ROM port */
-    val tileRom = Flipped(BurstReadMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
+    val tileRom = Flipped(new TileRomIO)
     /** Frame buffer DMA port */
     val frameBufferDMA = Flipped(BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
     /** Video DMA port */
@@ -63,6 +71,9 @@ class MemSys extends Module {
   })
 
   // DDR download cache
+  //
+  // A download cache is used to buffer download data, so that a complete word can be written to
+  // memory.
   val ddrDownloadCache = Module(new CacheMem(CacheConfig(
     inAddrWidth = DownloadIO.ADDR_WIDTH,
     inDataWidth = DownloadIO.DATA_WIDTH,
@@ -74,6 +85,9 @@ class MemSys extends Module {
   ddrDownloadCache.io.in <> io.download.asAsyncReadWriteMemIO
 
   // SDRAM download cache
+  //
+  // A download cache is used to buffer download data, so that a complete word can be written to
+  // memory.
   val sdramDownloadCache = Module(new CacheMem(CacheConfig(
     inAddrWidth = DownloadIO.ADDR_WIDTH,
     inDataWidth = DownloadIO.DATA_WIDTH,
@@ -96,7 +110,7 @@ class MemSys extends Module {
     offset = Config.PROG_ROM_OFFSET,
     wrapping = true
   )))
-  progRomCache.io.in <> io.progRom
+  progRomCache.io.in.asAsyncReadMemIO <> io.progRom
 
   // Sound ROM cache
   val soundRomCache = Module(new CacheMem(CacheConfig(
@@ -109,7 +123,7 @@ class MemSys extends Module {
     offset = Config.SOUND_ROM_OFFSET,
     wrapping = true
   )))
-  soundRomCache.io.in <> io.soundRom
+  soundRomCache.io.in.asAsyncReadMemIO <> io.soundRom
 
   // DDR arbiter
   val ddrArbiter = Module(new MemArbiter(4, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))

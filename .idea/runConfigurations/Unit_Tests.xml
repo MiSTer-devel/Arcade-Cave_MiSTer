@@ -26,7 +26,6 @@
               <option value="read should latch valid output data" />
               <option value="valid should latch the valid signal" />
               <option value="wait should latch the wait signal" />
-              <option value="write should latch a write request" />
             </set>
           </value>
         </entry>

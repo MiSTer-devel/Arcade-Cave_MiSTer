@@ -46,7 +46,7 @@ import cave.dma._
 import cave.gpu._
 import cave.types._
 import chisel3._
-import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
+import chisel3.stage._
 import chisel3.util._
 
 /**
@@ -95,7 +95,7 @@ class Main extends Module {
   // The swap register selects which frame buffer is being used for reading/writing pixel data.
   // While one frame buffer is being written to, the other is being read from.
   //
-  // It gets toggled on the rising edge of the vertical blank signal.
+  // It is toggled on the rising edge of the vertical blank signal.
   val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)
   when(Util.rising(vBlank)) { swapReg := !swapReg }
 
@@ -144,10 +144,10 @@ class Main extends Module {
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.player := io.player
-  cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }.asAsyncReadMemIO
-  cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }.asAsyncReadMemIO
+  cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }
+  cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }
   cave.io.tileRom <> mem.io.tileRom
-  cave.io.video := videoTiming.io
+  cave.io.video <> videoTiming.io
   cave.io.frameBuffer <> frameBufferDMA.io.frameBuffer
   cave.io.audio <> io.audio
   frameBufferDMA.io.start := cave.io.frameDone
