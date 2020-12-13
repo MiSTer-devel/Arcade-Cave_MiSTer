@@ -163,7 +163,7 @@ class CacheEntry(private val config: CacheConfig) extends Bundle {
    * Merges the given data with the cache line, and marks the line as dirty.
    *
    * @param offset The address offset.
-   * @param data The data.
+   * @param data   The data.
    */
   def merge(offset: UInt, data: Bits) = {
     val words = WireInit(line.inWords)
@@ -283,13 +283,11 @@ class CacheMem(config: CacheConfig) extends Module {
     (addr << log2Ceil(config.outBytes)).asUInt +& config.offset.U
   }
 
-  // Set cache entry index and data
-  val cacheEntryIndex = Mux(stateReg === State.write, requestReg.addr.index, initCounter)
-  val cacheEntryData = Mux(stateReg === State.write, cacheEntryReg.asUInt, 0.U)
-
   // Write cache entry
   when(stateReg === State.init || stateReg === State.write) {
-    cacheEntryMem.write(cacheEntryIndex, cacheEntryData)
+    val index = Mux(stateReg === State.write, requestReg.addr.index, initCounter)
+    val data = Mux(stateReg === State.write, cacheEntryReg.asUInt, 0.U)
+    cacheEntryMem.write(index, data)
   }
 
   // Fill cache line as words are bursted
