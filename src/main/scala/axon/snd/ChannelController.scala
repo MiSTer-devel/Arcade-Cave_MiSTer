@@ -88,7 +88,6 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   // Registers
   val stateReg = RegInit(State.init)
   val accumulatorReg = Reg(new Audio(config.sampleWidth))
-  val channelStateReg = Reg(new ChannelState(config))
 
   // Counters
   val (channelCounterValue, channelCounterWrap) = Counter.static(config.numChannels, enable = stateReg === State.init || stateReg === State.next)
@@ -98,7 +97,9 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   val channelReg = io.channelRegs(channelCounterValue)
 
   // Channel state memory
-  val channelStateMem = SyncReadMem(config.numChannels, new ChannelState(config))
+  val channelStateMem = SyncReadMem(config.numChannels, Bits(new ChannelState(config).getWidth.W))
+  val channelState = channelStateMem.read(channelCounterValue, stateReg === State.read).asTypeOf(new ChannelState(config))
+  val channelStateReg = RegEnable(channelState, stateReg === State.latch)
 
   // Audio pipeline
   val audioPipeline = Module(new AudioPipeline(config))
@@ -122,17 +123,8 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   audioPipeline.io.pcmData.valid := io.mem.valid
   audioPipeline.io.pcmData.bits := Mux(channelStateReg.nibble, io.mem.dout(3, 0), io.mem.dout(7, 4))
 
-  // Initialize channel states
-  when(stateReg === State.init) { channelStateMem.write(channelCounterValue, ChannelState.default(config)) }
-
   // Clear accumulator
   when(stateReg === State.idle) { accumulatorReg := Audio.zero }
-
-  // Read channel state from memory
-  val channelState = channelStateMem.read(channelCounterValue, stateReg === State.read)
-
-  // Latch channel state
-  when(stateReg === State.latch) { channelStateReg := channelState }
 
   // Start/stop channel
   when(stateReg === State.check) {
@@ -164,8 +156,11 @@ class ChannelController(config: YMZ280BConfig) extends Module {
     channelStateReg.audioPipelineState := audioPipeline.io.out.bits.state
   }
 
-  // Write channels state to memory
-  when(stateReg === State.write) { channelStateMem.write(channelCounterValue, channelStateReg) }
+  // Write channel state to memory
+  when(stateReg === State.init || stateReg === State.write) {
+    val data = Mux(stateReg === State.write, channelStateReg, ChannelState.default(config))
+    channelStateMem.write(channelCounterValue, data.asUInt)
+  }
 
   // FSM
   switch(stateReg) {
