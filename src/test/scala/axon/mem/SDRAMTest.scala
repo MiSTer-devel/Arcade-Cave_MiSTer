@@ -255,7 +255,6 @@ class SDRAMTest extends FlatSpec with ChiselScalatestTester with Matchers with S
       dut.io.sdram.addr.expect(0.U)
       waitForRead(dut)
       dut.io.sdram.addr.expect(0x401.U)
-      dut.io.sdram.bank.expect(1.U)
 
       // CAS latency
       dut.clock.step(cycles = 2)
