@@ -94,7 +94,7 @@ class LayerProcessor extends Module {
   processor.io.layer_info_i := io.layerRegs
   processor.io.layerRam <> io.layerRam
   processor.io.paletteRam <> io.paletteRam
-  processor.io.tileRom <> io.tileRom
+  processor.io.tileRom.mapAddr(_+Config.TILE_ROM_OFFSET.U) <> io.tileRom
   processor.io.priority <> io.priority
   processor.io.frameBuffer <> io.frameBuffer
 }

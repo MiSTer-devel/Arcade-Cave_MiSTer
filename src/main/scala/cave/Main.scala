@@ -46,7 +46,7 @@ import cave.dma._
 import cave.gpu._
 import cave.types._
 import chisel3._
-import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
+import chisel3.stage._
 import chisel3.util._
 
 /**
@@ -95,7 +95,7 @@ class Main extends Module {
   // The swap register selects which frame buffer is being used for reading/writing pixel data.
   // While one frame buffer is being written to, the other is being read from.
   //
-  // It gets toggled on the rising edge of the vertical blank signal.
+  // It is toggled on the rising edge of the vertical blank signal.
   val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)
   when(Util.rising(vBlank)) { swapReg := !swapReg }
 
@@ -123,13 +123,13 @@ class Main extends Module {
   videoDMA.io.ddr <> mem.io.videoDMA
 
   // Frame buffer DMA
-  val fbDMA = Module(new FrameBufferDMA(
+  val frameBufferDMA = Module(new FrameBufferDMA(
     addr = Config.FRAME_BUFFER_OFFSET,
     numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
-  fbDMA.io.swap := !swapReg
-  fbDMA.io.ddr <> mem.io.fbDMA
+  frameBufferDMA.io.swap := !swapReg
+  frameBufferDMA.io.ddr <> mem.io.frameBufferDMA
 
   // Video FIFO
   val videoFIFO = Module(new VideoFIFO)
@@ -139,44 +139,18 @@ class Main extends Module {
   videoFIFO.io.pixelData <> videoDMA.io.pixelData
   io.rgb := videoFIFO.io.rgb
 
-  // Cache memory
-  val progRomCache = Module(new CacheMem(CacheConfig(
-    inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
-    inDataWidth = Config.PROG_ROM_DATA_WIDTH,
-    outAddrWidth = Config.sdramConfig.addrWidth,
-    outDataWidth = Config.sdramConfig.dataWidth,
-    lineWidth = Config.sdramConfig.burstLength,
-    depth = 512,
-    offset = Config.PROG_ROM_OFFSET,
-    wrapping = true
-  )))
-  progRomCache.io.out <> mem.io.progRom
-
-  // Cache memory
-  val soundRomCache = Module(new CacheMem(CacheConfig(
-    inAddrWidth = Config.SOUND_ROM_ADDR_WIDTH,
-    inDataWidth = Config.SOUND_ROM_DATA_WIDTH,
-    outAddrWidth = Config.sdramConfig.addrWidth,
-    outDataWidth = Config.sdramConfig.dataWidth,
-    lineWidth = Config.sdramConfig.burstLength,
-    depth = 256,
-    offset = Config.SOUND_ROM_OFFSET,
-    wrapping = true
-  )))
-  soundRomCache.io.out <> mem.io.soundRom
-
   // Cave
   val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.player := io.player
-  cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { progRomCache.io.in }.asAsyncReadMemIO
-  cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { soundRomCache.io.in }.asAsyncReadMemIO
-  cave.io.tileRom.mapAddr(_+Config.TILE_ROM_OFFSET.U) <> mem.io.tileRom
-  cave.io.video := videoTiming.io
-  cave.io.frameBuffer <> fbDMA.io.frameBuffer
+  cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }
+  cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }
+  cave.io.tileRom <> mem.io.tileRom
+  cave.io.video <> videoTiming.io
+  cave.io.frameBuffer <> frameBufferDMA.io.frameBuffer
   cave.io.audio <> io.audio
-  fbDMA.io.start := cave.io.frameDone
+  frameBufferDMA.io.start := cave.io.frameDone
 }
 
 object Main extends App {

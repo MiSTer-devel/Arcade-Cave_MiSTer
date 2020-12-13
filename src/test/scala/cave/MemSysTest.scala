@@ -41,8 +41,57 @@ import chisel3._
 import chiseltest._
 import org.scalatest._
 
-trait DDRArbiterHelpers {
+trait MemSysTestHelpers {
+  protected def waitForDownloadReady(dut: MemSys) =
+    while(dut.io.download.waitReq.peek().litToBoolean) { dut.clock.step() }
 }
 
-class MemSysTest extends FlatSpec with ChiselScalatestTester with Matchers with DDRArbiterHelpers {
+class MemSysTest extends FlatSpec with ChiselScalatestTester with Matchers with MemSysTestHelpers {
+  it should "write download data to memory" in {
+    test(new MemSys) { dut =>
+      waitForDownloadReady(dut)
+      dut.io.download.cs.poke(true.B)
+
+      // Download & fill
+      dut.io.download.wr.poke(true.B)
+      dut.io.download.addr.poke(0.U)
+      dut.io.download.dout.poke(0x1234.U)
+      dut.clock.step()
+      dut.io.download.wr.poke(false.B)
+      dut.clock.step(2)
+      dut.io.ddr.rd.expect(true.B)
+      dut.io.ddr.burstLength.expect(1.U)
+      dut.io.sdram.rd.expect(true.B)
+      dut.io.sdram.burstLength.expect(4.U)
+
+      // DDR valid
+      dut.io.ddr.valid.poke(true.B)
+      dut.clock.step(2)
+      dut.io.ddr.valid.poke(false.B)
+
+      // SDRAM valid
+      dut.io.sdram.valid.poke(true.B)
+      dut.clock.step(5)
+      dut.io.sdram.valid.poke(false.B)
+
+      // Burst done
+      dut.io.ddr.burstDone.poke(true.B)
+      dut.io.sdram.burstDone.poke(true.B)
+      dut.clock.step()
+      dut.io.ddr.burstDone.poke(false.B)
+      dut.io.sdram.burstDone.poke(false.B)
+
+      // Download & evict
+      dut.io.download.wr.poke(true.B)
+      dut.io.download.addr.poke(8.U)
+      dut.io.download.dout.poke(0x5678.U)
+      dut.clock.step()
+      dut.io.download.wr.poke(false.B)
+      dut.clock.step(2)
+      dut.io.ddr.wr.expect(true.B)
+      dut.io.ddr.burstLength.expect(1.U)
+      dut.io.sdram.wr.expect(true.B)
+      dut.io.sdram.burstLength.expect(4.U)
+    }
+  }
 }

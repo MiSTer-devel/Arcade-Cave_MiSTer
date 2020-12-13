@@ -26,7 +26,6 @@
               <option value="read should latch valid output data" />
               <option value="valid should latch the valid signal" />
               <option value="wait should latch the wait signal" />
-              <option value="write should latch a write request" />
             </set>
           </value>
         </entry>
@@ -216,6 +215,13 @@
               <option value="should increment a static counter" />
               <option value="should wrap a dynamic counter with zero length" />
               <option value="should wrap a static counter with zero length" />
+            </set>
+          </value>
+        </entry>
+        <entry key="cave.MemSysTest">
+          <value>
+            <set>
+              <option value="should write download data to memory" />
             </set>
           </value>
         </entry>

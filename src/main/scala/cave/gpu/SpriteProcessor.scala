@@ -87,7 +87,7 @@ class SpriteProcessor extends Module {
   processor.io.sprite_bank_i := io.spriteBank
   processor.io.spriteRam <> io.spriteRam
   processor.io.paletteRam <> io.paletteRam
-  processor.io.tileRom <> io.tileRom
+  processor.io.tileRom.mapAddr(_+Config.TILE_ROM_OFFSET.U) <> io.tileRom
   processor.io.priority <> io.priority
   processor.io.frameBuffer <> io.frameBuffer
 }
