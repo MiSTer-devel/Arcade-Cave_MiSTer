@@ -58,9 +58,9 @@ class DataFreezer(addrWidth: Int, dataWidth: Int) extends Module {
     /** Target clock domain */
     val targetClock = Input(Clock())
     /** Input port */
-    val in = Flipped(AsyncReadWriteMemIO(addrWidth, dataWidth))
+    val in = Flipped(AsyncReadMemIO(addrWidth, dataWidth))
     /** Output port */
-    val out = AsyncReadWriteMemIO(addrWidth, dataWidth)
+    val out = AsyncReadMemIO(addrWidth, dataWidth)
   })
 
   // Detect rising edges of the target clock
@@ -76,9 +76,6 @@ class DataFreezer(addrWidth: Int, dataWidth: Int) extends Module {
   // Latch pending read request until the request has completed
   val pendingRead = Util.latch(RegNext(io.in.rd && !io.out.waitReq), clear && RegNext(valid))
 
-  // Latch pending write request
-  val pendingWrite = Util.latch(RegNext(io.in.wr && !io.out.waitReq), clear)
-
   // Connect I/O ports
   io.in <> io.out
 
@@ -87,9 +84,8 @@ class DataFreezer(addrWidth: Int, dataWidth: Int) extends Module {
   io.in.valid := valid
   io.in.dout := data
   io.out.rd := io.in.rd && !pendingRead
-  io.out.wr := io.in.wr && !pendingWrite
 
-  printf(p"DataFreezer(read: ${io.out.rd}, write: ${io.out.wr}, wait: $waitReq, valid: $valid, clear: $clear)\n")
+  printf(p"DataFreezer(read: ${io.out.rd}, wait: $waitReq, valid: $valid, clear: $clear)\n")
 }
 
 object DataFreezer {
@@ -99,7 +95,7 @@ object DataFreezer {
    * @param targetClock The target clock domain.
    * @param mem The memory interface.
    */
-  def freeze(targetClock: Clock)(mem: AsyncReadWriteMemIO): AsyncReadWriteMemIO = {
+  def freeze(targetClock: Clock)(mem: AsyncReadMemIO): AsyncReadMemIO = {
     val freezer = Module(new DataFreezer(mem.addrWidth, mem.dataWidth))
     freezer.io.targetClock := targetClock
     freezer.io.out <> mem
