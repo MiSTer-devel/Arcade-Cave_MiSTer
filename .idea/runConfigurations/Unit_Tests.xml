@@ -93,6 +93,16 @@
             </set>
           </value>
         </entry>
+        <entry key="axon.mem.MemArbiterTest">
+          <value>
+            <set>
+              <option value="should assert the burst done signal" />
+              <option value="should assert the valid signal" />
+              <option value="should assert the wait signal" />
+              <option value="should mux the request to the input port with the highest priority" />
+            </set>
+          </value>
+        </entry>
         <entry key="axon.mem.SDRAMTest">
           <value>
             <set>
@@ -105,6 +115,7 @@
               <option value="FSM should return to the idle state from the read state" />
               <option value="FSM should return to the idle state from the refresh state" />
               <option value="FSM should return to the idle state from the write state" />
+              <option value="addressing should select a bank" />
               <option value="idle should deassert the wait signal" />
               <option value="idle should perform a NOP" />
               <option value="initialize should initialize the SDRAM" />
@@ -205,30 +216,6 @@
               <option value="should increment a static counter" />
               <option value="should wrap a dynamic counter with zero length" />
               <option value="should wrap a static counter with zero length" />
-            </set>
-          </value>
-        </entry>
-        <entry key="cave.DDRArbiterTest">
-          <value>
-            <set>
-              <option value="FSM should move to the cache request state" />
-              <option value="FSM should move to the cache wait state" />
-              <option value="FSM should move to the check state" />
-              <option value="FSM should move to the download state" />
-              <option value="FSM should move to the graphics request state" />
-              <option value="FSM should move to the graphics wait state" />
-              <option value="FSM should return to the idle state after reading a cache line" />
-              <option value="FSM should return to the idle state after reading graphics data" />
-              <option value="FSM should return to the idle state after reading the frame buffer from DDR" />
-              <option value="FSM should return to the idle state after writing the frame buffer to DDR" />
-              <option value="download should set DDR address and byte mask" />
-              <option value="download should write DDR data" />
-              <option value="frame buffer should read the frame buffer from DDR" />
-              <option value="frame buffer should write the frame buffer to DDR" />
-              <option value="program ROM should read a cache line from DDR" />
-              <option value="sound ROM should read a cache line from DDR" />
-              <option value="tile ROM should read a large tile from DDR" />
-              <option value="tile ROM should read a small tile from DDR" />
             </set>
           </value>
         </entry>
