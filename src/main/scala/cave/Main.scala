@@ -139,39 +139,13 @@ class Main extends Module {
   videoFIFO.io.pixelData <> videoDMA.io.pixelData
   io.rgb := videoFIFO.io.rgb
 
-  // Cache memory
-  val progRomCache = Module(new CacheMem(CacheConfig(
-    inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
-    inDataWidth = Config.PROG_ROM_DATA_WIDTH,
-    outAddrWidth = Config.sdramConfig.addrWidth,
-    outDataWidth = Config.sdramConfig.dataWidth,
-    lineWidth = Config.sdramConfig.burstLength,
-    depth = 512,
-    offset = Config.PROG_ROM_OFFSET,
-    wrapping = true
-  )))
-  progRomCache.io.out <> mem.io.progRom
-
-  // Cache memory
-  val soundRomCache = Module(new CacheMem(CacheConfig(
-    inAddrWidth = Config.SOUND_ROM_ADDR_WIDTH,
-    inDataWidth = Config.SOUND_ROM_DATA_WIDTH,
-    outAddrWidth = Config.sdramConfig.addrWidth,
-    outDataWidth = Config.sdramConfig.dataWidth,
-    lineWidth = Config.sdramConfig.burstLength,
-    depth = 256,
-    offset = Config.SOUND_ROM_OFFSET,
-    wrapping = true
-  )))
-  soundRomCache.io.out <> mem.io.soundRom
-
   // Cave
   val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.player := io.player
-  cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { progRomCache.io.in }.asAsyncReadMemIO
-  cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { soundRomCache.io.in }.asAsyncReadMemIO
+  cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }.asAsyncReadMemIO
+  cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }.asAsyncReadMemIO
   cave.io.tileRom.mapAddr(_+Config.TILE_ROM_OFFSET.U) <> mem.io.tileRom
   cave.io.video := videoTiming.io
   cave.io.frameBuffer <> fbDMA.io.frameBuffer
