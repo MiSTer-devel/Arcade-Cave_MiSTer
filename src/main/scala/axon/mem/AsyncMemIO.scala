@@ -124,17 +124,6 @@ class AsyncReadWriteMemIO protected(addrWidth: Int, dataWidth: Int) extends Read
     din := wire.din
     wire
   }
-
-  /** Converts the interface to synchronous read-only */
-  override def asReadMemIO: ReadMemIO = {
-    val wire = Wire(Flipped(ReadMemIO(addrWidth, dataWidth)))
-    rd := wire.rd
-    wr := false.B
-    addr := wire.addr
-    din := 0.U
-    wire.dout := dout
-    wire
-  }
 }
 
 object AsyncReadWriteMemIO {
