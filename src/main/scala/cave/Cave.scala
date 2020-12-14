@@ -217,8 +217,8 @@ class Cave extends Module {
     memMap(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
     memMap(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
     memMap(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-    memMap(0xd00000 to 0xd00001).r { (_, _) => "b1111111".U ## ~io.player.player1 }
-    memMap(0xd00002 to 0xd00003).r { (_, _) => "b1111011".U ## ~io.player.player2 }
+    memMap(0xd00000 to 0xd00001).r { (_, _) => "b111111".U ## ~io.player.player1 }
+    memMap(0xd00002 to 0xd00003).r { (_, _) => "b111101".U ## ~io.player.player2 }
     memMap(0xe00000).w { (_, _, _) => /* TODO: EEPROM */ }
   }
 }
