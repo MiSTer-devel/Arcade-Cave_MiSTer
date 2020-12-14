@@ -49,9 +49,9 @@ package object types {
   /** Player IO */
   class PlayerIO extends Bundle {
     /** Player 1 input */
-    val player1 = Input(Bits(9.W))
+    val player1 = Input(Bits(Config.PLAYER_DATA_WIDTH.W))
     /** Player 2 input */
-    val player2 = Input(Bits(9.W))
+    val player2 = Input(Bits(Config.PLAYER_DATA_WIDTH.W))
     /** Pause flag */
     val pause = Input(Bool())
   }

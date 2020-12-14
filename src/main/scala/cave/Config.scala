@@ -53,6 +53,8 @@ object Config {
 
   val SAMPLE_WIDTH = 16
 
+  val PLAYER_DATA_WIDTH = 10
+
   val SCREEN_WIDTH = 320
   val SCREEN_HEIGHT = 240
   val SCREEN_BITS_PER_CHANNEL = 5
