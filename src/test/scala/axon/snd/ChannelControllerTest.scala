@@ -198,7 +198,7 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
 
   behavior of "PCM data"
 
-  it should "assert the memory read enable when the pipeline needs PCM data" in {
+  it should "assert the memory read enable signal" in {
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true.B)
@@ -207,6 +207,10 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
       // Fetch
       waitForProcess(dut)
       dut.clock.step()
+      dut.io.mem.waitReq.poke(true.B)
+      dut.io.mem.rd.expect(true.B)
+      dut.clock.step()
+      dut.io.mem.waitReq.poke(false.B)
       dut.io.mem.rd.expect(true.B)
       dut.clock.step()
       dut.io.mem.rd.expect(false.B)

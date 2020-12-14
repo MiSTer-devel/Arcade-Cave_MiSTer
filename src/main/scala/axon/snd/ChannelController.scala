@@ -113,6 +113,11 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   val stop = !channelReg.flags.keyOn
   val active = channelStateReg.enable || start
 
+  // Fetch PCM data when the audio pipeline is ready for data
+  val pendingReg = Util.latchSync(audioPipeline.io.pcmData.ready && !io.mem.waitReq, io.mem.valid)
+  val memRead = audioPipeline.io.pcmData.ready && !pendingReg
+  val memAddr = channelStateReg.addr
+
   // PCM data is valid during the clock cycle following a fetch
   audioPipeline.io.pcmData.valid := io.mem.valid
   audioPipeline.io.pcmData.bits := Mux(channelStateReg.nibble, io.mem.dout(3, 0), io.mem.dout(7, 4))
@@ -211,8 +216,8 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   io.channelIndex := channelCounterValue
   io.audio.valid := outputCounterWrap
   io.audio.bits := accumulatorReg
-  io.mem.addr := channelStateReg.addr
-  io.mem.rd := Util.rising(audioPipeline.io.pcmData.ready)
+  io.mem.rd := memRead
+  io.mem.addr := memAddr
   io.debug.init := stateReg === State.init
   io.debug.idle := stateReg === State.idle
   io.debug.read := stateReg === State.read
