@@ -47,7 +47,7 @@ class DownloadIO private extends Bundle {
   val cs = Input(Bool())
   /** Write enable */
   val wr = Input(Bool())
-  /** Asserted when the core isn't ready to proceed with the request  */
+  /** Asserted when the core isn't ready to proceed with the request */
   val waitReq = Output(Bool())
   /** Index */
   val index = Input(UInt(DownloadIO.INDEX_WIDTH.W))

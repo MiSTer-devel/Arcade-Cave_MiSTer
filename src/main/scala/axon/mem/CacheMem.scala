@@ -149,9 +149,9 @@ class CacheEntry(private val config: CacheConfig) extends Bundle {
   /**
    * Fills the cache line with the given data, and marks the line as valid.
    *
-   * @param tag The cache line tag value.
+   * @param tag    The cache line tag value.
    * @param offset The address offset.
-   * @param data The data.
+   * @param data   The data.
    */
   def fill(tag: UInt, offset: UInt, data: Bits) = {
     line.outWords(offset) := data
@@ -226,7 +226,7 @@ class CacheMem(config: CacheConfig) extends Module {
   val requestReg = RegEnable(request, nextState === State.latch)
 
   // Offset register
-  val offset = (io.in.addr >> log2Ceil(config.inBytes))(log2Up(config.inWords)-1, 0)
+  val offset = (io.in.addr >> log2Ceil(config.inBytes)) (log2Up(config.inWords) - 1, 0)
   val offsetReg = RegEnable(offset, nextState === State.latch)
 
   // Cache entry memory
@@ -259,7 +259,7 @@ class CacheMem(config: CacheConfig) extends Module {
   // been bursted to fill an input word. Otherwise, for a non-wrapping burst we just wait until the
   // end of the burst.
   val wordDone = if (config.wrapping) {
-    burstCounter === (config.inOutDataWidthRatio-1).U
+    burstCounter === (config.inOutDataWidthRatio - 1).U
   } else {
     burstCounterWrap
   }
@@ -293,7 +293,7 @@ class CacheMem(config: CacheConfig) extends Module {
   // Fill cache line as words are bursted
   when(stateReg === State.fillWait && io.out.valid) {
     val fillOffset = if (config.wrapping) requestReg.addr.offset else 0.U
-    cacheEntryReg.fill(requestReg.addr.tag, fillOffset+burstCounter, io.out.dout)
+    cacheEntryReg.fill(requestReg.addr.tag, fillOffset + burstCounter, io.out.dout)
   }
 
   // Merge the input data with the cache line
@@ -377,5 +377,5 @@ class CacheMem(config: CacheConfig) extends Module {
   io.debug.merge := stateReg === State.merge
   io.debug.write := stateReg === State.write
 
-  printf(p"CacheMem(state: $stateReg, tag: ${requestReg.addr.tag}, index: ${requestReg.addr.index}, offset: $offsetReg, inWords: ${cacheEntryReg.line.inWords} (0x${Hexadecimal(cacheEntryReg.line.inWords.asUInt)}), outWords: ${cacheEntryReg.line.outWords} (0x${Hexadecimal(cacheEntryReg.line.outWords.asUInt)}))\n")
+  printf(p"CacheMem(state: $stateReg, tag: ${ requestReg.addr.tag }, index: ${ requestReg.addr.index }, offset: $offsetReg, inWords: ${ cacheEntryReg.line.inWords } (0x${ Hexadecimal(cacheEntryReg.line.inWords.asUInt) }), outWords: ${ cacheEntryReg.line.outWords } (0x${ Hexadecimal(cacheEntryReg.line.outWords.asUInt) }))\n")
 }

@@ -69,7 +69,7 @@ class RegisterFile(numRegs: Int) extends Module {
 
   // Write masked bytes to the data register
   0.until(io.mem.maskWidth).foreach { n =>
-    when(io.mem.wr && io.mem.mask(n)) { bytes(n) := io.mem.din((n+1)*8-1, n*8) }
+    when(io.mem.wr && io.mem.mask(n)) { bytes(n) := io.mem.din((n + 1) * 8 - 1, n * 8) }
   }
 
   // Concatenate the bytes and update the data register

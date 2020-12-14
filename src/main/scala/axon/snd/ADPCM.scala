@@ -44,8 +44,7 @@ import chisel3._
  * Decodes adaptive differential pulse-code modulation (ADPCM) samples.
  *
  * @param sampleWidth The width of the sample words.
- * @param dataWidth The width of the ADPCM data.
- *
+ * @param dataWidth   The width of the ADPCM data.
  * @see https://en.wikipedia.org/wiki/Adaptive_differential_pulse-code_modulation
  */
 class ADPCM(sampleWidth: Int = 16, dataWidth: Int = 4) extends Module {
@@ -54,7 +53,7 @@ class ADPCM(sampleWidth: Int = 16, dataWidth: Int = 4) extends Module {
 
   /** Calculate the delta for the current sample value */
   val DELTA_LUT = VecInit.tabulate(16) { n =>
-    val value = (n&7)*2+1
+    val value = (n & 7) * 2 + 1
     if (n >= 8) (-value).S else value.S
   }
 
@@ -83,5 +82,5 @@ class ADPCM(sampleWidth: Int = 16, dataWidth: Int = 4) extends Module {
 
   // Calculate sample value
   val delta = ((io.in.step * DELTA_LUT(io.data)) >> 3).asSInt
-  io.out.sample := Util.clamp(io.in.sample+&delta, -32768, 32767)
+  io.out.sample := Util.clamp(io.in.sample +& delta, -32768, 32767)
 }

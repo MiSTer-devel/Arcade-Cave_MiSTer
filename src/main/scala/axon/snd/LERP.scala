@@ -43,7 +43,7 @@ import chisel3._
  * Interpolates sample values.
  *
  * @param sampleWidth The width of the sample words.
- * @param indexWidth The width of the interpolation index.
+ * @param indexWidth  The width of the interpolation index.
  */
 class LERP(sampleWidth: Int = 16, indexWidth: Int = 9) extends Module {
   val io = IO(new Bundle {
@@ -58,5 +58,5 @@ class LERP(sampleWidth: Int = 16, indexWidth: Int = 9) extends Module {
   // Calculate interpolated sample value
   val slope = io.samples(1) -& io.samples(0)
   val offset = io.index * slope
-  io.out := offset(sampleWidth+indexWidth-2, indexWidth-1).asSInt + io.samples(0)
+  io.out := offset(sampleWidth + indexWidth - 2, indexWidth - 1).asSInt + io.samples(0)
 }

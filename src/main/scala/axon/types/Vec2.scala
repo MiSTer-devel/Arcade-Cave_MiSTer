@@ -51,10 +51,10 @@ class Vec2(private val n: Int = 9) extends Bundle {
   val y = UInt(n.W)
 
   /** Adds the given vector. */
-  def +(that: Vec2) = Vec2(this.x+that.x, this.y+that.y)
+  def +(that: Vec2) = Vec2(this.x + that.x, this.y + that.y)
 
   /** Subtracts the given vector. */
-  def -(that: Vec2) = Vec2(this.x-that.x, this.y-that.y)
+  def -(that: Vec2) = Vec2(this.x - that.x, this.y - that.y)
 }
 
 object Vec2 {

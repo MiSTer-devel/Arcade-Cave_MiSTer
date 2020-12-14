@@ -38,11 +38,11 @@
 package cave.gpu
 
 import axon.mem._
+import axon.util.Counter
 import cave._
 import cave.types._
 import chisel3._
 import chisel3.util._
-import axon.util.Counter
 
 /** Graphics Processor */
 class GPU extends Module {
@@ -112,7 +112,8 @@ class GPU extends Module {
 
   // Priority RAM
   //
-  // The priority RAM is used by the sprite and tilemap layers for reading/writing pixel priority data during rendering.
+  // The priority RAM is used by the sprite and tilemap layers for reading/writing pixel priority
+  // data during rendering.
   val priorityRam = Module(new DualPortRam(
     addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
     dataWidthA = Config.FRAME_BUFFER_PRIO_WIDTH,
@@ -131,15 +132,16 @@ class GPU extends Module {
 
   // Frame buffer
   //
-  // The frame buffer is used by the sprite and tilemap layers for writing pixel data during rendering. Port A is
-  // registered to have better timing, due to the address linearization (which requires a multiplier).
+  // The frame buffer is used by the sprite and tilemap layers for writing pixel data during
+  // rendering. Port A is registered to have better timing, due to the address linearization (which
+  // requires a multiplier).
   val frameBuffer = Module(new DualPortRam(
     addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
     dataWidthA = Config.FRAME_BUFFER_DATA_WIDTH,
-    depthA = Some(Config.SCREEN_WIDTH*Config.SCREEN_HEIGHT),
-    addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH-2,
-    dataWidthB = Config.FRAME_BUFFER_DATA_WIDTH*4,
-    depthB = Some(Config.SCREEN_WIDTH*Config.SCREEN_HEIGHT/4),
+    depthA = Some(Config.SCREEN_WIDTH * Config.SCREEN_HEIGHT),
+    addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH - 2,
+    dataWidthB = Config.FRAME_BUFFER_DATA_WIDTH * 4,
+    depthB = Some(Config.SCREEN_WIDTH * Config.SCREEN_HEIGHT / 4),
     maskEnable = false
   ))
   frameBuffer.io.portA <> RegNext(WriteMemIO.mux(stateReg, Seq(
@@ -198,10 +200,10 @@ class GPU extends Module {
     (stateReg === State.layer0 || stateReg === State.layer1 || stateReg === State.layer2) -> layerProcessor.io.tileRom
   ))
   io.tileRom.addr := MuxLookup(stateReg, DontCare, Seq(
-    State.sprite -> (spriteProcessor.io.tileRom.addr+Config.SPRITE_ROM_OFFSET.U),
-    State.layer0 -> (layerProcessor.io.tileRom.addr+Config.LAYER_0_ROM_OFFSET.U),
-    State.layer1 -> (layerProcessor.io.tileRom.addr+Config.LAYER_1_ROM_OFFSET.U),
-    State.layer2 -> (layerProcessor.io.tileRom.addr+Config.LAYER_2_ROM_OFFSET.U)
+    State.sprite -> (spriteProcessor.io.tileRom.addr + Config.SPRITE_ROM_OFFSET.U),
+    State.layer0 -> (layerProcessor.io.tileRom.addr + Config.LAYER_0_ROM_OFFSET.U),
+    State.layer1 -> (layerProcessor.io.tileRom.addr + Config.LAYER_1_ROM_OFFSET.U),
+    State.layer2 -> (layerProcessor.io.tileRom.addr + Config.LAYER_2_ROM_OFFSET.U)
   ))
 }
 
@@ -210,14 +212,14 @@ object GPU {
   def linearizeAddr(addr: UInt): UInt = {
     val x = addr.head(log2Up(Config.SCREEN_WIDTH))
     val y = addr.tail(log2Up(Config.SCREEN_WIDTH))
-    (y*Config.SCREEN_WIDTH.U)+x
+    (y * Config.SCREEN_WIDTH.U) + x
   }
 
   /**
    * Creates a virtual write-only memory interface that writes blank pixels at the given address.
    *
    * @param addr The address value.
-   **/
+   * */
   def clearMem(addr: UInt): WriteMemIO = {
     val mem = Wire(WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH))
     mem.wr := true.B

@@ -37,8 +37,8 @@
 
 package axon
 
+import axon.mem._
 import chisel3._
-import mem._
 
 /**
  * Transfers a memory interface between clock domains.
@@ -85,7 +85,7 @@ class DataFreezer(addrWidth: Int, dataWidth: Int) extends Module {
   io.in.dout := data
   io.out.rd := io.in.rd && !pendingRead
 
-  printf(p"DataFreezer(read: ${io.out.rd}, wait: $waitReq, valid: $valid, clear: $clear)\n")
+  printf(p"DataFreezer(read: ${ io.out.rd }, wait: $waitReq, valid: $valid, clear: $clear)\n")
 }
 
 object DataFreezer {
@@ -93,7 +93,7 @@ object DataFreezer {
    * Wraps the given memory interface with a data freezer.
    *
    * @param targetClock The target clock domain.
-   * @param mem The memory interface.
+   * @param mem         The memory interface.
    */
   def freeze(targetClock: Clock)(mem: AsyncReadMemIO): AsyncReadMemIO = {
     val freezer = Module(new DataFreezer(mem.addrWidth, mem.dataWidth))

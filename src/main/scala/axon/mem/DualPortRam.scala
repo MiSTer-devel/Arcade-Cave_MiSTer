@@ -44,10 +44,10 @@ import chisel3._
  *
  * @param addrWidthA The width of the port A address bus.
  * @param dataWidthA The width of the port A data bus.
- * @param depthA The optional memory depth of port A (in words).
+ * @param depthA     The optional memory depth of port A (in words).
  * @param addrWidthB The width of the port B address bus.
  * @param dataWidthB The width of the port B data bus.
- * @param depthB The optional memory depth of port B (in words).
+ * @param depthB     The optional memory depth of port B (in words).
  * @param maskEnable A boolean value indicating whether byte masking is enabled.
  */
 class DualPortRam(addrWidthA: Int,
@@ -82,7 +82,7 @@ class DualPortRam(addrWidthA: Int,
       // port A
       val wr_a = Input(Bool())
       val addr_a = Input(UInt(addrWidthA.W))
-      val mask_a = Input(Bits((dataWidthA/8).W))
+      val mask_a = Input(Bits((dataWidthA / 8).W))
       val din_a = Input(Bits(dataWidthA.W))
 
       // port B

@@ -40,8 +40,8 @@ package axon.mem
 import chisel3._
 import chisel3.util._
 
-abstract class MemIO protected (val addrWidth: Int, val dataWidth: Int) extends Bundle {
-  def maskWidth = dataWidth/8
+abstract class MemIO protected(val addrWidth: Int, val dataWidth: Int) extends Bundle {
+  def maskWidth = dataWidth / 8
 }
 
 /**
@@ -50,7 +50,7 @@ abstract class MemIO protected (val addrWidth: Int, val dataWidth: Int) extends 
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class ReadMemIO protected (addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
+class ReadMemIO protected(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
   /** Read enable */
   val rd = Output(Bool())
   /** Address bus */
@@ -81,8 +81,8 @@ object ReadMemIO {
    * Multiplexes requests from two read-only memory interfaces to a single read-only memory interface.
    *
    * @param select Selects between the two memory interfaces.
-   * @param a The first interface.
-   * @param b The second interface.
+   * @param a      The first interface.
+   * @param b      The second interface.
    */
   def mux(select: Bool, a: ReadMemIO, b: ReadMemIO): ReadMemIO = {
     val mem = Wire(chiselTypeOf(a))
@@ -97,7 +97,7 @@ object ReadMemIO {
    * Demultiplexes requests from a single read-only memory interface to multiple read-only memory interfaces. The
    * request is routed to the interface matching a given key.
    *
-   * @param key The key to used to select the interface.
+   * @param key  The key to used to select the interface.
    * @param outs A list of key-interface pairs.
    */
   def demux[K <: UInt](key: K, outs: Seq[(K, ReadMemIO)]): ReadMemIO = {
@@ -118,7 +118,7 @@ object ReadMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class WriteMemIO protected (addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
+class WriteMemIO protected(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
   /** Write enable */
   val wr = Output(Bool())
   /** Address bus */
@@ -174,7 +174,7 @@ object WriteMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class ReadWriteMemIO protected (addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
+class ReadWriteMemIO protected(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
   /** Read enable */
   val rd = Output(Bool())
   /** Write enable */

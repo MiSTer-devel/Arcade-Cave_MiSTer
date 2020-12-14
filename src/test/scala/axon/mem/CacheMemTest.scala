@@ -97,31 +97,31 @@ trait CacheMemTestHelpers {
   }
 
   protected def waitForIdle(dut: CacheMem) =
-    while(!dut.io.debug.idle.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.idle.peek().litToBoolean) { dut.clock.step() }
 
   protected def waitForLatch(dut: CacheMem) =
-    while(!dut.io.debug.latch.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.latch.peek().litToBoolean) { dut.clock.step() }
 
   protected def waitForCheck(dut: CacheMem) =
-    while(!dut.io.debug.check.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.check.peek().litToBoolean) { dut.clock.step() }
 
   protected def waitForFill(dut: CacheMem) =
-    while(!dut.io.debug.fill.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.fill.peek().litToBoolean) { dut.clock.step() }
 
   protected def waitForFillWait(dut: CacheMem) =
-    while(!dut.io.debug.fillWait.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.fillWait.peek().litToBoolean) { dut.clock.step() }
 
   protected def waitForEvict(dut: CacheMem) =
-    while(!dut.io.debug.evict.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.evict.peek().litToBoolean) { dut.clock.step() }
 
   protected def waitForEvictWait(dut: CacheMem) =
-    while(!dut.io.debug.evictWait.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.evictWait.peek().litToBoolean) { dut.clock.step() }
 
   protected def waitForMerge(dut: CacheMem) =
-    while(!dut.io.debug.merge.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.merge.peek().litToBoolean) { dut.clock.step() }
 
   protected def waitForWrite(dut: CacheMem) =
-    while(!dut.io.debug.write.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.write.peek().litToBoolean) { dut.clock.step() }
 }
 
 class CacheMemTest extends FlatSpec with ChiselScalatestTester with Matchers with CacheMemTestHelpers {

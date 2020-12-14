@@ -39,9 +39,9 @@ package axon.types
 
 import chisel3._
 
-/** 
+/**
  * Represents a RGB color. 
- * 
+ *
  * @param n The number of bits per color channel.
  */
 class RGB(private val n: Int = 4) extends Bundle {

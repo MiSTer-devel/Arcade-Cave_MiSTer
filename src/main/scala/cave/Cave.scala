@@ -134,7 +134,8 @@ class Cave extends Module {
 
     // Layer 2 RAM
     //
-    // The layer 2 RAM masks address bits 14 and 15 on the CPU-side (i.e. the RAM is 8KB mirrored to 64KB).
+    // The layer 2 RAM masks address bits 14 and 15 on the CPU-side (i.e. the RAM is 8KB mirrored to
+    // 64KB).
     //
     // https://github.com/mamedev/mame/blob/master/src/mame/drivers/cave.cpp#L495
     val layer2Ram = Module(new TrueDualPortRam(
@@ -194,12 +195,13 @@ class Cave extends Module {
     memMap(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
     memMap(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     memMap(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
-    // Access to 0x5fxxxx appears in DoDonPachi on attract loop when showing the air stage on frame 9355 (i.e. after
-    // roughly 2 min 30 sec). The game is accessing data relative to a Layer 1 address and underflows. These accesses do
-    // nothing, but should be acknowledged in order not to block the CPU.
+    // Access to 0x5fxxxx appears in DoDonPachi on attract loop when showing the air stage on frame
+    // 9355 (i.e. after roughly 2 min 30 sec). The game is accessing data relative to a Layer 1
+    // address and underflows. These accesses do nothing, but should be acknowledged in order not to
+    // block the CPU.
     //
-    // The reason these accesses appear is probably because it made the layer update routine simpler to write (no need
-    // to handle edge cases). These accesses are simply ignored by the hardware.
+    // The reason these accesses appear is probably because it made the layer update routine simpler
+    // to write (no need to handle edge cases). These accesses are simply ignored by the hardware.
     memMap(0x5f0000 to 0x5fffff).ignore()
     memMap(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
     memMap(0x700000 to 0x70ffff).readWriteMem(layer2Ram.io.portA)

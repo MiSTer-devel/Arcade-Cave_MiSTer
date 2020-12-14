@@ -60,8 +60,8 @@ object MemRequest {
   /**
    * Constructs a memory request.
    *
-   * @param rd Read enable.
-   * @param wr Write enable.
+   * @param rd   Read enable.
+   * @param wr   Write enable.
    * @param addr The address value.
    * @param data The data value.
    */

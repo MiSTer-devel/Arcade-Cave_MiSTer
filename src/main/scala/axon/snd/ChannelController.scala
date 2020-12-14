@@ -92,7 +92,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
 
   // Counters
   val (channelCounterValue, channelCounterWrap) = Counter.static(config.numChannels, enable = stateReg === State.init || stateReg === State.next)
-  val (_, outputCounterWrap) = Counter.static((config.clockFreq/config.sampleFreq).round.toInt)
+  val (_, outputCounterWrap) = Counter.static((config.clockFreq / config.sampleFreq).round.toInt)
 
   // Register aliases
   val channelReg = io.channelRegs(channelCounterValue)

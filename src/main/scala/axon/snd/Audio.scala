@@ -48,7 +48,7 @@ class Audio(private val n: Int) extends Bundle {
   val right = SInt(n.W)
 
   /** Adds the given audio sample. */
-  def +(that: Audio): Audio = Audio(this.left+&that.left, this.right+&that.right)
+  def +(that: Audio): Audio = Audio(this.left +& that.left, this.right +& that.right)
 }
 
 object Audio {

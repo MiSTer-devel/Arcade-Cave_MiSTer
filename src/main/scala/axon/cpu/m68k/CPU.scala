@@ -117,10 +117,12 @@ class CPU extends Module {
 
   // Clock enable signals
   //
-  // The FX68K module requires an input clock that is twice the frequency of the desired clock speed. It has two clock
-  // enable signals (PHI1 and PHI2) that trigger the rising and falling edges of the CPU clock.
+  // The FX68K module requires an input clock that is twice the frequency of the desired clock
+  // speed. It has two clock enable signals (PHI1 and PHI2) that trigger the rising and falling
+  // edges of the CPU clock.
   //
-  // To generate the PHI1 and PHI2 clock enable signals, we toggle a bit and use the normal and inverted values.
+  // To generate the PHI1 and PHI2 clock enable signals, we toggle a bit and use the normal and
+  // inverted values.
   val phi1 = Util.toggle()
   val phi2 = !phi1
 

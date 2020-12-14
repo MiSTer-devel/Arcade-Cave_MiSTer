@@ -82,7 +82,7 @@ class ChannelState(private val config: YMZ280BConfig) extends Bundle {
     when(channelReg.flags.loop && addr === channelReg.loopEndAddr) {
       addr := channelReg.loopStartAddr
     }.elsewhen(addr =/= channelReg.endAddr) {
-      addr := addr+1.U
+      addr := addr + 1.U
     }.otherwise {
       done := true.B
     }

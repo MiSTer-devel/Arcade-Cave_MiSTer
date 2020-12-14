@@ -47,7 +47,7 @@ private class CounterStatic(to: Int, init: Int = 0) {
   /** Increments the counter */
   def inc(): Bool = {
     if (to > 1) {
-      val wrap = value === (to-1).U
+      val wrap = value === (to - 1).U
       value := value + 1.U
       if (!isPow2(to)) {
         when(wrap) { value := 0.U }
@@ -71,7 +71,7 @@ private class CounterDynamic(to: UInt) {
 
   /** Increments the counter */
   def inc(): Bool = {
-    val wrap = value === to-1.U || to === 0.U
+    val wrap = value === to - 1.U || to === 0.U
     value := value + 1.U
     when(wrap) { value := 0.U }
     wrap

@@ -82,27 +82,27 @@ object ChannelReg {
    * Decodes a channel register from the given register file.
    *
    * @param registerFile The register file.
-   * @param n The channel number.
+   * @param n            The channel number.
    */
   def fromRegisterFile(registerFile: Vec[UInt])(n: Int): ChannelReg = {
-    val offset = n*4
+    val offset = n * 4
     Cat(
-      registerFile(offset+0x00),       // pitch
-      registerFile(offset+0x01)(7, 4), // flags
-      registerFile(offset+0x02),       // level
-      registerFile(offset+0x03)(3, 0), // pan
-      registerFile(offset+0x20),       // start address
-      registerFile(offset+0x40),
-      registerFile(offset+0x60),
-      registerFile(offset+0x21),       // loop start address
-      registerFile(offset+0x41),
-      registerFile(offset+0x61),
-      registerFile(offset+0x22),       // loop end address
-      registerFile(offset+0x42),
-      registerFile(offset+0x62),
-      registerFile(offset+0x23),       // end address
-      registerFile(offset+0x43),
-      registerFile(offset+0x63)
+      registerFile(offset + 0x00), // pitch
+      registerFile(offset + 0x01)(7, 4), // flags
+      registerFile(offset + 0x02), // level
+      registerFile(offset + 0x03)(3, 0), // pan
+      registerFile(offset + 0x20), // start address
+      registerFile(offset + 0x40),
+      registerFile(offset + 0x60),
+      registerFile(offset + 0x21), // loop start address
+      registerFile(offset + 0x41),
+      registerFile(offset + 0x61),
+      registerFile(offset + 0x22), // loop end address
+      registerFile(offset + 0x42),
+      registerFile(offset + 0x62),
+      registerFile(offset + 0x23), // end address
+      registerFile(offset + 0x43),
+      registerFile(offset + 0x63)
     ).asTypeOf(new ChannelReg)
   }
 }

@@ -108,7 +108,7 @@ class FrameBufferDMATest extends FlatSpec with ChiselScalatestTester with Matche
       dut.io.ddr.mask.expect(0xff.U)
       0.to(3).foreach { n =>
         if (n == 3) dut.io.ddr.burstDone.poke(true.B)
-        dut.io.frameBuffer.addr.expect((n+1).U)
+        dut.io.frameBuffer.addr.expect((n + 1).U)
         dut.io.frameBuffer.dout.poke(n.U)
         dut.io.ddr.din.expect(n.U)
         dut.clock.step()
@@ -122,7 +122,7 @@ class FrameBufferDMATest extends FlatSpec with ChiselScalatestTester with Matche
       dut.io.ddr.mask.expect(0xff.U)
       0.to(3).foreach { n =>
         if (n == 3) dut.io.ddr.burstDone.poke(true.B)
-        dut.io.frameBuffer.addr.expect((n+5).U)
+        dut.io.frameBuffer.addr.expect((n + 5).U)
         dut.io.frameBuffer.dout.poke(n.U)
         dut.io.ddr.din.expect(n.U)
         dut.clock.step()

@@ -52,14 +52,14 @@ class DAC(width: Int = 16) extends Module {
   })
 
   // Registers
-  val accumulatorReg = Reg(UInt((width+1).W))
+  val accumulatorReg = Reg(UInt((width + 1).W))
   val sampleReg = RegEnable(io.sample, 0.S, io.valid)
 
   // Flip sample bits
   val sample = ~sampleReg(15) ## sampleReg(14, 0)
 
   // Add the sample to the accumulator
-  accumulatorReg := accumulatorReg(width-1, 0)+&sample
+  accumulatorReg := accumulatorReg(width - 1, 0) +& sample
 
   // Output
   io.q := accumulatorReg(width)

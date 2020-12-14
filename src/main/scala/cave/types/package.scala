@@ -42,7 +42,7 @@ import chisel3._
 
 package object types {
   /** Frame buffer IO */
-  class FrameBufferIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH-2, Config.FRAME_BUFFER_DATA_WIDTH*4) {
+  class FrameBufferIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH - 2, Config.FRAME_BUFFER_DATA_WIDTH * 4) {
     override def cloneType: this.type = new FrameBufferIO().asInstanceOf[this.type]
   }
 

@@ -43,7 +43,7 @@ import org.scalatest._
 
 trait MemSysTestHelpers {
   protected def waitForDownloadReady(dut: MemSys) =
-    while(dut.io.download.waitReq.peek().litToBoolean) { dut.clock.step() }
+    while (dut.io.download.waitReq.peek().litToBoolean) { dut.clock.step() }
 }
 
 class MemSysTest extends FlatSpec with ChiselScalatestTester with Matchers with MemSysTestHelpers {

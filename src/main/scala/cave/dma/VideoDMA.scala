@@ -46,9 +46,9 @@ import chisel3.util._
 /**
  * A direct memory access (DMA) controller for reading pixel data from DDR memory.
  *
- * @param numWords The number of words to transfer.
+ * @param numWords    The number of words to transfer.
  * @param burstLength The length of the DDR burst.
- * @param addr The start address of the transfer.
+ * @param addr        The start address of the transfer.
  */
 class VideoDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
   /** The number of bursts */
@@ -77,7 +77,7 @@ class VideoDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
 
   // Calculate the DDR address
   val ddrAddr = {
-    val mask = 0.U(log2Ceil(burstLength*8).W)
+    val mask = 0.U(log2Ceil(burstLength * 8).W)
     val offset = io.swap ## burstCounter ## mask
     addr.U + offset
   }

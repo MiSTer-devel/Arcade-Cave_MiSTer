@@ -142,7 +142,7 @@ class UtilTest extends FlatSpec with ChiselScalatestTester with Matchers {
         val a = Input(Bool())
         val b = Output(Bool())
       })
-     io.b := Util.falling(io.a)
+      io.b := Util.falling(io.a)
     }) { dut =>
       dut.io.a.poke(true.B)
       dut.io.b.expect(false.B)

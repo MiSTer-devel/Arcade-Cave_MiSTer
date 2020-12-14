@@ -63,7 +63,7 @@ object UtilReg {
    */
   def fromRegisterFile(registerFile: Vec[UInt]): UtilReg = {
     Cat(
-      registerFile(0xfe),    // IRQ mask
+      registerFile(0xfe), // IRQ mask
       registerFile(0xff)(7), // key on enable
       registerFile(0xff)(6), // memory enable
       registerFile(0xff)(4), // IRQ enable

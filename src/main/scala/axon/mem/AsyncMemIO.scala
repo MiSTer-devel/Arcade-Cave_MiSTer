@@ -55,7 +55,7 @@ trait ValidIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class AsyncReadMemIO protected (addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth, dataWidth) with WaitIO with ValidIO {
+class AsyncReadMemIO protected(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth, dataWidth) with WaitIO with ValidIO {
   override def cloneType: this.type = new AsyncReadMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
 
   /**
@@ -83,7 +83,7 @@ object AsyncReadMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class AsyncWriteMemIO protected (addrWidth: Int, dataWidth: Int) extends WriteMemIO(addrWidth, dataWidth) with WaitIO {
+class AsyncWriteMemIO protected(addrWidth: Int, dataWidth: Int) extends WriteMemIO(addrWidth, dataWidth) with WaitIO {
   override def cloneType: this.type = new AsyncWriteMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
 }
 
@@ -97,7 +97,7 @@ object AsyncWriteMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class AsyncReadWriteMemIO protected (addrWidth: Int, dataWidth: Int) extends ReadWriteMemIO(addrWidth, dataWidth) with WaitIO with ValidIO {
+class AsyncReadWriteMemIO protected(addrWidth: Int, dataWidth: Int) extends ReadWriteMemIO(addrWidth, dataWidth) with WaitIO with ValidIO {
   override def cloneType: this.type = new AsyncReadWriteMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
 
   /** Converts the interface to read-only */

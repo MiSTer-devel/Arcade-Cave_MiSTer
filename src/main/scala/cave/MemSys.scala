@@ -128,7 +128,7 @@ class MemSys extends Module {
   // DDR arbiter
   val ddrArbiter = Module(new MemArbiter(4, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
   ddrArbiter.io.in(0) <> ddrDownloadCache.io.out
-  ddrArbiter.io.in(1).asBurstReadMemIO <> io.videoDMA // high-priority required to burst data to the video FIFO
+  ddrArbiter.io.in(1).asBurstReadMemIO <> io.videoDMA // top priority required for video FIFO
   ddrArbiter.io.in(2).asBurstWriteMemIO <> io.frameBufferDMA
   ddrArbiter.io.in(3).asBurstReadMemIO <> io.tileRom
   ddrArbiter.io.out <> io.ddr

@@ -37,9 +37,9 @@
 
 package axon.gpu
 
-import chisel3._
 import axon.types.Vec2
 import axon.util.Counter
+import chisel3._
 
 /** Represents the video timing signals. */
 class VideoIO extends Bundle {
@@ -60,19 +60,18 @@ class VideoIO extends Bundle {
 /**
  * Represents the video timing configuration.
  *
- * @param hDisplay The horizontal width.
+ * @param hDisplay    The horizontal width.
  * @param hFrontPorch The width of the horizontal front porch region.
- * @param hRetrace The width of the horizontal retrace region.
- * @param hBackPorch The width of the horizontal front porch region.
- * @param hOffset The horizontal offset.
- * @param hInit The initial horizontal position (for testing).
- * @param vDisplay The vertical height.
+ * @param hRetrace    The width of the horizontal retrace region.
+ * @param hBackPorch  The width of the horizontal front porch region.
+ * @param hOffset     The horizontal offset.
+ * @param hInit       The initial horizontal position (for testing).
+ * @param vDisplay    The vertical height.
  * @param vFrontPorch The width of the vertical front porch region.
- * @param vRetrace The width of the vertical retrace region.
- * @param vBackPorch The width of the vertical front porch region.
- * @param vOffset The vertical offset.
- * @param vInit The initial vertical position (for testing).
-
+ * @param vRetrace    The width of the vertical retrace region.
+ * @param vBackPorch  The width of the vertical front porch region.
+ * @param vOffset     The vertical offset.
+ * @param vInit       The initial vertical position (for testing).
  */
 case class VideoTimingConfig(hDisplay: Int,
                              hFrontPorch: Int,
@@ -87,16 +86,16 @@ case class VideoTimingConfig(hDisplay: Int,
                              vOffset: Int = 0,
                              vInit: Int = 0) {
   // Horizontal
-  val hBeginSync    = hBackPorch+hDisplay+hFrontPorch
-  val hEndSync      = hBackPorch+hDisplay+hFrontPorch+hRetrace
+  val hBeginSync = hBackPorch + hDisplay + hFrontPorch
+  val hEndSync = hBackPorch + hDisplay + hFrontPorch + hRetrace
   val hBeginDisplay = hBackPorch
-  val hEndDisplay   = hBackPorch+hDisplay
+  val hEndDisplay = hBackPorch + hDisplay
 
   // Vertical
-  val vBeginSync    = vBackPorch+vDisplay+vFrontPorch
-  val vEndSync      = vBackPorch+vDisplay+vFrontPorch+vRetrace
+  val vBeginSync = vBackPorch + vDisplay + vFrontPorch
+  val vEndSync = vBackPorch + vDisplay + vFrontPorch + vRetrace
   val vBeginDisplay = vBackPorch
-  val vEndDisplay   = vBackPorch+vDisplay
+  val vEndDisplay = vBackPorch + vDisplay
 }
 
 /**
@@ -118,7 +117,7 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
   val (y, yWrap) = Counter.static(config.vEndSync, enable = xWrap, init = config.vInit)
 
   // Adjust the position so the display region begins at the origin
-  val pos = Vec2(x-config.hOffset.U, y-config.vOffset.U)
+  val pos = Vec2(x - config.hOffset.U, y - config.vOffset.U)
 
   // Sync signals
   val hSync = x >= config.hBeginSync.U && x < config.hEndSync.U

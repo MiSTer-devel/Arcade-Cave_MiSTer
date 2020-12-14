@@ -84,8 +84,9 @@ class MemMap(cpu: CPUIO) {
    * @param r   The address range.
    */
   class Mapping(cpu: CPUIO, r: Range) {
-    // The CPU address bus is only 23 bits, because the LSB is inferred from the UDS and LDS signals. However, we still
-    // need to use a 24-bit value when comparing the address to a byte range.
+    // The CPU address bus is only 23 bits, because the LSB is inferred from the UDS and LDS
+    // signals. However, we still need to use a 24-bit value when comparing the address to a byte
+    // range.
     val addr = cpu.addr ## 0.U
 
     // Address offset

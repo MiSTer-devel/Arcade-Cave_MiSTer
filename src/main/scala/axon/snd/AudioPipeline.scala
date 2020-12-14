@@ -132,7 +132,7 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
 
   // Apply level
   when(stateReg === State.level) {
-    sampleReg := sampleReg*(inputReg.level+&1.U) >> 8
+    sampleReg := sampleReg * (inputReg.level +& 1.U) >> 8
   }
 
   // Apply pan
@@ -142,9 +142,9 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
     val left = WireInit(s)
     val right = WireInit(s)
     when(inputReg.pan > 8.U) {
-      left := s*(~t).asUInt >> 3
+      left := s * (~t).asUInt >> 3
     }.elsewhen(inputReg.pan < 7.U) {
-      right := s*t >> 3
+      right := s * t >> 3
     }
     audioReg := Audio(left, right)
   }
@@ -195,5 +195,5 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
   io.debug.pan := stateReg === State.pan
   io.debug.done := stateReg === State.done
 
-  printf(p"AudioPipeline(state: $stateReg, pcmData: 0x${Hexadecimal(pcmDataReg)}, pipelineState: ${inputReg.state})\n")
+  printf(p"AudioPipeline(state: $stateReg, pcmData: 0x${ Hexadecimal(pcmDataReg) }, pipelineState: ${ inputReg.state })\n")
 }

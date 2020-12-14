@@ -45,7 +45,7 @@ import chisel3.util._
  *
  * @param config The SDRAM configuration.
  */
-class SDRAMIO private (config: SDRAMConfig) extends Bundle {
+class SDRAMIO private(config: SDRAMConfig) extends Bundle {
   /** Clock enable */
   val cke = Output(Bool())
   /** Chip select (active-low) */
@@ -77,23 +77,23 @@ object SDRAMIO {
  *
  * The default values used here may not work for every device, so be sure to check the datasheet.
  *
- * @param clockFreq The SDRAM clock frequency (Hz).
- * @param bankWidth The width of the bank address.
- * @param rowWidth The width of the row address.
- * @param colWidth The width of the column address.
- * @param dataWidth The width of the data bus.
- * @param burstLength The number of words to be transferred during a read/write.
- * @param burstType The burst type (0=sequential, 1=interleaved).
- * @param casLatency The delay in clock cycles, between the start of a read command and the
- *                   availability of the output data.
+ * @param clockFreq      The SDRAM clock frequency (Hz).
+ * @param bankWidth      The width of the bank address.
+ * @param rowWidth       The width of the row address.
+ * @param colWidth       The width of the column address.
+ * @param dataWidth      The width of the data bus.
+ * @param burstLength    The number of words to be transferred during a read/write.
+ * @param burstType      The burst type (0=sequential, 1=interleaved).
+ * @param casLatency     The delay in clock cycles, between the start of a read command and the
+ *                       availability of the output data.
  * @param writeBurstMode The write burst mode (0=burst, 1=single).
- * @param tINIT The initialization delay (ns).
- * @param tMRD The mode register cycle time (ns).
- * @param tRC The row cycle time (ns).
- * @param tRCD The RAS to CAS delay (ns).
- * @param tRP The precharge to activate delay (ns).
- * @param tWR The write recovery time (ns).
- * @param tREFI The refresh interval (ns).
+ * @param tINIT          The initialization delay (ns).
+ * @param tMRD           The mode register cycle time (ns).
+ * @param tRC            The row cycle time (ns).
+ * @param tRCD           The RAS to CAS delay (ns).
+ * @param tRP            The precharge to activate delay (ns).
+ * @param tWR            The write recovery time (ns).
+ * @param tREFI          The refresh interval (ns).
  */
 case class SDRAMConfig(clockFreq: Double,
                        bankWidth: Int = 2,
@@ -112,27 +112,27 @@ case class SDRAMConfig(clockFreq: Double,
                        tWR: Double = 12,
                        tREFI: Double = 7800) {
   /** The width of the address bus (i.e. the byte width of all banks, rows, and columns). */
-  val addrWidth = bankWidth+rowWidth+colWidth+1
+  val addrWidth = bankWidth + rowWidth + colWidth + 1
   /** The SDRAM clock period (ns). */
-  val clockPeriod = 1/clockFreq*1000000000
+  val clockPeriod = 1 / clockFreq * 1000000000
   /** The number of clock cycles to wait before selecting the device. */
-  val deselectWait = (tINIT/clockPeriod).ceil.toLong
+  val deselectWait = (tINIT / clockPeriod).ceil.toLong
   /** The number of clock cycles to wait for a PRECHARGE command. */
-  val prechargeWait = (tRP/clockPeriod).ceil.toLong
+  val prechargeWait = (tRP / clockPeriod).ceil.toLong
   /** The number of clock cycles to wait for a MODE command. */
-  val modeWait = (tMRD/clockPeriod).ceil.toLong
+  val modeWait = (tMRD / clockPeriod).ceil.toLong
   /** The number of clock cycles to wait for an ACTIVE command. */
-  val activeWait = (tRCD/clockPeriod).ceil.toLong
+  val activeWait = (tRCD / clockPeriod).ceil.toLong
   /** The number of clock cycles to wait for a READ command. */
-  val readWait = casLatency+burstLength
+  val readWait = casLatency + burstLength
   /** The number of clock cycles to wait for a WRITE command. */
-  val writeWait = burstLength+((tWR+tRP)/clockPeriod).ceil.toLong
+  val writeWait = burstLength + ((tWR + tRP) / clockPeriod).ceil.toLong
   /** The number of clock cycles to wait for a REFRESH command. */
-  val refreshWait = (tRC/clockPeriod).ceil.toLong
+  val refreshWait = (tRC / clockPeriod).ceil.toLong
   /** The number of clock cycles between REFRESH commands. */
-  val refreshInterval = (tREFI/clockPeriod).floor.toLong
+  val refreshInterval = (tREFI / clockPeriod).floor.toLong
   /** The number of clock cycles to wait during initialization. */
-  val initWait = deselectWait+prechargeWait+refreshWait+refreshWait
+  val initWait = deselectWait + prechargeWait + refreshWait + refreshWait
   /** The maximum value of the wait counter. */
   val waitCounterMax = 1 << log2Ceil(Seq(initWait, readWait, writeWait).max)
   /** The maximum value of the refresh counter. */
@@ -162,7 +162,7 @@ object SDRAMAddress {
   /**
    * Converts a byte address to a SDRAM address.
    *
-   * @param addr The address.
+   * @param addr   The address.
    * @param config The SDRAM configuration.
    */
   def fromByteAddress(addr: UInt)(config: SDRAMConfig) = {
@@ -237,14 +237,14 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   )
 
   // Control signals
-  val modeDone = waitCounter === (config.modeWait-1).U
-  val activeDone = waitCounter === (config.activeWait-1).U
-  val readDone = waitCounter === (config.readWait-1).U
-  val writeDone = waitCounter === (config.writeWait-1).U
-  val refreshDone = waitCounter === (config.refreshWait-1).U
-  val refresh = refreshCounter >= (config.refreshInterval-1).U
-  val burstBusy = waitCounter < (config.burstLength-1).U
-  val burstDone = waitCounter === (config.burstLength-1).U
+  val modeDone = waitCounter === (config.modeWait - 1).U
+  val activeDone = waitCounter === (config.activeWait - 1).U
+  val readDone = waitCounter === (config.readWait - 1).U
+  val writeDone = waitCounter === (config.writeWait - 1).U
+  val refreshDone = waitCounter === (config.refreshWait - 1).U
+  val refresh = refreshCounter >= (config.refreshInterval - 1).U
+  val burstBusy = waitCounter < (config.burstLength - 1).U
+  val burstDone = waitCounter === (config.burstLength - 1).U
 
   // Deassert the wait signal at the start of a read request, or during a write request
   val waitReq = {
@@ -255,7 +255,7 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   }
 
   // Assert the valid signal after the first word has been bursted during a read
-  val valid = RegNext(stateReg === State.read && waitCounter > (config.casLatency-1).U, false.B)
+  val valid = RegNext(stateReg === State.read && waitCounter > (config.casLatency - 1).U, false.B)
 
   // Assert the burst done signal when a read/write burst has completed
   val memBurstDone = {
@@ -291,13 +291,13 @@ class SDRAM(val config: SDRAMConfig) extends Module {
     is(State.init) {
       when(waitCounter === 0.U) {
         nextCommand := Command.deselect
-      }.elsewhen(waitCounter === (config.deselectWait-1).U) {
+      }.elsewhen(waitCounter === (config.deselectWait - 1).U) {
         nextCommand := Command.precharge
-      }.elsewhen(waitCounter === (config.deselectWait+config.prechargeWait-1).U) {
+      }.elsewhen(waitCounter === (config.deselectWait + config.prechargeWait - 1).U) {
         nextCommand := Command.refresh
-      }.elsewhen(waitCounter === (config.deselectWait+config.prechargeWait+config.refreshWait-1).U) {
+      }.elsewhen(waitCounter === (config.deselectWait + config.prechargeWait + config.refreshWait - 1).U) {
         nextCommand := Command.refresh
-      }.elsewhen(waitCounter === (config.deselectWait+config.prechargeWait+config.refreshWait+config.refreshWait-1).U) {
+      }.elsewhen(waitCounter === (config.deselectWait + config.prechargeWait + config.refreshWait + config.refreshWait - 1).U) {
         nextCommand := Command.mode
         nextState := State.mode
       }

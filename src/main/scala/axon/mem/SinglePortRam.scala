@@ -42,9 +42,9 @@ import chisel3._
 /**
  * This module wraps an external single-port RAM module.
  *
- * @param addrWidth The width of the address bus.
- * @param dataWidth The width of the data bus.
- * @param depth The optional memory depth (in words).
+ * @param addrWidth  The width of the address bus.
+ * @param dataWidth  The width of the data bus.
+ * @param depth      The optional memory depth (in words).
  * @param maskEnable A boolean value indicating whether byte masking is enabled.
  */
 class SinglePortRam(addrWidth: Int,
@@ -66,7 +66,7 @@ class SinglePortRam(addrWidth: Int,
       val rd = Input(Bool())
       val wr = Input(Bool())
       val addr = Input(UInt(addrWidth.W))
-      val mask = Input(Bits((dataWidth/8).W))
+      val mask = Input(Bits((dataWidth / 8).W))
       val din = Input(Bits(dataWidth.W))
       val dout = Output(Bits(dataWidth.W))
     })

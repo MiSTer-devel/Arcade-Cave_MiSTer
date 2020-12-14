@@ -58,7 +58,7 @@ class AudioPipelineState(private val config: YMZ280BConfig) extends Bundle {
 
   /** Updates the interpolation index with the given pitch value. */
   def interpolate(pitch: UInt) = {
-    val index = lerpIndex+pitch+1.U
+    val index = lerpIndex + pitch + 1.U
     underflow := index.head(1)
     lerpIndex := index.tail(1)
   }

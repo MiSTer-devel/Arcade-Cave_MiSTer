@@ -44,15 +44,15 @@ import chisel3.util._
 /**
  * Represents the YMZ280B configuration.
  *
- * @param clockFreq The system clock frequency (Hz).
- * @param sampleFreq The sample clock frequency (Hz).
- * @param sampleWidth The width of the sample words.
+ * @param clockFreq      The system clock frequency (Hz).
+ * @param sampleFreq     The sample clock frequency (Hz).
+ * @param sampleWidth    The width of the sample words.
  * @param adpcmDataWidth The width of the ADPCM data.
- * @param memAddrWidth The width of the memory address bus.
- * @param memDataWidth The width of the memory data bus.
- * @param cpuAddrWidth The width of the CPU address bus.
- * @param cpuDataWidth The width of the CPU data bus.
- * @param numChannels The number of channels.
+ * @param memAddrWidth   The width of the memory address bus.
+ * @param memDataWidth   The width of the memory data bus.
+ * @param cpuAddrWidth   The width of the CPU address bus.
+ * @param cpuDataWidth   The width of the CPU data bus.
+ * @param numChannels    The number of channels.
  */
 case class YMZ280BConfig(clockFreq: Double,
                          sampleFreq: Double = 44100,
@@ -74,7 +74,7 @@ case class YMZ280BConfig(clockFreq: Double,
   /** The maximum frequency. */
   val maxFreq = 44100D
   /** The width of the linear interpolation index value. */
-  val lerpIndexWidth = (pitchWidth+sampleFreq/maxFreq).ceil.toInt
+  val lerpIndexWidth = (pitchWidth + sampleFreq / maxFreq).ceil.toInt
 }
 
 /**
