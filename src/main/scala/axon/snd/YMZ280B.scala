@@ -104,9 +104,9 @@ class YMZ280B(config: YMZ280BConfig) extends Module {
   })
 
   // Registers
-  val addrReg = Reg(UInt(config.cpuDataWidth.W))
-  val dataReg = Reg(UInt(config.cpuDataWidth.W))
-  val statusReg = Reg(Bits(config.cpuDataWidth.W))
+  val addrReg = RegInit(0.U)
+  val dataReg = RegInit(0.U)
+  val statusReg = RegInit(0.U)
   val registerFile = RegInit(VecInit.tabulate(config.numRegs) { _ => 0.U(config.cpuDataWidth.W) })
 
   // Map register file to channel descriptors

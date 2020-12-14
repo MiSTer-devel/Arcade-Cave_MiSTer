@@ -178,7 +178,7 @@ class UtilTest extends FlatSpec with ChiselScalatestTester with Matchers {
     }
   }
 
-  "latch" should "latch a signal" in {
+  "latch" should "latch and clear a signal" in {
     test(new Module {
       val io = IO(new Bundle {
         val a = Input(Bool())
@@ -195,6 +195,29 @@ class UtilTest extends FlatSpec with ChiselScalatestTester with Matchers {
       dut.clock.step()
       dut.io.b.poke(true.B)
       dut.io.c.expect(false.B)
+      dut.clock.step()
+      dut.io.b.poke(false.B)
+      dut.io.c.expect(false.B)
+    }
+  }
+
+  "latchSync" should "latch and clear a signal" in {
+    test(new Module {
+      val io = IO(new Bundle {
+        val a = Input(Bool())
+        val b = Input(Bool())
+        val c = Output(Bool())
+      })
+      io.c := Util.latchSync(io.a, io.b)
+    }) { dut =>
+      dut.io.a.poke(true.B)
+      dut.io.c.expect(false.B)
+      dut.clock.step()
+      dut.io.a.poke(false.B)
+      dut.io.c.expect(true.B)
+      dut.clock.step()
+      dut.io.b.poke(true.B)
+      dut.io.c.expect(true.B)
       dut.clock.step()
       dut.io.b.poke(false.B)
       dut.io.c.expect(false.B)
