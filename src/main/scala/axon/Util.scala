@@ -166,6 +166,24 @@ object Util {
   }
 
   /**
+   * Synchronously latches and clears a signal.
+   *
+   * Once latched, the output will remain stable until the latch is cleared by the clear signal.
+   *
+   * @param s     The signal value.
+   * @param clear The clear signal.
+   */
+  def latchSync(s: Bool, clear: Bool): Bool = {
+    val enableReg = RegInit(false.B)
+    when(clear) {
+      enableReg := false.B
+    }.elsewhen(s) {
+      enableReg := true.B
+    }
+    enableReg
+  }
+
+  /**
    * Latches a signal when the given trigger is asserted.
    *
    * The output will remain stable until the latch is triggered or cleared.
