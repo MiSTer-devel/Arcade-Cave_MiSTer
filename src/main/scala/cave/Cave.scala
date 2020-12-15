@@ -95,9 +95,12 @@ class Cave extends Module {
     val cpu = Module(new CPU)
     cpu.io.halt := Util.toggle(pause)
     cpu.io.dtack := false.B
-    cpu.io.vpa := intAck // Autovectored interrupts
+    cpu.io.vpa := intAck // autovectored interrupts
     cpu.io.ipl := iplReg
     cpu.io.din := 0.U
+
+    // EEPROM
+    val eeprom = Module(new EEPROM)
 
     // Main RAM
     val mainRam = Module(new SinglePortRam(
@@ -217,8 +220,8 @@ class Cave extends Module {
     memMap(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
     memMap(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
     memMap(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-    memMap(0xd00000 to 0xd00001).r { (_, _) => "b111111".U ## ~io.player.player1 }
-    memMap(0xd00002 to 0xd00003).r { (_, _) => "b111101".U ## ~io.player.player2 }
-    memMap(0xe00000).w { (_, _, _) => /* TODO: EEPROM */ }
+    memMap(0xd00000).r { (_, _) => "b111111".U ## ~io.player.player1 }
+    memMap(0xd00002).r { (_, _) => "b1111".U ## eeprom.io.dout ## "b1".U ## ~io.player.player2 }
+    memMap(0xe00000).writeMem(eeprom.io.mem)
   }
 }
