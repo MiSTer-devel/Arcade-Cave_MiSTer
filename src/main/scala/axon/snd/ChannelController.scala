@@ -166,7 +166,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   switch(stateReg) {
     // Initialize channel states
     is(State.init) {
-      when(outputCounterWrap) { stateReg := State.idle }
+      when(channelCounterWrap) { stateReg := State.idle }
     }
 
     // Clear accumulator

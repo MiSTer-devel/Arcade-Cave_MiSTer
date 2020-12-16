@@ -78,7 +78,7 @@ case class YMZ280BConfig(clockFreq: Double,
 }
 
 /**
- * The YMZ280B is a PCM/ADPCM decoder that can play up to eight channels simultaneously.
+ * The YMZ280B is a PCM/ADPCM decoder that can play up to eight audio channels simultaneously.
  *
  * @param config The YMZ280B configuration.
  */

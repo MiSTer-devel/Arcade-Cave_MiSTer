@@ -137,7 +137,7 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
     }
   }
 
-  it should "move to the check state after latch the channel state" in {
+  it should "move to the check state after latching the channel state" in {
     test(mkChannelController()) { dut =>
       dut.io.enable.poke(true.B)
       waitForLatch(dut)

@@ -41,7 +41,7 @@ import chisel3._
 import chisel3.util._
 
 /**
- * Produces audio samples by processing sample data using a sequence of steps.
+ * Produces audio samples by processing PCM data using a sequence of steps.
  *
  * The audio pipeline steps are:
  *
