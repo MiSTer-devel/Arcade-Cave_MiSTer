@@ -242,6 +242,52 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
 
   behavior of "playing"
 
+  it should "play a looped sample" in {
+    test(mkChannelController()) { dut =>
+      // Start
+      dut.io.enable.poke(true.B)
+      startChannel(dut, channelIndex = 0, loop = true, loopEndAddr = 1, endAddress = 1)
+
+      // Fetch
+      waitForMemRead(dut)
+      dut.io.mem.valid.poke(true.B)
+      dut.io.mem.dout.poke(0x12.U)
+      waitForNext(dut)
+      dut.io.mem.valid.poke(false.B)
+
+      // Valid
+      waitForAudioValid(dut)
+      dut.io.audio.bits.left.expect(0.S)
+      dut.io.audio.bits.right.expect(0.S)
+      waitForIdle(dut)
+
+      // Fetch
+      waitForMemRead(dut)
+      dut.io.mem.valid.poke(true.B)
+      dut.io.mem.dout.poke(0x12.U)
+      waitForNext(dut)
+      dut.io.mem.valid.poke(false.B)
+
+      // Valid
+      waitForAudioValid(dut)
+      dut.io.audio.bits.left.expect(47.S)
+      dut.io.audio.bits.right.expect(47.S)
+      waitForIdle(dut)
+
+      // Fetch
+      waitForMemRead(dut)
+      dut.io.mem.valid.poke(true.B)
+      dut.io.mem.dout.poke(0x12.U)
+      waitForNext(dut)
+      dut.io.mem.valid.poke(false.B)
+
+      // Valid
+      waitForAudioValid(dut)
+      dut.io.audio.bits.left.expect(126.S)
+      dut.io.audio.bits.right.expect(126.S)
+    }
+  }
+
   it should "sum the channel outputs" in {
     test(mkChannelController(ymzConfig.copy(numChannels = 2))) { dut =>
       // Start
