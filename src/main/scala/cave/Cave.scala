@@ -221,7 +221,8 @@ class Cave extends Module {
     memMap(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
     memMap(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
     memMap(0xd00000).r { (_, _) => "b111111".U ## ~io.player.player1 }
-    memMap(0xd00002).r { (_, _) => "b1111".U ## eeprom.io.dout ## "b1".U ## ~io.player.player2 }
+    // FIXME: The EEPROM output data shouldn't need to be inverted.
+    memMap(0xd00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b1".U ## ~io.player.player2 }
     memMap(0xe00000).writeMem(eeprom.io.mem)
   }
 }
