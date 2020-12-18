@@ -86,8 +86,8 @@ class Cave extends Module {
   // The CPU and registers run in the CPU clock domain
   withClockAndReset(io.cpuClock, io.cpuReset) {
     // Registers
-    val vBlank = Util.rising(ShiftRegister(io.video.vBlank, 2))
     val pause = Util.rising(ShiftRegister(io.player.pause, 2))
+    val vBlank = Util.rising(ShiftRegister(io.video.vBlank, 2))
     val vBlankIRQ = RegInit(false.B)
     val iplReg = RegInit(0.U)
 
@@ -181,12 +181,13 @@ class Cave extends Module {
     val ymz = Module(new YMZ280B(Config.ymzConfig))
     ymz.io.mem <> io.soundRom
     io.audio <> RegEnable(ymz.io.audio.bits, ymz.io.audio.valid)
+    val soundIRQ = ymz.io.irq
 
     // Interrupt acknowledge
-    intAck := cpu.io.fc === 7.U && cpu.io.as
+    intAck := cpu.io.as && cpu.io.fc === 7.U
 
     // Set and clear interrupt priority level register
-    when(vBlank || Util.rising(ymz.io.irq)) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
+    when(vBlankIRQ || soundIRQ) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
 
     // Set vertical blank IRQ
     when(vBlank) { vBlankIRQ := true.B }
@@ -210,8 +211,10 @@ class Cave extends Module {
     memMap(0x700000 to 0x70ffff).readWriteMem(layer2Ram.io.portA)
     // IRQ cause
     memMap(0x800000 to 0x800007).r { (_, offset) =>
-      when(offset === 4.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
-      val result = WireInit(3.U)
+      // FIXME: In MAME, the VBLANK IRQ is cleared at offset 4. This means that the IRQ is cleared
+      // before it gets queried (at offset 0). Needs more investigation.
+      when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
+      val result = WireInit(7.U)
       result.bitSet(0.U, !vBlankIRQ) // clear bit 0 during a vertical blank
     }
     memMap(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
