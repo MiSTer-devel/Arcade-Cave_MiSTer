@@ -57,6 +57,8 @@ class ChannelController(config: YMZ280BConfig) extends Module {
     val regs = Input(Vec(config.numChannels, new ChannelReg))
     /** A flag indicating whether the channel controller is enabled */
     val enable = Input(Bool())
+    /** Asserted when the current channel is active */
+    val active = Output(Bool())
     /** Asserted when the current channel is done */
     val done = Output(Bool())
     /** Current channel index */
@@ -110,10 +112,10 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   audioPipeline.io.in.bits.pan := channelReg.pan
 
   // Control signals
-  val start = !channelStateReg.enable && channelReg.flags.keyOn
+  val start = !channelStateReg.enable && !channelStateReg.active && channelReg.flags.keyOn
   val stop = channelStateReg.enable && !channelReg.flags.keyOn
+  val active = channelStateReg.active || start
   val done = channelStateReg.done
-  val active = channelStateReg.enable || start
 
   // Fetch PCM data when the audio pipeline is ready for data
   val pendingReg = Util.latchSync(audioPipeline.io.pcmData.ready && !io.mem.waitReq, io.mem.valid)
@@ -131,8 +133,10 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   when(stateReg === State.check) {
     when(start) {
       channelStateReg.start(channelReg.startAddr)
-    }.elsewhen(stop || done) {
+    }.elsewhen(stop) {
       channelStateReg.stop()
+    }.elsewhen(done) {
+      channelStateReg.clearDone()
     }
   }
 
@@ -205,6 +209,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
 
   // Outputs
   io.index := channelCounter
+  io.active := stateReg === State.check && active
   io.done := stateReg === State.check && done
   io.audio.valid := outputCounterWrap
   io.audio.bits := accumulatorReg

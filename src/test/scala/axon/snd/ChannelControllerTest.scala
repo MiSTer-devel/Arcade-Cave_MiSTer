@@ -288,6 +288,7 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
       waitForMemRead(dut)
       dut.io.mem.valid.poke(true.B)
       dut.io.mem.dout.poke(0x10.U)
+      dut.io.index.expect(0.U)
       waitForNext(dut)
       dut.io.mem.valid.poke(false.B)
 
@@ -295,6 +296,7 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
       waitForMemRead(dut)
       dut.io.mem.valid.poke(true.B)
       dut.io.mem.dout.poke(0x20.U)
+      dut.io.index.expect(1.U)
       waitForNext(dut)
       dut.io.mem.valid.poke(false.B)
 
@@ -311,6 +313,78 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
     }
   }
 
+  it should "not allow a channel to play another sample until the key is released" in {
+    test(mkChannelController()) { dut =>
+      // Start
+      dut.io.enable.poke(true.B)
+      dut.io.mem.valid.poke(true.B)
+      startChannel(dut, index = 0, endAddress = 1)
+
+      // Done
+      for (_ <- 0 to 4) {
+        waitForRead(dut)
+        waitForCheck(dut)
+      }
+      dut.io.active.expect(false.B)
+      dut.io.done.expect(true.B)
+
+      // Key still down
+      waitForRead(dut)
+      waitForCheck(dut)
+      dut.io.active.expect(false.B)
+
+      // Stop
+      stopChannel(dut, index = 0)
+      waitForRead(dut)
+      waitForCheck(dut)
+
+      // Start
+      startChannel(dut, index = 0, endAddress = 1)
+      waitForRead(dut)
+      waitForCheck(dut)
+      dut.io.active.expect(true.B)
+    }
+  }
+
+  behavior of "active"
+
+  it should "assert the active signal when a channel is playing" in {
+    test(mkChannelController()) { dut =>
+      dut.io.enable.poke(true.B)
+
+      // Active
+      startChannel(dut, index = 0, endAddress = 1)
+      waitForCheck(dut)
+      dut.io.active.expect(true.B)
+
+      // Inactive
+      stopChannel(dut, index = 0)
+      waitForCheck(dut)
+      dut.io.active.expect(false.B)
+    }
+  }
+
+  it should "deassert the active signal when a channel has reached the end address" in {
+    test(mkChannelController()) { dut =>
+      // Start
+      dut.io.enable.poke(true.B)
+      dut.io.mem.valid.poke(true.B)
+      startChannel(dut, index = 0, endAddress = 1)
+
+      // Status
+      for (_ <- 0 to 3) {
+        waitForRead(dut)
+        waitForCheck(dut)
+        dut.io.active.expect(true.B)
+      }
+
+      // Done
+      waitForRead(dut)
+      waitForCheck(dut)
+      dut.io.active.expect(false.B)
+    }
+  }
+
   behavior of "done"
 
   it should "assert the done signal when a channel has reached the end address" in {
@@ -324,19 +398,17 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
       for (_ <- 0 to 3) {
         waitForRead(dut)
         waitForCheck(dut)
-        dut.io.index.expect(0.U)
         dut.io.done.expect(false.B)
       }
 
       // Done
       waitForRead(dut)
       waitForCheck(dut)
-      dut.io.index.expect(0.U)
       dut.io.done.expect(true.B)
     }
   }
 
-  it should "not assert the done signal when a channel has reached the loop end address" in {
+  it should "not assert the done signal when the loop end address is equal to the end address" in {
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true.B)
@@ -347,7 +419,6 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
       for (n <- Seq(0, 1, 1, 0)) {
         waitForRead(dut)
         waitForCheck(dut)
-        dut.io.index.expect(0.U)
         dut.io.done.expect(false.B)
       }
     }
@@ -366,12 +437,11 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
 
       // Status
       waitForCheck(dut)
-      dut.io.index.expect(0.U)
       dut.io.done.expect(false.B)
     }
   }
 
-  it should "not assert the done signal when the channel is disabled" in {
+  it should "not assert the done signal when a channel is inactive" in {
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true.B)
@@ -383,7 +453,6 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
         waitForRead(dut)
         waitForCheck(dut)
       }
-      dut.io.index.expect(0.U)
       dut.io.done.expect(true.B)
 
       // Disabled
