@@ -117,8 +117,9 @@ class YMZ280B(config: YMZ280BConfig) extends Module {
 
   // Channel controller
   val channelCtrl = Module(new ChannelController(config))
+  channelCtrl.io.regs := channelRegs
   channelCtrl.io.enable := utilReg.flags.keyOnEnable
-  channelCtrl.io.channelRegs := channelRegs
+  channelCtrl.io.audio <> io.audio
   channelCtrl.io.mem <> io.mem
 
   // Control signals
@@ -133,9 +134,7 @@ class YMZ280B(config: YMZ280BConfig) extends Module {
   when(writeData) { registerFile(addrReg) := io.cpu.din }
 
   // Mark current channel as done in the status register
-  when(channelCtrl.io.channelDone) {
-    statusReg := statusReg.bitSet(channelCtrl.io.channelIndex, true.B)
-  }
+  when(channelCtrl.io.done) { statusReg := statusReg.bitSet(channelCtrl.io.index, true.B) }
 
   // Read and clear the status register
   when(readStatus) {
@@ -145,7 +144,6 @@ class YMZ280B(config: YMZ280BConfig) extends Module {
 
   // Outputs
   io.cpu.dout := dataReg
-  io.audio <> channelCtrl.io.audio
   io.irq := utilReg.flags.irqEnable && (statusReg & utilReg.irqMask).orR
   io.debug.channels := channelRegs
   io.debug.utilReg := utilReg

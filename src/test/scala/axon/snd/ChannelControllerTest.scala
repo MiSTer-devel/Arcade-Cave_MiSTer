@@ -47,7 +47,7 @@ trait ChannelControllerTestHelpers {
   protected def mkChannelController(config: YMZ280BConfig = ymzConfig) = new ChannelController(config)
 
   protected def startChannel(dut: ChannelController,
-                             channelIndex: Int,
+                             index: Int,
                              loop: Boolean = false,
                              pitch: Int = 255,
                              level: Int = 255,
@@ -56,19 +56,19 @@ trait ChannelControllerTestHelpers {
                              loopStartAddr: Int = 0,
                              loopEndAddr: Int = 0,
                              endAddress: Int = 0) = {
-    dut.io.channelRegs(channelIndex).flags.keyOn.poke(true.B)
-    dut.io.channelRegs(channelIndex).flags.loop.poke(loop.B)
-    dut.io.channelRegs(channelIndex).pitch.poke(pitch.U)
-    dut.io.channelRegs(channelIndex).level.poke(level.U)
-    dut.io.channelRegs(channelIndex).pan.poke(pan.U)
-    dut.io.channelRegs(channelIndex).startAddr.poke(startAddress.U)
-    dut.io.channelRegs(channelIndex).loopStartAddr.poke(loopStartAddr.U)
-    dut.io.channelRegs(channelIndex).loopEndAddr.poke(loopEndAddr.U)
-    dut.io.channelRegs(channelIndex).endAddr.poke(endAddress.U)
+    dut.io.regs(index).flags.keyOn.poke(true.B)
+    dut.io.regs(index).flags.loop.poke(loop.B)
+    dut.io.regs(index).pitch.poke(pitch.U)
+    dut.io.regs(index).level.poke(level.U)
+    dut.io.regs(index).pan.poke(pan.U)
+    dut.io.regs(index).startAddr.poke(startAddress.U)
+    dut.io.regs(index).loopStartAddr.poke(loopStartAddr.U)
+    dut.io.regs(index).loopEndAddr.poke(loopEndAddr.U)
+    dut.io.regs(index).endAddr.poke(endAddress.U)
   }
 
-  protected def stopChannel(dut: ChannelController, channelIndex: Int) = {
-    dut.io.channelRegs(channelIndex).flags.keyOn.poke(false.B)
+  protected def stopChannel(dut: ChannelController, index: Int) = {
+    dut.io.regs(index).flags.keyOn.poke(false.B)
   }
 
   protected def waitForIdle(dut: ChannelController) =
@@ -149,7 +149,7 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
   it should "move to the ready state after checking an enabled channel" in {
     test(mkChannelController()) { dut =>
       dut.io.enable.poke(true.B)
-      dut.io.channelRegs(0).flags.keyOn.poke(true.B)
+      dut.io.regs(0).flags.keyOn.poke(true.B)
       waitForCheck(dut)
       dut.clock.step()
       dut.io.debug.ready.expect(true.B)
@@ -191,7 +191,7 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true.B)
-      startChannel(dut, channelIndex = 0)
+      startChannel(dut, index = 0)
 
       // Fetch
       waitForProcess(dut)
@@ -211,7 +211,7 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
       // Start
       dut.io.enable.poke(true.B)
       dut.io.mem.valid.poke(true.B)
-      startChannel(dut, channelIndex = 0, pitch = 127, startAddress = 1)
+      startChannel(dut, index = 0, pitch = 127, startAddress = 1)
 
       for (n <- Seq(1, 1, 2, 2)) {
         // Fetch
@@ -235,7 +235,7 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true.B)
-      startChannel(dut, channelIndex = 0, loop = true, loopEndAddr = 1, endAddress = 1)
+      startChannel(dut, index = 0, loop = true, loopEndAddr = 1, endAddress = 1)
 
       // Fetch
       waitForMemRead(dut)
@@ -281,8 +281,8 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
     test(mkChannelController(ymzConfig.copy(numChannels = 2))) { dut =>
       // Start
       dut.io.enable.poke(true.B)
-      startChannel(dut, channelIndex = 0, pitch = 127)
-      startChannel(dut, channelIndex = 1, pitch = 127)
+      startChannel(dut, index = 0, pitch = 127)
+      startChannel(dut, index = 1, pitch = 127)
 
       // Fetch (channel 0)
       waitForMemRead(dut)
@@ -318,21 +318,21 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
       // Start
       dut.io.enable.poke(true.B)
       dut.io.mem.valid.poke(true.B)
-      startChannel(dut, channelIndex = 0, endAddress = 1)
+      startChannel(dut, index = 0, endAddress = 1)
 
       // Status
       for (_ <- 0 to 3) {
         waitForRead(dut)
         waitForCheck(dut)
-        dut.io.channelIndex.expect(0.U)
-        dut.io.channelDone.expect(false.B)
+        dut.io.index.expect(0.U)
+        dut.io.done.expect(false.B)
       }
 
       // Done
       waitForRead(dut)
       waitForCheck(dut)
-      dut.io.channelIndex.expect(0.U)
-      dut.io.channelDone.expect(true.B)
+      dut.io.index.expect(0.U)
+      dut.io.done.expect(true.B)
     }
   }
 
@@ -341,14 +341,14 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
       // Start
       dut.io.enable.poke(true.B)
       dut.io.mem.valid.poke(true.B)
-      startChannel(dut, channelIndex = 0, loop = true, loopEndAddr = 1, endAddress = 1)
+      startChannel(dut, index = 0, loop = true, loopEndAddr = 1, endAddress = 1)
 
       // Status
       for (n <- Seq(0, 1, 1, 0)) {
         waitForRead(dut)
         waitForCheck(dut)
-        dut.io.channelIndex.expect(0.U)
-        dut.io.channelDone.expect(false.B)
+        dut.io.index.expect(0.U)
+        dut.io.done.expect(false.B)
       }
     }
   }
@@ -358,16 +358,16 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
       // Start
       dut.io.enable.poke(true.B)
       dut.io.mem.valid.poke(true.B)
-      startChannel(dut, channelIndex = 0, endAddress = 1)
+      startChannel(dut, index = 0, endAddress = 1)
 
       // Stop
       waitForNext(dut)
-      stopChannel(dut, channelIndex = 0)
+      stopChannel(dut, index = 0)
 
       // Status
       waitForCheck(dut)
-      dut.io.channelIndex.expect(0.U)
-      dut.io.channelDone.expect(false.B)
+      dut.io.index.expect(0.U)
+      dut.io.done.expect(false.B)
     }
   }
 
@@ -376,20 +376,20 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
       // Start
       dut.io.enable.poke(true.B)
       dut.io.mem.valid.poke(true.B)
-      startChannel(dut, channelIndex = 0, endAddress = 1)
+      startChannel(dut, index = 0, endAddress = 1)
 
       // Done
       for (_ <- 0 to 4) {
         waitForRead(dut)
         waitForCheck(dut)
       }
-      dut.io.channelIndex.expect(0.U)
-      dut.io.channelDone.expect(true.B)
+      dut.io.index.expect(0.U)
+      dut.io.done.expect(true.B)
 
       // Disabled
       waitForRead(dut)
       waitForCheck(dut)
-      dut.io.channelDone.expect(false.B)
+      dut.io.done.expect(false.B)
     }
   }
 }

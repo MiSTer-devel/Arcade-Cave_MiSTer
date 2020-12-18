@@ -53,15 +53,15 @@ import chisel3.util._
  */
 class ChannelController(config: YMZ280BConfig) extends Module {
   val io = IO(new Bundle {
-    /** Asserted when the channel controller is enabled */
-    val enable = Input(Bool())
     /** Channel registers port */
-    val channelRegs = Input(Vec(config.numChannels, new ChannelReg))
-    /** Channel index */
-    val channelIndex = Output(UInt())
+    val regs = Input(Vec(config.numChannels, new ChannelReg))
+    /** A flag indicating whether the channel controller is enabled */
+    val enable = Input(Bool())
     /** Asserted when the current channel is done */
-    val channelDone = Output(Bool())
-    /** Audio output */
+    val done = Output(Bool())
+    /** Current channel index */
+    val index = Output(UInt())
+    /** Audio output port */
     val audio = ValidIO(new Audio(config.sampleWidth))
     /** External memory port */
     val mem = AsyncReadMemIO(config.memAddrWidth, config.memDataWidth)
@@ -90,15 +90,15 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   val accumulatorReg = Reg(new Audio(config.sampleWidth))
 
   // Counters
-  val (channelCounterValue, channelCounterWrap) = Counter.static(config.numChannels, enable = stateReg === State.init || stateReg === State.next)
+  val (channelCounter, channelCounterWrap) = Counter.static(config.numChannels, enable = stateReg === State.init || stateReg === State.next)
   val (_, outputCounterWrap) = Counter.static((config.clockFreq / config.sampleFreq).round.toInt)
 
   // Register aliases
-  val channelReg = io.channelRegs(channelCounterValue)
+  val channelReg = io.regs(channelCounter)
 
   // Channel state memory
   val channelStateMem = SyncReadMem(config.numChannels, Bits(new ChannelState(config).getWidth.W))
-  val channelState = channelStateMem.read(channelCounterValue, stateReg === State.read).asTypeOf(new ChannelState(config))
+  val channelState = channelStateMem.read(channelCounter, stateReg === State.read).asTypeOf(new ChannelState(config))
   val channelStateReg = RegEnable(channelState, stateReg === State.latch)
 
   // Audio pipeline
@@ -157,7 +157,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   // Write channel state to memory
   when(stateReg === State.init || stateReg === State.write) {
     val data = Mux(stateReg === State.write, channelStateReg, ChannelState.default(config))
-    channelStateMem.write(channelCounterValue, data.asUInt)
+    channelStateMem.write(channelCounter, data.asUInt)
   }
 
   // FSM
@@ -204,8 +204,8 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   }
 
   // Outputs
-  io.channelIndex := channelCounterValue
-  io.channelDone := stateReg === State.check && done
+  io.index := channelCounter
+  io.done := stateReg === State.check && done
   io.audio.valid := outputCounterWrap
   io.audio.bits := accumulatorReg
   io.mem.rd := memRead
@@ -221,5 +221,5 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   io.debug.next := stateReg === State.next
   io.debug.done := stateReg === State.done
 
-  printf(p"ChannelController(state: $stateReg, index: $channelCounterValue ($channelCounterWrap), channelState: $channelStateReg, audio: $accumulatorReg ($outputCounterWrap))\n")
+  printf(p"ChannelController(state: $stateReg, index: $channelCounter ($channelCounterWrap), channelState: $channelStateReg, audio: $accumulatorReg ($outputCounterWrap))\n")
 }
