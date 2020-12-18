@@ -66,27 +66,23 @@ class ChannelState(private val config: YMZ280BConfig) extends Bundle {
     done := false.B
   }
 
-  /** Marks the channel as done. */
-  def markAsDone() = {
-    enable := false.B
-    done := true.B
-  }
-
   /**
    * Move the channel to the next address using the values from the given channel register.
    *
    * @return A [[Bool]] value indicating whether the channel has reached the end address.
    */
-  def nextAddr(channelReg: ChannelReg): Bool = {
-    val done = WireInit(false.B)
+  def nextAddr(channelReg: ChannelReg) = {
     when(channelReg.flags.loop && addr === channelReg.loopEndAddr) {
+      // Return to loop start address
       addr := channelReg.loopStartAddr
     }.elsewhen(addr =/= channelReg.endAddr) {
+      // Increment address
       addr := addr + 1.U
     }.otherwise {
+      // Mark as done
+      enable := false.B
       done := true.B
     }
-    done
   }
 }
 

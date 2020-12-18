@@ -125,7 +125,6 @@ class YMZ280B(config: YMZ280BConfig) extends Module {
   val writeAddr = io.cpu.wr && !io.cpu.addr(0)
   val writeData = io.cpu.wr && io.cpu.addr(0)
   val readStatus = io.cpu.rd && io.cpu.addr(0)
-  val writeStatus = channelCtrl.io.channelState.valid && channelCtrl.io.channelState.bits.done
 
   // Write to address register
   when(writeAddr) { addrReg := io.cpu.din }
@@ -133,8 +132,10 @@ class YMZ280B(config: YMZ280BConfig) extends Module {
   // Write to register file
   when(writeData) { registerFile(addrReg) := io.cpu.din }
 
-  // Write to status register
-  when(writeStatus) { statusReg := statusReg.bitSet(channelCtrl.io.channelIndex, true.B) }
+  // Mark current channel as done in the status register
+  when(channelCtrl.io.channelDone) {
+    statusReg := statusReg.bitSet(channelCtrl.io.channelIndex, true.B)
+  }
 
   // Read and clear the status register
   when(readStatus) {

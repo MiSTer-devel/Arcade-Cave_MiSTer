@@ -165,17 +165,6 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
     }
   }
 
-  it should "assert the channel state valid signal during the write state" in {
-    test(mkChannelController()) { dut =>
-      dut.io.enable.poke(true.B)
-      dut.io.channelState.valid.expect(false.B)
-      waitForWrite(dut)
-      dut.io.channelState.valid.expect(true.B)
-      dut.clock.step()
-      dut.io.channelState.valid.expect(false.B)
-    }
-  }
-
   it should "move to the done state after processing all channels" in {
     test(mkChannelController()) { dut =>
       dut.io.enable.poke(true.B)
@@ -224,7 +213,7 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
       dut.io.mem.valid.poke(true.B)
       startChannel(dut, channelIndex = 0, pitch = 127, startAddress = 1)
 
-      Seq(1, 1, 2, 2).foreach { n =>
+      for (n <- Seq(1, 1, 2, 2)) {
         // Fetch
         waitForProcess(dut)
         dut.clock.step()
@@ -322,6 +311,8 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
     }
   }
 
+  behavior of "done"
+
   it should "assert the done signal when a channel has reached the end address" in {
     test(mkChannelController()) { dut =>
       // Start
@@ -330,18 +321,18 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
       startChannel(dut, channelIndex = 0, endAddress = 1)
 
       // Status
-      0.to(2).foreach { _ =>
-        waitForWrite(dut)
+      for (_ <- 0 to 3) {
+        waitForRead(dut)
+        waitForCheck(dut)
         dut.io.channelIndex.expect(0.U)
-        dut.io.channelState.bits.done.expect(false.B)
-        waitForNext(dut)
+        dut.io.channelDone.expect(false.B)
       }
 
       // Done
-      waitForWrite(dut)
+      waitForRead(dut)
+      waitForCheck(dut)
       dut.io.channelIndex.expect(0.U)
-      dut.io.channelState.bits.done.expect(true.B)
-      dut.io.channelState.bits.addr.expect(1.U)
+      dut.io.channelDone.expect(true.B)
     }
   }
 
@@ -353,12 +344,11 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
       startChannel(dut, channelIndex = 0, loop = true, loopEndAddr = 1, endAddress = 1)
 
       // Status
-      Seq(0, 1, 1, 0).foreach { n =>
-        waitForWrite(dut)
+      for (n <- Seq(0, 1, 1, 0)) {
+        waitForRead(dut)
+        waitForCheck(dut)
         dut.io.channelIndex.expect(0.U)
-        dut.io.channelState.bits.done.expect(false.B)
-        dut.io.channelState.bits.addr.expect(n.U)
-        waitForNext(dut)
+        dut.io.channelDone.expect(false.B)
       }
     }
   }
@@ -375,10 +365,31 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
       stopChannel(dut, channelIndex = 0)
 
       // Status
-      waitForWrite(dut)
+      waitForCheck(dut)
       dut.io.channelIndex.expect(0.U)
-      dut.io.channelState.bits.done.expect(false.B)
-      dut.io.channelState.bits.addr.expect(1.U)
+      dut.io.channelDone.expect(false.B)
+    }
+  }
+
+  it should "not assert the done signal when the channel is disabled" in {
+    test(mkChannelController()) { dut =>
+      // Start
+      dut.io.enable.poke(true.B)
+      dut.io.mem.valid.poke(true.B)
+      startChannel(dut, channelIndex = 0, endAddress = 1)
+
+      // Done
+      for (_ <- 0 to 4) {
+        waitForRead(dut)
+        waitForCheck(dut)
+      }
+      dut.io.channelIndex.expect(0.U)
+      dut.io.channelDone.expect(true.B)
+
+      // Disabled
+      waitForRead(dut)
+      waitForCheck(dut)
+      dut.io.channelDone.expect(false.B)
     }
   }
 }

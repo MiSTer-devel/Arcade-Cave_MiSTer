@@ -59,8 +59,8 @@ class ChannelController(config: YMZ280BConfig) extends Module {
     val channelRegs = Input(Vec(config.numChannels, new ChannelReg))
     /** Channel index */
     val channelIndex = Output(UInt())
-    /** Channel state port */
-    val channelState = ValidIO(new ChannelState(config))
+    /** Asserted when the current channel is done */
+    val channelDone = Output(Bool())
     /** Audio output */
     val audio = ValidIO(new Audio(config.sampleWidth))
     /** External memory port */
@@ -110,8 +110,9 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   audioPipeline.io.in.bits.pan := channelReg.pan
 
   // Control signals
-  val start = !channelStateReg.enable && !channelStateReg.done && channelReg.flags.keyOn
-  val stop = !channelReg.flags.keyOn
+  val start = !channelStateReg.enable && channelReg.flags.keyOn
+  val stop = channelStateReg.enable && !channelReg.flags.keyOn
+  val done = channelStateReg.done
   val active = channelStateReg.enable || start
 
   // Fetch PCM data when the audio pipeline is ready for data
@@ -130,7 +131,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   when(stateReg === State.check) {
     when(start) {
       channelStateReg.start(channelReg.startAddr)
-    }.elsewhen(stop) {
+    }.elsewhen(stop || done) {
       channelStateReg.stop()
     }
   }
@@ -141,10 +142,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
     channelStateReg.nibble := !channelStateReg.nibble
 
     // Move to next sample address after the high nibble has been processed
-    when(channelStateReg.nibble) {
-      val done = channelStateReg.nextAddr(channelReg)
-      when(done) { channelStateReg.markAsDone() }
-    }
+    when(channelStateReg.nibble) { channelStateReg.nextAddr(channelReg) }
   }
 
   // Audio pipeline has produced valid output
@@ -206,9 +204,8 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   }
 
   // Outputs
-  io.channelState.valid := stateReg === State.write
-  io.channelState.bits := channelStateReg
   io.channelIndex := channelCounterValue
+  io.channelDone := stateReg === State.check && done
   io.audio.valid := outputCounterWrap
   io.audio.bits := accumulatorReg
   io.mem.rd := memRead
