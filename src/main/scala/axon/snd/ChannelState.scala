@@ -43,6 +43,8 @@ import chisel3._
 class ChannelState(private val config: YMZ280BConfig) extends Bundle {
   /** Asserted when the channel is enabled */
   val enable = Bool()
+  /** Asserted when the channel is playing a sample */
+  val active = Bool()
   /** Asserted when the channel has reached the end address */
   val done = Bool()
   /** Asserted when the channel is processing the high ADPCM nibble */
@@ -55,6 +57,7 @@ class ChannelState(private val config: YMZ280BConfig) extends Bundle {
   /** Starts the channel at the given address. */
   def start(startAddr: UInt) = {
     enable := true.B
+    active := true.B
     done := false.B
     addr := startAddr
     audioPipelineState := AudioPipelineState.default(config)
@@ -63,30 +66,28 @@ class ChannelState(private val config: YMZ280BConfig) extends Bundle {
   /** Stops the channel. */
   def stop() = {
     enable := false.B
+    active := false.B
     done := false.B
   }
 
-  /** Marks the channel as done. */
-  def markAsDone() = {
-    enable := false.B
-    done := true.B
-  }
-
   /**
-   * Move the channel to the next address using the values from the given channel register.
-   *
-   * @return A [[Bool]] value indicating whether the channel has reached the end address.
+   * Moves the channel to the next address. If the channel has reached the end address, then the
+   * done flag is asserted.
    */
-  def nextAddr(channelReg: ChannelReg): Bool = {
-    val done = WireInit(false.B)
+  def nextAddr(channelReg: ChannelReg) = {
     when(channelReg.flags.loop && addr === channelReg.loopEndAddr) {
       addr := channelReg.loopStartAddr
     }.elsewhen(addr =/= channelReg.endAddr) {
       addr := addr + 1.U
     }.otherwise {
+      active := false.B
       done := true.B
     }
-    done
+  }
+
+  /** Clears the done flag. */
+  def clearDone() = {
+    done := false.B
   }
 }
 
@@ -95,6 +96,7 @@ object ChannelState {
   def default(config: YMZ280BConfig): ChannelState = {
     val state = Wire(new ChannelState(config))
     state.enable := false.B
+    state.active := false.B
     state.done := false.B
     state.nibble := false.B
     state.addr := 0.U

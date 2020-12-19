@@ -55,6 +55,7 @@ class MemMap(cpu: CPUIO) {
   val readStrobe = Util.rising(cpu.as) && cpu.rw
   val upperWriteStrobe = Util.rising(cpu.uds) && !cpu.rw
   val lowerWriteStrobe = Util.rising(cpu.lds) && !cpu.rw
+  val writeStrobe = upperWriteStrobe || lowerWriteStrobe
 
   // Clear data transfer acknowledge register
   when(!cpu.as) { dtackReg := false.B }
@@ -110,7 +111,7 @@ class MemMap(cpu: CPUIO) {
      */
     def readWriteMemT(mem: ReadWriteMemIO)(f: UInt => UInt): Unit = {
       mem.rd := cs && readStrobe
-      mem.wr := cs && (upperWriteStrobe || lowerWriteStrobe)
+      mem.wr := cs && writeStrobe
       mem.addr := f(cpu.addr)
       mem.mask := cpu.uds ## cpu.lds
       mem.din := cpu.dout
@@ -156,7 +157,7 @@ class MemMap(cpu: CPUIO) {
      * @param f   The address transform function.
      */
     def writeMemT(mem: WriteMemIO)(f: UInt => UInt): Unit = {
-      mem.wr := cs && (upperWriteStrobe || lowerWriteStrobe)
+      mem.wr := cs && writeStrobe
       mem.addr := f(cpu.addr)
       mem.mask := cpu.uds ## cpu.lds
       mem.din := cpu.dout
@@ -171,7 +172,7 @@ class MemMap(cpu: CPUIO) {
      */
     def rw(f: (UInt, UInt) => UInt)(g: (UInt, UInt, UInt) => Unit): Unit = {
       when(cs) {
-        when(cpu.rw) { dinReg := f(addr, offset) }.otherwise { g(addr, offset, cpu.dout) }
+        when(readStrobe) { dinReg := f(addr, offset) }.elsewhen(writeStrobe) { g(addr, offset, cpu.dout) }
         dtackReg := true.B
       }
     }
@@ -182,7 +183,7 @@ class MemMap(cpu: CPUIO) {
      * @param f The getter function.
      */
     def r(f: (UInt, UInt) => UInt): Unit = {
-      when(cs && cpu.rw) {
+      when(cs && readStrobe) {
         dinReg := f(addr, offset)
         dtackReg := true.B
       }
@@ -194,7 +195,7 @@ class MemMap(cpu: CPUIO) {
      * @param f The setter function.
      */
     def w(f: (UInt, UInt, UInt) => Unit): Unit = {
-      when(cs && !cpu.rw) {
+      when(cs && writeStrobe) {
         f(addr, offset, cpu.dout)
         dtackReg := true.B
       }

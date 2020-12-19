@@ -78,7 +78,7 @@ case class YMZ280BConfig(clockFreq: Double,
 }
 
 /**
- * The YMZ280B is a PCM/ADPCM decoder that can play up to eight channels simultaneously.
+ * The YMZ280B is a PCM/ADPCM decoder that can play up to eight audio channels simultaneously.
  *
  * @param config The YMZ280B configuration.
  */
@@ -117,15 +117,15 @@ class YMZ280B(config: YMZ280BConfig) extends Module {
 
   // Channel controller
   val channelCtrl = Module(new ChannelController(config))
+  channelCtrl.io.regs := channelRegs
   channelCtrl.io.enable := utilReg.flags.keyOnEnable
-  channelCtrl.io.channelRegs := channelRegs
+  channelCtrl.io.audio <> io.audio
   channelCtrl.io.mem <> io.mem
 
   // Control signals
   val writeAddr = io.cpu.wr && !io.cpu.addr(0)
   val writeData = io.cpu.wr && io.cpu.addr(0)
   val readStatus = io.cpu.rd && io.cpu.addr(0)
-  val writeStatus = channelCtrl.io.channelState.valid && channelCtrl.io.channelState.bits.done
 
   // Write to address register
   when(writeAddr) { addrReg := io.cpu.din }
@@ -133,8 +133,8 @@ class YMZ280B(config: YMZ280BConfig) extends Module {
   // Write to register file
   when(writeData) { registerFile(addrReg) := io.cpu.din }
 
-  // Write to status register
-  when(writeStatus) { statusReg := statusReg.bitSet(channelCtrl.io.channelIndex, true.B) }
+  // Mark current channel as done in the status register
+  when(channelCtrl.io.done) { statusReg := statusReg.bitSet(channelCtrl.io.index, true.B) }
 
   // Read and clear the status register
   when(readStatus) {
@@ -144,7 +144,6 @@ class YMZ280B(config: YMZ280BConfig) extends Module {
 
   // Outputs
   io.cpu.dout := dataReg
-  io.audio <> channelCtrl.io.audio
   io.irq := utilReg.flags.irqEnable && (statusReg & utilReg.irqMask).orR
   io.debug.channels := channelRegs
   io.debug.utilReg := utilReg
