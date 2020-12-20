@@ -73,6 +73,8 @@ class ChannelState(private val config: YMZ280BConfig) extends Bundle {
   /**
    * Moves the channel to the next address. If the channel has reached the end address, then the
    * done flag is asserted.
+   *
+   * @param channelReg The channel register.
    */
   def nextAddr(channelReg: ChannelReg) = {
     when(channelReg.flags.loop && addr === channelReg.loopEndAddr) {

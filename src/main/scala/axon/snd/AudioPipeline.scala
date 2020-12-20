@@ -46,8 +46,8 @@ import chisel3.util._
  * The audio pipeline steps are:
  *
  *   - Check whether PCM data is required
- *   - Load PCM data
- *   - Decode PCM data
+ *   - Fetch PCM data
+ *   - Decode ADPCM sample
  *   - Interpolate sample values
  *   - Apply level
  *   - Apply pan
