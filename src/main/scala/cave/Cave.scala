@@ -136,11 +136,6 @@ class Cave extends Module {
     layer1Ram.io.clockB := clock
 
     // Layer 2 RAM
-    //
-    // The layer 2 RAM masks address bits 14 and 15 on the CPU-side (i.e. the RAM is 8KB mirrored to
-    // 64KB).
-    //
-    // https://github.com/mamedev/mame/blob/master/src/mame/drivers/cave.cpp#L495
     val layer2Ram = Module(new TrueDualPortRam(
       addrWidthA = Config.LAYER_2_RAM_ADDR_WIDTH,
       dataWidthA = Config.LAYER_2_RAM_DATA_WIDTH,
