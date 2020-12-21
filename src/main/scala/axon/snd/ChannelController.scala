@@ -110,6 +110,9 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   audioPipeline.io.in.bits.pitch := channelReg.pitch
   audioPipeline.io.in.bits.level := channelReg.level
   audioPipeline.io.in.bits.pan := channelReg.pan
+  audioPipeline.io.pcmData.valid := io.mem.valid
+  audioPipeline.io.pcmData.bits := Mux(channelStateReg.nibble, io.mem.dout(3, 0), io.mem.dout(7, 4))
+  audioPipeline.io.loopStart := channelStateReg.loopStart
 
   // Control signals
   val start = !channelStateReg.enable && !channelStateReg.active && channelReg.flags.keyOn
@@ -121,10 +124,6 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   val pendingReg = Util.latchSync(audioPipeline.io.pcmData.ready && !io.mem.waitReq, io.mem.valid)
   val memRead = audioPipeline.io.pcmData.ready && !pendingReg
   val memAddr = channelStateReg.addr
-
-  // PCM data is valid during the clock cycle following a fetch
-  audioPipeline.io.pcmData.valid := io.mem.valid
-  audioPipeline.io.pcmData.bits := Mux(channelStateReg.nibble, io.mem.dout(3, 0), io.mem.dout(7, 4))
 
   // Clear accumulator
   when(stateReg === State.idle) { accumulatorReg := Audio.zero }
@@ -141,13 +140,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   }
 
   // PCM data has been fetched
-  when(audioPipeline.io.pcmData.fire()) {
-    // Toggle high/low nibble
-    channelStateReg.nibble := !channelStateReg.nibble
-
-    // Move to next sample address after the high nibble has been processed
-    when(channelStateReg.nibble) { channelStateReg.nextAddr(channelReg) }
-  }
+  when(audioPipeline.io.pcmData.fire()) { channelStateReg.nextAddr(channelReg) }
 
   // Audio pipeline has produced valid output
   when(audioPipeline.io.out.valid) {

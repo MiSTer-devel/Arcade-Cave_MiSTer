@@ -274,6 +274,45 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
       waitForAudioValid(dut)
       dut.io.audio.bits.left.expect(126.S)
       dut.io.audio.bits.right.expect(126.S)
+      waitForIdle(dut)
+
+      // Fetch
+      waitForMemRead(dut)
+      dut.io.mem.valid.poke(true.B)
+      dut.io.mem.dout.poke(0x12.U)
+      waitForNext(dut)
+      dut.io.mem.valid.poke(false.B)
+
+      // Valid
+      waitForAudioValid(dut)
+      dut.io.audio.bits.left.expect(173.S)
+      dut.io.audio.bits.right.expect(173.S)
+      waitForIdle(dut)
+
+      // Fetch
+      waitForMemRead(dut)
+      dut.io.mem.valid.poke(true.B)
+      dut.io.mem.dout.poke(0x12.U)
+      waitForNext(dut)
+      dut.io.mem.valid.poke(false.B)
+
+      // Valid
+      waitForAudioValid(dut)
+      dut.io.audio.bits.left.expect(252.S)
+      dut.io.audio.bits.right.expect(252.S)
+      waitForIdle(dut)
+
+      // Fetch
+      waitForMemRead(dut)
+      dut.io.mem.valid.poke(true.B)
+      dut.io.mem.dout.poke(0x12.U)
+      waitForNext(dut)
+      dut.io.mem.valid.poke(false.B)
+
+      // Valid
+      waitForAudioValid(dut)
+      dut.io.audio.bits.left.expect(47.S)
+      dut.io.audio.bits.right.expect(47.S)
     }
   }
 

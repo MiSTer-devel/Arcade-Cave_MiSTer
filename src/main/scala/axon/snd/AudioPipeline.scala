@@ -46,8 +46,8 @@ import chisel3.util._
  * The audio pipeline steps are:
  *
  *   - Check whether PCM data is required
- *   - Load PCM data
- *   - Decode PCM data
+ *   - Fetch PCM data
+ *   - Decode ADPCM sample
  *   - Interpolate sample values
  *   - Apply level
  *   - Apply pan
@@ -77,6 +77,8 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
     })
     /** PCM data port */
     val pcmData = DeqIO(Bits(config.adpcmDataWidth.W))
+    /** Flag indicating whether the pipeline is at the start of a loop */
+    val loopStart = Input(Bool())
     /** Debug port */
     val debug = new Bundle {
       val idle = Output(Bool())
@@ -120,8 +122,19 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
   lerp.io.index := inputReg.state.lerpIndex
 
   // Decode ADPCM data
+  //
+  // When the loop start flag is asserted the pipeline will use the cached step and sample values
+  // for the start of the loop. Otherwise, the decoded ADPCM step and sample values will be used
+  // instead.
   when(stateReg === State.decode) {
-    inputReg.state.adpcm(adpcm.io.out.step, adpcm.io.out.sample)
+    val step = Mux(io.loopStart && inputReg.state.loopEnable, inputReg.state.loopStep, adpcm.io.out.step)
+    val sample = Mux(io.loopStart && inputReg.state.loopEnable, inputReg.state.loopSample, adpcm.io.out.sample)
+    when(io.loopStart && !inputReg.state.loopEnable) {
+      inputReg.state.loopEnable := true.B
+      inputReg.state.loopStep := adpcm.io.out.step
+      inputReg.state.loopSample := adpcm.io.out.sample
+    }
+    inputReg.state.adpcm(step, sample)
   }
 
   // Interpolate sample values
