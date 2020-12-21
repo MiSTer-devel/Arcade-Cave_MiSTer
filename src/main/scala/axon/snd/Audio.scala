@@ -47,18 +47,36 @@ class Audio(private val n: Int) extends Bundle {
   /** Right channel data */
   val right = SInt(n.W)
 
-  /** Adds the given audio sample. */
-  def +(that: Audio): Audio = Audio(this.left +& that.left, this.right +& that.right)
+  /**
+   * Adds the given audio sample.
+   *
+   * @param that The audio sample.
+   */
+  def +(that: Audio): Audio = Audio(this.left + that.left, this.right + that.right)(n)
+
+  /**
+   * Clamps the sample between two given values.
+   *
+   * @param a The minimum value.
+   * @param b The maximum value.
+   */
+  def clamp(a: Int, b: Int): Audio = Audio(Util.clamp(left, a, b), Util.clamp(right, a, b))(n)
 }
 
 object Audio {
-  def apply(left: SInt, right: SInt): Audio = {
-    val sample = Wire(new Audio(16))
-    sample.left := Util.clamp(left, -32768, 32767)
-    sample.right := Util.clamp(right, -32768, 32767)
+  /**
+   * Constructs an audio sample from the left and right channel values.
+   *
+   * @param left The left channel value.
+   * @param right The right channel value.
+   */
+  def apply(left: SInt, right: SInt)(n: Int): Audio = {
+    val sample = Wire(new Audio(n))
+    sample.left := left
+    sample.right := right
     sample
   }
 
-  /** Creates a zero sample. */
-  def zero = Audio(0.S, 0.S)
+  /** Constructs an audio sample with zero left and right channel values. */
+  def zero(n: Int) = Audio(0.S, 0.S)(n)
 }

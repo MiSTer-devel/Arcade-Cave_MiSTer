@@ -73,11 +73,11 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
       /** Pipeline state */
       val state = new AudioPipelineState(config)
       /** Audio */
-      val audio = new Audio(config.sampleWidth)
+      val audio = new Audio(config.internalSampleWidth)
     })
     /** PCM data port */
     val pcmData = DeqIO(Bits(config.adpcmDataWidth.W))
-    /** Flag indicating whether the pipeline is at the start of a loop */
+    /** Asserted when the pipeline is at the start of a loop */
     val loopStart = Input(Bool())
     /** Debug port */
     val debug = new Bundle {
@@ -100,13 +100,13 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
   // Registers
   val stateReg = RegInit(State.idle)
   val inputReg = RegEnable(io.in.bits, io.in.fire())
-  val sampleReg = Reg(SInt(config.sampleWidth.W))
-  val audioReg = Reg(new Audio(config.sampleWidth))
+  val sampleReg = Reg(SInt(config.internalSampleWidth.W))
+  val audioReg = Reg(new Audio(config.internalSampleWidth))
   val pcmDataReg = RegEnable(io.pcmData.bits, io.pcmData.fire())
 
   // ADPCM decoder
   val adpcm = Module(new ADPCM(
-    sampleWidth = config.sampleWidth,
+    sampleWidth = config.internalSampleWidth,
     dataWidth = config.adpcmDataWidth
   ))
   adpcm.io.data := pcmDataReg
@@ -115,7 +115,7 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
 
   // Linear interpolator
   val lerp = Module(new LERP(
-    sampleWidth = config.sampleWidth,
+    sampleWidth = config.internalSampleWidth,
     indexWidth = config.lerpIndexWidth
   ))
   lerp.io.samples := inputReg.state.samples
@@ -127,13 +127,13 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
   // for the start of the loop. Otherwise, the decoded ADPCM step and sample values will be used
   // instead.
   when(stateReg === State.decode) {
-    val step = Mux(io.loopStart && inputReg.state.loopEnable, inputReg.state.loopStep, adpcm.io.out.step)
-    val sample = Mux(io.loopStart && inputReg.state.loopEnable, inputReg.state.loopSample, adpcm.io.out.sample)
     when(io.loopStart && !inputReg.state.loopEnable) {
       inputReg.state.loopEnable := true.B
       inputReg.state.loopStep := adpcm.io.out.step
       inputReg.state.loopSample := adpcm.io.out.sample
     }
+    val step = Mux(io.loopStart && inputReg.state.loopEnable, inputReg.state.loopStep, adpcm.io.out.step)
+    val sample = Mux(io.loopStart && inputReg.state.loopEnable, inputReg.state.loopSample, adpcm.io.out.sample)
     inputReg.state.adpcm(step, sample)
   }
 
@@ -159,7 +159,7 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
     }.elsewhen(inputReg.pan < 7.U) {
       right := s * t >> 3
     }
-    audioReg := Audio(left, right)
+    audioReg := Audio(left, right)(config.internalSampleWidth)
   }
 
   // FSM

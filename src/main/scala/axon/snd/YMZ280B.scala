@@ -75,6 +75,8 @@ case class YMZ280BConfig(clockFreq: Double,
   val maxFreq = 44100D
   /** The width of the linear interpolation index value. */
   val lerpIndexWidth = (pitchWidth + sampleFreq / maxFreq).ceil.toInt
+  /** The internal sample width. */
+  val internalSampleWidth = 24
 }
 
 /**
