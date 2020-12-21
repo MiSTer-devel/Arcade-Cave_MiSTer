@@ -141,13 +141,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   }
 
   // PCM data has been fetched
-  when(audioPipeline.io.pcmData.fire()) {
-    // Toggle high/low nibble
-    channelStateReg.nibble := !channelStateReg.nibble
-
-    // Move to next sample address after the high nibble has been processed
-    when(channelStateReg.nibble) { channelStateReg.nextAddr(channelReg) }
-  }
+  when(audioPipeline.io.pcmData.fire()) { channelStateReg.nextAddr(channelReg) }
 
   // Audio pipeline has produced valid output
   when(audioPipeline.io.out.valid) {
