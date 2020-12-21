@@ -51,6 +51,8 @@ class ChannelState(private val config: YMZ280BConfig) extends Bundle {
   val nibble = Bool()
   /** Sample address */
   val addr = UInt(config.memAddrWidth.W)
+  /** Asserted when the channel is at the start of a loop */
+  val loopStart = Bool()
   /** Audio pipeline state */
   val audioPipelineState = new AudioPipelineState(config)
 
@@ -60,6 +62,7 @@ class ChannelState(private val config: YMZ280BConfig) extends Bundle {
     active := true.B
     done := false.B
     addr := startAddr
+    loopStart := false.B
     audioPipelineState := AudioPipelineState.default(config)
   }
 
@@ -78,6 +81,7 @@ class ChannelState(private val config: YMZ280BConfig) extends Bundle {
    * @param channelReg The channel register.
    */
   def nextAddr(channelReg: ChannelReg) = {
+    loopStart := channelReg.flags.loop && addr === channelReg.loopStartAddr && !nibble
     nibble := !nibble
     when(nibble) {
       when(channelReg.flags.loop && addr === channelReg.loopEndAddr) {
@@ -106,6 +110,7 @@ object ChannelState {
     state.done := false.B
     state.nibble := false.B
     state.addr := 0.U
+    state.loopStart := false.B
     state.audioPipelineState := AudioPipelineState.default(config)
     state
   }

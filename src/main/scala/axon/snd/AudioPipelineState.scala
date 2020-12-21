@@ -49,6 +49,12 @@ class AudioPipelineState(private val config: YMZ280BConfig) extends Bundle {
   val adpcmStep = SInt(config.sampleWidth.W)
   /** Interpolation index */
   val lerpIndex = UInt(config.lerpIndexWidth.W)
+  /** Asserted when the loop step and sample values are cached */
+  val loopEnable = Bool()
+  /** Cached loop ADPCM step value */
+  val loopStep = SInt(config.sampleWidth.W)
+  /** Cached loop sample value */
+  val loopSample = SInt(config.sampleWidth.W)
 
   /** Updates the ADPCM state with the given step and sample values. */
   def adpcm(step: SInt, sample: SInt) = {
@@ -72,6 +78,9 @@ object AudioPipelineState {
     state.adpcmStep := 127.S
     state.lerpIndex := 0.U
     state.underflow := true.B
+    state.loopEnable := false.B
+    state.loopStep := 0.S
+    state.loopSample := 0.S
     state
   }
 }
