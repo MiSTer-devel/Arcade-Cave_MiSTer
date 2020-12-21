@@ -106,7 +106,7 @@ class MemSys extends Module {
     outAddrWidth = Config.sdramConfig.addrWidth,
     outDataWidth = Config.sdramConfig.dataWidth,
     lineWidth = Config.sdramConfig.burstLength,
-    depth = 512,
+    depth = 256,
     offset = Config.PROG_ROM_OFFSET,
     wrapping = true
   )))
