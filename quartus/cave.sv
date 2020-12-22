@@ -405,7 +405,6 @@ Main main (
     .reset(RESET),
     // Video clock domain
     .io_videoClock(CLK_VIDEO),
-    .io_videoReset(core_sreset),
     // CPU clock domain
     .io_cpuClock(clk_68k),
     .io_cpuReset(sreset_68k),
