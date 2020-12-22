@@ -54,10 +54,10 @@ entity layer_pipeline is
         -- Control (Layer Info)
         layer_number_i            : in  unsigned(1 downto 0);
         update_layer_info_i       : in  std_logic;
-        layer_info_i              : in  layer_info_t;
+        layer_info_i              : in  layer_info_line_t;
         last_layer_priority_i     : in  priority_t;
         -- Tile Info
-        tile_info_i               : in  tile_info_t;
+        tile_info_i               : in  layer_ram_line_t;
         get_tile_info_o           : out std_logic;
         -- Burst FIFO
         layer_burst_fifo_data_i   : in  std_logic_vector;
@@ -346,7 +346,7 @@ begin
     begin
         if rising_edge(clk_i) then
             if update_tile_info_s = '1' then
-                tile_info_reg_s <= tile_info_i;
+                tile_info_reg_s <= extract_tile_info_from_layer_ram_line(tile_info_i);
             end if; -- Load
         end if; -- Rising Edge Clock
     end process tile_info_reg_process;
@@ -357,7 +357,7 @@ begin
     begin
         if rising_edge(clk_i) then
             if update_layer_info_s = '1' then
-                layer_info_reg_s <= layer_info_i;
+                layer_info_reg_s <= extract_global_layer_info_from_regs(layer_info_i);
             end if; -- Load
         end if;
     end process layer_info_reg_process;
