@@ -44,7 +44,7 @@ import chisel3._
  *
  * @param n The number of bits per color channel.
  */
-class RGB(private val n: Int = 4) extends Bundle {
+class RGB(private val n: Int) extends Bundle {
   /** Red */
   val r = UInt(n.W)
   /** Green */
@@ -75,7 +75,7 @@ object RGB {
    * @param value The value of the red, green, and blue channels.
    */
   def apply(value: UInt): RGB = {
-    val rgb = Wire(new RGB)
+    val rgb = Wire(new RGB(value.getWidth))
     rgb.r := value
     rgb.g := value
     rgb.b := value
@@ -90,7 +90,7 @@ object RGB {
    * @param b The blue channel value.
    */
   def apply(r: UInt, g: UInt, b: UInt): RGB = {
-    val rgb = Wire(new RGB)
+    val rgb = Wire(new RGB(r.getWidth))
     rgb.r := r
     rgb.g := g
     rgb.b := b
