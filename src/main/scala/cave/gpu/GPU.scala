@@ -37,7 +37,9 @@
 
 package cave.gpu
 
+import axon._
 import axon.mem._
+import axon.types._
 import axon.util.Counter
 import cave._
 import cave.types._
@@ -208,7 +210,11 @@ class GPU extends Module {
 }
 
 object GPU {
-  /** Converts an X/Y address to a linear address. */
+  /**
+   * Converts an X/Y address to a linear address.
+   *
+   * @param addr The address value.
+   */
   def linearizeAddr(addr: UInt): UInt = {
     val x = addr.head(log2Up(Config.SCREEN_WIDTH))
     val y = addr.tail(log2Up(Config.SCREEN_WIDTH))
@@ -219,7 +225,7 @@ object GPU {
    * Creates a virtual write-only memory interface that writes blank pixels at the given address.
    *
    * @param addr The address value.
-   * */
+   */
   def clearMem(addr: UInt): WriteMemIO = {
     val mem = Wire(WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH))
     mem.wr := true.B
@@ -227,5 +233,15 @@ object GPU {
     mem.mask := 0.U
     mem.din := 0.U
     mem
+  }
+
+  /**
+   * Decodes the palette data into an RGB value.
+   *
+   * @param data The palette data.
+   */
+  def decodePaletteData(data: Bits): RGB = {
+    val words = Util.decode(data, 3, 5)
+    RGB(words(1).asUInt, words(0).asUInt, words(2).asUInt)
   }
 }
