@@ -124,6 +124,8 @@ object Config {
 
   /** The width of a priority value */
   val PRIO_WIDTH = 2
+  /** The width of a color code value */
+  val COLOR_CODE_WIDTH = 6
 
   /** Video timing configuration */
   val videoTimingConfig = VideoTimingConfig(

@@ -46,7 +46,7 @@ class Tile extends Bundle {
   /** Priority */
   val priority = UInt(Config.PRIO_WIDTH.W)
   /** Color code */
-  val colorCode = UInt(6.W)
+  val colorCode = UInt(Config.COLOR_CODE_WIDTH.W)
   /** Tile code */
   val code = UInt(24.W)
 }
