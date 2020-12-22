@@ -118,6 +118,7 @@ architecture struct of sprite_processor is
 
     signal sprite_info_s                : sprite_info_t;
     signal sprite_info_reg_s            : sprite_info_t;
+    signal raw_sprite_info_reg_s        : sprite_ram_line_t;
     signal update_sprite_info_s         : std_logic;
     signal sprite_in_ram_line_s         : std_logic;
     signal burst_todo_s                 : std_logic;
@@ -217,7 +218,8 @@ begin
             end if; -- Reset
 
             if update_sprite_info_s = '1' then
-                sprite_info_reg_s   <= sprite_info_s;
+                raw_sprite_info_reg_s <= spriteRam_dout;
+                sprite_info_reg_s <= sprite_info_s;
                 burst_counter_max_s <= sprite_info_s.tile_size_x * sprite_info_s.tile_size_y;
             end if; -- Update Sprite Info Reg
         end if; -- Rising Edge Clock
@@ -298,23 +300,22 @@ begin
         port map (
             clk_i                     => clk_i,
             rst_i                     => rst_i,
-            sprite_info_i             => sprite_info_reg_s,
+            sprite_info_i             => raw_sprite_info_reg_s,
             get_sprite_info_o         => pipeline_takes_sprite_info_s,
             sprite_burst_fifo_data_i  => data_to_pipeline_s,
             sprite_burst_fifo_read_o  => read_fifo_s,
             sprite_burst_fifo_empty_i => fifo_empty_s,
             palette_color_select_o    => palette_color_select_s,
-            palette_color_i           => extract_color_from_palette_data(paletteRam_dout),
             priority_ram_read_addr_o  => priority_read_addr,
             priority_ram_priority_i   => priority_read_dout,
             priority_ram_write_addr_o => priority_write_addr,
             priority_ram_priority_o   => priority_write_din,
             priority_ram_write_o      => priority_write_wr,
             frame_buffer_addr_o       => frameBuffer_addr,
-            frame_buffer_color_o      => frame_buffer_color_s,
             frame_buffer_write_o      => frameBuffer_wr,
             done_blitting_sprite_o    => pipeline_done_blitting_s);
 
+    frame_buffer_color_s <= extract_color_from_palette_data(paletteRam_dout);
     frameBuffer_din <= frame_buffer_color_s.r & frame_buffer_color_s.g & frame_buffer_color_s.b;
 
     ---------

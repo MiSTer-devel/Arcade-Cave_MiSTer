@@ -101,9 +101,9 @@ architecture struct of layer_processor is
     signal state_reg_s, next_state_s        : state_t;
     --
     signal layer_info_s                     : layer_info_t;
-    signal layer_info_reg_s                 : layer_info_t;
+    signal layer_info_reg_s                 : layer_info_line_t;
     signal tile_info_s                      : tile_info_t;
-    signal tile_info_reg_s                  : tile_info_t;
+    signal tile_info_reg_s                  : layer_ram_line_t;
     signal tile_data_burst_done_s           : std_logic;
     signal update_tile_info_s               : std_logic;
     signal tile_burst_read_s                : std_logic;
@@ -145,10 +145,10 @@ architecture struct of layer_processor is
     signal frame_buffer_color_s             : color_t;
 begin
     -- The layer info from the layer registers
-    layer_info_s <= extract_global_layer_info_from_regs(layer_info_i);
+    layer_info_s <= extract_global_layer_info_from_regs(layer_info_reg_s);
 
     -- The tile info from the layer RAM
-    tile_info_s <= extract_tile_info_from_layer_ram_line(layerRam_dout);
+    tile_info_s <= extract_tile_info_from_layer_ram_line(tile_info_reg_s);
 
     -- Relabel for clarity
     tile_data_burst_done_s <= tileRom_burstDone;
@@ -189,8 +189,8 @@ begin
                             to_unsigned(17, magic_offset_y_s'length) when layer_number_i = "10" else
                             (others => '0');
 
-        start_x_pos_s <= layer_info_reg_s.scroll_x + magic_offset_x_s;
-        start_y_pos_s <= layer_info_reg_s.scroll_y + magic_offset_y_s;
+        start_x_pos_s <= layer_info_s.scroll_x + magic_offset_x_s;
+        start_y_pos_s <= layer_info_s.scroll_y + magic_offset_y_s;
 
     end block start_block;
 
@@ -232,26 +232,21 @@ begin
             end if; -- Reset
 
             if update_tile_info_s = '1' then
-                tile_info_reg_s <= tile_info_s;
+                tile_info_reg_s <= layerRam_dout;
             end if;
 
             if state_reg_s = REGISTER_INFO then
-                layer_info_reg_s <= layer_info_s;
-                if layer_info_s.small_tile = '1' then
-                    -- Small Tiles
-                    total_tile_counter_max_s <= to_unsigned(41 * 31, total_tile_counter_max_s'length); -- TODO: Replace magic
-                else
-                    -- Big Tiles
-                    total_tile_counter_max_s <= to_unsigned(21 * 16, total_tile_counter_max_s'length); -- TODO: Replace magic
-                end if;
+                layer_info_reg_s <= layer_info_i;
             end if; -- Register info
 
             if state_reg_s = SET_PARAMETERS then
                 -- Set the base address etc.
-                if layer_info_reg_s.small_tile = '1' then
+                if layer_info_s.small_tile = '1' then
                     first_tile_index_s <= start_x_pos_s(start_x_pos_s'high downto 3) + (start_y_pos_s(start_y_pos_s'high downto 3) & "000000");
+                    total_tile_counter_max_s <= to_unsigned(41 * 31, total_tile_counter_max_s'length); -- TODO: Replace magic
                 else
                     first_tile_index_s <= resize(start_x_pos_s(start_x_pos_s'high downto 4) + (start_y_pos_s(start_y_pos_s'high downto 4) & "00000"), first_tile_index_s'length);
+                    total_tile_counter_max_s <= to_unsigned(21 * 16, total_tile_counter_max_s'length); -- TODO: Replace magic
                 end if;
 
                 -- TODO : Implement flip
@@ -290,7 +285,7 @@ begin
                 next_state_s <= SET_PARAMETERS;
 
             when SET_PARAMETERS =>
-                if layer_info_reg_s.disabled = '1' then
+                if layer_info_s.disabled = '1' then
                     next_state_s <= IDLE;
                 else
                     next_state_s <= WAIT_BRAM;
@@ -316,9 +311,9 @@ begin
     -- Counters --
     --------------
 
-    tile_counter_max_x_s <= to_unsigned(DDP_VISIBLE_SCREEN_WIDTH/8, tile_counter_max_x_s'length) when layer_info_reg_s.small_tile = '1' else
+    tile_counter_max_x_s <= to_unsigned(DDP_VISIBLE_SCREEN_WIDTH/8, tile_counter_max_x_s'length) when layer_info_s.small_tile = '1' else
                             to_unsigned(DDP_VISIBLE_SCREEN_WIDTH/16, tile_counter_max_x_s'length);
-    tile_counter_max_y_s <= to_unsigned(DDP_VISIBLE_SCREEN_HEIGHT/8, tile_counter_max_y_s'length) when layer_info_reg_s.small_tile = '1' else
+    tile_counter_max_y_s <= to_unsigned(DDP_VISIBLE_SCREEN_HEIGHT/8, tile_counter_max_y_s'length) when layer_info_s.small_tile = '1' else
                             to_unsigned(DDP_VISIBLE_SCREEN_HEIGHT/16, tile_counter_max_y_s'length);
 
     -- Layer RAM tile counter
@@ -389,7 +384,7 @@ begin
             else
                 -- If we finish doing our layer we can update this register
                 if (state_reg_s = WORKING) and (work_done_s = '1') then
-                    last_layer_priority_reg_s <= layer_info_reg_s.priority;
+                    last_layer_priority_reg_s <= layer_info_s.priority;
                 end if;
             end if;
         end if;
@@ -411,17 +406,16 @@ begin
             layer_burst_fifo_read_o   => read_fifo_s,
             layer_burst_fifo_empty_i  => fifo_empty_s,
             palette_color_select_o    => palette_color_select_s,
-            palette_color_i           => extract_color_from_palette_data(paletteRam_dout),
             priority_ram_read_addr_o  => priority_read_addr,
             priority_ram_priority_i   => priority_read_dout,
             priority_ram_write_addr_o => priority_write_addr,
             priority_ram_priority_o   => priority_write_din,
             priority_ram_write_o      => priority_write_wr,
             frame_buffer_addr_o       => frameBuffer_addr,
-            frame_buffer_color_o      => frame_buffer_color_s,
             frame_buffer_write_o      => frameBuffer_wr,
             done_writing_tile_o       => pipeline_done_writing_tile_s);
 
+    frame_buffer_color_s <= extract_color_from_palette_data(paletteRam_dout);
     frameBuffer_din <= frame_buffer_color_s.r & frame_buffer_color_s.g & frame_buffer_color_s.b;
 
     -------------
@@ -430,7 +424,7 @@ begin
 
     -- The small tile need tiny bursts (they require half the data of the big
     -- tiles)
-    tileRom_burstLength <= x"08" when layer_info_reg_s.small_tile = '1' else x"10";
+    tileRom_burstLength <= x"08" when layer_info_s.small_tile = '1' else x"10";
 
     tileRom_rd <= tile_burst_read_s;
 
@@ -478,11 +472,11 @@ begin
 
     end block big_tile_layer_ram_addr_block;
 
-    layerRam_addr <= resize(small_tile_index_s, layerRam_addr'length) when layer_info_reg_s.small_tile = '1' else
+    layerRam_addr <= resize(small_tile_index_s, layerRam_addr'length) when layer_info_s.small_tile = '1' else
                      resize(big_tile_index_s, layerRam_addr'length);
 
-    tileRom_addr <= resize(tile_info_reg_s.code * DDP_BYTES_PER_8x8_TILE, tileRom_addr'length) when layer_info_reg_s.small_tile = '1' else
-                    resize(tile_info_reg_s.code * DDP_BYTES_PER_16x16_TILE, tileRom_addr'length);
+    tileRom_addr <= resize(tile_info_s.code * DDP_BYTES_PER_8x8_TILE, tileRom_addr'length) when layer_info_s.small_tile = '1' else
+                    resize(tile_info_s.code * DDP_BYTES_PER_16x16_TILE, tileRom_addr'length);
 
     paletteRam_addr <= palette_ram_addr_from_palette_color_select(palette_color_select_s);
 

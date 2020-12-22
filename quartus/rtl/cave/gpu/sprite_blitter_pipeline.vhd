@@ -52,7 +52,7 @@ entity sprite_blitter_pipeline is
         clk_i                     : in  std_logic;
         rst_i                     : in  std_logic;
         -- Sprite Info
-        sprite_info_i             : in  sprite_info_t;
+        sprite_info_i             : in  sprite_ram_line_t;
         get_sprite_info_o         : out std_logic;
         -- Burst FIFO
         sprite_burst_fifo_data_i  : in  std_logic_vector;
@@ -60,7 +60,6 @@ entity sprite_blitter_pipeline is
         sprite_burst_fifo_empty_i : in  std_logic;
         -- Access to Palette RAM
         palette_color_select_o    : out palette_color_select_t;
-        palette_color_i           : in  color_t;
         -- Access to Priority RAM
         priority_ram_read_addr_o  : out priority_ram_addr_t;
         priority_ram_priority_i   : in  priority_t;
@@ -69,7 +68,6 @@ entity sprite_blitter_pipeline is
         priority_ram_write_o      : out std_logic;
         -- Access to Frame Buffer
         frame_buffer_addr_o       : out frame_buffer_addr_t;
-        frame_buffer_color_o      : out color_t;
         frame_buffer_write_o      : out std_logic;
         -- Control signals
         done_blitting_sprite_o    : out std_logic
@@ -123,7 +121,6 @@ architecture rtl of sprite_blitter_pipeline is
     signal stage_1_done_s            : std_logic;
     signal stage_2_done_s            : std_logic;
 
-    signal color_from_palette_s      : color_t;
     signal old_priority_s            : priority_t;
 
     signal stage_1_current_prio_s    : priority_t;
@@ -233,7 +230,7 @@ begin
     begin
         if rising_edge(clk_i) then
             if update_sprite_info_s = '1' then
-                sprite_info_reg_s <= sprite_info_i;
+                sprite_info_reg_s <= extract_sprite_info_from_sprite_ram_line(sprite_info_i);
             end if;
         end if;
     end process sprite_info_reg_process;
@@ -296,8 +293,7 @@ begin
     priority_read_addr_s      <= stage_1_pos_x_s & stage_1_pos_y_s(DDP_FRAME_BUFFER_ADDR_BITS_Y-1 downto 0);
 
     -- Responses from BRAMs
-    color_from_palette_s <= palette_color_i;
-    old_priority_s       <= priority_ram_priority_i;
+    old_priority_s <= priority_ram_priority_i;
 
     -- The current sprite has priority if it has more priority or the same
     -- priority as the previous sprite (all priority should be 0 at start)
@@ -348,7 +344,6 @@ begin
     priority_ram_priority_o   <= stage_2_current_prio_s;
     priority_ram_write_o      <= update_frame_buffer_s;
     frame_buffer_addr_o       <= frame_buffer_write_addr_s;
-    frame_buffer_color_o      <= color_from_palette_s;
     frame_buffer_write_o      <= update_frame_buffer_s;
     done_blitting_sprite_o    <= stage_2_done_s;
 
