@@ -121,7 +121,9 @@ object Config {
   val FRAME_BUFFER_DATA_WIDTH = 15
   val FRAME_BUFFER_DMA_NUM_WORDS = SCREEN_WIDTH * SCREEN_HEIGHT * FRAME_BUFFER_BPP / 64
   val FRAME_BUFFER_DMA_BURST_LENGTH = 128
-  val FRAME_BUFFER_PRIO_WIDTH = 2
+
+  /** The width of a priority value */
+  val PRIO_WIDTH = 2
 
   /** Video timing configuration */
   val videoTimingConfig = VideoTimingConfig(
