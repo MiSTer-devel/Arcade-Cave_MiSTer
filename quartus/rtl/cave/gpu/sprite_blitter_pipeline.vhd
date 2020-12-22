@@ -52,7 +52,7 @@ entity sprite_blitter_pipeline is
         clk_i                     : in  std_logic;
         rst_i                     : in  std_logic;
         -- Sprite Info
-        sprite_info_i             : in  sprite_info_t;
+        sprite_info_i             : in  sprite_ram_line_t;
         get_sprite_info_o         : out std_logic;
         -- Burst FIFO
         sprite_burst_fifo_data_i  : in  std_logic_vector;
@@ -230,7 +230,7 @@ begin
     begin
         if rising_edge(clk_i) then
             if update_sprite_info_s = '1' then
-                sprite_info_reg_s <= sprite_info_i;
+                sprite_info_reg_s <= extract_sprite_info_from_sprite_ram_line(sprite_info_i);
             end if;
         end if;
     end process sprite_info_reg_process;
