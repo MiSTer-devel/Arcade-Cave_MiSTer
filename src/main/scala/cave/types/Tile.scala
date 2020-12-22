@@ -38,12 +38,13 @@
 package cave.types
 
 import axon.Util
+import cave.Config
 import chisel3._
 
 /** Represents a tile descriptor. */
 class Tile extends Bundle {
   /** Priority */
-  val priority = UInt(2.W)
+  val priority = UInt(Config.PRIO_WIDTH.W)
   /** Color code */
   val colorCode = UInt(6.W)
   /** Tile code */

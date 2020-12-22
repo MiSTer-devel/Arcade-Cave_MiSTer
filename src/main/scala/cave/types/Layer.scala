@@ -39,12 +39,13 @@ package cave.types
 
 import axon.Util
 import axon.types.Vec2
+import cave.Config
 import chisel3._
 
 /** Represents a layer descriptor. */
 class Layer extends Bundle {
   /** Priority */
-  val priority = UInt(2.W)
+  val priority = UInt(Config.PRIO_WIDTH.W)
   /** Small tile flag */
   val smallTile = Bool()
   /** Disable flag */

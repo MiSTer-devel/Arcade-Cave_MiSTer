@@ -39,12 +39,13 @@ package cave.types
 
 import axon.Util
 import axon.types.Vec2
+import cave.Config
 import chisel3._
 
 /** Represents a sprite descriptor. */
 class Sprite extends Bundle {
   /** Priority */
-  val priority = UInt(2.W)
+  val priority = UInt(Config.PRIO_WIDTH.W)
   /** Color code */
   val colorCode = UInt(6.W)
   /** Tile code */
