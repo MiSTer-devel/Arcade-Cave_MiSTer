@@ -59,8 +59,6 @@ class Main extends Module {
   val io = IO(new Bundle {
     /** Video clock domain */
     val videoClock = Input(Clock())
-    /** Video reset */
-    val videoReset = Input(Bool())
     /** CPU clock domain */
     val cpuClock = Input(Clock())
     /** CPU reset */
@@ -134,7 +132,6 @@ class Main extends Module {
   // Video FIFO
   val videoFIFO = Module(new VideoFIFO)
   videoFIFO.io.videoClock := io.videoClock
-  videoFIFO.io.videoReset := io.videoReset
   videoFIFO.io.video <> videoTiming.io
   videoFIFO.io.pixelData <> videoDMA.io.pixelData
   io.rgb := videoFIFO.io.rgb

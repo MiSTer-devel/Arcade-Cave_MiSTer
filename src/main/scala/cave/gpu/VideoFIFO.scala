@@ -44,19 +44,17 @@ import chisel3._
 import chisel3.util._
 
 /**
- * A queue for buffering pixel data that is ready to be output to the display.
+ * The video FIFO is a queue used to buffer pixel data that is ready to be output to the display.
  *
- * Ths video FIFO fetches pixel data from DDR memory, using a DMA transfer.
+ * When the video FIFO requires pixel data, it is fetched from DDR memory using a DMA transfer.
  */
 class VideoFIFO extends Module {
-  /** The depth at which the FIFO is considered to be almost empty */
-  val ALMOST_EMPTY_THRESHOLD = 120
+  /** The depth at which the FIFO should fetch pixel data */
+  val FETCH_THRESHOLD = 120
 
   val io = IO(new Bundle {
     /** Video clock domain */
     val videoClock = Input(Clock())
-    /** Video reset */
-    val videoReset = Input(Reset())
     /** Video port */
     val video = Input(new VideoIO)
     /** Pixel data port */
@@ -81,22 +79,25 @@ class VideoFIFO extends Module {
     override def desiredName = "video_fifo"
   }
 
-  val videoLockReg = withClockAndReset(io.videoClock, io.videoReset) { RegInit(false.B) }
+  // Pixel data may be read by the consumer once the display has been locked. This register needs to
+  // be clocked in the video clock domain.
+  val videoLockReg = withClock(io.videoClock) { RegInit(false.B) }
 
+  // FIFO
   val fifo = Module(new VideoFIFOBlackBox)
   fifo.io.aclr := reset
   fifo.io.data := io.pixelData.bits
   fifo.io.rdclk := io.videoClock
-  fifo.io.rdreq := io.video.enable && videoLockReg && !fifo.io.rdempty
+  fifo.io.rdreq := io.video.enable && videoLockReg
   fifo.io.wrclk := clock
   fifo.io.wrreq := io.pixelData.valid
 
-  // Set the video lock register during the blanking region, as soon as the FIFO has some data
-  when(io.video.hBlank && io.video.vBlank && !fifo.io.rdempty) { videoLockReg := true.B }
+  // Lock the video during a vertical blank, as soon as the FIFO contains pixel data
+  when(io.video.vBlank && !fifo.io.rdempty) { videoLockReg := true.B }
 
   // Set RGB output
   io.rgb := fifo.io.q.asTypeOf(new RGB(Config.SCREEN_BITS_PER_CHANNEL))
 
-  // Fetch pixel data if the FIFO is almost empty
-  io.pixelData.ready := fifo.io.wrusedw < ALMOST_EMPTY_THRESHOLD.U
+  // Fetch pixel data when the FIFO is almost empty
+  io.pixelData.ready := fifo.io.wrusedw < FETCH_THRESHOLD.U
 }

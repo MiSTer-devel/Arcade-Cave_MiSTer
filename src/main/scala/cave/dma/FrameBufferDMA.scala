@@ -61,8 +61,8 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
     val swap = Input(Bool())
     /** Start the transfer */
     val start = Input(Bool())
-    /** Asserted when the transfer is complete */
-    val done = Output(Bool())
+    /** Asserted when the DMA controller is busy */
+    val busy = Output(Bool())
     /** Frame buffer port */
     val frameBuffer = new FrameBufferIO
     /** DDR port */
@@ -81,7 +81,6 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
 
   // Control signals
   val write = !io.ddr.waitReq && busyReg
-  val done = RegNext(burstCounterDone, false.B)
 
   // Calculate the DDR address
   val ddrAddr = {
@@ -97,7 +96,7 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
   when(io.start) { busyReg := true.B }.elsewhen(burstCounterDone) { busyReg := false.B }
 
   // Outputs
-  io.done := done
+  io.busy := busyReg
   io.frameBuffer.rd := true.B
   io.frameBuffer.addr := Mux(effectiveWrite, totalCounter +& 1.U, totalCounter)
   io.ddr.wr := busyReg

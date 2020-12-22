@@ -41,20 +41,28 @@ import chisel3._
 import chiseltest._
 import org.scalatest._
 
-trait FrameBufferReadDMATestHelpers {
+trait VideoDMATestHelpers {
   protected def mkDMA() = new VideoDMA(addr = 1, numWords = 8, burstLength = 4)
 }
 
-class VideoDMATest extends FlatSpec with ChiselScalatestTester with Matchers with FrameBufferReadDMATestHelpers {
+class VideoDMATest extends FlatSpec with ChiselScalatestTester with Matchers with VideoDMATestHelpers {
+  it should "assert the busy signal during a transfer" in {
+    test(mkDMA()) { dut =>
+      dut.io.pixelData.ready.poke(true.B)
+      dut.clock.step()
+      dut.io.busy.expect(true.B)
+      dut.io.ddr.burstDone.poke(true.B)
+      dut.clock.step(3)
+      dut.io.busy.expect(false.B)
+    }
+  }
+
   it should "assert the read enable signal at the start of a transfer" in {
     test(mkDMA()) { dut =>
       dut.io.pixelData.ready.poke(true.B)
       dut.io.ddr.rd.expect(true.B)
       dut.clock.step()
       dut.io.ddr.rd.expect(false.B)
-      dut.io.ddr.burstDone.poke(true.B)
-      dut.clock.step(2)
-      dut.io.done.expect(true.B)
     }
   }
 
