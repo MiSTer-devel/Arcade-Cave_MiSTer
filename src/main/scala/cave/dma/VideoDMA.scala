@@ -57,8 +57,8 @@ class VideoDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
   val io = IO(new Bundle {
     /** Swap the frame buffer */
     val swap = Input(Bool())
-    /** Done flag */
-    val done = Output(Bool())
+    /** Asserted when the DMA controller is busy */
+    val busy = Output(Bool())
     /** Pixel data port */
     val pixelData = DecoupledIO(Bits(Config.ddrConfig.dataWidth.W))
     /** DDR port */
@@ -73,7 +73,6 @@ class VideoDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
 
   // Control signals
   val read = io.pixelData.ready && !busyReg
-  val done = RegNext(burstCounterDone, false.B)
 
   // Calculate the DDR address
   val ddrAddr = {
@@ -86,7 +85,7 @@ class VideoDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
   when(read && !io.ddr.waitReq) { busyReg := true.B }.elsewhen(io.ddr.burstDone) { busyReg := false.B }
 
   // Outputs
-  io.done := done
+  io.busy := busyReg
   io.pixelData.bits := io.ddr.dout
   io.pixelData.valid := io.ddr.valid
   io.ddr.rd := read
