@@ -65,7 +65,6 @@ entity layer_pipeline is
         layer_burst_fifo_empty_i  : in  std_logic;
         -- Access to Palette RAM
         palette_color_select_o    : out palette_color_select_t;
-        palette_color_i           : in  color_t;
         -- Access to Priority RAM
         priority_ram_read_addr_o  : out priority_ram_addr_t;
         priority_ram_priority_i   : in  priority_t;
@@ -74,7 +73,6 @@ entity layer_pipeline is
         priority_ram_write_o      : out std_logic;
         -- Access to Frame Buffer
         frame_buffer_addr_o       : out frame_buffer_addr_t;
-        frame_buffer_color_o      : out color_t;
         frame_buffer_write_o      : out std_logic;
         -- Control signals
         done_writing_tile_o       : out std_logic
@@ -150,7 +148,6 @@ architecture rtl of layer_pipeline is
     signal palette_ram_read_addr_s   : palette_color_select_t;
     signal frame_buffer_write_addr_s : frame_buffer_addr_t;
     signal priority_read_addr_s      : priority_ram_addr_t;
-    signal color_from_palette_s      : color_t;
     signal old_priority_s            : priority_t;
     signal has_priority_s            : std_logic;
     signal is_transparent_s          : std_logic;
@@ -493,8 +490,7 @@ begin
     priority_read_addr_s      <= stage_1_pos_x_s & stage_1_pos_y_s(DDP_FRAME_BUFFER_ADDR_BITS_Y-1 downto 0);
 
     -- Responses from BRAMs
-    color_from_palette_s      <= palette_color_i;
-    old_priority_s            <= priority_ram_priority_i;
+    old_priority_s <= priority_ram_priority_i;
 
     -------------
     -- Outputs --
@@ -507,7 +503,6 @@ begin
     priority_ram_priority_o   <= stage_2_current_prio_s;
     priority_ram_write_o      <= update_frame_buffer_s;
     frame_buffer_addr_o       <= frame_buffer_write_addr_s;
-    frame_buffer_color_o      <= color_from_palette_s;
     frame_buffer_write_o      <= update_frame_buffer_s;
     done_writing_tile_o       <= stage_2_done_s;
 

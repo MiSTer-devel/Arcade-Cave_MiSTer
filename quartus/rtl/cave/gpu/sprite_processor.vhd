@@ -304,17 +304,16 @@ begin
             sprite_burst_fifo_read_o  => read_fifo_s,
             sprite_burst_fifo_empty_i => fifo_empty_s,
             palette_color_select_o    => palette_color_select_s,
-            palette_color_i           => extract_color_from_palette_data(paletteRam_dout),
             priority_ram_read_addr_o  => priority_read_addr,
             priority_ram_priority_i   => priority_read_dout,
             priority_ram_write_addr_o => priority_write_addr,
             priority_ram_priority_o   => priority_write_din,
             priority_ram_write_o      => priority_write_wr,
             frame_buffer_addr_o       => frameBuffer_addr,
-            frame_buffer_color_o      => frame_buffer_color_s,
             frame_buffer_write_o      => frameBuffer_wr,
             done_blitting_sprite_o    => pipeline_done_blitting_s);
 
+    frame_buffer_color_s <= extract_color_from_palette_data(paletteRam_dout);
     frameBuffer_din <= frame_buffer_color_s.r & frame_buffer_color_s.g & frame_buffer_color_s.b;
 
     ---------
