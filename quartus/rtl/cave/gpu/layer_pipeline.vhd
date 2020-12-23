@@ -80,7 +80,7 @@ entity layer_pipeline is
         frameBuffer_mask          : out std_logic_vector(0 downto 0);
         frameBuffer_din           : out std_logic_vector(DDP_WORD_WIDTH-2 downto 0);
         -- Control signals
-        done_writing_tile_o       : out std_logic
+        done                      : out std_logic
         );
 end entity layer_pipeline;
 
@@ -517,6 +517,6 @@ begin
     frameBuffer_addr          <= frame_buffer_write_addr_s;
     frameBuffer_mask          <= "0";
     frameBuffer_din           <= frame_buffer_color_s.r & frame_buffer_color_s.g & frame_buffer_color_s.b;
-    done_writing_tile_o       <= stage_2_done_s;
+    done                      <= stage_2_done_s;
 
 end rtl;

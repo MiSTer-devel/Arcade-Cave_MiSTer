@@ -314,7 +314,7 @@ begin
             frameBuffer_addr          => frameBuffer_addr,
             frameBuffer_mask          => frameBuffer_mask,
             frameBuffer_din           => frameBuffer_din,
-            done_blitting_sprite_o    => pipeline_done_blitting_s);
+            done                      => pipeline_done_blitting_s);
 
 
     ---------

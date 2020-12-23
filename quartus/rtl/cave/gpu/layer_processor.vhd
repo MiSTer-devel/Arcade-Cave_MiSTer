@@ -417,7 +417,7 @@ begin
             frameBuffer_addr          => frameBuffer_addr,
             frameBuffer_mask          => frameBuffer_mask,
             frameBuffer_din           => frameBuffer_din,
-            done_writing_tile_o       => pipeline_done_writing_tile_s);
+            done                      => pipeline_done_writing_tile_s);
 
     -------------
     -- Outputs --
