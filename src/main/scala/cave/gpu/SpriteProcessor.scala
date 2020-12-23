@@ -90,7 +90,6 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   val updateSpriteInfo = Wire(Bool())
   val pipelineDoneBlitting = Wire(Bool())
   val pipelineTakesSpriteInfo = Wire(Bool())
-  val fifoFull = Wire(Bool())
 
   // Registers
   val stateReg = RegInit(State.idle)
@@ -120,13 +119,7 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   )
 
   // Tile FIFO
-  //
-  // TODO: Refactor to queue
-  val fifo = Module(new TileFIFO)
-  fifo.io.clock := clock
-  fifo.io.data := io.tileRom.dout
-  fifo.io.wrreq := io.tileRom.valid
-  fifoFull := fifo.io.almost_full
+  val tileFifo = Module(new TileFIFO)
 
   // Sprite blitter
   val spriteBlitter = Module(new SpriteBlitter)
@@ -134,9 +127,7 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   spriteBlitter.io.rst_i := reset
   spriteBlitter.io.sprite_info_i := rawSpriteInfoReg
   pipelineTakesSpriteInfo := spriteBlitter.io.get_sprite_info_o
-  spriteBlitter.io.pixelData_bits := fifo.io.q
-  fifo.io.rdreq := spriteBlitter.io.pixelData_ready
-  spriteBlitter.io.pixelData_valid := !fifo.io.empty
+  spriteBlitter.io.pixelData <> tileFifo.io.deq
   spriteBlitter.io.paletteRam <> io.paletteRam
   spriteBlitter.io.priority <> io.priority
   spriteBlitter.io.frameBuffer <> io.frameBuffer
@@ -167,7 +158,7 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   val doneBursting = burstTodo && burstCounterWrap
 
   // Set sprite burst read flag
-  val spriteBurstRead = burstTodo && burstReady && !fifoFull
+  val spriteBurstRead = burstTodo && burstReady && tileFifo.io.enq.ready
 
   // Set effective read flag
   effectiveRead := spriteBurstRead && !io.tileRom.waitReq
@@ -177,6 +168,13 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
 
   // Set tile ROM address
   val tileRomAddr = (spriteInfoReg.code + burstCounter) * LARGE_TILE_BYTE_SIZE.U
+
+  // Enqueue valid tile ROM data to the tile FIFO
+  when(io.tileRom.valid) {
+    tileFifo.io.enq.enq(io.tileRom.dout)
+  } otherwise {
+    tileFifo.io.enq.noenq()
+  }
 
   // Toggle sprite info taken register
   when(stateReg === State.idle) {

@@ -41,6 +41,7 @@ import axon.mem._
 import cave.Config
 import cave.types._
 import chisel3._
+import chisel3.util._
 
 /** The sprite blitter copies a sprite to the frame buffer. */
 class SpriteBlitter extends BlackBox {
@@ -51,9 +52,7 @@ class SpriteBlitter extends BlackBox {
     val sprite_info_i = Input(Bits(Config.SPRITE_RAM_GPU_DATA_WIDTH.W))
     val get_sprite_info_o = Output(Bool())
     /** Pixel data port */
-    val pixelData_bits = Input(Bits(Config.TILE_ROM_DATA_WIDTH.W))
-    val pixelData_ready = Output(Bool())
-    val pixelData_valid = Input(Bool())
+    val pixelData = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
     /** Palette RAM port */
     val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
     /** Priority port */

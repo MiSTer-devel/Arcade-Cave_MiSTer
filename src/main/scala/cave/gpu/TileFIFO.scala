@@ -39,17 +39,37 @@ package cave.gpu
 
 import cave.Config
 import chisel3._
+import chisel3.util._
 
-class TileFIFO extends BlackBox {
+/** A FIFO used to buffer tile ROM data. */
+class TileFIFO extends Module {
   val io = IO(new Bundle {
-    val clock = Input(Clock())
-    val data = Input(Bits(Config.TILE_ROM_DATA_WIDTH.W))
-    val rdreq = Input(Bool())
-    val wrreq = Input(Bool())
-    val almost_full = Output(Bool())
-    val empty = Output(Bool())
-    val q = Output(Bits(Config.TILE_ROM_DATA_WIDTH.W))
+    /** Enqueue data port */
+    val enq = Flipped(EnqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W)))
+    /** Dequeue data port */
+    val deq = Flipped(DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W)))
   })
 
-  override def desiredName = "tile_fifo"
+  class TileFIFOBlackBox extends BlackBox {
+    val io = IO(new Bundle {
+      val clock = Input(Clock())
+      val data = Input(Bits(Config.TILE_ROM_DATA_WIDTH.W))
+      val rdreq = Input(Bool())
+      val wrreq = Input(Bool())
+      val almost_full = Output(Bool())
+      val empty = Output(Bool())
+      val q = Output(Bits(Config.TILE_ROM_DATA_WIDTH.W))
+    })
+
+    override def desiredName = "tile_fifo"
+  }
+
+  val fifo = Module(new TileFIFOBlackBox)
+  fifo.io.clock := clock
+  io.enq.ready := !fifo.io.almost_full
+  fifo.io.wrreq := io.enq.valid
+  fifo.io.data := io.enq.bits
+  fifo.io.rdreq := io.deq.ready
+  io.deq.valid := !fifo.io.empty
+  io.deq.bits := fifo.io.q
 }
