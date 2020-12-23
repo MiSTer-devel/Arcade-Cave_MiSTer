@@ -134,7 +134,6 @@ architecture struct of layer_processor is
     signal pipeline_update_layer_info_reg_s : std_logic;
     signal last_layer_priority_reg_s        : priority_t;
     signal pipeline_takes_tile_info_s       : std_logic;
-    signal palette_color_select_s           : palette_color_select_t;
     signal pipeline_done_writing_tile_s     : std_logic;
     --
     signal small_tile_index_s               : unsigned(11 downto 0);
@@ -405,7 +404,7 @@ begin
             layer_burst_fifo_data_i   => data_to_pipeline_s,
             layer_burst_fifo_read_o   => read_fifo_s,
             layer_burst_fifo_empty_i  => fifo_empty_s,
-            palette_color_select_o    => palette_color_select_s,
+            palette_color_select_o    => paletteRam_addr,
             priority_ram_read_addr_o  => priority_read_addr,
             priority_ram_priority_i   => priority_read_dout,
             priority_ram_write_addr_o => priority_write_addr,
@@ -477,8 +476,6 @@ begin
 
     tileRom_addr <= resize(tile_info_s.code * DDP_BYTES_PER_8x8_TILE, tileRom_addr'length) when layer_info_s.small_tile = '1' else
                     resize(tile_info_s.code * DDP_BYTES_PER_16x16_TILE, tileRom_addr'length);
-
-    paletteRam_addr <= palette_ram_addr_from_palette_color_select(palette_color_select_s);
 
     layerRam_rd <= '1';
     paletteRam_rd <= '1';

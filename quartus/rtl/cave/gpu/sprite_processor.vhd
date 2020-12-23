@@ -150,8 +150,6 @@ architecture struct of sprite_processor is
     signal sprite_info_counter_s        : unsigned(ilogup(DDP_MAX_SPRITES_ON_SCREEN) downto 0);
     signal next_sprite_info_s           : std_logic;
 
-    signal palette_color_select_s       : palette_color_select_t;
-
     signal frame_buffer_color_s         : color_t;
 begin
 
@@ -305,7 +303,7 @@ begin
             sprite_burst_fifo_data_i  => data_to_pipeline_s,
             sprite_burst_fifo_read_o  => read_fifo_s,
             sprite_burst_fifo_empty_i => fifo_empty_s,
-            palette_color_select_o    => palette_color_select_s,
+            palette_color_select_o    => paletteRam_addr,
             priority_ram_read_addr_o  => priority_read_addr,
             priority_ram_priority_i   => priority_read_dout,
             priority_ram_write_addr_o => priority_write_addr,
@@ -367,8 +365,6 @@ begin
     -- since the code indicates the first tile and the burst counter bursts by
     -- the same amount of bytes than a 16x16 tile.
     tileRom_addr <= resize((sprite_info_reg_s.code+burst_counter_s)*DDP_BYTES_PER_16x16_TILE, tileRom_addr'length);
-
-    paletteRam_addr <= palette_ram_addr_from_palette_color_select(palette_color_select_s);
 
     tileRom_burstLength <= x"10";
     spriteRam_rd <= '1';

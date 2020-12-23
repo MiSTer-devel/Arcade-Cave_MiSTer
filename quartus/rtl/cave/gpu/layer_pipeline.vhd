@@ -60,11 +60,11 @@ entity layer_pipeline is
         tile_info_i               : in  layer_ram_line_t;
         get_tile_info_o           : out std_logic;
         -- Burst FIFO
-        layer_burst_fifo_data_i   : in  std_logic_vector;
+        layer_burst_fifo_data_i   : in  std_logic_vector(63 downto 0);
         layer_burst_fifo_read_o   : out std_logic;
         layer_burst_fifo_empty_i  : in  std_logic;
         -- Access to Palette RAM
-        palette_color_select_o    : out palette_color_select_t;
+        palette_color_select_o    : out palette_ram_addr_t;
         -- Access to Priority RAM
         priority_ram_read_addr_o  : out priority_ram_addr_t;
         priority_ram_priority_i   : in  priority_t;
@@ -497,7 +497,7 @@ begin
     -------------
     get_tile_info_o           <= update_tile_info_s;
     layer_burst_fifo_read_o   <= read_fifo_s;
-    palette_color_select_o    <= palette_ram_read_addr_s;
+    palette_color_select_o    <= palette_ram_addr_from_palette_color_select(palette_ram_read_addr_s);
     priority_ram_read_addr_o  <= priority_read_addr_s;
     priority_ram_write_addr_o <= frame_buffer_write_addr_s;
     priority_ram_priority_o   <= stage_2_current_prio_s;
