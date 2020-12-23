@@ -73,8 +73,8 @@ class GPU extends Module {
     val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
     /** Tile ROM port */
     val tileRom = new TileRomIO
-    /** Frame buffer port */
-    val frameBuffer = Flipped(new FrameBufferIO)
+    /** Frame buffer DMA port */
+    val frameBufferDMA = Flipped(new FrameBufferDMAIO)
   })
 
   // States
@@ -135,15 +135,17 @@ class GPU extends Module {
   // Frame buffer
   //
   // The frame buffer is used by the sprite and tilemap layers for writing pixel data during
-  // rendering. Port A is registered to have better timing, due to the address linearization (which
-  // requires a multiplier).
+  // rendering.
+  //
+  // Port A is registered to have better timing, due to the address linearization (which requires a
+  // multiplier). Port B is used for DMA when copying the frame buffer to DDR memory.
   val frameBuffer = Module(new DualPortRam(
     addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
     dataWidthA = Config.FRAME_BUFFER_DATA_WIDTH,
-    depthA = Some(Config.SCREEN_WIDTH * Config.SCREEN_HEIGHT),
-    addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH - 2,
-    dataWidthB = Config.FRAME_BUFFER_DATA_WIDTH * 4,
-    depthB = Some(Config.SCREEN_WIDTH * Config.SCREEN_HEIGHT / 4),
+    depthA = Some(Config.FRAME_BUFFER_DEPTH),
+    addrWidthB = Config.FRAME_BUFFER_DMA_ADDR_WIDTH,
+    dataWidthB = Config.FRAME_BUFFER_DMA_DATA_WIDTH,
+    depthB = Some(Config.FRAME_BUFFER_DMA_DEPTH),
     maskEnable = false
   ))
   frameBuffer.io.portA <> RegNext(WriteMemIO.mux(stateReg, Seq(
@@ -153,7 +155,7 @@ class GPU extends Module {
     State.layer1 -> layerProcessor.io.frameBuffer,
     State.layer2 -> layerProcessor.io.frameBuffer
   )).mapAddr(GPU.linearizeAddr))
-  frameBuffer.io.portB <> io.frameBuffer
+  frameBuffer.io.portB <> io.frameBufferDMA
 
   // Default to the previous state
   nextState := stateReg

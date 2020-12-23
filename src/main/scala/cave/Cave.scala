@@ -65,7 +65,7 @@ class Cave extends Module {
     /** Tile ROM port */
     val tileRom = new TileRomIO
     /** Frame buffer DMA port */
-    val frameBuffer = Flipped(new FrameBufferIO)
+    val frameBufferDMA = Flipped(new FrameBufferDMAIO)
     /** Video port */
     val video = Input(new VideoIO)
     /** Audio port */
@@ -81,7 +81,7 @@ class Cave extends Module {
   gpu.io.generateFrame := Util.rising(ShiftRegister(generateFrame, 2))
   io.frameDone := gpu.io.frameDone
   io.tileRom <> gpu.io.tileRom
-  io.frameBuffer <> gpu.io.frameBuffer
+  io.frameBufferDMA <> gpu.io.frameBufferDMA
 
   // The CPU and registers run in the CPU clock domain
   withClockAndReset(io.cpuClock, io.cpuReset) {

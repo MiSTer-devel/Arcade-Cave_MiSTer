@@ -145,7 +145,7 @@ class Main extends Module {
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }
   cave.io.tileRom <> mem.io.tileRom
   cave.io.video <> videoTiming.io
-  cave.io.frameBuffer <> frameBufferDMA.io.frameBuffer
+  cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
   cave.io.audio <> io.audio
   frameBufferDMA.io.start := cave.io.frameDone
 }
