@@ -46,7 +46,7 @@ class VideoIO extends Bundle {
   /** The enable signal is asserted when the beam is in the display region. */
   val enable = Output(Bool())
   /** Position */
-  val pos = Output(new Vec2)
+  val pos = Output(new Vec2(9))
   /** The horizontal sync signal. */
   val hSync = Output(Bool())
   /** The vertical sync signal. */

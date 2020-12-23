@@ -44,7 +44,7 @@ import chisel3._
  *
  * @param n The data width.
  */
-class Vec2(private val n: Int = 9) extends Bundle {
+class Vec2(private val n: Int) extends Bundle {
   /** Horizontal position */
   val x = UInt(n.W)
   /** Vertical position */
@@ -65,7 +65,7 @@ object Vec2 {
    * @param y The vertical position.
    */
   def apply(x: Bits, y: Bits): Vec2 = {
-    val pos = Wire(new Vec2)
+    val pos = Wire(new Vec2(x.getWidth))
     pos.x := x
     pos.y := y
     pos
