@@ -66,11 +66,12 @@ entity layer_pipeline is
         -- Access to Palette RAM
         palette_color_select_o    : out palette_ram_addr_t;
         -- Access to Priority RAM
-        priority_ram_read_addr_o  : out priority_ram_addr_t;
-        priority_ram_priority_i   : in  priority_t;
-        priority_ram_write_addr_o : out priority_ram_addr_t;
-        priority_ram_priority_o   : out priority_t;
-        priority_ram_write_o      : out std_logic;
+        priority_read_rd          : out std_logic;
+        priority_read_addr        : out priority_ram_addr_t;
+        priority_read_dout        : in  priority_t;
+        priority_write_addr       : out priority_ram_addr_t;
+        priority_write_din        : out priority_t;
+        priority_write_wr         : out std_logic;
         -- Access to Frame Buffer
         frame_buffer_addr_o       : out frame_buffer_addr_t;
         frame_buffer_write_o      : out std_logic;
@@ -490,7 +491,7 @@ begin
     priority_read_addr_s      <= stage_1_pos_x_s & stage_1_pos_y_s(DDP_FRAME_BUFFER_ADDR_BITS_Y-1 downto 0);
 
     -- Responses from BRAMs
-    old_priority_s <= priority_ram_priority_i;
+    old_priority_s <= priority_read_dout;
 
     -------------
     -- Outputs --
@@ -498,10 +499,11 @@ begin
     get_tile_info_o           <= update_tile_info_s;
     layer_burst_fifo_read_o   <= read_fifo_s;
     palette_color_select_o    <= palette_ram_addr_from_palette_color_select(palette_ram_read_addr_s);
-    priority_ram_read_addr_o  <= priority_read_addr_s;
-    priority_ram_write_addr_o <= frame_buffer_write_addr_s;
-    priority_ram_priority_o   <= stage_2_current_prio_s;
-    priority_ram_write_o      <= update_frame_buffer_s;
+    priority_read_rd          <= '1';
+    priority_read_addr        <= priority_read_addr_s;
+    priority_write_addr       <= frame_buffer_write_addr_s;
+    priority_write_din        <= stage_2_current_prio_s;
+    priority_write_wr         <= update_frame_buffer_s;
     frame_buffer_addr_o       <= frame_buffer_write_addr_s;
     frame_buffer_write_o      <= update_frame_buffer_s;
     done_writing_tile_o       <= stage_2_done_s;

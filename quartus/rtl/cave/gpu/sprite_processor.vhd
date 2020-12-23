@@ -304,11 +304,12 @@ begin
             sprite_burst_fifo_read_o  => read_fifo_s,
             sprite_burst_fifo_empty_i => fifo_empty_s,
             palette_color_select_o    => paletteRam_addr,
-            priority_ram_read_addr_o  => priority_read_addr,
-            priority_ram_priority_i   => priority_read_dout,
-            priority_ram_write_addr_o => priority_write_addr,
-            priority_ram_priority_o   => priority_write_din,
-            priority_ram_write_o      => priority_write_wr,
+            priority_read_rd          => priority_read_rd,
+            priority_read_addr        => priority_read_addr,
+            priority_read_dout        => priority_read_dout,
+            priority_write_addr       => priority_write_addr,
+            priority_write_din        => priority_write_din,
+            priority_write_wr         => priority_write_wr,
             frame_buffer_addr_o       => frameBuffer_addr,
             frame_buffer_write_o      => frameBuffer_wr,
             done_blitting_sprite_o    => pipeline_done_blitting_s);
@@ -369,6 +370,5 @@ begin
     tileRom_burstLength <= x"10";
     spriteRam_rd <= '1';
     paletteRam_rd <= '1';
-    priority_read_rd <= '1';
     frameBuffer_mask <= "0";
 end struct;
