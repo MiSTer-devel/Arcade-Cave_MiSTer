@@ -38,11 +38,25 @@
 package cave.gpu
 
 import axon.mem._
+import axon.util.Counter
 import cave.Config
 import cave.types._
 import chisel3._
+import chisel3.util._
 
-class SpriteProcessor extends Module {
+/**
+ * The sprite processor handles rendering sprites.
+ *
+ * @param numSprites The maximum number of sprites to render.
+ */
+class SpriteProcessor(numSprites: Int = 1024) extends Module {
+  /** The size of a large tile in pixels */
+  val LARGE_TILE_SIZE = 16
+  /** The size of a large tile in bytes */
+  val LARGE_TILE_BYTE_SIZE = LARGE_TILE_SIZE * 8
+  /** The magic position value that indicates a disabled sprite */
+  val SPRITE_MAGIC_POS = 0x2a0
+
   val io = IO(new Bundle {
     /** Start flag */
     val start = Input(Bool())
@@ -62,32 +76,154 @@ class SpriteProcessor extends Module {
     val frameBuffer = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH)
   })
 
-  class SpriteProcessorBlackBox extends BlackBox {
-    val io = IO(new Bundle {
-      val clk_i = Input(Clock())
-      val rst_i = Input(Reset())
-      val start_i = Input(Bool())
-      val done_o = Output(Bool())
-      val sprite_bank_i = Input(Bool())
-      val spriteRam = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
-      val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
-      val tileRom = new TileRomIO
-      val priority = new PriorityIO
-      val frameBuffer = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH)
-    })
-
-    override def desiredName = "sprite_processor"
+  // States
+  object State {
+    val idle :: check :: working :: Nil = Enum(3)
   }
 
-  val processor = Module(new SpriteProcessorBlackBox)
-  processor.io.clk_i := clock
-  processor.io.rst_i := reset
-  processor.io.start_i := io.start
-  io.done := processor.io.done_o
-  processor.io.sprite_bank_i := io.spriteBank
-  processor.io.spriteRam <> io.spriteRam
-  processor.io.paletteRam <> io.paletteRam
-  processor.io.tileRom.mapAddr(_ + Config.TILE_ROM_OFFSET.U) <> io.tileRom
-  processor.io.priority <> io.priority
-  processor.io.frameBuffer <> io.frameBuffer
+  // Decode sprite info
+  val spriteInfo = Sprite.decode(io.spriteRam.dout)
+
+  // Wires
+  val effectiveRead = Wire(Bool())
+  val nextSpriteInfo = Wire(Bool())
+  val updateSpriteInfo = Wire(Bool())
+  val pipelineDoneBlitting = Wire(Bool())
+  val pipelineTakesSpriteInfo = Wire(Bool())
+
+  // Registers
+  val stateReg = RegInit(State.idle)
+  val spriteInfoTaken = Reg(Bool())
+  val burstTodo = Reg(Bool())
+  val burstReady = Reg(Bool())
+  val rawSpriteInfoReg = RegEnable(io.spriteRam.dout, updateSpriteInfo)
+  val spriteInfoReg = RegEnable(spriteInfo, updateSpriteInfo)
+  val burstCounterMax = RegEnable(spriteInfo.tileSize.x * spriteInfo.tileSize.y, updateSpriteInfo)
+
+  // Counters
+  val (spriteInfoCounter, _) = Counter.static(numSprites * 2, // FIXME
+    enable = nextSpriteInfo,
+    reset = stateReg === State.idle
+  )
+  val (spriteSentCounter, _) = Counter.static(numSprites,
+    enable = updateSpriteInfo,
+    reset = stateReg === State.idle
+  )
+  val (spriteDoneCounter, _) = Counter.static(numSprites,
+    enable = pipelineDoneBlitting,
+    reset = stateReg === State.idle
+  )
+  val (burstCounter, burstCounterWrap) = Counter.dynamic(burstCounterMax,
+    enable = effectiveRead,
+    reset = updateSpriteInfo
+  )
+
+  // Tile FIFO
+  val tileFifo = Module(new TileFIFO)
+
+  // Sprite blitter
+  val spriteBlitter = Module(new SpriteBlitter)
+  spriteBlitter.io.clk_i := clock
+  spriteBlitter.io.rst_i := reset
+  spriteBlitter.io.sprite_info_i := rawSpriteInfoReg
+  pipelineTakesSpriteInfo := spriteBlitter.io.get_sprite_info_o
+  spriteBlitter.io.pixelData <> tileFifo.io.deq
+  spriteBlitter.io.paletteRam <> io.paletteRam
+  spriteBlitter.io.priority <> io.priority
+  spriteBlitter.io.frameBuffer <> io.frameBuffer
+  pipelineDoneBlitting := spriteBlitter.io.done
+
+  // Set sprite enabled flag
+  val spriteInRamLine = spriteInfo.pos.x =/= SPRITE_MAGIC_POS.U &&
+                        spriteInfo.tileSize.x =/= 0.U &&
+                        spriteInfo.tileSize.y =/= 0.U
+
+  // Set next sprite info flag
+  nextSpriteInfo := stateReg === State.working &&
+                    !spriteInfoCounter(10) &&
+                    (!spriteInRamLine || updateSpriteInfo)
+
+  // Set done flag
+  val workDone = spriteInfoCounter(10) &&
+                 spriteSentCounter === spriteDoneCounter
+
+  // Set update sprite info flag
+  updateSpriteInfo := stateReg === State.working &&
+                      !spriteInfoCounter(10) &&
+                      spriteInRamLine &&
+                      spriteInfoTaken &&
+                      !burstTodo
+
+  // Set burst done flag
+  val doneBursting = burstTodo && burstCounterWrap
+
+  // Set sprite burst read flag
+  val spriteBurstRead = burstTodo && burstReady && tileFifo.io.enq.ready
+
+  // Set effective read flag
+  effectiveRead := spriteBurstRead && !io.tileRom.waitReq
+
+  // Set sprite RAM address
+  val spriteRamAddr = io.spriteBank ## spriteInfoCounter(9, 0)
+
+  // Set tile ROM address
+  val tileRomAddr = (spriteInfoReg.code + burstCounter) * LARGE_TILE_BYTE_SIZE.U
+
+  // Enqueue valid tile ROM data to the tile FIFO
+  when(io.tileRom.valid) {
+    tileFifo.io.enq.enq(io.tileRom.dout)
+  } otherwise {
+    tileFifo.io.enq.noenq()
+  }
+
+  // Toggle sprite info taken register
+  when(stateReg === State.idle) {
+    spriteInfoTaken := true.B
+  }.elsewhen(pipelineTakesSpriteInfo) {
+    spriteInfoTaken := true.B
+  }.elsewhen(updateSpriteInfo) {
+    spriteInfoTaken := false.B
+  }
+
+  // Toggle burst todo register
+  when(stateReg === State.idle) {
+    burstTodo := false.B
+  }.elsewhen(updateSpriteInfo) {
+    burstTodo := true.B
+  }.elsewhen(doneBursting) {
+    burstTodo := false.B
+  }
+
+  // Toggle burst ready register
+  when(stateReg === State.idle) {
+    burstReady := true.B
+  }.elsewhen(effectiveRead) {
+    burstReady := false.B
+  }.elsewhen(io.tileRom.burstDone) {
+    burstReady := true.B
+  }
+
+  // FSM
+  switch(stateReg) {
+    // Wait for the start signal
+    is(State.idle) {
+      when(io.start) { stateReg := State.check }
+    }
+
+    // Check whether the sprite is enabled
+    is(State.check) { stateReg := State.working }
+
+    // Blit the sprite
+    is(State.working) {
+      when(workDone) { stateReg := State.idle }
+    }
+  }
+
+  // Outputs
+  io.done := workDone
+  io.spriteRam.rd := true.B
+  io.spriteRam.addr := spriteRamAddr
+  io.tileRom.rd := spriteBurstRead
+  io.tileRom.addr := tileRomAddr + Config.TILE_ROM_OFFSET.U
+  io.tileRom.burstLength := 16.U
 }

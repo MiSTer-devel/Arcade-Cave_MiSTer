@@ -40,6 +40,7 @@ package cave
 import axon.gpu.VideoTimingConfig
 import axon.mem.{DDRConfig, SDRAMConfig}
 import axon.snd.YMZ280BConfig
+import chisel3.util.log2Ceil
 
 object Config {
   /** System clock frequency (Hz) */
@@ -109,6 +110,11 @@ object Config {
   val PALETTE_RAM_DATA_WIDTH = 16
   val PALETTE_RAM_GPU_ADDR_WIDTH = 15
   val PALETTE_RAM_GPU_DATA_WIDTH = 16
+
+  val PALETTE_NUM_PALETTES = 128
+  val PALETTE_NUM_COLORS = 256
+  val PALETTE_INDEX_WIDTH = log2Ceil(PALETTE_NUM_PALETTES)
+  val PALETTE_COLOR_INDEX_WIDTH = log2Ceil(PALETTE_NUM_COLORS)
 
   val LAYER_REGS_COUNT = 3
   val LAYER_REGS_GPU_DATA_WIDTH = 48
