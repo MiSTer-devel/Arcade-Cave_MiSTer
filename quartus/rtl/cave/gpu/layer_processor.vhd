@@ -404,19 +404,20 @@ begin
             layer_burst_fifo_data_i   => data_to_pipeline_s,
             layer_burst_fifo_read_o   => read_fifo_s,
             layer_burst_fifo_empty_i  => fifo_empty_s,
-            palette_color_select_o    => paletteRam_addr,
+            paletteRam_rd             => paletteRam_rd,
+            paletteRam_addr           => paletteRam_addr,
+            paletteRam_dout           => paletteRam_dout,
             priority_read_rd          => priority_read_rd,
             priority_read_addr        => priority_read_addr,
             priority_read_dout        => priority_read_dout,
             priority_write_addr       => priority_write_addr,
             priority_write_din        => priority_write_din,
             priority_write_wr         => priority_write_wr,
-            frame_buffer_addr_o       => frameBuffer_addr,
-            frame_buffer_write_o      => frameBuffer_wr,
+            frameBuffer_wr            => frameBuffer_wr,
+            frameBuffer_addr          => frameBuffer_addr,
+            frameBuffer_mask          => frameBuffer_mask,
+            frameBuffer_din           => frameBuffer_din,
             done_writing_tile_o       => pipeline_done_writing_tile_s);
-
-    frame_buffer_color_s <= extract_color_from_palette_data(paletteRam_dout);
-    frameBuffer_din <= frame_buffer_color_s.r & frame_buffer_color_s.g & frame_buffer_color_s.b;
 
     -------------
     -- Outputs --
@@ -479,6 +480,4 @@ begin
                     resize(tile_info_s.code * DDP_BYTES_PER_16x16_TILE, tileRom_addr'length);
 
     layerRam_rd <= '1';
-    paletteRam_rd <= '1';
-    frameBuffer_mask <= "0";
 end struct;

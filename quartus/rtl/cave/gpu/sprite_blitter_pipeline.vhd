@@ -59,7 +59,9 @@ entity sprite_blitter_pipeline is
         sprite_burst_fifo_read_o  : out std_logic;
         sprite_burst_fifo_empty_i : in  std_logic;
         -- Access to Palette RAM
-        palette_color_select_o    : out palette_ram_addr_t;
+        paletteRam_rd             : out std_logic;
+        paletteRam_addr           : out palette_ram_addr_t;
+        paletteRam_dout           : in  palette_ram_data_t;
         -- Access to Priority RAM
         priority_read_rd          : out std_logic;
         priority_read_addr        : out priority_ram_addr_t;
@@ -68,8 +70,10 @@ entity sprite_blitter_pipeline is
         priority_write_din        : out priority_t;
         priority_write_wr         : out std_logic;
         -- Access to Frame Buffer
-        frame_buffer_addr_o       : out frame_buffer_addr_t;
-        frame_buffer_write_o      : out std_logic;
+        frameBuffer_wr            : out std_logic;
+        frameBuffer_addr          : out frame_buffer_addr_t;
+        frameBuffer_mask          : out std_logic_vector(0 downto 0);
+        frameBuffer_din           : out std_logic_vector(DDP_WORD_WIDTH-2 downto 0);
         -- Control signals
         done_blitting_sprite_o    : out std_logic
         );
@@ -136,6 +140,8 @@ architecture rtl of sprite_blitter_pipeline is
     signal has_priority_s            : std_logic;
     signal is_transparent_s          : std_logic;
     signal visible_on_screen_s       : std_logic;
+
+    signal frame_buffer_color_s      : color_t;
 
 begin
 
@@ -334,19 +340,24 @@ begin
     -- The pixel is on screen
     update_frame_buffer_s <= stage_2_valid_s and has_priority_s and (not is_transparent_s) and visible_on_screen_s;
 
+    frame_buffer_color_s <= extract_color_from_palette_data(paletteRam_dout);
+
     -------------
     -- Outputs --
     -------------
     get_sprite_info_o         <= update_sprite_info_s;
     sprite_burst_fifo_read_o  <= read_fifo_s;
-    palette_color_select_o    <= palette_ram_addr_from_palette_color_select(palette_ram_read_addr_s);
+    paletteRam_rd             <= '1';
+    paletteRam_addr           <= palette_ram_addr_from_palette_color_select(palette_ram_read_addr_s);
     priority_read_rd          <= '1';
     priority_read_addr        <= priority_read_addr_s;
     priority_write_addr       <= frame_buffer_write_addr_s;
     priority_write_din        <= stage_2_current_prio_s;
     priority_write_wr         <= update_frame_buffer_s;
-    frame_buffer_addr_o       <= frame_buffer_write_addr_s;
-    frame_buffer_write_o      <= update_frame_buffer_s;
+    frameBuffer_wr            <= update_frame_buffer_s;
+    frameBuffer_addr          <= frame_buffer_write_addr_s;
+    frameBuffer_mask          <= "0";
+    frameBuffer_din           <= frame_buffer_color_s.r & frame_buffer_color_s.g & frame_buffer_color_s.b;
     done_blitting_sprite_o    <= stage_2_done_s;
 
 end rtl;

@@ -149,8 +149,6 @@ architecture struct of sprite_processor is
     -- This one will go to 1024 each time and we use the MSB bit as a control signal
     signal sprite_info_counter_s        : unsigned(ilogup(DDP_MAX_SPRITES_ON_SCREEN) downto 0);
     signal next_sprite_info_s           : std_logic;
-
-    signal frame_buffer_color_s         : color_t;
 begin
 
     -- The sprite info from the sprite RAM
@@ -303,19 +301,21 @@ begin
             sprite_burst_fifo_data_i  => data_to_pipeline_s,
             sprite_burst_fifo_read_o  => read_fifo_s,
             sprite_burst_fifo_empty_i => fifo_empty_s,
-            palette_color_select_o    => paletteRam_addr,
+            paletteRam_rd             => paletteRam_rd,
+            paletteRam_addr           => paletteRam_addr,
+            paletteRam_dout           => paletteRam_dout,
             priority_read_rd          => priority_read_rd,
             priority_read_addr        => priority_read_addr,
             priority_read_dout        => priority_read_dout,
             priority_write_addr       => priority_write_addr,
             priority_write_din        => priority_write_din,
             priority_write_wr         => priority_write_wr,
-            frame_buffer_addr_o       => frameBuffer_addr,
-            frame_buffer_write_o      => frameBuffer_wr,
+            frameBuffer_wr            => frameBuffer_wr,
+            frameBuffer_addr          => frameBuffer_addr,
+            frameBuffer_mask          => frameBuffer_mask,
+            frameBuffer_din           => frameBuffer_din,
             done_blitting_sprite_o    => pipeline_done_blitting_s);
 
-    frame_buffer_color_s <= extract_color_from_palette_data(paletteRam_dout);
-    frameBuffer_din <= frame_buffer_color_s.r & frame_buffer_color_s.g & frame_buffer_color_s.b;
 
     ---------
     -- FSM --
@@ -369,6 +369,4 @@ begin
 
     tileRom_burstLength <= x"10";
     spriteRam_rd <= '1';
-    paletteRam_rd <= '1';
-    frameBuffer_mask <= "0";
 end struct;
