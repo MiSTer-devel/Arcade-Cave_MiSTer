@@ -54,10 +54,10 @@ entity sprite_blitter_pipeline is
         -- Sprite Info
         sprite_info_i             : in  sprite_ram_line_t;
         get_sprite_info_o         : out std_logic;
-        -- Burst FIFO
-        sprite_burst_fifo_data_i  : in  std_logic_vector(63 downto 0);
-        sprite_burst_fifo_read_o  : out std_logic;
-        sprite_burst_fifo_empty_i : in  std_logic;
+        -- Pixel data
+        pixelData_bits            : in  std_logic_vector(63 downto 0);
+        pixelData_ready           : out std_logic;
+        pixelData_valid           : in  std_logic;
         -- Access to Palette RAM
         paletteRam_rd             : out std_logic;
         paletteRam_addr           : out palette_ram_addr_t;
@@ -89,7 +89,7 @@ architecture rtl of sprite_blitter_pipeline is
     ---------------
     -- Constants --
     ---------------
-    constant NUMBER_OF_COLOR_CODES_PER_FIFO_LINE : natural := (sprite_burst_fifo_data_i'length)/(code_16_colors_t'length);
+    constant NUMBER_OF_COLOR_CODES_PER_FIFO_LINE : natural := (pixelData_bits'length)/(code_16_colors_t'length);
 
     -------------
     -- Signals --
@@ -146,7 +146,7 @@ architecture rtl of sprite_blitter_pipeline is
 begin
 
     -- 2* since there are 2 colors per byte
-    assert (sprite_burst_fifo_data_i'length mod (2*code_16_colors_t'length)) = 0 report "Wrong Input FIFO width" severity error;
+    assert (pixelData_bits'length mod (2*code_16_colors_t'length)) = 0 report "Wrong Input FIFO width" severity error;
 
     -- If those don't meet timing, set them as registers and update at the same
     -- time as the sprite info reg and use sprite_info_i input.
@@ -181,7 +181,7 @@ begin
     -- piso is empty or will be empty next clock cycle (Since the pipeline
     -- after the FIFO has no backpressure and can accomodate data every clock
     -- cycle this will be the case if the piso counter is 1).
-    read_fifo_s  <= '1' when (sprite_burst_fifo_empty_i = '0') and ((piso_empty_s = '1') or (piso_counter_s = 1)) else '0';
+    read_fifo_s  <= '1' when (pixelData_valid = '1') and ((piso_empty_s = '1') or (piso_counter_s = 1)) else '0';
 
     piso_empty_s <= '1' when piso_counter_s = 0 else '0';
 
@@ -203,7 +203,7 @@ begin
     end process piso_counter_process;
 
     piso_process : process(clk_i) is
-        variable data : std_logic_vector(63 downto 0) := sprite_burst_fifo_data_i;
+        variable data : std_logic_vector(63 downto 0) := pixelData_bits;
     begin
         if rising_edge(clk_i) then
             if read_fifo_s = '1' then
@@ -346,7 +346,7 @@ begin
     -- Outputs --
     -------------
     get_sprite_info_o         <= update_sprite_info_s;
-    sprite_burst_fifo_read_o  <= read_fifo_s;
+    pixelData_ready           <= read_fifo_s;
     paletteRam_rd             <= '1';
     paletteRam_addr           <= palette_ram_addr_from_palette_color_select(palette_ram_read_addr_s);
     priority_read_rd          <= '1';
