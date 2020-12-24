@@ -46,3 +46,18 @@ class PaletteColorSelect extends Bundle {
   /** Color index */
   val colorIndex = UInt(Config.PALETTE_COLOR_INDEX_WIDTH.W)
 }
+
+object PaletteColorSelect {
+  /**
+   * Constructs a new palette color instance.
+   *
+   * @param paletteIndex The palette index.
+   * @param colorIndex The color index.
+   */
+  def apply(paletteIndex: UInt, colorIndex: UInt): PaletteColorSelect = {
+    val wire = Wire(new PaletteColorSelect)
+    wire.paletteIndex := paletteIndex
+    wire.colorIndex := colorIndex
+    wire
+  }
+}
