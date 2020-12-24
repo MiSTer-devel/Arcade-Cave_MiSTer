@@ -50,10 +50,13 @@ class Vec2(private val n: Int) extends Bundle {
   /** Vertical position */
   val y = UInt(n.W)
 
-  /** Adds the given vector. */
+  /** Addition operator. */
   def +(that: Vec2) = Vec2(this.x + that.x, this.y + that.y)
 
-  /** Subtracts the given vector. */
+  /** Addition operator (expanding width). */
+  def +&(that: Vec2) = Vec2(this.x +& that.x, this.y +& that.y)
+
+  /** Subtraction operator. */
   def -(that: Vec2) = Vec2(this.x - that.x, this.y - that.y)
 }
 
