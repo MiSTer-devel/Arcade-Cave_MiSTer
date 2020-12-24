@@ -42,13 +42,16 @@ import chisel3._
 /**
  * Represents a 2D vector.
  *
- * @param n The data width.
+ * @param xWidth The X data width.
+ * @param yWidth The Y data width.
  */
-class Vec2(private val n: Int) extends Bundle {
+class Vec2(xWidth: Int, yWidth: Int) extends Bundle {
   /** Horizontal position */
-  val x = UInt(n.W)
+  val x = UInt(xWidth.W)
   /** Vertical position */
-  val y = UInt(n.W)
+  val y = UInt(yWidth.W)
+
+  def this(n: Int) = this(n, n)
 
   /** Addition operator. */
   def +(that: Vec2) = Vec2(this.x + that.x, this.y + that.y)
@@ -64,6 +67,8 @@ class Vec2(private val n: Int) extends Bundle {
 
   /** Left shift operator. */
   def <<(n: UInt) = Vec2(this.x << n, this.y << n)
+
+  override def cloneType: this.type = new Vec2(xWidth, yWidth).asInstanceOf[this.type]
 }
 
 object Vec2 {
@@ -74,7 +79,7 @@ object Vec2 {
    * @param y The vertical position.
    */
   def apply(x: Bits, y: Bits): Vec2 = {
-    val pos = Wire(new Vec2(math.max(x.getWidth, y.getWidth)))
+    val pos = Wire(new Vec2(x.getWidth, y.getWidth))
     pos.x := x
     pos.y := y
     pos
