@@ -60,6 +60,11 @@ object Config {
   val SCREEN_HEIGHT = 240
   val SCREEN_BITS_PER_CHANNEL = 5
 
+  val SPRITE_CODE_WIDTH = 18
+  val SPRITE_POS_WIDTH = 10
+  val SPRITE_TILE_SIZE_WIDTH = 8
+  val SPRITE_ZOOM_WIDTH = 16
+
   val PROG_ROM_OFFSET = 0x0000000
   val TILE_ROM_OFFSET = 0x0100000
   val SOUND_ROM_OFFSET = 0x0f00000
@@ -123,7 +128,9 @@ object Config {
   val VIDEO_REGS_GPU_DATA_WIDTH = 128
 
   val FRAME_BUFFER_BPP = 16
-  val FRAME_BUFFER_ADDR_WIDTH = 17
+  val FRAME_BUFFER_ADDR_WIDTH_X = log2Ceil(SCREEN_WIDTH)
+  val FRAME_BUFFER_ADDR_WIDTH_Y = log2Ceil(SCREEN_HEIGHT)
+  val FRAME_BUFFER_ADDR_WIDTH = FRAME_BUFFER_ADDR_WIDTH_X + FRAME_BUFFER_ADDR_WIDTH_Y
   val FRAME_BUFFER_DATA_WIDTH = 15
   val FRAME_BUFFER_DEPTH = SCREEN_WIDTH * SCREEN_HEIGHT
   val FRAME_BUFFER_DMA_ADDR_WIDTH = 15
@@ -136,6 +143,20 @@ object Config {
   val PRIO_WIDTH = 2
   /** The width of a color code value */
   val COLOR_CODE_WIDTH = 6
+
+  /** The size of a small tile in pixels */
+  val SMALL_TILE_SIZE = 16
+  /** The size of a large tile in bytes */
+  val SMALL_TILE_BYTE_SIZE = SMALL_TILE_SIZE * 8
+  /** The bit depth of a small tile pixel */
+  val SMALL_TILE_BPP = 8
+
+  /** The size of a large tile in pixels */
+  val LARGE_TILE_SIZE = 16
+  /** The size of a large tile in bytes */
+  val LARGE_TILE_BYTE_SIZE = LARGE_TILE_SIZE * 8
+  /** The bit depth of a large tile pixel */
+  val LARGE_TILE_BPP = 4
 
   /** Video timing configuration */
   val videoTimingConfig = VideoTimingConfig(
