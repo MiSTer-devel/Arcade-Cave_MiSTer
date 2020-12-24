@@ -68,7 +68,7 @@ object Vec2 {
    * @param y The vertical position.
    */
   def apply(x: Bits, y: Bits): Vec2 = {
-    val pos = Wire(new Vec2(x.getWidth))
+    val pos = Wire(new Vec2(math.max(x.getWidth, y.getWidth)))
     pos.x := x
     pos.y := y
     pos
