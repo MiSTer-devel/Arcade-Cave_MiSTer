@@ -243,7 +243,7 @@ object GPU {
    * @param data The palette data.
    */
   def decodePaletteData(data: Bits): RGB = {
-    val words = Util.decode(data, 3, 5)
-    RGB(words(1).asUInt, words(0).asUInt, words(2).asUInt)
+    val words = Util.decode(data, 3, Config.SCREEN_BITS_PER_CHANNEL)
+    RGB(words(1).asUInt, words(2).asUInt, words(0).asUInt)
   }
 }
