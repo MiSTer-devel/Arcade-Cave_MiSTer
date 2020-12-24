@@ -61,6 +61,12 @@ class Sprite extends Bundle {
   val tileSize = new Vec2(Config.SPRITE_TILE_SIZE_WIDTH)
   /** Zoom */
   val zoom = new Vec2(Config.SPRITE_ZOOM_WIDTH)
+
+  /** Sprite size in pixels */
+  def size: Vec2 = tileSize << log2Ceil(Config.LARGE_TILE_SIZE).U
+
+  /** Asserted when the sprite is enabled */
+  def enable: Bool = pos.x =/= Sprite.MAGIC_POS.U && tileSize.x =/= 0.U && tileSize.y =/= 0.U
 }
 
 object Sprite {
