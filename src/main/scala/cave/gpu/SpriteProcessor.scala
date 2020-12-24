@@ -50,13 +50,6 @@ import chisel3.util._
  * @param numSprites The maximum number of sprites to render.
  */
 class SpriteProcessor(numSprites: Int = 1024) extends Module {
-  /** The size of a large tile in pixels */
-  val LARGE_TILE_SIZE = 16
-  /** The size of a large tile in bytes */
-  val LARGE_TILE_BYTE_SIZE = LARGE_TILE_SIZE * 8
-  /** The magic position value that indicates a disabled sprite */
-  val SPRITE_MAGIC_POS = 0x2a0
-
   val io = IO(new Bundle {
     /** Start flag */
     val start = Input(Bool())
@@ -96,7 +89,6 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   val spriteInfoTaken = Reg(Bool())
   val burstTodo = Reg(Bool())
   val burstReady = Reg(Bool())
-  val rawSpriteInfoReg = RegEnable(io.spriteRam.dout, updateSpriteInfo)
   val spriteInfoReg = RegEnable(spriteInfo, updateSpriteInfo)
   val burstCounterMax = RegEnable(spriteInfo.tileSize.x * spriteInfo.tileSize.y, updateSpriteInfo)
 
@@ -123,36 +115,29 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
 
   // Sprite blitter
   val spriteBlitter = Module(new SpriteBlitter)
-  spriteBlitter.io.clk_i := clock
-  spriteBlitter.io.rst_i := reset
-  spriteBlitter.io.sprite_info_i := rawSpriteInfoReg
-  pipelineTakesSpriteInfo := spriteBlitter.io.get_sprite_info_o
+  spriteBlitter.io.spriteData.bits := spriteInfoReg
+  pipelineTakesSpriteInfo := spriteBlitter.io.spriteData.ready
+  spriteBlitter.io.spriteData.valid := updateSpriteInfo
   spriteBlitter.io.pixelData <> tileFifo.io.deq
   spriteBlitter.io.paletteRam <> io.paletteRam
   spriteBlitter.io.priority <> io.priority
   spriteBlitter.io.frameBuffer <> io.frameBuffer
   pipelineDoneBlitting := spriteBlitter.io.done
 
-  // Set sprite enabled flag
-  val spriteInRamLine = spriteInfo.pos.x =/= SPRITE_MAGIC_POS.U &&
-                        spriteInfo.tileSize.x =/= 0.U &&
-                        spriteInfo.tileSize.y =/= 0.U
-
   // Set next sprite info flag
   nextSpriteInfo := stateReg === State.working &&
                     !spriteInfoCounter(10) &&
-                    (!spriteInRamLine || updateSpriteInfo)
-
-  // Set done flag
-  val workDone = spriteInfoCounter(10) &&
-                 spriteSentCounter === spriteDoneCounter
+                    (!spriteInfo.enable || updateSpriteInfo)
 
   // Set update sprite info flag
   updateSpriteInfo := stateReg === State.working &&
                       !spriteInfoCounter(10) &&
-                      spriteInRamLine &&
+                      spriteInfo.enable &&
                       spriteInfoTaken &&
                       !burstTodo
+
+  // Set done flag
+  val workDone = spriteInfoCounter(10) && spriteSentCounter === spriteDoneCounter
 
   // Set burst done flag
   val doneBursting = burstTodo && burstCounterWrap
@@ -167,9 +152,9 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   val spriteRamAddr = io.spriteBank ## spriteInfoCounter(9, 0)
 
   // Set tile ROM address
-  val tileRomAddr = (spriteInfoReg.code + burstCounter) * LARGE_TILE_BYTE_SIZE.U
+  val tileRomAddr = (spriteInfoReg.code + burstCounter) * Config.LARGE_TILE_BYTE_SIZE.U
 
-  // Enqueue valid tile ROM data to the tile FIFO
+  // Enqueue valid tile ROM data into the tile FIFO
   when(io.tileRom.valid) {
     tileFifo.io.enq.enq(io.tileRom.dout)
   } otherwise {

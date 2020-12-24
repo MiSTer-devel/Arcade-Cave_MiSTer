@@ -50,11 +50,20 @@ class Vec2(private val n: Int) extends Bundle {
   /** Vertical position */
   val y = UInt(n.W)
 
-  /** Adds the given vector. */
+  /** Addition operator. */
   def +(that: Vec2) = Vec2(this.x + that.x, this.y + that.y)
 
-  /** Subtracts the given vector. */
+  /** Addition operator (expanding width). */
+  def +&(that: Vec2) = Vec2(this.x +& that.x, this.y +& that.y)
+
+  /** Subtraction operator. */
   def -(that: Vec2) = Vec2(this.x - that.x, this.y - that.y)
+
+  /** Scalar multiplication operator. */
+  def *(n: UInt) = Vec2(this.x * n, this.y * n)
+
+  /** Left shift operator. */
+  def <<(n: UInt) = Vec2(this.x << n, this.y << n)
 }
 
 object Vec2 {
@@ -65,7 +74,7 @@ object Vec2 {
    * @param y The vertical position.
    */
   def apply(x: Bits, y: Bits): Vec2 = {
-    val pos = Wire(new Vec2(x.getWidth))
+    val pos = Wire(new Vec2(math.max(x.getWidth, y.getWidth)))
     pos.x := x
     pos.y := y
     pos

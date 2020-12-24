@@ -38,9 +38,10 @@
 package cave.types
 
 import axon.Util
-import axon.types.Vec2
+import axon.types._
 import cave.Config
 import chisel3._
+import chisel3.util._
 
 /** Represents a sprite descriptor. */
 class Sprite extends Bundle {
@@ -49,20 +50,29 @@ class Sprite extends Bundle {
   /** Color code */
   val colorCode = UInt(Config.COLOR_CODE_WIDTH.W)
   /** Tile code */
-  val code = UInt(18.W)
+  val code = UInt(Config.SPRITE_CODE_WIDTH.W)
   /** Horizontal flip */
   val flipX = Bool()
   /** Vertical flip */
   val flipY = Bool()
   /** Position */
-  val pos = new Vec2(10)
+  val pos = new Vec2(Config.SPRITE_POS_WIDTH)
   /** Tile size */
-  val tileSize = new Vec2(8)
+  val tileSize = new Vec2(Config.SPRITE_TILE_SIZE_WIDTH)
   /** Zoom */
-  val zoom = new Vec2(16)
+  val zoom = new Vec2(Config.SPRITE_ZOOM_WIDTH)
+
+  /** Sprite size in pixels */
+  def size: Vec2 = tileSize << log2Ceil(Config.LARGE_TILE_SIZE).U
+
+  /** Asserted when the sprite is enabled */
+  def enable: Bool = pos.x =/= Sprite.MAGIC_POS.U && tileSize.x =/= 0.U && tileSize.y =/= 0.U
 }
 
 object Sprite {
+  /** The magic position value that indicates a disabled sprite. */
+  val MAGIC_POS = 0x2a0
+
   /**
    * Decodes a sprite from the given data.
    *

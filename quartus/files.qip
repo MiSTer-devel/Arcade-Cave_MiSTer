@@ -12,7 +12,6 @@ set_global_assignment -name VERILOG_FILE rtl/jteeprom/hdl/jt9346.v
 set_global_assignment -name VHDL_FILE rtl/cave/cave_pkg.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/gpu/layer_pipeline.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/gpu/layer_processor.vhd
-set_global_assignment -name VHDL_FILE rtl/cave/gpu/sprite_blitter_pipeline.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/mem/dual_port_ram.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/mem/single_port_ram.vhd
 set_global_assignment -name VHDL_FILE rtl/cave/mem/true_dual_port_ram.vhd
