@@ -42,15 +42,19 @@ import chisel3._
 /**
  * Represents a RGB color. 
  *
- * @param n The number of bits per color channel.
+ * @param redWidth The red channel width.
+ * @param greenWidth The green channel width.
+ * @param blueWidth The blue channel width.
  */
-class RGB(private val n: Int) extends Bundle {
+class RGB(redWidth: Int, greenWidth: Int, blueWidth: Int) extends Bundle {
   /** Red */
-  val r = UInt(n.W)
+  val r = UInt(redWidth.W)
   /** Green */
-  val g = UInt(n.W)
+  val g = UInt(greenWidth.W)
   /** Blue */
-  val b = UInt(n.W)
+  val b = UInt(blueWidth.W)
+
+  def this(n: Int) = this(n, n, n)
 
   /** Bitwise AND operator. */
   def &(that: RGB): RGB = {
@@ -66,6 +70,8 @@ class RGB(private val n: Int) extends Bundle {
   def ^(that: RGB): RGB = {
     RGB(this.r ^ that.r, this.g ^ that.g, this.b ^ that.b)
   }
+
+  override def cloneType: this.type = new RGB(redWidth, greenWidth, blueWidth).asInstanceOf[this.type]
 }
 
 object RGB {
@@ -90,7 +96,7 @@ object RGB {
    * @param b The blue channel value.
    */
   def apply(r: UInt, g: UInt, b: UInt): RGB = {
-    val rgb = Wire(new RGB(r.getWidth))
+    val rgb = Wire(new RGB(r.getWidth, g.getWidth, b.getWidth))
     rgb.r := r
     rgb.g := g
     rgb.b := b
