@@ -85,7 +85,7 @@ class SpriteBlitter extends Module {
     val destX = Mux(spriteInfoReg.flipX, spriteInfoReg.size.x - x - 1.U, x)
     val destY = Mux(spriteInfoReg.flipY, spriteInfoReg.size.y - y - 1.U, y)
     val pos = spriteInfoReg.pos + Vec2(destX, destY)
-    Vec2(pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0), pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0))
+    Vec2(pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0), pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y, 0))
   }
   val stage1Pos = RegNext(tilePixelPos)
   val stage2Pos = RegNext(stage1Pos)
