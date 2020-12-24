@@ -58,6 +58,12 @@ class Vec2(private val n: Int) extends Bundle {
 
   /** Subtraction operator. */
   def -(that: Vec2) = Vec2(this.x - that.x, this.y - that.y)
+
+  /** Scalar multiplication operator. */
+  def *(n: UInt) = Vec2(this.x * n, this.y * n)
+
+  /** Left shift operator. */
+  def <<(n: UInt) = Vec2(this.x << n, this.y << n)
 }
 
 object Vec2 {
