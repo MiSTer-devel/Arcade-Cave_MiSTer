@@ -163,10 +163,8 @@ class SpriteBlitter extends Module {
   val hasPriority = priorityWriteData >= io.priority.read.dout
 
   // Calculate sprite visibility
-  val visible = stage2Pos.x >= 0.S &&
-                stage2Pos.y >= 0.S &&
-                stage2Pos.x < Config.SCREEN_WIDTH.S &&
-                stage2Pos.y < Config.SCREEN_HEIGHT.S
+  val visible = Util.between(stage2Pos.x, 0 until Config.SCREEN_WIDTH) &&
+                Util.between(stage2Pos.y, 0 until Config.SCREEN_HEIGHT)
 
   // Calculate frame buffer data
   val frameBufferWrite = valid && hasPriority && !isTransparent && visible
