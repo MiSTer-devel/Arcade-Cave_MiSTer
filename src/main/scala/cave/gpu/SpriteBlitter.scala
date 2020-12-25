@@ -68,7 +68,6 @@ class SpriteBlitter extends Module {
   val pisoEmpty = Wire(Bool())
   val pisoAlmostEmpty = Wire(Bool())
   val readFifo = Wire(Bool())
-  val spriteDone = Wire(Bool())
 
   // Registers
   val spriteInfoReg = RegEnable(io.spriteData.bits, updateSpriteInfo)
@@ -79,6 +78,9 @@ class SpriteBlitter extends Module {
   // Counters
   val (x, xWrap) = Counter.dynamic(spriteInfoReg.size.x, enable = !pisoEmpty)
   val (y, yWrap) = Counter.dynamic(spriteInfoReg.size.y, enable = xWrap)
+
+  // Set sprite done flag
+  val spriteDone = xWrap && yWrap && !pisoEmpty
 
   // Tile pixel position
   val tilePixelPos = {
@@ -96,40 +98,37 @@ class SpriteBlitter extends Module {
     pisoCounterReg := pisoCounterReg - 1.U
   }
 
-  // Set PISO empty flags
-  pisoEmpty := pisoCounterReg === 0.U
-  pisoAlmostEmpty := pisoCounterReg === 1.U
-
-  // The FIFO can only be read when it is not empty and should be read if the PISO is empty or will
-  // be empty next clock cycle. Since the pipeline after the FIFO has no backpressure and can
-  // accommodate data every clock cycle, this will be the case if the PISO counter is 1.
-  readFifo := io.pixelData.valid && (pisoEmpty || pisoAlmostEmpty)
-
-  // The sprite info should be updated when we read a new sprite from the FIFO, this can be in
-  // either of two cases. First, when the counters are at 0 (no data yet) and the first pixels
-  // arrive, second, when a sprite finishes and the data for the second sprite is already there.
-  //
-  // This is to achieve maximum efficiency of the pipeline, while there are sprites to draw we burst
-  // them from memory into the pipeline. Max one 16x16 tile in advance, so there are at most 2 16x16
-  // tiles in the pipeline at any given time.
-  //
-  // When there is space in the pipeline for a 16x16 tile and there are sprites to draw, a tile will
-  // be bursted from memory into the pipeline. A 16x16 tile is 16 bytes since a byte encodes 2 pixel
-  // colors on nibbles, these are 16 color sprites.
-  updateSpriteInfo := readFifo && ((x === 0.U && y === 0.U) || (xWrap && yWrap))
-
-  // The sprite has been blitted when the counters are at max values and the PISO is not empty.
-  spriteDone := xWrap && yWrap && !pisoEmpty
-
-  // The sprites use the first 64 palettes, and use 16 colors (out of 256 possible in a palette)
-  paletteReg := PaletteColorSelect(spriteInfoReg.colorCode, pisoReg.head)
-
   // Decode pixel data into the PISO
   when(readFifo) {
     pisoReg := VecInit(SpriteBlitter.decodePixelData(io.pixelData.bits))
   }.otherwise {
     pisoReg := pisoReg.tail :+ pisoReg.head
   }
+
+  // Set PISO empty flags
+  pisoEmpty := pisoCounterReg === 0.U
+  pisoAlmostEmpty := pisoCounterReg === 1.U
+
+  // The FIFO can only be read when it is not empty and should be read if the PISO is empty or will
+  // be empty next clock cycle. Since the pipeline after the FIFO has no backpressure, and can
+  // accommodate data every clock cycle, this will be the case if the PISO counter is one.
+  readFifo := io.pixelData.valid && (pisoEmpty || pisoAlmostEmpty)
+
+  // The sprite info should be updated when we read a new sprite from the FIFO, this can be in
+  // either of two cases. First, when the counters are at 0 (no data yet) and the first pixels
+  // arrive, second, when a sprite finishes and the data for the second sprite is already there.
+  //
+  // This is to achieve maximum efficiency of the pipeline. While there are sprites to draw we burst
+  // them from memory into the pipeline. Max one 16x16 tile in advance, so there are at most 2 16x16
+  // tiles in the pipeline at any given time.
+  //
+  // When there is space in the pipeline for a 16x16 tile and there are sprites to draw, a tile will
+  // be bursted from memory into the pipeline. A 16x16 tile is 16 bytes since a byte encodes two
+  // pixel colors on nibbles, these are 16 color sprites.
+  updateSpriteInfo := readFifo && ((x === 0.U && y === 0.U) || (xWrap && yWrap))
+
+  // The sprites use the first 64 palettes, and use 16 colors (out of 256 possible in a palette)
+  paletteReg := PaletteColorSelect(spriteInfoReg.colorCode, pisoReg.head)
 
   // The CAVE first-generation hardware handles transparency the following way:
   //
