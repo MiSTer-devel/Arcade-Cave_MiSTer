@@ -40,7 +40,7 @@ package axon.types
 import chisel3._
 
 /**
- * Represents a 2D vector.
+ * Represents an unsigned 2D vector.
  *
  * @param xWidth The X data width.
  * @param yWidth The Y data width.
@@ -66,19 +66,19 @@ class Vec2(xWidth: Int, yWidth: Int) extends Bundle {
   def *(n: UInt) = Vec2(this.x * n, this.y * n)
 
   /** Left shift operator. */
-  def <<(n: UInt) = Vec2(this.x << n, this.y << n)
+  def <<(n: UInt) = Vec2((this.x << n).asUInt, (this.y << n).asUInt)
 
   override def cloneType: this.type = new Vec2(xWidth, yWidth).asInstanceOf[this.type]
 }
 
 object Vec2 {
   /**
-   * Creates a vector from X and Y values.
+   * Creates an unsigned vector from X and Y values.
    *
    * @param x The horizontal position.
    * @param y The vertical position.
    */
-  def apply(x: Bits, y: Bits): Vec2 = {
+  def apply(x: UInt, y: UInt): Vec2 = {
     val pos = Wire(new Vec2(x.getWidth, y.getWidth))
     pos.x := x
     pos.y := y
