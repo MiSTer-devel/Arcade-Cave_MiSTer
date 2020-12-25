@@ -81,8 +81,8 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   val effectiveRead = Wire(Bool())
   val nextSpriteInfo = Wire(Bool())
   val updateSpriteInfo = Wire(Bool())
-  val pipelineDoneBlitting = Wire(Bool())
-  val pipelineTakesSpriteInfo = Wire(Bool())
+  val pipelineReady = Wire(Bool())
+  val pipelineDone = Wire(Bool())
 
   // Registers
   val stateReg = RegInit(State.idle)
@@ -102,7 +102,7 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
     reset = stateReg === State.idle
   )
   val (spriteDoneCounter, _) = Counter.static(numSprites,
-    enable = pipelineDoneBlitting,
+    enable = pipelineDone,
     reset = stateReg === State.idle
   )
   val (burstCounter, burstCounterWrap) = Counter.dynamic(burstCounterMax,
@@ -116,13 +116,13 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   // Sprite blitter
   val spriteBlitter = Module(new SpriteBlitter)
   spriteBlitter.io.spriteData.bits := spriteInfoReg
-  pipelineTakesSpriteInfo := spriteBlitter.io.spriteData.ready
+  pipelineReady := spriteBlitter.io.spriteData.ready
   spriteBlitter.io.spriteData.valid := updateSpriteInfo
   spriteBlitter.io.pixelData <> tileFifo.io.deq
   spriteBlitter.io.paletteRam <> io.paletteRam
   spriteBlitter.io.priority <> io.priority
   spriteBlitter.io.frameBuffer <> io.frameBuffer
-  pipelineDoneBlitting := spriteBlitter.io.done
+  pipelineDone := spriteBlitter.io.done
 
   // Set next sprite info flag
   nextSpriteInfo := stateReg === State.working &&
@@ -164,7 +164,7 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   // Toggle sprite info taken register
   when(stateReg === State.idle) {
     spriteInfoTaken := true.B
-  }.elsewhen(pipelineTakesSpriteInfo) {
+  }.elsewhen(pipelineReady) {
     spriteInfoTaken := true.B
   }.elsewhen(updateSpriteInfo) {
     spriteInfoTaken := false.B
