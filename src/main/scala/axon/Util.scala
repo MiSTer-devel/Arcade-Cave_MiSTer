@@ -51,6 +51,14 @@ object Util {
   def between(n: UInt, r: Range): Bool = n >= r.start.U && n <= r.end.U
 
   /**
+   * Checks whether a signed value is in the given range.
+   *
+   * @param n The value to check.
+   * @param r The range.
+   */
+  def between(n: SInt, r: Range): Bool = n >= r.start.S && n <= r.end.S
+
+  /**
    * Checks whether an unsigned value is in the given range.
    *
    * @param n     The value to check.
@@ -58,6 +66,15 @@ object Util {
    * @param end   The end of the range.
    */
   def between(n: UInt, start: UInt, end: UInt): Bool = n >= start && n <= end
+
+  /**
+   * Checks whether a signed value is in the given range.
+   *
+   * @param n     The value to check.
+   * @param start The start of the range.
+   * @param end   The end of the range.
+   */
+  def between(n: SInt, start: SInt, end: SInt): Bool = n >= start && n <= end
 
   /**
    * Rotates the bits in the given value to the left.
