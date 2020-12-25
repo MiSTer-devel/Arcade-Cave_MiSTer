@@ -56,7 +56,7 @@ class Sprite extends Bundle {
   /** Vertical flip */
   val flipY = Bool()
   /** Position */
-  val pos = new Vec2(Config.SPRITE_POS_WIDTH)
+  val pos = new SVec2(Config.SPRITE_POS_WIDTH)
   /** Tile size */
   val tileSize = new Vec2(Config.SPRITE_TILE_SIZE_WIDTH)
   /** Zoom */
@@ -66,7 +66,9 @@ class Sprite extends Bundle {
   def size: Vec2 = tileSize << log2Ceil(Config.LARGE_TILE_SIZE).U
 
   /** Asserted when the sprite is enabled */
-  def enable: Bool = pos.x =/= Sprite.MAGIC_POS.U && tileSize.x =/= 0.U && tileSize.y =/= 0.U
+  def enable: Bool = pos.x.asUInt =/= Sprite.MAGIC_POS.U &&
+                     tileSize.x =/= 0.U &&
+                     tileSize.y =/= 0.U
 }
 
 object Sprite {
@@ -104,11 +106,9 @@ object Sprite {
     sprite.code := words(0)(1, 0) ## words(1)(15, 0)
     sprite.flipX := words(0)(3)
     sprite.flipY := words(0)(2)
-    sprite.pos := Vec2(words(2)(9, 0), words(3)(9, 0))
+    sprite.pos := SVec2(words(2)(9, 0).asSInt, words(3)(9, 0).asSInt)
     sprite.tileSize := Vec2(words(4)(15, 8), words(4)(7, 0))
     sprite.zoom := Vec2(words(6)(15, 0), words(7)(15, 0))
     sprite
   }
 }
-
-
