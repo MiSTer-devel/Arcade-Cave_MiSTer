@@ -84,8 +84,7 @@ class SpriteBlitter extends Module {
   val tilePixelPos = {
     val destX = Mux(spriteInfoReg.flipX, spriteInfoReg.size.x - x - 1.U, x)
     val destY = Mux(spriteInfoReg.flipY, spriteInfoReg.size.y - y - 1.U, y)
-    val pos = spriteInfoReg.pos + Vec2(destX, destY)
-    Vec2(pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0), pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y, 0))
+    spriteInfoReg.pos + SVec2(destX.asSInt, destY.asSInt)
   }
   val stage1Pos = RegNext(tilePixelPos)
   val stage2Pos = RegNext(stage1Pos)
@@ -107,7 +106,7 @@ class SpriteBlitter extends Module {
   readFifo := io.pixelData.valid && (pisoEmpty || pisoAlmostEmpty)
 
   // The sprite info should be updated when we read a new sprite from the FIFO, this can be in
-  // either of two cases, first, when the counters are at 0 (no data yet) and the first pixels
+  // either of two cases. First, when the counters are at 0 (no data yet) and the first pixels
   // arrive, second, when a sprite finishes and the data for the second sprite is already there.
   //
   // This is to achieve maximum efficiency of the pipeline, while there are sprites to draw we burst
@@ -155,7 +154,8 @@ class SpriteBlitter extends Module {
   val done = ShiftRegister(spriteDone, 2, false.B, true.B)
 
   // Calculate priority
-  val priorityReadAddr = stage1Pos.x ## stage1Pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
+  val priorityReadAddr = stage1Pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0) ##
+                         stage1Pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
   val priorityWriteData = ShiftRegister(spriteInfoReg.priority, 2)
 
   // The current sprite has priority if it has more priority or the same priority as the previous
@@ -163,11 +163,13 @@ class SpriteBlitter extends Module {
   val hasPriority = priorityWriteData >= io.priority.read.dout
 
   // Calculate sprite visibility
-  val visible = stage2Pos.x < Config.SCREEN_WIDTH.U && stage2Pos.y < Config.SCREEN_HEIGHT.U
+  val visible = Util.between(stage2Pos.x, 0 until Config.SCREEN_WIDTH) &&
+                Util.between(stage2Pos.y, 0 until Config.SCREEN_HEIGHT)
 
   // Calculate frame buffer data
   val frameBufferWrite = valid && hasPriority && !isTransparent && visible
-  val frameBufferAddr = stage2Pos.x ## stage2Pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
+  val frameBufferAddr = stage2Pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0) ##
+                        stage2Pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
   val frameBufferData = GPU.decodePaletteData(io.paletteRam.dout)
 
   // Outputs

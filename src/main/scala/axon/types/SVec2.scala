@@ -40,51 +40,51 @@ package axon.types
 import chisel3._
 
 /**
- * Represents an unsigned 2D vector.
+ * Represents a signed 2D vector.
  *
  * @param xWidth The X data width.
  * @param yWidth The Y data width.
  */
-class Vec2(xWidth: Int, yWidth: Int) extends Bundle {
+class SVec2(xWidth: Int, yWidth: Int) extends Bundle {
   /** Horizontal position */
-  val x = UInt(xWidth.W)
+  val x = SInt(xWidth.W)
   /** Vertical position */
-  val y = UInt(yWidth.W)
+  val y = SInt(yWidth.W)
 
   def this(n: Int) = this(n, n)
 
   /** Addition operator. */
-  def +(that: Vec2) = Vec2(this.x + that.x, this.y + that.y)
+  def +(that: SVec2) = SVec2(this.x + that.x, this.y + that.y)
 
   /** Addition operator (expanding width). */
-  def +&(that: Vec2) = Vec2(this.x +& that.x, this.y +& that.y)
+  def +&(that: SVec2) = SVec2(this.x +& that.x, this.y +& that.y)
 
   /** Subtraction operator. */
-  def -(that: Vec2) = Vec2(this.x - that.x, this.y - that.y)
+  def -(that: SVec2) = SVec2(this.x - that.x, this.y - that.y)
 
   /** Scalar multiplication operator. */
-  def *(n: UInt) = Vec2(this.x * n, this.y * n)
+  def *(n: UInt) = SVec2(this.x * n, this.y * n)
 
   /** Left shift operator. */
-  def <<(n: UInt) = Vec2((this.x << n).asUInt, (this.y << n).asUInt)
+  def <<(n: UInt) = SVec2((this.x << n).asSInt, (this.y << n).asSInt)
 
-  override def cloneType: this.type = new Vec2(xWidth, yWidth).asInstanceOf[this.type]
+  override def cloneType: this.type = new SVec2(xWidth, yWidth).asInstanceOf[this.type]
 }
 
-object Vec2 {
+object SVec2 {
   /**
-   * Creates an unsigned vector from X and Y values.
+   * Creates a signed vector from X and Y values.
    *
    * @param x The horizontal position.
    * @param y The vertical position.
    */
-  def apply(x: UInt, y: UInt): Vec2 = {
-    val pos = Wire(new Vec2(x.getWidth, y.getWidth))
+  def apply(x: SInt, y: SInt): SVec2 = {
+    val pos = Wire(new SVec2(x.getWidth, y.getWidth))
     pos.x := x
     pos.y := y
     pos
   }
 
   /** Creates a zero vector. */
-  def zero = Vec2(0.U, 0.U)
+  def zero = SVec2(0.S, 0.S)
 }
