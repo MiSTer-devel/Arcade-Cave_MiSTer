@@ -66,15 +66,10 @@ class Sprite extends Bundle {
   def size: Vec2 = tileSize << log2Ceil(Config.LARGE_TILE_SIZE).U
 
   /** Asserted when the sprite is enabled */
-  def enable: Bool = pos.x.asUInt =/= Sprite.MAGIC_POS.U &&
-                     tileSize.x =/= 0.U &&
-                     tileSize.y =/= 0.U
+  def enable: Bool = tileSize.x =/= 0.U && tileSize.y =/= 0.U
 }
 
 object Sprite {
-  /** The magic position value that indicates a disabled sprite. */
-  val MAGIC_POS = 0x2a0
-
   /**
    * Decodes a sprite from the given data.
    *
