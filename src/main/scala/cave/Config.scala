@@ -143,20 +143,36 @@ object Config {
   val PRIO_WIDTH = 2
   /** The width of a color code value */
   val COLOR_CODE_WIDTH = 6
+  /** The width of the layer index value */
+  val LAYER_INDEX_WIDTH = 2
+  /** The width of the layer scroll value */
+  val LAYER_SCROLL_WIDTH = 9
 
-  /** The size of a small tile in pixels */
-  val SMALL_TILE_SIZE = 16
-  /** The size of a large tile in bytes */
-  val SMALL_TILE_BYTE_SIZE = SMALL_TILE_SIZE * 8
   /** The bit depth of a small tile pixel */
   val SMALL_TILE_BPP = 8
+  /** The size of a small tile in pixels */
+  val SMALL_TILE_SIZE = 8
+  /** The size of a large tile in bytes */
+  val SMALL_TILE_BYTE_SIZE = SMALL_TILE_SIZE * 8
+  /** The number of small tiles that fit horizontally on the screen */
+  val SMALL_TILE_NUM_COLS = SCREEN_WIDTH / SMALL_TILE_SIZE + 1
+  /** The number of small tiles that fit vertically on the screen */
+  val SMALL_TILE_NUM_ROWS = SCREEN_HEIGHT / SMALL_TILE_SIZE + 1
+  /** The number of small tiles that fit on the screen */
+  val SMALL_TILE_NUM_TILES = SMALL_TILE_NUM_COLS * SMALL_TILE_NUM_ROWS
 
+  /** The bit depth of a large tile pixel */
+  val LARGE_TILE_BPP = 4
   /** The size of a large tile in pixels */
   val LARGE_TILE_SIZE = 16
   /** The size of a large tile in bytes */
   val LARGE_TILE_BYTE_SIZE = LARGE_TILE_SIZE * 8
-  /** The bit depth of a large tile pixel */
-  val LARGE_TILE_BPP = 4
+  /** The number of large tiles that fit horizontally on the screen */
+  val LARGE_TILE_NUM_COLS = SCREEN_WIDTH / LARGE_TILE_SIZE + 1
+  /** The number of large tiles that fit vertically on the screen */
+  val LARGE_TILE_NUM_ROWS = SCREEN_HEIGHT / LARGE_TILE_SIZE + 1
+  /** The number of large tiles that fit on the screen */
+  val LARGE_TILE_NUM_TILES = LARGE_TILE_NUM_COLS * LARGE_TILE_NUM_ROWS
 
   /** Video timing configuration */
   val videoTimingConfig = VideoTimingConfig(

@@ -35,64 +35,38 @@
  *  SOFTWARE.
  */
 
-package cave.types
+package cave.gpu
 
-import axon.Util
-import axon.types.Vec2
+import axon.mem._
 import cave.Config
+import cave.types._
 import chisel3._
+import chisel3.util._
 
-/** Represents a layer descriptor. */
-class Layer extends Bundle {
-  /** Priority */
-  val priority = UInt(Config.PRIO_WIDTH.W)
-  /** Small tile flag */
-  val smallTile = Bool()
-  /** Disable flag */
-  val disable = Bool()
-  /** Horizontal flip */
-  val flipX = Bool()
-  /** Vertical flip */
-  val flipY = Bool()
-  /** Row scroll enable */
-  val rowScrollEnable = Bool()
-  /** Row select enable */
-  val rowSelectEnable = Bool()
-  /** Scroll position */
-  val scroll = new Vec2(Config.LAYER_SCROLL_WIDTH)
-}
+/** The layer pipeline renders a tilemap layer. */
+class LayerPipeline extends BlackBox {
+  val io = IO(new Bundle {
+    val clk_i = Input(Clock())
+    val rst_i = Input(Reset())
+    /** Layer info port */
+    val layer_number_i = Input(UInt(2.W))
+    val update_layer_info_i = Input(Bool())
+    val layer_info_i = Input(Bits(Config.LAYER_REGS_GPU_DATA_WIDTH.W))
+    val last_layer_priority_i = Input(UInt(Config.PRIO_WIDTH.W))
+    /** Tile info port */
+    val tile_info_i = Input(Bits(Config.LAYER_RAM_GPU_DATA_WIDTH.W))
+    val get_tile_info_o = Output(Bool())
+    /** Pixel data port */
+    val pixelData = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
+    /** Palette RAM port */
+    val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
+    /** Priority port */
+    val priority = new PriorityIO
+    /** Frame buffer port */
+    val frameBuffer = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH)
+    /** Done flag */
+    val done = Output(Bool())
+  })
 
-object Layer {
-  /**
-   * Decodes a layer from the given data.
-   *
-   * {{{
-   * word   bits                  description
-   * -----+-fedc-ba98-7654-3210-+----------------
-   *    0 | x--- ---- ---- ---- | flip x
-   *      | -x-- ---- ---- ---- | row scroll enable
-   *      | ---- ---x xxxx xxxx | scroll x
-   *    1 | x--- ---- ---- ---- | flip y
-   *      | -x-- ---- ---- ---- | row select enable
-   *      | --x- ---- ---- ---- | tile size
-   *      | ---- ---x xxxx xxxx | scroll y
-   *    2 | ---- ---- ---x ---- | disable
-   *      | ---- ---- ---- --xx | priority
-   * }}}
-   *
-   * @param data The layer data.
-   */
-  def decode(data: Bits): Layer = {
-    val words = Util.decode(data, 3, 16)
-    val layer = Wire(new Layer)
-    layer.priority := words(2)(1, 0)
-    layer.smallTile := !words(1)(13)
-    layer.disable := words(2)(4)
-    layer.flipX := !words(0)(15)
-    layer.flipY := !words(1)(15)
-    layer.rowScrollEnable := words(0)(14)
-    layer.rowSelectEnable := words(1)(14)
-    layer.scroll := Vec2(words(0)(8, 0), words(1)(8, 0))
-    layer
-  }
+  override def desiredName = "layer_pipeline"
 }
