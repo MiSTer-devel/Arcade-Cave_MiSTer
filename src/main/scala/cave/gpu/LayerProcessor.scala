@@ -80,18 +80,12 @@ class LayerProcessor extends Module {
 
   // Registers
   val stateReg = RegInit(State.idle)
-  val layerInfoReg = RegEnable(io.layerRegs, stateReg === State.regInfo)
-  val tileInfoReg = RegEnable(io.layerRam.dout, updateTileInfo)
+  val layerInfoReg = RegEnable(Layer.decode(io.layerRegs), stateReg === State.regInfo)
+  val tileInfoReg = RegEnable(Tile.decode(io.layerRam.dout), updateTileInfo)
   val tileInfoTakenReg = Reg(Bool())
   val burstTodoReg = Reg(Bool())
   val burstReadyReg = Reg(Bool())
   val lastLayerPriorityReg = Reg(UInt())
-
-  // Decode layer info
-  val layerInfo = Layer.decode(layerInfoReg)
-
-  // Decode tile info
-  val tileInfo = Tile.decode(tileInfoReg)
 
   // Tile FIFO
   val tileFifo = Module(new TileFIFO)
@@ -111,9 +105,9 @@ class LayerProcessor extends Module {
   pipeline.io.frameBuffer <> io.frameBuffer
 
   // Set number of columns/rows/tiles
-  val numCols = Mux(layerInfo.smallTile, Config.SMALL_TILE_NUM_COLS.U, Config.LARGE_TILE_NUM_COLS.U)
-  val numRows = Mux(layerInfo.smallTile, Config.SMALL_TILE_NUM_ROWS.U, Config.LARGE_TILE_NUM_ROWS.U)
-  val numTiles = Mux(layerInfo.smallTile, Config.SMALL_TILE_NUM_TILES.U, Config.LARGE_TILE_NUM_TILES.U)
+  val numCols = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_COLS.U, Config.LARGE_TILE_NUM_COLS.U)
+  val numRows = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_ROWS.U, Config.LARGE_TILE_NUM_ROWS.U)
+  val numTiles = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_TILES.U, Config.LARGE_TILE_NUM_TILES.U)
 
   // Counters
   val (col, colWrap) = Counter.dynamic(numCols,
@@ -139,11 +133,11 @@ class LayerProcessor extends Module {
   val startPos = {
     val xOffset = MuxLookup(io.layerIndex, 0.U, Seq(0.U -> 0x6b.U, 1.U -> 0x6c.U, 2.U -> 0x75.U))
     val yOffset = 17.U
-    layerInfo.scroll + Vec2(xOffset, yOffset)
+    layerInfoReg.scroll + Vec2(xOffset, yOffset)
   }
 
   // Set first tile index
-  val firstTileIndex = Mux(layerInfo.smallTile,
+  val firstTileIndex = Mux(layerInfoReg.smallTile,
     (startPos.y(8, 3) ## 0.U(6.W)) + startPos.x(8, 3),
     (startPos.y(8, 4) ## 0.U(5.W)) + startPos.x(8, 4)
   )
@@ -159,17 +153,17 @@ class LayerProcessor extends Module {
       val y = firstTileIndex(9, 5) + row
       (y(4, 0) ## 0.U(5.W)) + x(4, 0)
     }
-    Mux(layerInfo.smallTile, small, large)
+    Mux(layerInfoReg.smallTile, small, large)
   }
 
   // Set tile ROM address
-  val tileRomAddr = Mux(layerInfo.smallTile,
-    tileInfo.code * Config.SMALL_TILE_BYTE_SIZE.U,
-    tileInfo.code * Config.LARGE_TILE_BYTE_SIZE.U
+  val tileRomAddr = Mux(layerInfoReg.smallTile,
+    tileInfoReg.code * Config.SMALL_TILE_BYTE_SIZE.U,
+    tileInfoReg.code * Config.LARGE_TILE_BYTE_SIZE.U
   )
 
   // Set tile ROM burst length
-  val tileRomBurstLength = Mux(layerInfo.smallTile,
+  val tileRomBurstLength = Mux(layerInfoReg.smallTile,
     Config.SMALL_TILE_SIZE.U,
     Config.LARGE_TILE_SIZE.U
   )
@@ -212,7 +206,7 @@ class LayerProcessor extends Module {
   when(stateReg === State.setParams && io.layerIndex === 0.U) {
     lastLayerPriorityReg := 0.U
   }.elsewhen(stateReg === State.working && tileCounterWrap) {
-    lastLayerPriorityReg := layerInfo.priority
+    lastLayerPriorityReg := layerInfoReg.priority
   }
 
   // FSM
@@ -226,7 +220,7 @@ class LayerProcessor extends Module {
     is(State.regInfo) { stateReg := State.setParams }
 
     // Set parameters
-    is(State.setParams) { stateReg := Mux(layerInfo.disable, State.idle, State.waitRam) }
+    is(State.setParams) { stateReg := Mux(layerInfoReg.disable, State.idle, State.waitRam) }
 
     // Wait for RAM
     is(State.waitRam) { stateReg := State.working }

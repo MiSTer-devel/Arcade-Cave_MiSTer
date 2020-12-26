@@ -54,9 +54,9 @@ class LayerPipeline extends Module {
     /** Previous layer priority value */
     val lastLayerPriority = Input(UInt(Config.PRIO_WIDTH.W))
     /** Layer info port */
-    val layerInfo = DeqIO(Bits(Config.LAYER_REGS_GPU_DATA_WIDTH.W))
+    val layerInfo = DeqIO(new Layer)
     /** Tile info port */
-    val tileInfo = DeqIO(Bits(Config.LAYER_RAM_GPU_DATA_WIDTH.W))
+    val tileInfo = DeqIO(new Tile)
     /** Pixel data port */
     val pixelData = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
     /** Palette RAM port */
@@ -69,12 +69,6 @@ class LayerPipeline extends Module {
     val done = Output(Bool())
   })
 
-  // Decode layer info
-  val layerInfo = Layer.decode(io.layerInfo.bits)
-
-  // Decode tile info
-  val tileInfo = Tile.decode(io.tileInfo.bits)
-
   // Wires
   val updateTileInfo = Wire(Bool())
   val updateScreenTileCounter = Wire(Bool())
@@ -83,16 +77,16 @@ class LayerPipeline extends Module {
   val readFifo = Wire(Bool())
 
   // Registers
-  val layerInfoReg = RegEnable(layerInfo, io.layerInfo.valid)
-  val tileInfoReg = RegEnable(tileInfo, updateTileInfo)
+  val layerInfoReg = RegEnable(io.layerInfo.bits, io.layerInfo.valid)
+  val tileInfoReg = RegEnable(io.tileInfo.bits, updateTileInfo)
   val paletteReg = Reg(new PaletteColorSelect)
   val smallPisoReg = Reg(Vec(Config.SMALL_TILE_SIZE, UInt(Config.SMALL_TILE_BPP.W)))
   val largePisoReg = Reg(Vec(Config.LARGE_TILE_SIZE, UInt(Config.LARGE_TILE_BPP.W)))
   val pisoCounterReg = RegInit(0.U)
 
   // Set number of columns/rows/tiles
-  val numCols = Mux(layerInfo.smallTile, Config.SMALL_TILE_NUM_COLS.U, Config.LARGE_TILE_NUM_COLS.U)
-  val numRows = Mux(layerInfo.smallTile, Config.SMALL_TILE_NUM_ROWS.U, Config.LARGE_TILE_NUM_ROWS.U)
+  val numCols = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_COLS.U, Config.LARGE_TILE_NUM_COLS.U)
+  val numRows = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_ROWS.U, Config.LARGE_TILE_NUM_ROWS.U)
 
   // Counters
   val (x, xWrap) = Counter.static(8, enable = !pisoEmpty)
@@ -105,15 +99,15 @@ class LayerPipeline extends Module {
   // Set tile done flag
   val smallTileDone = xWrap && yWrap && !pisoEmpty
   val largeTileDone = smallTileDone && miniTileXWrap && miniTileYWrap
-  val tileDone = Mux(layerInfo.smallTile, smallTileDone, largeTileDone)
+  val tileDone = Mux(layerInfoReg.smallTile, smallTileDone, largeTileDone)
 
   // Tile position
   val tilePos = {
-    val x = Mux(layerInfo.smallTile,
+    val x = Mux(layerInfoReg.smallTile,
       col ## 0.U(3.W),
       (col ## 0.U(4.W)) + (miniTileX ## 0.U(3.W))
     )
-    val y = Mux(layerInfo.smallTile,
+    val y = Mux(layerInfoReg.smallTile,
       row ## 0.U(3.W),
       (row ## 0.U(4.W)) + (miniTileY ## 0.U(3.W))
     )
@@ -124,10 +118,10 @@ class LayerPipeline extends Module {
   val tileOffset = {
     val xMagicOffset = MuxLookup(io.layerIndex, 0.U, Seq(0.U -> 0x6b.U, 1.U -> 0x6c.U, 2.U -> 0x75.U))
     val yMagicOffset = 17.U
-    val xScroll = layerInfo.scroll.x + xMagicOffset
-    val yScroll = layerInfo.scroll.y + yMagicOffset
-    val x = Mux(layerInfo.smallTile, xScroll(2, 0), xScroll(3, 0))
-    val y = Mux(layerInfo.smallTile, yScroll(2, 0), yScroll(3, 0))
+    val xScroll = layerInfoReg.scroll.x + xMagicOffset
+    val yScroll = layerInfoReg.scroll.y + yMagicOffset
+    val x = Mux(layerInfoReg.smallTile, xScroll(2, 0), xScroll(3, 0))
+    val y = Mux(layerInfoReg.smallTile, yScroll(2, 0), yScroll(3, 0))
     Vec2(x, y)
   }
 
@@ -141,7 +135,7 @@ class LayerPipeline extends Module {
 
   // Update PISO counter register
   when(readFifo) {
-    pisoCounterReg := Mux(layerInfo.smallTile, Config.SMALL_TILE_SIZE.U, Config.LARGE_TILE_SIZE.U)
+    pisoCounterReg := Mux(layerInfoReg.smallTile, Config.SMALL_TILE_SIZE.U, Config.LARGE_TILE_SIZE.U)
   }.elsewhen(!pisoEmpty) {
     pisoCounterReg := pisoCounterReg - 1.U
   }
@@ -172,13 +166,13 @@ class LayerPipeline extends Module {
   // them from memory into the pipeline.
   val updateSmallTileInfo = readFifo && ((x === 0.U && y === 0.U) || (xWrap && yWrap))
   val updateLargeTileInfo = readFifo && ((x === 0.U && y === 0.U && miniTileX === 0.U && miniTileY === 0.U) || (xWrap && yWrap && miniTileXWrap && miniTileYWrap))
-  updateTileInfo := Mux(layerInfo.smallTile, updateSmallTileInfo, updateLargeTileInfo)
+  updateTileInfo := Mux(layerInfoReg.smallTile, updateSmallTileInfo, updateLargeTileInfo)
 
   // Set update screen tile counter flag
   // FIXME: refactor this logic
   when(!(xWrap && yWrap)) {
     updateScreenTileCounter := false.B
-  }.elsewhen(layerInfo.smallTile) {
+  }.elsewhen(layerInfoReg.smallTile) {
     updateScreenTileCounter := true.B
   }.elsewhen(miniTileXWrap && miniTileYWrap) {
     updateScreenTileCounter := true.B
@@ -189,7 +183,7 @@ class LayerPipeline extends Module {
   // The tiles use the second 64 palettes, and use 16 colors (out of 256 possible in a palette)
   paletteReg := PaletteColorSelect(
     1.U ## tileInfoReg.colorCode,
-    Mux(layerInfo.smallTile, smallPisoReg.head, largePisoReg.head)
+    Mux(layerInfoReg.smallTile, smallPisoReg.head, largePisoReg.head)
   )
 
   // The CAVE first-generation hardware handles transparency the following way:
@@ -225,7 +219,7 @@ class LayerPipeline extends Module {
   // The current pixel has priority if it has more priority than the previous pixel. Otherwise, if
   // the pixel priorities are the same then it depends on the layer priorities.
   val hasPriority = (priorityWriteData > io.priority.read.dout) ||
-                    (priorityWriteData === io.priority.read.dout && layerInfo.priority >= io.lastLayerPriority)
+                    (priorityWriteData === io.priority.read.dout && layerInfoReg.priority >= io.lastLayerPriority)
 
   // Calculate visibility
   val visible = Util.between(stage2Pos.x, 0 until Config.SCREEN_WIDTH) &&
