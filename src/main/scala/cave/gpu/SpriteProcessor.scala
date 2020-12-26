@@ -127,12 +127,12 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   // Set next sprite info flag
   nextSpriteInfo := stateReg === State.working &&
                     !spriteInfoCounter(10) &&
-                    (!spriteInfo.enable || updateSpriteInfo)
+                    (!spriteInfo.isEnabled || updateSpriteInfo)
 
   // Set update sprite info flag
   updateSpriteInfo := stateReg === State.working &&
                       !spriteInfoCounter(10) &&
-                      spriteInfo.enable &&
+                      spriteInfo.isEnabled &&
                       spriteInfoTaken &&
                       !burstTodo
 

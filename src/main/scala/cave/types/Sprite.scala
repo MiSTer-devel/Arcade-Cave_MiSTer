@@ -66,7 +66,7 @@ class Sprite extends Bundle {
   def size: Vec2 = tileSize << log2Ceil(Config.LARGE_TILE_SIZE).U
 
   /** Asserted when the sprite is enabled */
-  def enable: Bool = tileSize.x =/= 0.U && tileSize.y =/= 0.U
+  def isEnabled: Bool = tileSize.x =/= 0.U && tileSize.y =/= 0.U
 }
 
 object Sprite {
