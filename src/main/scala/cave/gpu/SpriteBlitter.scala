@@ -40,7 +40,7 @@ package cave.gpu
 import axon.Util
 import axon.mem._
 import axon.types._
-import axon.util.Counter
+import axon.util.{Counter, PISO}
 import cave.Config
 import cave.types._
 import chisel3._
@@ -65,15 +65,20 @@ class SpriteBlitter extends Module {
 
   // Wires
   val updateSpriteInfo = Wire(Bool())
-  val pisoEmpty = Wire(Bool())
-  val pisoAlmostEmpty = Wire(Bool())
   val readFifo = Wire(Bool())
 
   // Registers
   val spriteInfoReg = RegEnable(io.spriteData.bits, updateSpriteInfo)
   val paletteReg = Reg(new PaletteEntry)
-  val pisoReg = Reg(Vec(Config.LARGE_TILE_SIZE, UInt(Config.LARGE_TILE_BPP.W)))
-  val pisoCounterReg = RegInit(0.U)
+
+  // Tile PISO
+  val tilePiso = Module(new PISO(Config.LARGE_TILE_SIZE, Config.LARGE_TILE_BPP))
+  tilePiso.io.wr := readFifo
+  tilePiso.io.din := VecInit(SpriteBlitter.decodeTile(io.pixelData.bits))
+
+  // Set PISO flags
+  val pisoEmpty = tilePiso.io.isEmpty
+  val pisoAlmostEmpty = tilePiso.io.isAlmostEmpty
 
   // Counters
   val (x, xWrap) = Counter.dynamic(spriteInfoReg.size.x, enable = !pisoEmpty)
@@ -94,24 +99,6 @@ class SpriteBlitter extends Module {
   val stage1Pos = RegNext(stage0Pos)
   val stage2Pos = RegNext(stage1Pos)
 
-  // Update PISO counter register
-  when(readFifo) {
-    pisoCounterReg := Config.LARGE_TILE_SIZE.U
-  }.elsewhen(!pisoEmpty) {
-    pisoCounterReg := pisoCounterReg - 1.U
-  }
-
-  // Decode pixel data into the PISO
-  when(readFifo) {
-    pisoReg := VecInit(SpriteBlitter.decodeTile(io.pixelData.bits))
-  }.otherwise {
-    pisoReg := pisoReg.tail :+ pisoReg.head
-  }
-
-  // Set PISO empty flags
-  pisoEmpty := pisoCounterReg === 0.U
-  pisoAlmostEmpty := pisoCounterReg === 1.U
-
   // The FIFO can only be read when it is not empty and should be read if the PISO is empty or will
   // be empty next clock cycle. Since the pipeline after the FIFO has no backpressure, and can
   // accommodate data every clock cycle, this will be the case if the PISO counter is one.
@@ -131,7 +118,7 @@ class SpriteBlitter extends Module {
   updateSpriteInfo := readFifo && ((x === 0.U && y === 0.U) || (xWrap && yWrap))
 
   // The sprites use the first 64 palettes, and use 16 colors (out of 256 possible in a palette)
-  paletteReg := PaletteEntry(spriteInfoReg.colorCode, pisoReg.head)
+  paletteReg := PaletteEntry(spriteInfoReg.colorCode, tilePiso.io.dout)
 
   // Set valid flag
   val valid = ShiftRegister(!pisoEmpty, 2, false.B, true.B)

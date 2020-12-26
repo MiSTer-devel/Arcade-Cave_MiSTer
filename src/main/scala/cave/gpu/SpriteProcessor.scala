@@ -92,6 +92,9 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   val spriteInfoReg = RegEnable(spriteInfo, updateSpriteInfo)
   val burstCounterMax = RegEnable(spriteInfo.tileSize.x * spriteInfo.tileSize.y, updateSpriteInfo)
 
+  // Tile FIFO
+  val tileFifo = Module(new TileFIFO)
+
   // Counters
   val (spriteCounter, _) = Counter.static(numSprites * 2, // FIXME
     enable = spriteCounterEnable,
@@ -109,9 +112,6 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
     enable = effectiveRead,
     reset = updateSpriteInfo
   )
-
-  // Tile FIFO
-  val tileFifo = Module(new TileFIFO)
 
   // Sprite blitter
   val spriteBlitter = Module(new SpriteBlitter)
