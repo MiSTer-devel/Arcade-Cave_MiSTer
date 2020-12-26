@@ -40,7 +40,7 @@ package cave.gpu
 import axon.Util
 import axon.mem._
 import axon.types._
-import axon.util.Counter
+import axon.util.{Counter, PISO}
 import cave.Config
 import cave.types._
 import chisel3._
@@ -71,18 +71,25 @@ class LayerPipeline extends Module {
 
   // Wires
   val updateTileInfo = Wire(Bool())
-  val updateScreenTileCounter = Wire(Bool())
-  val pisoEmpty = Wire(Bool())
-  val pisoAlmostEmpty = Wire(Bool())
+  val colCounterEnable = Wire(Bool())
   val readFifo = Wire(Bool())
 
   // Registers
   val layerInfoReg = RegEnable(io.layerInfo.bits, io.layerInfo.valid)
   val tileInfoReg = RegEnable(io.tileInfo.bits, updateTileInfo)
   val paletteReg = Reg(new PaletteEntry)
-  val smallPisoReg = Reg(Vec(Config.SMALL_TILE_SIZE, UInt(Config.SMALL_TILE_BPP.W)))
-  val largePisoReg = Reg(Vec(Config.LARGE_TILE_SIZE, UInt(Config.LARGE_TILE_BPP.W)))
-  val pisoCounterReg = RegInit(0.U)
+
+  // Tile PISOs
+  val smallTilePiso = Module(new PISO(Config.SMALL_TILE_SIZE, Config.SMALL_TILE_BPP))
+  smallTilePiso.io.wr := readFifo
+  smallTilePiso.io.din := VecInit(LayerPipeline.decodeSmallTile(io.pixelData.bits))
+  val largeTilePiso = Module(new PISO(Config.LARGE_TILE_SIZE, Config.LARGE_TILE_BPP))
+  largeTilePiso.io.wr := readFifo
+  largeTilePiso.io.din := VecInit(LayerPipeline.decodeLargeTile(io.pixelData.bits))
+
+  // Set PISO flags
+  val pisoEmpty = Mux(layerInfoReg.smallTile, smallTilePiso.io.isEmpty, largeTilePiso.io.isEmpty)
+  val pisoAlmostEmpty = Mux(layerInfoReg.smallTile, smallTilePiso.io.isAlmostEmpty, largeTilePiso.io.isAlmostEmpty)
 
   // Set number of columns/rows/tiles
   val numCols = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_COLS.U, Config.LARGE_TILE_NUM_COLS.U)
@@ -93,7 +100,7 @@ class LayerPipeline extends Module {
   val (y, yWrap) = Counter.static(8, enable = xWrap)
   val (miniTileX, miniTileXWrap) = Counter.static(2, enable = xWrap && yWrap)
   val (miniTileY, miniTileYWrap) = Counter.static(2, enable = miniTileXWrap)
-  val (col, colWrap) = Counter.dynamic(numCols, enable = updateScreenTileCounter)
+  val (col, colWrap) = Counter.dynamic(numCols, enable = colCounterEnable)
   val (row, rowWrap) = Counter.dynamic(numRows, enable = colWrap)
 
   // Set tile done flag
@@ -130,26 +137,6 @@ class LayerPipeline extends Module {
   val stage1Pos = RegNext(stage0Pos)
   val stage2Pos = RegNext(stage1Pos)
 
-  // Update PISO counter register
-  when(readFifo) {
-    pisoCounterReg := Mux(layerInfoReg.smallTile, Config.SMALL_TILE_SIZE.U, Config.LARGE_TILE_SIZE.U)
-  }.elsewhen(!pisoEmpty) {
-    pisoCounterReg := pisoCounterReg - 1.U
-  }
-
-  // Decode pixel data into the PISO
-  when(readFifo) {
-    smallPisoReg := VecInit(LayerPipeline.decodeSmallTile(io.pixelData.bits))
-    largePisoReg := VecInit(LayerPipeline.decodeLargeTile(io.pixelData.bits))
-  }.otherwise {
-    smallPisoReg := smallPisoReg.tail :+ smallPisoReg.head
-    largePisoReg := largePisoReg.tail :+ largePisoReg.head
-  }
-
-  // Set PISO empty flags
-  pisoEmpty := pisoCounterReg === 0.U
-  pisoAlmostEmpty := pisoCounterReg === 1.U
-
   // The FIFO can only be read when it is not empty and should be read if the PISO is empty or will
   // be empty next clock cycle. Since the pipeline after the FIFO has no backpressure, and can
   // accommodate data every clock cycle, this will be the case if the PISO counter is one.
@@ -165,22 +152,22 @@ class LayerPipeline extends Module {
   val updateLargeTileInfo = readFifo && ((x === 0.U && y === 0.U && miniTileX === 0.U && miniTileY === 0.U) || (xWrap && yWrap && miniTileXWrap && miniTileYWrap))
   updateTileInfo := Mux(layerInfoReg.smallTile, updateSmallTileInfo, updateLargeTileInfo)
 
-  // Set update screen tile counter flag
+  // Set column counter enable
   // FIXME: refactor this logic
   when(!(xWrap && yWrap)) {
-    updateScreenTileCounter := false.B
+    colCounterEnable := false.B
   }.elsewhen(layerInfoReg.smallTile) {
-    updateScreenTileCounter := true.B
+    colCounterEnable := true.B
   }.elsewhen(miniTileXWrap && miniTileYWrap) {
-    updateScreenTileCounter := true.B
+    colCounterEnable := true.B
   }.otherwise {
-    updateScreenTileCounter := false.B
+    colCounterEnable := false.B
   }
 
   // The tiles use the second 64 palettes, and use 16 colors (out of 256 possible in a palette)
   paletteReg := PaletteEntry(
     1.U ## tileInfoReg.colorCode,
-    Mux(layerInfoReg.smallTile, smallPisoReg.head, largePisoReg.head)
+    Mux(layerInfoReg.smallTile, smallTilePiso.io.dout, largeTilePiso.io.dout)
   )
 
   // Set valid flag

@@ -87,6 +87,9 @@ class LayerProcessor extends Module {
   val burstReadyReg = Reg(Bool())
   val lastLayerPriorityReg = Reg(UInt())
 
+  // Tile FIFO
+  val tileFifo = Module(new TileFIFO)
+
   // Set number of columns/rows/tiles
   val numCols = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_COLS.U, Config.LARGE_TILE_NUM_COLS.U)
   val numRows = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_ROWS.U, Config.LARGE_TILE_NUM_ROWS.U)
@@ -105,9 +108,6 @@ class LayerProcessor extends Module {
     enable = pipelineDone,
     reset = stateReg === State.idle
   )
-
-  // Tile FIFO
-  val tileFifo = Module(new TileFIFO)
 
   // Layer pipeline
   val layerPipeline = withReset(stateReg === State.idle) { Module(new LayerPipeline) }
