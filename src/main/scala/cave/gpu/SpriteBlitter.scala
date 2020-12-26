@@ -133,22 +133,6 @@ class SpriteBlitter extends Module {
   // The sprites use the first 64 palettes, and use 16 colors (out of 256 possible in a palette)
   paletteReg := PaletteEntry(spriteInfoReg.colorCode, pisoReg.head)
 
-  // The CAVE first-generation hardware handles transparency the following way:
-  //
-  // If the color code (palette index) is 0 the pixel is transparent. This results in 15 usable
-  // colors for a tile. Even if the color at the first index of the palette is not zero, the pixel
-  // still is transparent.
-  //
-  // It is difficult to understand why CAVE didn't use the MSB bit of the 16 bit color word to
-  // indicate transparency. This would allow for 16 colors out of 2^15 colors for each tile instead
-  // of 15 colors of 2^15. With the cave CV1000 (SH3) hardware, they use the MSB bit of the 16-bit
-  // word as transparency bit while the colors remain RGB555.
-  //
-  // One wonders why they didn't do this on first-generation hardware. The transparency info must be
-  // delayed by one cycle, as for the colors (since the colors come from the palette RAM (BRAM) they
-  // arrive one cycle later).
-  val isTransparent = RegNext(paletteReg.color === 0.U)
-
   // Set valid flag
   val valid = ShiftRegister(!pisoEmpty, 2, false.B, true.B)
 
@@ -169,7 +153,10 @@ class SpriteBlitter extends Module {
                 Util.between(stage2Pos.y, 0 until Config.SCREEN_HEIGHT)
 
   // Calculate frame buffer data
-  val frameBufferWrite = valid && hasPriority && !isTransparent && visible
+  //
+  // The transparency flag must be delayed by one cycle, as for the colors (since the colors come
+  // from the palette RAM they arrive one cycle later).
+  val frameBufferWrite = valid && hasPriority && !RegNext(paletteReg.isTransparent) && visible
   val frameBufferAddr = stage2Pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0) ##
                         stage2Pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
   val frameBufferData = GPU.decodePaletteData(io.paletteRam.dout)

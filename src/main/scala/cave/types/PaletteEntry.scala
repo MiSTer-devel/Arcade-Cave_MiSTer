@@ -46,6 +46,24 @@ class PaletteEntry extends Bundle {
   val palette = UInt(Config.PALETTE_ENTRY_PALLETE_WIDTH.W)
   /** Color index */
   val color = UInt(Config.PALETTE_ENTRY_COLOR_WIDTH.W)
+
+  /**
+   * Asserted when the palette entry is transparent.
+   *
+   * @note The CAVE first-generation hardware handles transparency the following way:
+   *
+   * If the color code is zero the pixel is transparent. This results in 15 usable colors for a
+   * tile. Even if the color at the first index of the palette is not zero, the pixel is still
+   * transparent.
+   *
+   * It is difficult to understand why CAVE didn't use the MSB bit of the 16 bit color word to
+   * indicate transparency. This would allow for 16 colors out of 2^15 colors for each tile instead
+   * of 15 colors of 2^15. With the CAVE CV1000 (SH3) hardware, they use the MSB bit of the 16-bit
+   * word as a transparency bit, while the colors remain RGB555.
+   *
+   * One wonders why they didn't do this on first-generation hardware.
+   */
+  def isTransparent: Bool = color === 0.U
 }
 
 object PaletteEntry {
