@@ -71,7 +71,7 @@ class SpriteBlitter extends Module {
 
   // Registers
   val spriteInfoReg = RegEnable(io.spriteData.bits, updateSpriteInfo)
-  val paletteReg = Reg(new PaletteColorSelect)
+  val paletteReg = Reg(new PaletteEntry)
   val pisoReg = Reg(Vec(Config.LARGE_TILE_SIZE, UInt(Config.LARGE_TILE_BPP.W)))
   val pisoCounterReg = RegInit(0.U)
 
@@ -131,7 +131,7 @@ class SpriteBlitter extends Module {
   updateSpriteInfo := readFifo && ((x === 0.U && y === 0.U) || (xWrap && yWrap))
 
   // The sprites use the first 64 palettes, and use 16 colors (out of 256 possible in a palette)
-  paletteReg := PaletteColorSelect(spriteInfoReg.colorCode, pisoReg.head)
+  paletteReg := PaletteEntry(spriteInfoReg.colorCode, pisoReg.head)
 
   // The CAVE first-generation hardware handles transparency the following way:
   //
@@ -147,7 +147,7 @@ class SpriteBlitter extends Module {
   // One wonders why they didn't do this on first-generation hardware. The transparency info must be
   // delayed by one cycle, as for the colors (since the colors come from the palette RAM (BRAM) they
   // arrive one cycle later).
-  val isTransparent = RegNext(paletteReg.colorIndex === 0.U)
+  val isTransparent = RegNext(paletteReg.color === 0.U)
 
   // Set valid flag
   val valid = ShiftRegister(!pisoEmpty, 2, false.B, true.B)

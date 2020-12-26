@@ -79,7 +79,7 @@ class LayerPipeline extends Module {
   // Registers
   val layerInfoReg = RegEnable(io.layerInfo.bits, io.layerInfo.valid)
   val tileInfoReg = RegEnable(io.tileInfo.bits, updateTileInfo)
-  val paletteReg = Reg(new PaletteColorSelect)
+  val paletteReg = Reg(new PaletteEntry)
   val smallPisoReg = Reg(Vec(Config.SMALL_TILE_SIZE, UInt(Config.SMALL_TILE_BPP.W)))
   val largePisoReg = Reg(Vec(Config.LARGE_TILE_SIZE, UInt(Config.LARGE_TILE_BPP.W)))
   val pisoCounterReg = RegInit(0.U)
@@ -181,7 +181,7 @@ class LayerPipeline extends Module {
   }
 
   // The tiles use the second 64 palettes, and use 16 colors (out of 256 possible in a palette)
-  paletteReg := PaletteColorSelect(
+  paletteReg := PaletteEntry(
     1.U ## tileInfoReg.colorCode,
     Mux(layerInfoReg.smallTile, smallPisoReg.head, largePisoReg.head)
   )
@@ -201,7 +201,7 @@ class LayerPipeline extends Module {
   // delayed by one cycle, as for the colors (since the colors come from the palette RAM (BRAM) they
   // arrive one cycle later).
   // FIXME: move to PaletteEntry class.
-  val isTransparent = RegNext(paletteReg.colorIndex === 0.U)
+  val isTransparent = RegNext(paletteReg.color === 0.U)
 
   // Set valid flag
   val valid = ShiftRegister(!pisoEmpty, 2, false.B, true.B)

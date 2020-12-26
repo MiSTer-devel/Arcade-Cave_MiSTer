@@ -40,24 +40,25 @@ package cave.types
 import cave.Config
 import chisel3._
 
-class PaletteColorSelect extends Bundle {
+/** Represent an entry in a color palette. */
+class PaletteEntry extends Bundle {
   /** Palette index */
-  val paletteIndex = UInt(Config.PALETTE_INDEX_WIDTH.W)
+  val palette = UInt(Config.PALETTE_ENTRY_PALLETE_WIDTH.W)
   /** Color index */
-  val colorIndex = UInt(Config.PALETTE_COLOR_INDEX_WIDTH.W)
+  val color = UInt(Config.PALETTE_ENTRY_COLOR_WIDTH.W)
 }
 
-object PaletteColorSelect {
+object PaletteEntry {
   /**
-   * Constructs a new palette color instance.
+   * Constructs a new palette entry.
    *
-   * @param paletteIndex The palette index.
-   * @param colorIndex The color index.
+   * @param palette The palette index.
+   * @param color The color index.
    */
-  def apply(paletteIndex: UInt, colorIndex: UInt): PaletteColorSelect = {
-    val wire = Wire(new PaletteColorSelect)
-    wire.paletteIndex := paletteIndex
-    wire.colorIndex := colorIndex
+  def apply(palette: UInt, color: UInt): PaletteEntry = {
+    val wire = Wire(new PaletteEntry)
+    wire.palette := palette
+    wire.color := color
     wire
   }
 }
