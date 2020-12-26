@@ -76,7 +76,8 @@ class LayerProcessor extends Module {
   // Wires
   val effectiveRead = Wire(Bool())
   val updateTileInfo = Wire(Bool())
-  val pipelineTakesTileInfo = Wire(Bool())
+  val pipelineReady = Wire(Bool())
+  val pipelineDone = Wire(Bool())
 
   // Registers
   val stateReg = RegInit(State.idle)
@@ -86,23 +87,6 @@ class LayerProcessor extends Module {
   val burstTodoReg = Reg(Bool())
   val burstReadyReg = Reg(Bool())
   val lastLayerPriorityReg = Reg(UInt())
-
-  // Tile FIFO
-  val tileFifo = Module(new TileFIFO)
-
-  // Layer pipeline
-  val pipeline = withReset(stateReg === State.idle) { Module(new LayerPipeline) }
-  pipeline.io.layerIndex := io.layerIndex
-  pipeline.io.lastLayerPriority := lastLayerPriorityReg
-  pipeline.io.layerInfo.bits := layerInfoReg
-  pipeline.io.layerInfo.valid := stateReg === State.setParams
-  pipeline.io.tileInfo.bits := tileInfoReg
-  pipelineTakesTileInfo := pipeline.io.tileInfo.ready
-  pipeline.io.tileInfo.valid := updateTileInfo
-  pipeline.io.pixelData <> tileFifo.io.deq
-  pipeline.io.paletteRam <> io.paletteRam
-  pipeline.io.priority <> io.priority
-  pipeline.io.frameBuffer <> io.frameBuffer
 
   // Set number of columns/rows/tiles
   val numCols = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_COLS.U, Config.LARGE_TILE_NUM_COLS.U)
@@ -119,9 +103,27 @@ class LayerProcessor extends Module {
     reset = stateReg === State.idle
   )
   val (tileCounter, tileCounterWrap) = Counter.dynamic(numTiles,
-    enable = pipeline.io.done,
+    enable = pipelineDone,
     reset = stateReg === State.idle
   )
+
+  // Tile FIFO
+  val tileFifo = Module(new TileFIFO)
+
+  // Layer pipeline
+  val layerPipeline = withReset(stateReg === State.idle) { Module(new LayerPipeline) }
+  layerPipeline.io.layerIndex := io.layerIndex
+  layerPipeline.io.lastLayerPriority := lastLayerPriorityReg
+  layerPipeline.io.layerInfo.bits := layerInfoReg
+  layerPipeline.io.layerInfo.valid := stateReg === State.setParams
+  layerPipeline.io.tileInfo.bits := tileInfoReg
+  pipelineReady := layerPipeline.io.tileInfo.ready
+  layerPipeline.io.tileInfo.valid := updateTileInfo
+  layerPipeline.io.pixelData <> tileFifo.io.deq
+  layerPipeline.io.paletteRam <> io.paletteRam
+  layerPipeline.io.priority <> io.priority
+  layerPipeline.io.frameBuffer <> io.frameBuffer
+  pipelineDone := layerPipeline.io.done
 
   // Control signals
   val tileBurstRead = burstTodoReg && burstReadyReg && tileFifo.io.enq.ready
@@ -178,7 +180,7 @@ class LayerProcessor extends Module {
   // Toggle tile info taken register
   when(stateReg === State.idle) {
     tileInfoTakenReg := false.B
-  }.elsewhen(stateReg === State.waitRam || pipelineTakesTileInfo) {
+  }.elsewhen(stateReg === State.waitRam || pipelineReady) {
     tileInfoTakenReg := true.B
   }.elsewhen(updateTileInfo) {
     tileInfoTakenReg := false.B
