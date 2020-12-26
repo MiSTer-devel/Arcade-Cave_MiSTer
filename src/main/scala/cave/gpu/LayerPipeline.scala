@@ -101,6 +101,9 @@ class LayerPipeline extends Module {
   val largeTileDone = smallTileDone && miniTileXWrap && miniTileYWrap
   val tileDone = Mux(layerInfoReg.smallTile, smallTileDone, largeTileDone)
 
+  // Pixel position
+  val pixelPos = Vec2(x, y)
+
   // Tile position
   val tilePos = {
     val x = Mux(layerInfoReg.smallTile,
@@ -122,11 +125,8 @@ class LayerPipeline extends Module {
     Vec2(x, y)
   }
 
-  // Pixel position
-  val pixelPos = Vec2(x, y)
-
   // Pixel position pipeline
-  val stage0Pos = tilePos + pixelPos - tileOffset
+  val stage0Pos = pixelPos + tilePos - tileOffset
   val stage1Pos = RegNext(stage0Pos)
   val stage2Pos = RegNext(stage1Pos)
 

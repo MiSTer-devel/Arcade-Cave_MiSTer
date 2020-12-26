@@ -38,7 +38,6 @@
 package cave.gpu
 
 import axon.mem._
-import axon.types._
 import axon.util.Counter
 import cave.Config
 import cave.types._
@@ -131,14 +130,14 @@ class LayerProcessor extends Module {
   effectiveRead := tileBurstRead && !io.tileRom.waitReq
   updateTileInfo := stateReg === State.working && tileInfoTakenReg
 
-  // Set start position
-  val startPos = layerInfoReg.scroll + Layer.magicOffset(io.layerIndex)
-
   // Set first tile index
-  val firstTileIndex = Mux(layerInfoReg.smallTile,
-    (startPos.y(8, 3) ## 0.U(6.W)) + startPos.x(8, 3),
-    (startPos.y(8, 4) ## 0.U(5.W)) + startPos.x(8, 4)
-  )
+  val firstTileIndex = {
+    val offset = layerInfoReg.scroll + Layer.magicOffset(io.layerIndex)
+    Mux(layerInfoReg.smallTile,
+      (offset.y(8, 3) ## 0.U(6.W)) + offset.x(8, 3),
+      (offset.y(8, 4) ## 0.U(5.W)) + offset.x(8, 4)
+    )
+  }
 
   // Set layer RAM address
   val layerRamAddr = {
