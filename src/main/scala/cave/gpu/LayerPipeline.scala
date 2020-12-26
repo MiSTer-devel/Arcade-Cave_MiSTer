@@ -48,14 +48,14 @@ class LayerPipeline extends BlackBox {
   val io = IO(new Bundle {
     val clk_i = Input(Clock())
     val rst_i = Input(Reset())
+    /** Layer index */
+    val layerIndex = Input(UInt(2.W))
+    /** Previous layer priority value */
+    val lastLayerPriority = Input(UInt(Config.PRIO_WIDTH.W))
     /** Layer info port */
-    val layer_number_i = Input(UInt(2.W))
-    val update_layer_info_i = Input(Bool())
-    val layer_info_i = Input(Bits(Config.LAYER_REGS_GPU_DATA_WIDTH.W))
-    val last_layer_priority_i = Input(UInt(Config.PRIO_WIDTH.W))
+    val layerInfo = DeqIO(Bits(Config.LAYER_REGS_GPU_DATA_WIDTH.W))
     /** Tile info port */
-    val tile_info_i = Input(Bits(Config.LAYER_RAM_GPU_DATA_WIDTH.W))
-    val get_tile_info_o = Output(Bool())
+    val tileInfo = DeqIO(Bits(Config.LAYER_RAM_GPU_DATA_WIDTH.W))
     /** Pixel data port */
     val pixelData = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
     /** Palette RAM port */

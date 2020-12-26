@@ -100,12 +100,13 @@ class LayerProcessor extends Module {
   val pipeline = Module(new LayerPipeline)
   pipeline.io.clk_i := clock
   pipeline.io.rst_i := stateReg === State.idle
-  pipeline.io.update_layer_info_i := stateReg === State.setParams
-  pipeline.io.layer_number_i := io.layerIndex
-  pipeline.io.layer_info_i := layerInfoReg
-  pipeline.io.last_layer_priority_i := lastLayerPriorityReg
-  pipeline.io.tile_info_i := tileInfoReg
-  pipelineTakesTileInfo := pipeline.io.get_tile_info_o
+  pipeline.io.layerIndex := io.layerIndex
+  pipeline.io.lastLayerPriority := lastLayerPriorityReg
+  pipeline.io.layerInfo.bits := layerInfoReg
+  pipeline.io.layerInfo.valid := stateReg === State.setParams
+  pipeline.io.tileInfo.bits := tileInfoReg
+  pipelineTakesTileInfo := pipeline.io.tileInfo.ready
+  pipeline.io.tileInfo.valid := updateTileInfo
   pipeline.io.pixelData <> tileFifo.io.deq
   pipeline.io.paletteRam <> io.paletteRam
   pipeline.io.priority <> io.priority

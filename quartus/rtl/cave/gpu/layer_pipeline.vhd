@@ -52,13 +52,16 @@ entity layer_pipeline is
         clk_i                     : in  std_logic;
         rst_i                     : in  std_logic;
         -- Control (Layer Info)
-        layer_number_i            : in  unsigned(1 downto 0);
-        update_layer_info_i       : in  std_logic;
-        layer_info_i              : in  layer_info_line_t;
-        last_layer_priority_i     : in  priority_t;
+        layerIndex                : in  unsigned(1 downto 0);
+        lastLayerPriority         : in  priority_t;
+        -- Layer info
+        layerInfo_bits            : in  layer_info_line_t;
+        layerInfo_ready           : out std_logic;
+        layerInfo_valid           : in  std_logic;
         -- Tile Info
-        tile_info_i               : in  layer_ram_line_t;
-        get_tile_info_o           : out std_logic;
+        tileInfo_bits             : in  layer_ram_line_t;
+        tileInfo_ready            : out std_logic;
+        tileInfo_valid            : in  std_logic;
         -- Pixel data
         pixelData_bits            : in  std_logic_vector(63 downto 0);
         pixelData_ready           : out std_logic;
@@ -353,18 +356,18 @@ begin
     begin
         if rising_edge(clk_i) then
             if update_tile_info_s = '1' then
-                tile_info_reg_s <= extract_tile_info_from_layer_ram_line(tile_info_i);
+                tile_info_reg_s <= extract_tile_info_from_layer_ram_line(tileInfo_bits);
             end if; -- Load
         end if; -- Rising Edge Clock
     end process tile_info_reg_process;
 
-    update_layer_info_s <= update_layer_info_i;
+    update_layer_info_s <= layerInfo_valid;
 
     layer_info_reg_process : process(clk_i) is
     begin
         if rising_edge(clk_i) then
             if update_layer_info_s = '1' then
-                layer_info_reg_s <= extract_global_layer_info_from_regs(layer_info_i);
+                layer_info_reg_s <= extract_global_layer_info_from_regs(layerInfo_bits);
             end if; -- Load
         end if;
     end process layer_info_reg_process;
@@ -403,15 +406,15 @@ begin
     begin
 
         -- Note : Truncation is normal here (Since we only need the internal tile offset).
-        magic_offset_x_s <= to_unsigned(16#6b#,         magic_offset_x_s'length) when layer_number_i = "00" else
-                            to_unsigned(16#6b# + 1,     magic_offset_x_s'length) when layer_number_i = "01" else
-                            to_unsigned(16#6b# + 2 + 8, magic_offset_x_s'length) when layer_number_i = "10" else
+        magic_offset_x_s <= to_unsigned(16#6b#,         magic_offset_x_s'length) when layerIndex = "00" else
+                            to_unsigned(16#6b# + 1,     magic_offset_x_s'length) when layerIndex = "01" else
+                            to_unsigned(16#6b# + 2 + 8, magic_offset_x_s'length) when layerIndex = "10" else
                             (others => '0');
 
         -- "At rest" the offset in DDP is 0x1EF = 495, 495 + 17 = 512 => 0
-        magic_offset_y_s <= to_unsigned(17, magic_offset_y_s'length) when layer_number_i = "00" else
-                            to_unsigned(17, magic_offset_y_s'length) when layer_number_i = "01" else
-                            to_unsigned(17, magic_offset_y_s'length) when layer_number_i = "10" else
+        magic_offset_y_s <= to_unsigned(17, magic_offset_y_s'length) when layerIndex = "00" else
+                            to_unsigned(17, magic_offset_y_s'length) when layerIndex = "01" else
+                            to_unsigned(17, magic_offset_y_s'length) when layerIndex = "10" else
                             (others => '0');
 
         offset_x_s <= 0 - resize(resize(layer_info_reg_s.scroll_x(2 downto 0) + magic_offset_x_s, 3), offset_x_s'length) when layer_info_reg_s.small_tile = '1' else
@@ -462,7 +465,7 @@ begin
     -- previous pixel, otherwhise if their priority is the same it depends on
     -- the layer priorities.
     has_priority_s <= '1' when stage_2_current_prio_s > old_priority_s else
-                      '1' when (stage_2_current_prio_s = old_priority_s) and (layer_info_reg_s.priority >= last_layer_priority_i) else
+                      '1' when (stage_2_current_prio_s = old_priority_s) and (layer_info_reg_s.priority >= lastLayerPriority) else
                       '0';
 
     -- Transparency, if the first color from the palette is picked it means the
@@ -504,7 +507,8 @@ begin
     -------------
     -- Outputs --
     -------------
-    get_tile_info_o           <= update_tile_info_s;
+    layerInfo_ready           <= '1';
+    tileInfo_ready            <= update_tile_info_s;
     pixelData_ready           <= read_fifo_s;
     paletteRam_rd             <= '1';
     paletteRam_addr           <= palette_ram_addr_from_palette_color_select(palette_ram_read_addr_s);
