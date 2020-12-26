@@ -97,9 +97,7 @@ class LayerProcessor extends Module {
   val tileFifo = Module(new TileFIFO)
 
   // Layer pipeline
-  val pipeline = Module(new LayerPipeline)
-  pipeline.io.clk_i := clock
-  pipeline.io.rst_i := stateReg === State.idle
+  val pipeline = withReset(stateReg === State.idle) { Module(new LayerPipeline) }
   pipeline.io.layerIndex := io.layerIndex
   pipeline.io.lastLayerPriority := lastLayerPriorityReg
   pipeline.io.layerInfo.bits := layerInfoReg
