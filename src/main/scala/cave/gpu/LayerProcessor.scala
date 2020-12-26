@@ -132,11 +132,7 @@ class LayerProcessor extends Module {
   updateTileInfo := stateReg === State.working && tileInfoTakenReg
 
   // Set start position
-  val startPos = {
-    val xOffset = MuxLookup(io.layerIndex, 0.U, Seq(0.U -> 0x6b.U, 1.U -> 0x6c.U, 2.U -> 0x75.U))
-    val yOffset = 17.U
-    layerInfoReg.scroll + Vec2(xOffset, yOffset)
-  }
+  val startPos = layerInfoReg.scroll + Layer.magicOffset(io.layerIndex)
 
   // Set first tile index
   val firstTileIndex = Mux(layerInfoReg.smallTile,

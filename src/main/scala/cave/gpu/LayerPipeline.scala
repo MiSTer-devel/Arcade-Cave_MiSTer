@@ -116,12 +116,9 @@ class LayerPipeline extends Module {
 
   // Tile offset
   val tileOffset = {
-    val xMagicOffset = MuxLookup(io.layerIndex, 0.U, Seq(0.U -> 0x6b.U, 1.U -> 0x6c.U, 2.U -> 0x75.U))
-    val yMagicOffset = 17.U
-    val xScroll = layerInfoReg.scroll.x + xMagicOffset
-    val yScroll = layerInfoReg.scroll.y + yMagicOffset
-    val x = Mux(layerInfoReg.smallTile, xScroll(2, 0), xScroll(3, 0))
-    val y = Mux(layerInfoReg.smallTile, yScroll(2, 0), yScroll(3, 0))
+    val offset = layerInfoReg.scroll + Layer.magicOffset(io.layerIndex)
+    val x = Mux(layerInfoReg.smallTile, offset.x(2, 0), offset.x(3, 0))
+    val y = Mux(layerInfoReg.smallTile, offset.y(2, 0), offset.y(3, 0))
     Vec2(x, y)
   }
 
