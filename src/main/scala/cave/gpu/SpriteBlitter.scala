@@ -82,13 +82,16 @@ class SpriteBlitter extends Module {
   // Set sprite done flag
   val spriteDone = xWrap && yWrap && !pisoEmpty
 
-  // Tile pixel position
-  val tilePixelPos = {
-    val destX = Mux(spriteInfoReg.flipX, spriteInfoReg.size.x - x - 1.U, x)
-    val destY = Mux(spriteInfoReg.flipY, spriteInfoReg.size.y - y - 1.U, y)
-    spriteInfoReg.pos + SVec2(destX.asSInt, destY.asSInt)
+  // Pixel position
+  val pixelPos = {
+    val xPos = Mux(spriteInfoReg.flipX, spriteInfoReg.size.x - x - 1.U, x)
+    val yPos = Mux(spriteInfoReg.flipY, spriteInfoReg.size.y - y - 1.U, y)
+    SVec2(xPos.asSInt, yPos.asSInt)
   }
-  val stage1Pos = RegNext(tilePixelPos)
+
+  // Pixel position pipeline
+  val stage0Pos = spriteInfoReg.pos + pixelPos
+  val stage1Pos = RegNext(stage0Pos)
   val stage2Pos = RegNext(stage1Pos)
 
   // Update PISO counter register
@@ -161,7 +164,7 @@ class SpriteBlitter extends Module {
   // sprite (all priority should be 0 at start).
   val hasPriority = priorityWriteData >= io.priority.read.dout
 
-  // Calculate sprite visibility
+  // Calculate visibility
   val visible = Util.between(stage2Pos.x, 0 until Config.SCREEN_WIDTH) &&
                 Util.between(stage2Pos.y, 0 until Config.SCREEN_HEIGHT)
 
