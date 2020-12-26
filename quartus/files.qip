@@ -3,16 +3,12 @@ set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
 
 set_global_assignment -name CDF_FILE jtag.cdf
 set_global_assignment -name QIP_FILE rtl/fx68k/fx68k.qip
-set_global_assignment -name QIP_FILE rtl/ip/tile_fifo.qip
-set_global_assignment -name QIP_FILE rtl/ip/video_fifo.qip
+set_global_assignment -name QIP_FILE rtl/tile_fifo/tile_fifo.qip
+set_global_assignment -name QIP_FILE rtl/video_fifo/video_fifo.qip
 set_global_assignment -name SDC_FILE rtl/sdram.sdc
 set_global_assignment -name SYSTEMVERILOG_FILE cave.sv
 set_global_assignment -name VERILOG_FILE rtl/ChiselTop.v
 set_global_assignment -name VERILOG_FILE rtl/jteeprom/hdl/jt9346.v
-set_global_assignment -name VHDL_FILE rtl/cave/cave_pkg.vhd
-set_global_assignment -name VHDL_FILE rtl/cave/mem/dual_port_ram.vhd
-set_global_assignment -name VHDL_FILE rtl/cave/mem/single_port_ram.vhd
-set_global_assignment -name VHDL_FILE rtl/cave/mem/true_dual_port_ram.vhd
-set_global_assignment -name VHDL_FILE rtl/debug/debug_display.vhd
-set_global_assignment -name VHDL_FILE rtl/debug/font_rom.vhd
-set_global_assignment -name VHDL_FILE rtl/log_pkg.vhd
+set_global_assignment -name VHDL_FILE rtl/mem/dual_port_ram.vhd
+set_global_assignment -name VHDL_FILE rtl/mem/single_port_ram.vhd
+set_global_assignment -name VHDL_FILE rtl/mem/true_dual_port_ram.vhd
