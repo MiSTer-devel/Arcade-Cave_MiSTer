@@ -100,7 +100,7 @@ class SpriteBlitter extends Module {
 
   // Decode pixel data into the PISO
   when(readFifo) {
-    pisoReg := VecInit(SpriteBlitter.decodePixelData(io.pixelData.bits))
+    pisoReg := VecInit(SpriteBlitter.decodeTile(io.pixelData.bits))
   }.otherwise {
     pisoReg := pisoReg.tail :+ pisoReg.head
   }
@@ -191,20 +191,13 @@ class SpriteBlitter extends Module {
 
 object SpriteBlitter {
   /**
-   * Decodes the pixel data into a sequence of tile rows.
+   * Decodes a tile from the given pixel data.
    *
-   * The sprite tiles are encoded in the following sequence:
-   *
-   * {{{
-   * 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12
-   * }}}
+   * Sprite tile pixels are encoded as 4-bit words.
    *
    * @param data The pixel data.
    */
-  def decodePixelData(data: Bits): Seq[Bits] =
-    Util
-      .decode(data, Config.LARGE_TILE_SIZE, Config.LARGE_TILE_BPP)
-      .grouped(4)
-      .flatMap(_.reverse)
-      .toSeq
+  def decodeTile(data: Bits): Seq[Bits] =
+    Seq(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12)
+      .map(Util.decode(data, 16, 4).apply)
 }
