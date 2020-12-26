@@ -79,7 +79,7 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
 
   // Wires
   val effectiveRead = Wire(Bool())
-  val nextSpriteInfo = Wire(Bool())
+  val spriteCounterEnable = Wire(Bool())
   val updateSpriteInfo = Wire(Bool())
   val pipelineReady = Wire(Bool())
   val pipelineDone = Wire(Bool())
@@ -93,8 +93,8 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   val burstCounterMax = RegEnable(spriteInfo.tileSize.x * spriteInfo.tileSize.y, updateSpriteInfo)
 
   // Counters
-  val (spriteInfoCounter, _) = Counter.static(numSprites * 2, // FIXME
-    enable = nextSpriteInfo,
+  val (spriteCounter, _) = Counter.static(numSprites * 2, // FIXME
+    enable = spriteCounterEnable,
     reset = stateReg === State.idle
   )
   val (spriteSentCounter, _) = Counter.static(numSprites,
@@ -125,19 +125,19 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   pipelineDone := spriteBlitter.io.done
 
   // Set next sprite info flag
-  nextSpriteInfo := stateReg === State.working &&
-                    !spriteInfoCounter(10) &&
-                    (!spriteInfo.isEnabled || updateSpriteInfo)
+  spriteCounterEnable := stateReg === State.working &&
+                         !spriteCounter(10) &&
+                         (!spriteInfo.isEnabled || updateSpriteInfo)
 
   // Set update sprite info flag
   updateSpriteInfo := stateReg === State.working &&
-                      !spriteInfoCounter(10) &&
+                      !spriteCounter(10) &&
                       spriteInfo.isEnabled &&
                       spriteInfoTaken &&
                       !burstTodo
 
   // Set done flag
-  val workDone = spriteInfoCounter(10) && spriteSentCounter === spriteDoneCounter
+  val workDone = spriteCounter(10) && spriteSentCounter === spriteDoneCounter
 
   // Set burst done flag
   val doneBursting = burstTodo && burstCounterWrap
@@ -149,7 +149,7 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   effectiveRead := spriteBurstRead && !io.tileRom.waitReq
 
   // Set sprite RAM address
-  val spriteRamAddr = io.spriteBank ## spriteInfoCounter(9, 0)
+  val spriteRamAddr = io.spriteBank ## spriteCounter(9, 0)
 
   // Set tile ROM address
   val tileRomAddr = (spriteInfoReg.code + burstCounter) * Config.LARGE_TILE_BYTE_SIZE.U
