@@ -50,7 +50,7 @@ class PaletteEntry extends Bundle {
   /**
    * Asserted when the palette entry is transparent.
    *
-   * @note The CAVE first-generation hardware handles transparency the following way:
+   * The CAVE first-generation hardware handles transparency the following way:
    *
    * If the color code is zero the pixel is transparent. This results in 15 usable colors for a
    * tile. Even if the color at the first index of the palette is not zero, the pixel is still

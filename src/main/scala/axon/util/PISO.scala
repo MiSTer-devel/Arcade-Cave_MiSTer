@@ -42,11 +42,11 @@ import chisel3._
 /**
  * A PISO (parallel-in, serial-out) used to buffer data.
  *
- * @param n The number of elements.
- * @param width The data width.
- * @param almostEmptyThreshold The threshold at which the [[isAlmostEmpty]] flag will be asserted.
+ * @param n              The number of elements.
+ * @param width          The data width.
+ * @param emptyThreshold The threshold at which the [[isAlmostEmpty]] flag will be asserted.
  */
-class PISO(n: Int, width: Int, almostEmptyThreshold: Int = 1) extends Module {
+class PISO(n: Int, width: Int, emptyThreshold: Int = 1) extends Module {
   val io = IO(new Bundle {
     val wr = Input(Bool())
     val isEmpty = Output(Bool())
@@ -59,7 +59,7 @@ class PISO(n: Int, width: Int, almostEmptyThreshold: Int = 1) extends Module {
   val pisoCounterReg = RegInit(0.U)
 
   val pisoEmpty = pisoCounterReg === 0.U
-  val pisoAlmostEmpty = pisoCounterReg === almostEmptyThreshold.U
+  val pisoAlmostEmpty = pisoCounterReg === emptyThreshold.U
 
   // Shift data in/out of PISO
   when(io.wr) {

@@ -41,7 +41,7 @@ import axon.Util
 import axon.types.Vec2
 import cave.Config
 import chisel3._
-import chisel3.util.MuxLookup
+import chisel3.util._
 
 /** Represents a layer descriptor. */
 class Layer extends Bundle {
@@ -100,7 +100,7 @@ object Layer {
   /**
    * Returns the magic offset value for the given layer index.
    *
-   * @note The X offset in DDP is 0x195 for the first layer 0x195 = 405, 405 + 107 (0x6b) = 512.
+   * The X offset in DDP is 0x195 for the first layer 0x195 = 405, 405 + 107 (0x6b) = 512.
    *
    * Due to pipeline pixel offsets, this must be incremented by 1 for each layer (and 8 once for
    * small tiles).
