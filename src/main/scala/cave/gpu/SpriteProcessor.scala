@@ -115,9 +115,9 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
 
   // Sprite blitter
   val spriteBlitter = Module(new SpriteBlitter)
-  spriteBlitter.io.spriteData.bits := spriteInfoReg
-  pipelineReady := spriteBlitter.io.spriteData.ready
-  spriteBlitter.io.spriteData.valid := updateSpriteInfo
+  spriteBlitter.io.spriteInfo.bits := spriteInfoReg
+  pipelineReady := spriteBlitter.io.spriteInfo.ready
+  spriteBlitter.io.spriteInfo.valid := updateSpriteInfo
   spriteBlitter.io.pixelData <> tileFifo.io.deq
   spriteBlitter.io.paletteRam <> io.paletteRam
   spriteBlitter.io.priority <> io.priority

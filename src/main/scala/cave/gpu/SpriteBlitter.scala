@@ -49,8 +49,8 @@ import chisel3.util._
 /** The sprite blitter copies a sprite to the frame buffer. */
 class SpriteBlitter extends Module {
   val io = IO(new Bundle {
-    /** Sprite data port */
-    val spriteData = DeqIO(new Sprite)
+    /** Sprite info port */
+    val spriteInfo = DeqIO(new Sprite)
     /** Pixel data port */
     val pixelData = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
     /** Palette RAM port */
@@ -68,7 +68,7 @@ class SpriteBlitter extends Module {
   val readFifo = Wire(Bool())
 
   // Registers
-  val spriteInfoReg = RegEnable(io.spriteData.bits, updateSpriteInfo)
+  val spriteInfoReg = RegEnable(io.spriteInfo.bits, updateSpriteInfo)
   val paletteReg = Reg(new PaletteEntry)
 
   // Tile PISO
@@ -149,7 +149,7 @@ class SpriteBlitter extends Module {
   val frameBufferData = GPU.decodePaletteData(io.paletteRam.dout)
 
   // Outputs
-  io.spriteData.ready := updateSpriteInfo
+  io.spriteInfo.ready := updateSpriteInfo
   io.pixelData.ready := readFifo
   io.paletteRam.rd := true.B
   io.paletteRam.addr := paletteReg.asUInt
