@@ -96,16 +96,16 @@ class LayerPipeline extends Module {
   val numRows = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_ROWS.U, Config.LARGE_TILE_NUM_ROWS.U)
 
   // Counters
-  val (x, xWrap) = Counter.static(8, enable = !pisoEmpty)
-  val (y, yWrap) = Counter.static(8, enable = xWrap)
+  val (x, xWrap) = Counter.static(Config.SMALL_TILE_SIZE, enable = !pisoEmpty)
+  val (y, yWrap) = Counter.static(Config.SMALL_TILE_SIZE, enable = xWrap)
   val (miniTileX, miniTileXWrap) = Counter.static(2, enable = xWrap && yWrap)
   val (miniTileY, miniTileYWrap) = Counter.static(2, enable = miniTileXWrap)
   val (col, colWrap) = Counter.dynamic(numCols, enable = colCounterEnable)
   val (row, rowWrap) = Counter.dynamic(numRows, enable = colWrap)
 
   // Set tile done flag
-  val smallTileDone = xWrap && yWrap && !pisoEmpty
-  val largeTileDone = smallTileDone && miniTileXWrap && miniTileYWrap
+  val smallTileDone = !pisoEmpty && xWrap && yWrap
+  val largeTileDone = !pisoEmpty && xWrap && yWrap && miniTileXWrap && miniTileYWrap
   val tileDone = Mux(layerInfoReg.smallTile, smallTileDone, largeTileDone)
 
   // Pixel position
@@ -119,7 +119,7 @@ class LayerPipeline extends Module {
   }
 
   // Tile offset
-  val tileOffset = {
+  val scrollPos = {
     val offset = layerInfoReg.scroll + Layer.magicOffset(io.layerIndex)
     val x = Mux(layerInfoReg.smallTile, offset.x(2, 0), offset.x(3, 0))
     val y = Mux(layerInfoReg.smallTile, offset.y(2, 0), offset.y(3, 0))
@@ -127,7 +127,7 @@ class LayerPipeline extends Module {
   }
 
   // Pixel position pipeline
-  val stage0Pos = pixelPos + tilePos - tileOffset
+  val stage0Pos = pixelPos + tilePos - scrollPos
   val stage1Pos = RegNext(stage0Pos)
   val stage2Pos = RegNext(stage1Pos)
 
