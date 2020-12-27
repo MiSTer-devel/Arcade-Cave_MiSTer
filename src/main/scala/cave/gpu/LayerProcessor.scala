@@ -90,24 +90,15 @@ class LayerProcessor extends Module {
   // Tile FIFO
   val tileFifo = Module(new TileFIFO)
 
-  // Set number of columns/rows/tiles
+  // Columns/rows/tiles
   val numCols = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_COLS.U, Config.LARGE_TILE_NUM_COLS.U)
   val numRows = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_ROWS.U, Config.LARGE_TILE_NUM_ROWS.U)
   val numTiles = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_TILES.U, Config.LARGE_TILE_NUM_TILES.U)
 
   // Counters
-  val (col, colWrap) = Counter.dynamic(numCols,
-    enable = effectiveRead,
-    reset = stateReg === State.idle
-  )
-  val (row, rowWrap) = Counter.dynamic(numRows,
-    enable = colWrap,
-    reset = stateReg === State.idle
-  )
-  val (tileCounter, tileCounterWrap) = Counter.dynamic(numTiles,
-    enable = pipelineDone,
-    reset = stateReg === State.idle
-  )
+  val (col, colWrap) = Counter.dynamic(numCols, enable = effectiveRead, reset = stateReg === State.idle)
+  val (row, rowWrap) = Counter.dynamic(numRows, enable = colWrap, reset = stateReg === State.idle)
+  val (_, tileWrap) = Counter.dynamic(numTiles, enable = pipelineDone, reset = stateReg === State.idle)
 
   // Layer pipeline
   val layerPipeline = withReset(stateReg === State.idle) { Module(new LayerPipeline) }
@@ -202,7 +193,7 @@ class LayerProcessor extends Module {
   // Set last layer priority register
   when(stateReg === State.setParams && io.layerIndex === 0.U) {
     lastLayerPriorityReg := 0.U
-  }.elsewhen(stateReg === State.working && tileCounterWrap) {
+  }.elsewhen(stateReg === State.working && tileWrap) {
     lastLayerPriorityReg := layerInfoReg.priority
   }
 
@@ -229,7 +220,7 @@ class LayerProcessor extends Module {
 
     // Wait for the pipeline
     is(State.waitPipeline) {
-      when(tileCounterWrap) { stateReg := State.idle }
+      when(tileWrap) { stateReg := State.idle }
     }
   }
 
@@ -239,5 +230,5 @@ class LayerProcessor extends Module {
   io.tileRom.rd := tileBurstRead
   io.tileRom.addr := tileRomAddr + Config.TILE_ROM_OFFSET.U
   io.tileRom.burstLength := tileRomBurstLength
-  io.done := RegNext(tileCounterWrap) // TODO: Does this signal need to be delayed?
+  io.done := RegNext(tileWrap) // TODO: Does this signal need to be delayed?
 }
