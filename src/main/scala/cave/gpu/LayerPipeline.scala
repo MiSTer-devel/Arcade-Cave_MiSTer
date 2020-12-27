@@ -113,14 +113,8 @@ class LayerPipeline extends Module {
 
   // Tile position
   val tilePos = {
-    val x = Mux(layerInfoReg.smallTile,
-      col ## 0.U(3.W),
-      (col ## 0.U(4.W)) + (miniTileX ## 0.U(3.W))
-    )
-    val y = Mux(layerInfoReg.smallTile,
-      row ## 0.U(3.W),
-      (row ## 0.U(4.W)) + (miniTileY ## 0.U(3.W))
-    )
+    val x = Mux(layerInfoReg.smallTile, col ## 0.U(3.W), col ## miniTileX ## 0.U(3.W))
+    val y = Mux(layerInfoReg.smallTile, row ## 0.U(3.W), row ## miniTileY ## 0.U(3.W))
     Vec2(x, y)
   }
 
