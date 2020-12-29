@@ -49,10 +49,11 @@ object Config {
   /** CPU clock frequency (Hz) */
   val CPU_CLOCK_FREQ = 32000000
 
-  /** Sample frequency (Hz) */
-  val SAMPLE_FREQ = 88200
-
-  val SAMPLE_WIDTH = 16
+  /** YMZ280B configuration */
+  val ymzConfig = YMZ280BConfig(
+    clockFreq = CPU_CLOCK_FREQ,
+    sampleFreq = 88200
+  )
 
   /** DDR data width */
   val DDR_DATA_WIDTH = 64
@@ -205,13 +206,6 @@ object Config {
     vFrontPorch = 12,
     vRetrace = 2,
     vBackPorch = 19
-  )
-
-  /** YMZ280B configuration */
-  val ymzConfig = YMZ280BConfig(
-    clockFreq = CPU_CLOCK_FREQ,
-    sampleFreq = SAMPLE_FREQ,
-    sampleWidth = SAMPLE_WIDTH
   )
 
   /** DDR configuration */

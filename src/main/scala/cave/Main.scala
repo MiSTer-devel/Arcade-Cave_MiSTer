@@ -74,7 +74,7 @@ class Main extends Module {
     /** RGB output */
     val rgb = Output(new RGB(Config.BITS_PER_CHANNEL))
     /** Audio port */
-    val audio = Output(new Audio(Config.SAMPLE_WIDTH))
+    val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** DDR port */
     val ddr = DDRIO(Config.ddrConfig)
     /** SDRAM port */

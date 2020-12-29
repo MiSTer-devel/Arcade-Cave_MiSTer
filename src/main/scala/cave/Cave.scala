@@ -69,7 +69,7 @@ class Cave extends Module {
     /** Video port */
     val video = Input(new VideoIO)
     /** Audio port */
-    val audio = Output(new Audio(Config.SAMPLE_WIDTH))
+    val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
   })
 
   // Wires
