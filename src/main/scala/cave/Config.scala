@@ -83,9 +83,6 @@ object Config {
 
   val PLAYER_DATA_WIDTH = 10
 
-  /** The number of bits per color channel */
-  val BITS_PER_CHANNEL = 5
-
   val SPRITE_CODE_WIDTH = 18
   val SPRITE_POS_WIDTH = 10
   val SPRITE_TILE_SIZE_WIDTH = 8
@@ -142,9 +139,15 @@ object Config {
   val PALETTE_RAM_GPU_ADDR_WIDTH = 15
   val PALETTE_RAM_GPU_DATA_WIDTH = 16
 
+  /** The number of bits per color channel */
+  val BITS_PER_CHANNEL = 5
+  /** The number of palettes */
   val NUM_PALETTES = 128
+  /** The number of colors per palette */
   val NUM_COLORS = 256
-  val PALETTE_ENTRY_PALLETE_WIDTH = log2Ceil(NUM_PALETTES)
+  /** The width of a palette entry palette index  */
+  val PALETTE_ENTRY_PALETTE_WIDTH = log2Ceil(NUM_PALETTES)
+  /** The width of a palette entry color index  */
   val PALETTE_ENTRY_COLOR_WIDTH = log2Ceil(NUM_COLORS)
 
   val LAYER_REGS_COUNT = 3

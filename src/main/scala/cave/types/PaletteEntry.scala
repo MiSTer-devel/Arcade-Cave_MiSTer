@@ -43,7 +43,7 @@ import chisel3._
 /** Represent an entry in a color palette. */
 class PaletteEntry extends Bundle {
   /** Palette index */
-  val palette = UInt(Config.PALETTE_ENTRY_PALLETE_WIDTH.W)
+  val palette = UInt(Config.PALETTE_ENTRY_PALETTE_WIDTH.W)
   /** Color index */
   val color = UInt(Config.PALETTE_ENTRY_COLOR_WIDTH.W)
 
