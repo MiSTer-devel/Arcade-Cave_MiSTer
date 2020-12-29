@@ -59,6 +59,8 @@ class Main extends Module {
   val io = IO(new Bundle {
     /** Video clock domain */
     val videoClock = Input(Clock())
+    /** Video reset */
+    val videoReset = Input(Bool())
     /** CPU clock domain */
     val cpuClock = Input(Clock())
     /** CPU reset */
@@ -87,7 +89,7 @@ class Main extends Module {
   // The video timing module runs in the video clock domain. It doesn't use the video reset signal,
   // because the video timing signals should always be generated. Otherwise, the progress bar won't
   // be visible while the core is loading.
-  val videoTiming = withClock(io.videoClock) { Module(new VideoTiming(Config.videoTimingConfig)) }
+  val videoTiming = withClockAndReset(io.videoClock, io.videoReset) { Module(new VideoTiming(Config.videoTimingConfig)) }
   videoTiming.io <> io.video
 
   // The swap register selects which frame buffer is being used for reading/writing pixel data.
@@ -132,6 +134,7 @@ class Main extends Module {
   // Video FIFO
   val videoFIFO = Module(new VideoFIFO)
   videoFIFO.io.videoClock := io.videoClock
+  videoFIFO.io.videoReset := io.videoReset
   videoFIFO.io.video <> videoTiming.io
   videoFIFO.io.pixelData <> videoDMA.io.pixelData
   io.rgb := videoFIFO.io.rgb

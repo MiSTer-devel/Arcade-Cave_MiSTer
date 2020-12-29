@@ -37,6 +37,7 @@
 
 package cave.gpu
 
+import axon.Util
 import axon.gpu.VideoIO
 import axon.types.RGB
 import cave.Config
@@ -55,6 +56,8 @@ class VideoFIFO extends Module {
   val io = IO(new Bundle {
     /** Video clock domain */
     val videoClock = Input(Clock())
+    /** Video reset */
+    val videoReset = Input(Reset())
     /** Video port */
     val video = Input(new VideoIO)
     /** Pixel data port */
@@ -79,25 +82,28 @@ class VideoFIFO extends Module {
     override def desiredName = "video_fifo"
   }
 
-  // Pixel data may be read by the consumer once the display has been locked. This register needs to
-  // be clocked in the video clock domain.
-  val videoLockReg = withClock(io.videoClock) { RegInit(false.B) }
+  // Pixel data may be read by the consumer once the video FIFO has been drained and filled. This
+  // register needs to be clocked in the video clock domain.
+  val drainReg = withClockAndReset(io.videoClock, io.videoReset) { RegInit(false.B) }
+  val fillReg = withClockAndReset(io.videoClock, io.videoReset) { RegInit(false.B) }
 
-  // FIFO
-  val fifo = Module(new VideoFIFOBlackBox)
-  fifo.io.aclr := reset
-  fifo.io.data := io.pixelData.bits
-  fifo.io.rdclk := io.videoClock
-  fifo.io.rdreq := io.video.enable && videoLockReg
-  fifo.io.wrclk := clock
-  fifo.io.wrreq := io.pixelData.valid
+  // Video FIFO
+  val videoFifo = Module(new VideoFIFOBlackBox)
+  videoFifo.io.aclr := reset
+  videoFifo.io.data := io.pixelData.bits
+  videoFifo.io.rdclk := io.videoClock
+  videoFifo.io.rdreq := io.video.enable && fillReg
+  videoFifo.io.wrclk := clock
+  videoFifo.io.wrreq := io.pixelData.valid
 
-  // Lock the video during a vertical blank, as soon as the FIFO contains pixel data
-  when(io.video.vBlank && !fifo.io.rdempty) { videoLockReg := true.B }
+  withClockAndReset(io.videoClock, io.videoReset) {
+    when(Util.falling(io.video.vBlank) && videoFifo.io.rdempty) { drainReg := true.B }
+    when(Util.rising(io.video.vBlank) && !videoFifo.io.rdempty && drainReg) { fillReg := true.B }
+  }
 
   // Set RGB output
-  io.rgb := fifo.io.q.asTypeOf(new RGB(Config.SCREEN_BITS_PER_CHANNEL))
+  io.rgb := videoFifo.io.q.asTypeOf(new RGB(Config.SCREEN_BITS_PER_CHANNEL))
 
   // Fetch pixel data when the FIFO is almost empty
-  io.pixelData.ready := fifo.io.wrusedw < FETCH_THRESHOLD.U
+  io.pixelData.ready := drainReg && videoFifo.io.wrusedw < FETCH_THRESHOLD.U
 }
