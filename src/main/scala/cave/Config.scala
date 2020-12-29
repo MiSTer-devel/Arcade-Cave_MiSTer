@@ -64,10 +64,25 @@ object Config {
     burstLength = 4
   )
 
+  /** The screen width in pixels */
+  val SCREEN_WIDTH = 320
+  /** The screen height in pixels */
+  val SCREEN_HEIGHT = 240
+
+  /** Video timing configuration */
+  val videoTimingConfig = VideoTimingConfig(
+    hDisplay = SCREEN_WIDTH,
+    hFrontPorch = 5,
+    hRetrace = 23,
+    hBackPorch = 34,
+    vDisplay = SCREEN_HEIGHT,
+    vFrontPorch = 12,
+    vRetrace = 2,
+    vBackPorch = 19
+  )
+
   val PLAYER_DATA_WIDTH = 10
 
-  val SCREEN_WIDTH = 320
-  val SCREEN_HEIGHT = 240
   /** The number of bits per color channel */
   val BITS_PER_CHANNEL = 5
 
@@ -201,16 +216,4 @@ object Config {
   val LARGE_TILE_NUM_ROWS = SCREEN_HEIGHT / LARGE_TILE_SIZE + 1
   /** The number of large tiles that fit on the screen */
   val LARGE_TILE_NUM_TILES = LARGE_TILE_NUM_COLS * LARGE_TILE_NUM_ROWS
-
-  /** Video timing configuration */
-  val videoTimingConfig = VideoTimingConfig(
-    hDisplay = 320,
-    hFrontPorch = 5,
-    hRetrace = 23,
-    hBackPorch = 34,
-    vDisplay = 240,
-    vFrontPorch = 12,
-    vRetrace = 2,
-    vBackPorch = 19
-  )
 }
