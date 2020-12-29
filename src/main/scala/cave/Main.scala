@@ -86,6 +86,8 @@ class Main extends Module {
     val ddr = DDRIO(Config.ddrConfig)
     /** SDRAM port */
     val sdram = SDRAMIO(Config.sdramConfig)
+    /** MiSTer frame buffer port */
+    val misterFrameBuffer = new mister.FrameBufferIO
   })
 
   // Registers
@@ -163,6 +165,15 @@ class Main extends Module {
   when(Util.rising(vBlank)) {
     frameBufferReadIndex := nextIndex(frameBufferReadIndex, frameBufferWriteIndex)
   }
+
+  // MiSTer frame buffer
+  io.misterFrameBuffer.enable := true.B
+  io.misterFrameBuffer.forceBlank := false.B
+  io.misterFrameBuffer.hSize := Config.SCREEN_HEIGHT.U
+  io.misterFrameBuffer.vSize := Config.SCREEN_WIDTH.U
+  io.misterFrameBuffer.format := mister.FrameBufferIO.FORMAT_32BPP.U
+  io.misterFrameBuffer.base := Config.FRAME_BUFFER_OFFSET.U + (frameBufferReadIndex ## 0.U(19.W))
+  io.misterFrameBuffer.stride := (Config.SCREEN_HEIGHT * 4).U
 }
 
 object Main extends App {

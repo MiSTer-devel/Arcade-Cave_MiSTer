@@ -57,6 +57,8 @@ class FrameBufferIO extends Bundle {
   val vBlank = Input(Bool())
   /** Low latency flag */
   val lowLat = Input(Bool())
+  /** Force blank flag */
+  val forceBlank = Output(Bool())
 }
 
 object FrameBufferIO {
