@@ -58,6 +58,12 @@ object Config {
   /** DDR configuration */
   val ddrConfig = DDRConfig()
 
+  /** SDRAM configuration */
+  val sdramConfig = SDRAMConfig(
+    clockFreq = CLOCK_FREQ,
+    burstLength = 4
+  )
+
   val PLAYER_DATA_WIDTH = 10
 
   val SCREEN_WIDTH = 320
@@ -207,7 +213,4 @@ object Config {
     vRetrace = 2,
     vBackPorch = 19
   )
-
-  /** SDRAM configuration */
-  val sdramConfig = SDRAMConfig(clockFreq = CLOCK_FREQ, burstLength = 4)
 }
