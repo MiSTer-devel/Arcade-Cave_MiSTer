@@ -58,7 +58,8 @@ object Config {
 
   val SCREEN_WIDTH = 320
   val SCREEN_HEIGHT = 240
-  val SCREEN_BITS_PER_CHANNEL = 5
+  /** The number of bits per color channel */
+  val BITS_PER_CHANNEL = 5
 
   val SPRITE_CODE_WIDTH = 18
   val SPRITE_POS_WIDTH = 10

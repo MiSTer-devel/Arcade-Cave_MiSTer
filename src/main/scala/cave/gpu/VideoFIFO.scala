@@ -63,7 +63,7 @@ class VideoFIFO extends Module {
     /** Pixel data port */
     val pixelData = Flipped(DecoupledIO(Bits(Config.ddrConfig.dataWidth.W)))
     /** RGB output */
-    val rgb = Output(new RGB(Config.SCREEN_BITS_PER_CHANNEL))
+    val rgb = Output(new RGB(Config.BITS_PER_CHANNEL))
   })
 
   class VideoFIFOBlackBox extends BlackBox {
@@ -102,7 +102,7 @@ class VideoFIFO extends Module {
   }
 
   // Set RGB output
-  io.rgb := videoFifo.io.q.asTypeOf(new RGB(Config.SCREEN_BITS_PER_CHANNEL))
+  io.rgb := videoFifo.io.q.asTypeOf(new RGB(Config.BITS_PER_CHANNEL))
 
   // Fetch pixel data when the FIFO is almost empty
   io.pixelData.ready := drainReg && videoFifo.io.wrusedw < FETCH_THRESHOLD.U
