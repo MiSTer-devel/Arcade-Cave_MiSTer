@@ -240,10 +240,12 @@ object GPU {
   /**
    * Decodes the palette data into an RGB value.
    *
+   * Colors are 15-bit GBR values (i.e. GGGGGBBBBBRRRRR).
+   *
    * @param data The palette data.
    */
   def decodePaletteData(data: Bits): RGB = {
-    val words = Util.decode(data, 3, Config.SCREEN_BITS_PER_CHANNEL)
+    val words = Util.decode(data, 3, Config.BITS_PER_CHANNEL)
     RGB(words(1).asUInt, words(2).asUInt, words(0).asUInt)
   }
 }
