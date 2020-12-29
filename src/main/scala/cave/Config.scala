@@ -54,6 +54,9 @@ object Config {
 
   val SAMPLE_WIDTH = 16
 
+  /** DDR data width */
+  val DDR_DATA_WIDTH = 64
+
   val PLAYER_DATA_WIDTH = 10
 
   val SCREEN_WIDTH = 320
@@ -142,7 +145,7 @@ object Config {
   val FRAME_BUFFER_DMA_ADDR_WIDTH = log2Ceil(SCREEN_WIDTH * SCREEN_HEIGHT / FRAME_BUFFER_DMA_PIXELS)
   val FRAME_BUFFER_DMA_DATA_WIDTH = FRAME_BUFFER_BPP * FRAME_BUFFER_DMA_PIXELS
   val FRAME_BUFFER_DMA_DEPTH = SCREEN_WIDTH * SCREEN_HEIGHT / FRAME_BUFFER_DMA_PIXELS
-  val FRAME_BUFFER_DMA_NUM_WORDS = SCREEN_WIDTH * SCREEN_HEIGHT * DDR_FRAME_BUFFER_BPP / 64
+  val FRAME_BUFFER_DMA_NUM_WORDS = SCREEN_WIDTH * SCREEN_HEIGHT * DDR_FRAME_BUFFER_BPP / DDR_DATA_WIDTH
   val FRAME_BUFFER_DMA_BURST_LENGTH = 128
 
   /** The width of a priority value */
@@ -200,7 +203,7 @@ object Config {
   )
 
   /** DDR configuration */
-  val ddrConfig = DDRConfig()
+  val ddrConfig = DDRConfig(dataWidth = DDR_DATA_WIDTH)
 
   /** SDRAM configuration */
   val sdramConfig = SDRAMConfig(clockFreq = CLOCK_FREQ, burstLength = 4)
