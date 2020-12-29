@@ -72,7 +72,7 @@ class Main extends Module {
     /** Download port */
     val download = DownloadIO()
     /** RGB output */
-    val rgb = Output(new RGB(Config.BITS_PER_CHANNEL))
+    val rgb = Output(new RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL))
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** DDR port */

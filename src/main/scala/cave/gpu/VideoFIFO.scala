@@ -63,7 +63,7 @@ class VideoFIFO extends Module {
     /** Pixel data port */
     val pixelData = Flipped(DecoupledIO(Bits(Config.ddrConfig.dataWidth.W)))
     /** RGB output */
-    val rgb = Output(new RGB(Config.BITS_PER_CHANNEL))
+    val rgb = Output(new RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL))
   })
 
   class VideoFIFOBlackBox extends BlackBox {
@@ -74,7 +74,7 @@ class VideoFIFO extends Module {
       val rdreq = Input(Bool())
       val wrclk = Input(Clock())
       val wrreq = Input(Bool())
-      val q = Output(Bits(16.W))
+      val q = Output(Bits(32.W))
       val rdempty = Output(Bool())
       val wrusedw = Output(UInt(8.W))
     })
@@ -101,8 +101,12 @@ class VideoFIFO extends Module {
     when(Util.rising(io.video.vBlank) && !videoFifo.io.rdempty && drainReg) { fillReg := true.B }
   }
 
-  // Set RGB output
-  io.rgb := videoFifo.io.q.asTypeOf(new RGB(Config.BITS_PER_CHANNEL))
+  // Decode a 32-bit pixel (ignoring the first 8 bits)
+  io.rgb := {
+    val bits = videoFifo.io.q(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL * 3 - 1, 0)
+    val channels = Util.decode(bits, 3, Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL)
+    RGB(channels)
+  }
 
   // Fetch pixel data when the FIFO is almost empty
   io.pixelData.ready := drainReg && videoFifo.io.wrusedw < FETCH_THRESHOLD.U

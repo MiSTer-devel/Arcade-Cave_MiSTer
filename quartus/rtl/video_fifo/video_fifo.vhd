@@ -48,7 +48,7 @@ ENTITY video_fifo IS
 		rdreq		: IN STD_LOGIC ;
 		wrclk		: IN STD_LOGIC ;
 		wrreq		: IN STD_LOGIC ;
-		q		: OUT STD_LOGIC_VECTOR (15 DOWNTO 0);
+		q		: OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
 		rdempty		: OUT STD_LOGIC ;
 		wrusedw		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
 	);
@@ -57,7 +57,7 @@ END video_fifo;
 
 ARCHITECTURE SYN OF video_fifo IS
 
-	SIGNAL sub_wire0	: STD_LOGIC_VECTOR (15 DOWNTO 0);
+	SIGNAL sub_wire0	: STD_LOGIC_VECTOR (31 DOWNTO 0);
 	SIGNAL sub_wire1	: STD_LOGIC ;
 	SIGNAL sub_wire2	: STD_LOGIC_VECTOR (7 DOWNTO 0);
 
@@ -88,14 +88,14 @@ ARCHITECTURE SYN OF video_fifo IS
 			rdreq	: IN STD_LOGIC ;
 			wrclk	: IN STD_LOGIC ;
 			wrreq	: IN STD_LOGIC ;
-			q	: OUT STD_LOGIC_VECTOR (15 DOWNTO 0);
+			q	: OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
 			rdempty	: OUT STD_LOGIC ;
 			wrusedw	: OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
 	);
 	END COMPONENT;
 
 BEGIN
-	q    <= sub_wire0(15 DOWNTO 0);
+	q    <= sub_wire0(31 DOWNTO 0);
 	rdempty    <= sub_wire1;
 	wrusedw    <= sub_wire2(7 DOWNTO 0);
 
@@ -107,8 +107,8 @@ BEGIN
 		lpm_type => "dcfifo_mixed_widths",
 		lpm_width => 64,
 		lpm_widthu => 8,
-		lpm_widthu_r => 10,
-		lpm_width_r => 16,
+		lpm_widthu_r => 9,
+		lpm_width_r => 32,
 		overflow_checking => "ON",
 		rdsync_delaypipe => 6,
 		read_aclr_synch => "OFF",

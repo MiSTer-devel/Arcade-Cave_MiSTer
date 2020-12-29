@@ -156,8 +156,10 @@ object Config {
   val VIDEO_REGS_COUNT = 8
   val VIDEO_REGS_GPU_DATA_WIDTH = 128
 
+  /** The number of bits per color channel for the DDR frame buffer */
+  val DDR_FRAME_BUFFER_BITS_PER_CHANNEL = 8
   /** The number of bits per pixel in the DDR frame buffer */
-  val DDR_FRAME_BUFFER_BPP = 16
+  val DDR_FRAME_BUFFER_BPP = 32
 
   /** The number of bits per pixel in the frame buffer */
   val FRAME_BUFFER_BPP = 15
@@ -173,7 +175,7 @@ object Config {
   val FRAME_BUFFER_DATA_WIDTH = FRAME_BUFFER_BPP
 
   /** The number of pixels transferred per word during frame buffer DMA */
-  val FRAME_BUFFER_DMA_PIXELS = 4
+  val FRAME_BUFFER_DMA_PIXELS = 2
   /** The depth of the frame buffer DMA in words */
   val FRAME_BUFFER_DMA_DEPTH = SCREEN_WIDTH * SCREEN_HEIGHT / FRAME_BUFFER_DMA_PIXELS
   /** The width of the frame buffer DMA address bus */

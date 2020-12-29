@@ -89,8 +89,16 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
     addr.U + offset
   }
 
-  // Pad pixel data into a frame buffer word (64 bits)
-  val pixelData = Util.padWords(io.frameBufferDMA.dout, Config.FRAME_BUFFER_DMA_PIXELS, Config.FRAME_BUFFER_BPP, Config.ddrConfig.dataWidth / Config.FRAME_BUFFER_DMA_PIXELS)
+  // Convert pixel data from 15 BPP to 32 BPP and pack them into a 64-bit word
+  val pixelData =
+    Util
+      .decode(io.frameBufferDMA.dout, 6, Config.BITS_PER_CHANNEL)
+      .map { c => c(4, 0) ## c(4, 2) }
+      .grouped(3)
+      .toList
+      .map(0.U(8.W) ## Cat(_))
+      .reverse
+      .reduce(_ ## _)
 
   // Toggle the busy register
   when(io.start) { busyReg := true.B }.elsewhen(burstCounterDone) { busyReg := false.B }

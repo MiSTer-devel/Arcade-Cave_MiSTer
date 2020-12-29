@@ -214,7 +214,7 @@ assign debug = status[7];
 
 wire [8:0] hc;
 wire [8:0] vc;
-wire [4:0] r, g, b;
+wire [7:0] r, g, b;
 wire hsync, vsync;
 wire hblank, vblank;
 wire video_enable;
@@ -222,9 +222,9 @@ wire video_enable;
 assign VGA_DE = video_enable;
 assign VGA_HS = hsync;
 assign VGA_VS = vsync;
-assign VGA_R  = {r[4:0], r[4:2]};
-assign VGA_G  = {g[4:0], g[4:2]};
-assign VGA_B  = {b[4:0], b[4:2]};
+assign VGA_R  = r;
+assign VGA_G  = g;
+assign VGA_B  = b;
 
 assign CE_PIXEL = '1;
 
