@@ -146,7 +146,7 @@ localparam CONF_STR = {
 // CLOCKS
 ////////////////////////////////////////////////////////////////////////////////
 
-wire clk_sys, clk_68k;
+wire clk_sys, clk_cpu;
 wire locked;
 
 pll pll (
@@ -155,7 +155,7 @@ pll pll (
     .outclk_0(clk_sys),
     .outclk_1(SDRAM_CLK),
     .outclk_2(CLK_VIDEO),
-    .outclk_3(clk_68k),
+    .outclk_3(clk_cpu),
     .locked(locked)
 );
 
@@ -380,16 +380,38 @@ wire player_2_service  = key_0     | joystick_1[10];
 // CAVE
 ////////////////////////////////////////////////////////////////////////////////
 
-wire core_sreset = RESET | status[0] | buttons[1] | ~locked;
+wire reset_sys = RESET | ~locked;
+wire reset_video = RESET | ~locked;
+wire reset_cpu = RESET | status[0] | buttons[1] | ~locked;
 
-logic sreset_68k_0;
-logic sreset_68k_1;
-logic sreset_68k;
+logic reset_sys_0;
+logic reset_sys_1;
+logic reset_sys_2;
 
-always_ff @(posedge clk_68k) begin
-    sreset_68k_0 <= core_sreset;
-    sreset_68k_1 <= sreset_68k_0;
-    sreset_68k   <= sreset_68k_1;
+always_ff @(posedge clk_sys) begin
+    reset_sys_0 <= reset_sys;
+    reset_sys_1 <= reset_sys_0;
+    reset_sys_2 <= reset_sys_1;
+end
+
+logic reset_video_0;
+logic reset_video_1;
+logic reset_video_2;
+
+always_ff @(posedge CLK_VIDEO) begin
+    reset_video_0 <= reset_video;
+    reset_video_1 <= reset_video_0;
+    reset_video_2 <= reset_video_1;
+end
+
+logic reset_cpu_0;
+logic reset_cpu_1;
+logic reset_cpu_2;
+
+always_ff @(posedge clk_cpu) begin
+    reset_cpu_0 <= reset_cpu;
+    reset_cpu_1 <= reset_cpu_0;
+    reset_cpu_2 <= reset_cpu_1;
 end
 
 wire        sdram_oe;
@@ -402,12 +424,13 @@ assign sdram_dout = SDRAM_DQ;
 Main main (
     // Fast clock domain
     .clock(clk_sys),
-    .reset(RESET),
+    .reset(reset_sys_2),
     // Video clock domain
     .io_videoClock(CLK_VIDEO),
+    .io_videoReset(reset_video_2),
     // CPU clock domain
-    .io_cpuClock(clk_68k),
-    .io_cpuReset(sreset_68k),
+    .io_cpuClock(clk_cpu),
+    .io_cpuReset(reset_cpu_2),
     // Player input signals
     .io_player_player1({player_1_service, player_1_coin, player_1_start, player_1_button_3, player_1_button_2, player_1_button_1, player_1_right, player_1_left, player_1_down, player_1_up}),
     .io_player_player2({player_2_service, layer_2_coin, player_2_start, player_2_button_3, player_2_button_2, player_2_button_1, player_2_right, player_2_left, player_2_down, player_2_up}),
