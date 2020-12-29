@@ -131,21 +131,33 @@ object Config {
   val VIDEO_REGS_COUNT = 8
   val VIDEO_REGS_GPU_DATA_WIDTH = 128
 
+  /** The number of bits per pixel in the DDR frame buffer */
   val DDR_FRAME_BUFFER_BPP = 16
 
+  /** The number of bits per pixel in the frame buffer */
   val FRAME_BUFFER_BPP = 15
+  /** The width of the frame buffer X address */
   val FRAME_BUFFER_ADDR_WIDTH_X = log2Ceil(SCREEN_WIDTH)
+  /** The width of the frame buffer Y address */
   val FRAME_BUFFER_ADDR_WIDTH_Y = log2Ceil(SCREEN_HEIGHT)
+  /** The width of the frame buffer address bus */
   val FRAME_BUFFER_ADDR_WIDTH = FRAME_BUFFER_ADDR_WIDTH_X + FRAME_BUFFER_ADDR_WIDTH_Y
+  /** The width of the frame buffer data bus */
   val FRAME_BUFFER_DATA_WIDTH = FRAME_BUFFER_BPP
+  /** The depth of the frame buffer in words */
   val FRAME_BUFFER_DEPTH = SCREEN_WIDTH * SCREEN_HEIGHT
 
-  /** The number of pixels transferred per word during DMA */
+  /** The number of pixels transferred per word during frame buffer DMA */
   val FRAME_BUFFER_DMA_PIXELS = 4
+  /** The width of the frame buffer DMA address bus */
   val FRAME_BUFFER_DMA_ADDR_WIDTH = log2Ceil(SCREEN_WIDTH * SCREEN_HEIGHT / FRAME_BUFFER_DMA_PIXELS)
+  /** The width of the frame buffer DMA data bus */
   val FRAME_BUFFER_DMA_DATA_WIDTH = FRAME_BUFFER_BPP * FRAME_BUFFER_DMA_PIXELS
+  /** The depth of the frame buffer DMA in words */
   val FRAME_BUFFER_DMA_DEPTH = SCREEN_WIDTH * SCREEN_HEIGHT / FRAME_BUFFER_DMA_PIXELS
+  /** The number of words to transfer during frame buffer DMA */
   val FRAME_BUFFER_DMA_NUM_WORDS = SCREEN_WIDTH * SCREEN_HEIGHT * DDR_FRAME_BUFFER_BPP / DDR_DATA_WIDTH
+  /** The length of a burst during a frame buffer DMA transfer */
   val FRAME_BUFFER_DMA_BURST_LENGTH = 128
 
   /** The width of a priority value */
