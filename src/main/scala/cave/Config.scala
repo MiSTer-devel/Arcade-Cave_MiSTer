@@ -55,8 +55,8 @@ object Config {
     sampleFreq = 88200
   )
 
-  /** DDR data width */
-  val DDR_DATA_WIDTH = 64
+  /** DDR configuration */
+  val ddrConfig = DDRConfig()
 
   val PLAYER_DATA_WIDTH = 10
 
@@ -157,7 +157,7 @@ object Config {
   /** The depth of the frame buffer DMA in words */
   val FRAME_BUFFER_DMA_DEPTH = SCREEN_WIDTH * SCREEN_HEIGHT / FRAME_BUFFER_DMA_PIXELS
   /** The number of words to transfer during frame buffer DMA */
-  val FRAME_BUFFER_DMA_NUM_WORDS = SCREEN_WIDTH * SCREEN_HEIGHT * DDR_FRAME_BUFFER_BPP / DDR_DATA_WIDTH
+  val FRAME_BUFFER_DMA_NUM_WORDS = SCREEN_WIDTH * SCREEN_HEIGHT * DDR_FRAME_BUFFER_BPP / ddrConfig.dataWidth
   /** The length of a burst during a frame buffer DMA transfer */
   val FRAME_BUFFER_DMA_BURST_LENGTH = 128
 
@@ -207,9 +207,6 @@ object Config {
     vRetrace = 2,
     vBackPorch = 19
   )
-
-  /** DDR configuration */
-  val ddrConfig = DDRConfig(dataWidth = DDR_DATA_WIDTH)
 
   /** SDRAM configuration */
   val sdramConfig = SDRAMConfig(clockFreq = CLOCK_FREQ, burstLength = 4)
