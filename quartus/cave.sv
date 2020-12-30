@@ -48,6 +48,7 @@ module emu (
   output        VGA_DE,    // = ~(VBlank | HBlank)
   output        VGA_F1,
   output [1:0]  VGA_SL,
+  output        VGA_SCALER, // Force VGA scaler
 
   // Use framebuffer from DDRAM (USE_FB=1 in qsf)
   // FB_FORMAT:
@@ -56,7 +57,6 @@ module emu (
   //    [4]   : 0=RGB  1=BGR (for 16/24/32 modes)
   //
   // FB_STRIDE either 0 (rounded to 256 bytes) or multiple of 16 bytes.
-
   //output        FB_EN,
   //output  [4:0] FB_FORMAT,
   //output [11:0] FB_WIDTH,
@@ -65,6 +65,7 @@ module emu (
   //output [13:0] FB_STRIDE,
   //input         FB_VBL,
   //input         FB_LL,
+  //output        FB_FORCE_BLANK,
 
   output        LED_USER,  // 1 - ON, 0 - OFF.
 
@@ -73,6 +74,11 @@ module emu (
   // hint: supply 2'b00 to let the system control the LED.
   output  [1:0] LED_POWER,
   output  [1:0] LED_DISK,
+
+  // I/O board button press simulation (active high)
+  // b[1]: user button
+  // b[0]: osd button
+  output  [1:0] BUTTONS,
 
   input         CLK_AUDIO, // 24.576 MHz
   output [15:0] AUDIO_L,
@@ -122,6 +128,7 @@ assign AUDIO_MIX = 0;
 
 assign LED_DISK  = 0;
 assign LED_POWER = 0;
+assign BUTTONS = 0;
 
 assign VIDEO_ARX = status[1] ? 8'd16 : status[2] ? 8'd3 : 8'd4;
 assign VIDEO_ARY = status[1] ? 8'd9  : status[2] ? 8'd4 : 8'd3;
