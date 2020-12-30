@@ -166,6 +166,8 @@ pll pll (
     .locked(locked)
 );
 
+assign DDRAM_CLK = clk_sys;
+
 ////////////////////////////////////////////////////////////////////////////////
 // HPS IO
 ////////////////////////////////////////////////////////////////////////////////
@@ -259,46 +261,10 @@ assign CE_PIXEL = '1;
 // DDRAM
 ////////////////////////////////////////////////////////////////////////////////
 
-logic [7:0]  ddr_burstcnt;
 logic [28:0] ddr_addr;
-logic        ddr_rd;
-logic [63:0] ddr_din;
-logic [7:0]  ddr_be;
-logic        ddr_we;
-
-assign DDRAM_CLK = clk_sys;
-assign DDRAM_BURSTCNT = ddr_burstcnt;
 assign DDRAM_ADDR = ddr_addr;
-assign DDRAM_RD = ddr_rd;
-assign DDRAM_DIN = ddr_din;
-assign DDRAM_BE = ddr_be;
-assign DDRAM_WE = ddr_we & ~DDRAM_BUSY;
-
 logic [31:0] ddr3_address_arbiter;
-logic        ddr3_waitrequest_arbiter;
-logic [7:0]  ddr3_burstcount_arbiter;
-logic        ddr3_read_arbiter;
-logic        ddr3_read_data_valid_arbiter;
-logic [63:0] ddr3_read_data_arbiter;
-logic        ddr3_write_arbiter;
-logic [63:0] ddr3_write_data_arbiter;
-logic [7:0]  ddr3_write_be_arbiter;
-
-// HPS / FPGA access to DDR3 multiplexing
-assign ddr_burstcnt = ddr3_burstcount_arbiter;
-assign ddr_addr     = {4'b0011, ddr3_address_arbiter[27:3]};
-assign ddr_rd       = (RESET) ? 1'b0 : ddr3_read_arbiter;
-assign ddr_din      = ddr3_write_data_arbiter;
-assign ddr_be       = ddr3_write_be_arbiter;
-assign ddr_we       = (RESET) ? 1'b0 : ddr3_write_arbiter;
-
-logic ioctl_wait_arbiter;
-
-assign ioctl_wait = (ioctl_download) ? ioctl_wait_arbiter : '0;
-
-assign ddr3_waitrequest_arbiter     = DDRAM_BUSY;
-assign ddr3_read_data_arbiter       = DDRAM_DOUT;
-assign ddr3_read_data_valid_arbiter = DDRAM_DOUT_READY;
+assign ddr_addr = {4'b0011, ddr3_address_arbiter[27:3]};
 
 ////////////////////////////////////////////////////////////////////////////////
 // CONTROLS
@@ -451,15 +417,15 @@ Main main (
     .io_video_vBlank(vblank),
     .io_video_enable(video_enable),
     // DDR
-    .io_ddr_rd(ddr3_read_arbiter),
-    .io_ddr_wr(ddr3_write_arbiter),
+    .io_ddr_rd(DDRAM_RD),
+    .io_ddr_wr(DDRAM_WE),
     .io_ddr_addr(ddr3_address_arbiter),
-    .io_ddr_mask(ddr3_write_be_arbiter),
-    .io_ddr_din(ddr3_write_data_arbiter),
-    .io_ddr_dout(ddr3_read_data_arbiter),
-    .io_ddr_waitReq(ddr3_waitrequest_arbiter),
-    .io_ddr_valid(ddr3_read_data_valid_arbiter),
-    .io_ddr_burstLength(ddr3_burstcount_arbiter),
+    .io_ddr_mask(DDRAM_BE),
+    .io_ddr_din(DDRAM_DIN),
+    .io_ddr_dout(DDRAM_DOUT),
+    .io_ddr_waitReq(DDRAM_BUSY),
+    .io_ddr_valid(DDRAM_DOUT_READY),
+    .io_ddr_burstLength(DDRAM_BURSTCNT),
     // SDRAM
     .io_sdram_cke(SDRAM_CKE),
     .io_sdram_cs_n(SDRAM_nCS),
@@ -474,7 +440,7 @@ Main main (
     // Download
     .io_download_cs(ioctl_download),
     .io_download_wr(ioctl_wr),
-    .io_download_waitReq(ioctl_wait_arbiter),
+    .io_download_waitReq(ioctl_wait),
     .io_download_addr(ioctl_addr),
     .io_download_dout(ioctl_dout),
     // RGB output
