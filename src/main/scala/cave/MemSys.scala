@@ -80,7 +80,8 @@ class MemSys extends Module {
     outAddrWidth = Config.ddrConfig.addrWidth,
     outDataWidth = Config.ddrConfig.dataWidth,
     lineWidth = 1,
-    depth = 1
+    depth = 1,
+    offset = Config.DDR_DOWNLOAD_OFFSET
   )))
   ddrDownloadCache.io.in <> io.download.asAsyncReadWriteMemIO
 
@@ -131,6 +132,7 @@ class MemSys extends Module {
   ddrArbiter.io.in(1).asBurstReadMemIO <> io.videoDMA // top priority required for video FIFO
   ddrArbiter.io.in(2).asBurstWriteMemIO <> io.frameBufferDMA
   ddrArbiter.io.in(3).asBurstReadMemIO <> io.tileRom
+  ddrArbiter.io.in(3).addr := io.tileRom.addr + Config.DDR_DOWNLOAD_OFFSET.U
   ddrArbiter.io.out <> io.ddr
 
   // SDRAM arbiter

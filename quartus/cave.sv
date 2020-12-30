@@ -258,15 +258,6 @@ assign CE_PIXEL = '1;
 /* ); */
 
 ////////////////////////////////////////////////////////////////////////////////
-// DDRAM
-////////////////////////////////////////////////////////////////////////////////
-
-logic [28:0] ddr_addr;
-assign DDRAM_ADDR = ddr_addr;
-logic [31:0] ddr3_address_arbiter;
-assign ddr_addr = {4'b0011, ddr3_address_arbiter[27:3]};
-
-////////////////////////////////////////////////////////////////////////////////
 // CONTROLS
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -387,10 +378,12 @@ always_ff @(posedge clk_cpu) begin
     reset_cpu_2 <= reset_cpu_1;
 end
 
+wire [31:0] ddr_addr;
 wire        sdram_oe;
 wire [15:0] sdram_din;
 wire [15:0] sdram_dout;
 
+assign DDRAM_ADDR = ddr_addr[31:3];
 assign SDRAM_DQ = sdram_oe ? sdram_din : 16'bZ;
 assign sdram_dout = SDRAM_DQ;
 
@@ -419,7 +412,7 @@ Main main (
     // DDR
     .io_ddr_rd(DDRAM_RD),
     .io_ddr_wr(DDRAM_WE),
-    .io_ddr_addr(ddr3_address_arbiter),
+    .io_ddr_addr(ddr_addr),
     .io_ddr_mask(DDRAM_BE),
     .io_ddr_din(DDRAM_DIN),
     .io_ddr_dout(DDRAM_DOUT),
