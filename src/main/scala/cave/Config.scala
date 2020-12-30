@@ -49,16 +49,39 @@ object Config {
   /** CPU clock frequency (Hz) */
   val CPU_CLOCK_FREQ = 32000000
 
-  /** Sample frequency (Hz) */
-  val SAMPLE_FREQ = 88200
+  /** YMZ280B configuration */
+  val ymzConfig = YMZ280BConfig(
+    clockFreq = CPU_CLOCK_FREQ,
+    sampleFreq = 88200
+  )
 
-  val SAMPLE_WIDTH = 16
+  /** DDR configuration */
+  val ddrConfig = DDRConfig()
+
+  /** SDRAM configuration */
+  val sdramConfig = SDRAMConfig(
+    clockFreq = CLOCK_FREQ,
+    burstLength = 4
+  )
+
+  /** The screen width in pixels */
+  val SCREEN_WIDTH = 320
+  /** The screen height in pixels */
+  val SCREEN_HEIGHT = 240
+
+  /** Video timing configuration */
+  val videoTimingConfig = VideoTimingConfig(
+    hDisplay = SCREEN_WIDTH,
+    hFrontPorch = 5,
+    hRetrace = 23,
+    hBackPorch = 34,
+    vDisplay = SCREEN_HEIGHT,
+    vFrontPorch = 12,
+    vRetrace = 2,
+    vBackPorch = 19
+  )
 
   val PLAYER_DATA_WIDTH = 10
-
-  val SCREEN_WIDTH = 320
-  val SCREEN_HEIGHT = 240
-  val SCREEN_BITS_PER_CHANNEL = 5
 
   val SPRITE_CODE_WIDTH = 18
   val SPRITE_POS_WIDTH = 10
@@ -116,9 +139,15 @@ object Config {
   val PALETTE_RAM_GPU_ADDR_WIDTH = 15
   val PALETTE_RAM_GPU_DATA_WIDTH = 16
 
+  /** The number of bits per color channel */
+  val BITS_PER_CHANNEL = 5
+  /** The number of palettes */
   val NUM_PALETTES = 128
+  /** The number of colors per palette */
   val NUM_COLORS = 256
-  val PALETTE_ENTRY_PALLETE_WIDTH = log2Ceil(NUM_PALETTES)
+  /** The width of a palette entry palette index  */
+  val PALETTE_ENTRY_PALETTE_WIDTH = log2Ceil(NUM_PALETTES)
+  /** The width of a palette entry color index  */
   val PALETTE_ENTRY_COLOR_WIDTH = log2Ceil(NUM_COLORS)
 
   val LAYER_REGS_COUNT = 3
@@ -127,16 +156,35 @@ object Config {
   val VIDEO_REGS_COUNT = 8
   val VIDEO_REGS_GPU_DATA_WIDTH = 128
 
-  val FRAME_BUFFER_BPP = 16
-  val FRAME_BUFFER_ADDR_WIDTH_X = log2Ceil(SCREEN_WIDTH)
-  val FRAME_BUFFER_ADDR_WIDTH_Y = log2Ceil(SCREEN_HEIGHT)
-  val FRAME_BUFFER_ADDR_WIDTH = FRAME_BUFFER_ADDR_WIDTH_X + FRAME_BUFFER_ADDR_WIDTH_Y
-  val FRAME_BUFFER_DATA_WIDTH = 15
+  /** The number of bits per color channel for the DDR frame buffer */
+  val DDR_FRAME_BUFFER_BITS_PER_CHANNEL = 8
+  /** The number of bits per pixel in the DDR frame buffer */
+  val DDR_FRAME_BUFFER_BPP = 32
+
+  /** The number of bits per pixel in the frame buffer */
+  val FRAME_BUFFER_BPP = 15
+  /** The depth of the frame buffer in words */
   val FRAME_BUFFER_DEPTH = SCREEN_WIDTH * SCREEN_HEIGHT
-  val FRAME_BUFFER_DMA_ADDR_WIDTH = 15
-  val FRAME_BUFFER_DMA_DATA_WIDTH = 60
-  val FRAME_BUFFER_DMA_DEPTH = SCREEN_WIDTH * SCREEN_HEIGHT / 4
-  val FRAME_BUFFER_DMA_NUM_WORDS = SCREEN_WIDTH * SCREEN_HEIGHT * FRAME_BUFFER_BPP / 64
+  /** The width of the frame buffer X address */
+  val FRAME_BUFFER_ADDR_WIDTH_X = log2Ceil(SCREEN_WIDTH)
+  /** The width of the frame buffer Y address */
+  val FRAME_BUFFER_ADDR_WIDTH_Y = log2Ceil(SCREEN_HEIGHT)
+  /** The width of the frame buffer address bus */
+  val FRAME_BUFFER_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DEPTH)
+  /** The width of the frame buffer data bus */
+  val FRAME_BUFFER_DATA_WIDTH = FRAME_BUFFER_BPP
+
+  /** The number of pixels transferred per word during frame buffer DMA */
+  val FRAME_BUFFER_DMA_PIXELS = 2
+  /** The depth of the frame buffer DMA in words */
+  val FRAME_BUFFER_DMA_DEPTH = SCREEN_WIDTH * SCREEN_HEIGHT / FRAME_BUFFER_DMA_PIXELS
+  /** The width of the frame buffer DMA address bus */
+  val FRAME_BUFFER_DMA_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DMA_DEPTH)
+  /** The width of the frame buffer DMA data bus */
+  val FRAME_BUFFER_DMA_DATA_WIDTH = FRAME_BUFFER_BPP * FRAME_BUFFER_DMA_PIXELS
+  /** The number of words to transfer during frame buffer DMA */
+  val FRAME_BUFFER_DMA_NUM_WORDS = SCREEN_WIDTH * SCREEN_HEIGHT * DDR_FRAME_BUFFER_BPP / ddrConfig.dataWidth
+  /** The length of a burst during a frame buffer DMA transfer */
   val FRAME_BUFFER_DMA_BURST_LENGTH = 128
 
   /** The width of a priority value */
@@ -173,29 +221,4 @@ object Config {
   val LARGE_TILE_NUM_ROWS = SCREEN_HEIGHT / LARGE_TILE_SIZE + 1
   /** The number of large tiles that fit on the screen */
   val LARGE_TILE_NUM_TILES = LARGE_TILE_NUM_COLS * LARGE_TILE_NUM_ROWS
-
-  /** Video timing configuration */
-  val videoTimingConfig = VideoTimingConfig(
-    hDisplay = 320,
-    hFrontPorch = 5,
-    hRetrace = 23,
-    hBackPorch = 34,
-    vDisplay = 240,
-    vFrontPorch = 12,
-    vRetrace = 2,
-    vBackPorch = 19
-  )
-
-  /** YMZ280B configuration */
-  val ymzConfig = YMZ280BConfig(
-    clockFreq = CPU_CLOCK_FREQ,
-    sampleFreq = SAMPLE_FREQ,
-    sampleWidth = SAMPLE_WIDTH
-  )
-
-  /** DDR configuration */
-  val ddrConfig = DDRConfig()
-
-  /** SDRAM configuration */
-  val sdramConfig = SDRAMConfig(clockFreq = CLOCK_FREQ, burstLength = 4)
 }

@@ -80,13 +80,14 @@ object RGB {
    *
    * @param value The value of the red, green, and blue channels.
    */
-  def apply(value: UInt): RGB = {
-    val rgb = Wire(new RGB(value.getWidth))
-    rgb.r := value
-    rgb.g := value
-    rgb.b := value
-    rgb
-  }
+  def apply(value: UInt): RGB = RGB(value, value, value)
+
+  /**
+   * Constructs a RGB color from a list.
+   *
+   * @param value An list containing the values of the red, green, and blue channels.
+   */
+  def apply(value: Seq[Bits]): RGB = RGB(value(0).asUInt, value(1).asUInt, value(2).asUInt)
 
   /**
    * Constructs a RGB color from red, green, and blue values.
