@@ -69,7 +69,7 @@ class SpriteBlitter extends Module {
 
   // Registers
   val spriteInfoReg = RegEnable(io.spriteInfo.bits, updateSpriteInfo)
-  val paletteReg = Reg(new PaletteEntry)
+  val paletteEntryReg = Reg(new PaletteEntry)
 
   // Tile PISO
   val tilePiso = Module(new PISO(Config.LARGE_TILE_SIZE, Config.LARGE_TILE_BPP))
@@ -118,7 +118,7 @@ class SpriteBlitter extends Module {
   updateSpriteInfo := readFifo && ((x === 0.U && y === 0.U) || (xWrap && yWrap))
 
   // The sprites use the first 64 palettes, and use 16 colors (out of 256 possible in a palette)
-  paletteReg := PaletteEntry(spriteInfoReg.colorCode, tilePiso.io.dout)
+  paletteEntryReg := PaletteEntry(spriteInfoReg.colorCode, tilePiso.io.dout)
 
   // Set valid flag
   val valid = ShiftRegister(!pisoEmpty, 2, false.B, true.B)
@@ -143,16 +143,15 @@ class SpriteBlitter extends Module {
   //
   // The transparency flag must be delayed by one cycle, as for the colors (since the colors come
   // from the palette RAM they arrive one cycle later).
-  val frameBufferWrite = valid && hasPriority && !RegNext(paletteReg.isTransparent) && visible
+  val frameBufferWrite = valid && hasPriority && !RegNext(paletteEntryReg.isTransparent) && visible
   val frameBufferAddr = stage2Pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0) ##
                         stage2Pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
-  val frameBufferData = GPU.decodePaletteData(io.paletteRam.dout)
 
   // Outputs
   io.spriteInfo.ready := updateSpriteInfo
   io.pixelData.ready := readFifo
   io.paletteRam.rd := true.B
-  io.paletteRam.addr := paletteReg.asUInt
+  io.paletteRam.addr := paletteEntryReg.asUInt
   io.priority.read.rd := true.B
   io.priority.read.addr := priorityReadAddr
   io.priority.write.wr := frameBufferWrite
@@ -162,7 +161,7 @@ class SpriteBlitter extends Module {
   io.frameBuffer.wr := frameBufferWrite
   io.frameBuffer.addr := frameBufferAddr
   io.frameBuffer.mask := 0.U
-  io.frameBuffer.din := frameBufferData.asUInt
+  io.frameBuffer.din := io.paletteRam.dout
   io.done := done
 }
 
