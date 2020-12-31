@@ -144,7 +144,7 @@ assign VIDEO_ARY = status[1] ? 8'd9  : status[2] ? 8'd4 : 8'd3;
 `include "build_id.v"
 localparam CONF_STR = {
     "cave;;",
-    "O1,Aspect Ratio,Original,Wide;",
+    "O1,Aspect Ratio,Original,Full Screen;",
     "O2,Orientation,Horz,Vert;",
     "O3,Flip Screen,Off,On;",
     "O46,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
@@ -161,20 +161,21 @@ localparam CONF_STR = {
 // CLOCKS
 ////////////////////////////////////////////////////////////////////////////////
 
-wire clk_sys, clk_cpu;
+wire clk_sys, clk_sdram, clk_video, clk_cpu;
 wire locked;
 
 pll pll (
     .refclk(CLK_50M),
     .rst(RESET),
     .outclk_0(clk_sys),
-    .outclk_1(SDRAM_CLK),
-    .outclk_2(CLK_VIDEO),
+    .outclk_1(clk_sdram),
+    .outclk_2(clk_video),
     .outclk_3(clk_cpu),
     .locked(locked)
 );
 
 assign DDRAM_CLK = clk_sys;
+assign SDRAM_CLK = clk_sdram;
 
 ////////////////////////////////////////////////////////////////////////////////
 // HPS IO
@@ -229,41 +230,22 @@ assign debug = status[7];
 // VIDEO
 ////////////////////////////////////////////////////////////////////////////////
 
-wire [8:0] hc;
-wire [8:0] vc;
 wire [7:0] r, g, b;
 wire hsync, vsync;
 wire hblank, vblank;
 wire video_enable;
+wire [2:0] fx = status[6:4];
+wire [2:0] sl = fx ? fx - 1'd1 : 3'd0;
 
+assign CLK_VIDEO = clk_video;
+assign CE_PIXEL = '1;
 assign VGA_DE = video_enable;
 assign VGA_HS = hsync;
 assign VGA_VS = vsync;
 assign VGA_R  = r;
 assign VGA_G  = g;
 assign VGA_B  = b;
-
-assign CE_PIXEL = '1;
-
-/* wire no_rotate = ~status[2] & ~direct_video; */
-
-/* arcade_video #(.WIDTH(320), .DW(24)) arcade_video ( */
-/*   .*, */
-/*   .clk_video(clk_video), */
-/*   .ce_pix('1), */
-/*   .RGB_in({r, g, b}), */
-/*   .HBlank(hblank), */
-/*   .VBlank(vblank), */
-/*   .HSync(hsync), */
-/*   .VSync(vsync), */
-/*   .fx(status[6:4]) */
-/* ); */
-
-/* screen_rotate screen_rotate ( */
-/*   .*, */
-/*   .rotate_ccw(0), */
-/*   .no_rotate(no_rotate) */
-/* ); */
+assign VGA_SL = sl[1:0];
 
 ////////////////////////////////////////////////////////////////////////////////
 // CONTROLS
@@ -370,7 +352,7 @@ logic reset_video_0;
 logic reset_video_1;
 logic reset_video_2;
 
-always_ff @(posedge CLK_VIDEO) begin
+always_ff @(posedge clk_video) begin
     reset_video_0 <= reset_video;
     reset_video_1 <= reset_video_0;
     reset_video_2 <= reset_video_1;
@@ -400,7 +382,7 @@ Main main (
     .clock(clk_sys),
     .reset(reset_sys_2),
     // Video clock domain
-    .io_videoClock(CLK_VIDEO),
+    .io_videoClock(clk_video),
     .io_videoReset(reset_video_2),
     // CPU clock domain
     .io_cpuClock(clk_cpu),
@@ -412,8 +394,6 @@ Main main (
     .io_player_player2({player_2_service, layer_2_coin, player_2_start, player_2_button_3, player_2_button_2, player_2_button_1, player_2_right, player_2_left, player_2_down, player_2_up}),
     .io_player_pause(player_1_pause | player_2_pause),
     // Video signals
-    .io_video_pos_x(hc),
-    .io_video_pos_y(vc),
     .io_video_hSync(hsync),
     .io_video_vSync(vsync),
     .io_video_hBlank(hblank),
