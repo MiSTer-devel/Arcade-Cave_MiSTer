@@ -56,6 +56,13 @@ import chisel3.util._
  * memory arbiter, frame buffer) that are not part of the original arcade hardware design.
  */
 class Main extends Module {
+  /** Returns the next frame buffer index for the given indices */
+  private def nextIndex(a: UInt, b: UInt) =
+    MuxCase(1.U, Seq(
+      ((a === 0.U && b === 1.U) || (a === 1.U && b === 0.U)) -> 2.U,
+      ((a === 1.U && b === 2.U) || (a === 2.U && b === 1.U)) -> 0.U
+    ))
+
   val io = IO(new Bundle {
     /** Video clock domain */
     val videoClock = Input(Clock())
@@ -82,7 +89,8 @@ class Main extends Module {
   })
 
   // Registers
-  val swapReg = RegInit(false.B)
+  val frameBufferWriteIndex = RegInit(0.U)
+  val frameBufferReadIndex = RegInit(0.U)
 
   // The video timing module runs in the video clock domain. It doesn't use the video reset signal,
   // because the video timing signals should always be generated. Otherwise, the progress bar won't
@@ -91,13 +99,6 @@ class Main extends Module {
     Module(new VideoTiming(Config.videoTimingConfig))
   }
   videoTiming.io <> io.video
-
-  // The swap register selects which frame buffer is being used for reading/writing pixel data.
-  // While one frame buffer is being written to, the other is being read from.
-  //
-  // It is toggled on the rising edge of the vertical blank signal.
-  val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)
-  when(Util.rising(vBlank)) { swapReg := !swapReg }
 
   // DDR controller
   val ddr = Module(new DDR(Config.ddrConfig))
@@ -119,7 +120,7 @@ class Main extends Module {
     numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
-  frameBufferDMA.io.swap := !swapReg
+  frameBufferDMA.io.frameBufferIndex := frameBufferWriteIndex
   frameBufferDMA.io.ddr <> mem.io.frameBufferDMA
 
   // Video DMA
@@ -128,7 +129,7 @@ class Main extends Module {
     numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
-  videoDMA.io.swap := swapReg
+  videoDMA.io.frameBufferIndex := frameBufferReadIndex
   videoDMA.io.ddr <> mem.io.videoDMA
 
   // Video FIFO
@@ -151,6 +152,17 @@ class Main extends Module {
   cave.io.audio <> io.audio
   cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
   frameBufferDMA.io.start := cave.io.frameDone
+
+  // Update the frame buffer write index after a new frame has been written to DDR memory
+  when(Util.falling(frameBufferDMA.io.busy)) {
+    frameBufferWriteIndex := nextIndex(frameBufferWriteIndex, frameBufferReadIndex)
+  }
+
+  // Update the frame buffer read index after a vertical blank
+  val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)
+  when(Util.rising(vBlank)) {
+    frameBufferReadIndex := nextIndex(frameBufferReadIndex, frameBufferWriteIndex)
+  }
 }
 
 object Main extends App {
