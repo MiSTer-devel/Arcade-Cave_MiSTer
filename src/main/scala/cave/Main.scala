@@ -72,6 +72,8 @@ class Main extends Module {
     val cpuClock = Input(Clock())
     /** CPU reset */
     val cpuReset = Input(Bool())
+    /** Asserted when the screen is rotated */
+    val rotate = Input(Bool())
     /** Player port */
     val player = new PlayerIO
     /** Video port */
@@ -146,6 +148,7 @@ class Main extends Module {
   val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
+  cave.io.rotate := io.rotate
   cave.io.player := io.player
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }
@@ -167,7 +170,7 @@ class Main extends Module {
   }
 
   // MiSTer frame buffer
-  io.frameBuffer.enable := true.B
+  io.frameBuffer.enable := io.rotate
   io.frameBuffer.hSize := Config.SCREEN_HEIGHT.U
   io.frameBuffer.vSize := Config.SCREEN_WIDTH.U
   io.frameBuffer.format := mister.FrameBufferIO.FORMAT_32BPP.U

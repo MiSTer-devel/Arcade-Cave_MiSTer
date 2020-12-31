@@ -405,6 +405,8 @@ Main main (
     // CPU clock domain
     .io_cpuClock(clk_cpu),
     .io_cpuReset(reset_cpu_2),
+    // Rotate
+    .io_rotate(status[2]),
     // Player input signals
     .io_player_player1({player_1_service, player_1_coin, player_1_start, player_1_button_3, player_1_button_2, player_1_button_1, player_1_right, player_1_left, player_1_down, player_1_up}),
     .io_player_player2({player_2_service, layer_2_coin, player_2_start, player_2_button_3, player_2_button_2, player_2_button_1, player_2_right, player_2_left, player_2_down, player_2_up}),
