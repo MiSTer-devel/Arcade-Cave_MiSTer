@@ -79,10 +79,10 @@ class VideoDMATest extends FlatSpec with ChiselScalatestTester with Matchers wit
     }
   }
 
-  it should "offset the DDR address when swapping frames" in {
+  it should "apply the frame buffer index to the DDR address offset" in {
     test(mkDMA()) { dut =>
       dut.io.ddr.addr.expect(0x01.U)
-      dut.io.swap.poke(true.B)
+      dut.io.frameBufferIndex.poke(1.U)
       dut.io.ddr.addr.expect(0x41.U)
     }
   }

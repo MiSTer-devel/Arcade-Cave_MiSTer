@@ -44,7 +44,8 @@ import chisel3._
 import chisel3.util._
 
 /**
- * A direct memory access (DMA) controller for reading pixel data from DDR memory.
+ * A direct memory access (DMA) controller used to read pixel data from a frame buffer stored in
+ * DDR memory.
  *
  * @param numWords    The number of words to transfer.
  * @param burstLength The length of the DDR burst.
@@ -55,10 +56,10 @@ class VideoDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
   private val NUM_BURSTS = numWords / burstLength
 
   val io = IO(new Bundle {
-    /** Swap the frame buffer */
-    val swap = Input(Bool())
     /** Asserted when the DMA controller is busy */
     val busy = Output(Bool())
+    /** The index of the frame buffer to read */
+    val frameBufferIndex = Input(UInt(2.W))
     /** Pixel data port */
     val pixelData = DecoupledIO(Bits(Config.ddrConfig.dataWidth.W))
     /** DDR port */
@@ -77,7 +78,7 @@ class VideoDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
   // Calculate the DDR address
   val ddrAddr = {
     val mask = 0.U(log2Ceil(burstLength * 8).W)
-    val offset = io.swap ## burstCounter ## mask
+    val offset = io.frameBufferIndex ## burstCounter ## mask
     addr.U + offset
   }
 
