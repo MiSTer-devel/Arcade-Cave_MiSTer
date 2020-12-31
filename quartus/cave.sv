@@ -57,15 +57,23 @@ module emu (
   //    [4]   : 0=RGB  1=BGR (for 16/24/32 modes)
   //
   // FB_STRIDE either 0 (rounded to 256 bytes) or multiple of 16 bytes.
-  //output        FB_EN,
-  //output  [4:0] FB_FORMAT,
-  //output [11:0] FB_WIDTH,
-  //output [11:0] FB_HEIGHT,
-  //output [31:0] FB_BASE,
-  //output [13:0] FB_STRIDE,
-  //input         FB_VBL,
-  //input         FB_LL,
-  //output        FB_FORCE_BLANK,
+  output        FB_EN,
+  output  [4:0] FB_FORMAT,
+  output [11:0] FB_WIDTH,
+  output [11:0] FB_HEIGHT,
+  output [31:0] FB_BASE,
+  output [13:0] FB_STRIDE,
+  input         FB_VBL,
+  input         FB_LL,
+  output        FB_FORCE_BLANK,
+
+  // Palette control for 8bit modes.
+  // Ignored for other video modes.
+  output        FB_PAL_CLK,
+  output  [7:0] FB_PAL_ADDR,
+  output [23:0] FB_PAL_DOUT,
+  input  [23:0] FB_PAL_DIN,
+  output        FB_PAL_WR,
 
   output        LED_USER,  // 1 - ON, 0 - OFF.
 
@@ -397,6 +405,8 @@ Main main (
     // CPU clock domain
     .io_cpuClock(clk_cpu),
     .io_cpuReset(reset_cpu_2),
+    // Rotate
+    .io_rotate(status[2]),
     // Player input signals
     .io_player_player1({player_1_service, player_1_coin, player_1_start, player_1_button_3, player_1_button_2, player_1_button_1, player_1_right, player_1_left, player_1_down, player_1_up}),
     .io_player_player2({player_2_service, layer_2_coin, player_2_start, player_2_button_3, player_2_button_2, player_2_button_1, player_2_right, player_2_left, player_2_down, player_2_up}),
@@ -409,6 +419,16 @@ Main main (
     .io_video_hBlank(hblank),
     .io_video_vBlank(vblank),
     .io_video_enable(video_enable),
+    // Frame buffer signals
+    .io_frameBuffer_enable(FB_EN),
+    .io_frameBuffer_hSize(FB_WIDTH),
+    .io_frameBuffer_vSize(FB_HEIGHT),
+    .io_frameBuffer_format(FB_FORMAT),
+    .io_frameBuffer_base(FB_BASE),
+    .io_frameBuffer_stride(FB_STRIDE),
+    .io_frameBuffer_vBlank(FB_VBL),
+    .io_frameBuffer_lowLat(FB_LL),
+    .io_frameBuffer_forceBlank(FB_FORCE_BLANK),
     // DDR
     .io_ddr_rd(DDRAM_RD),
     .io_ddr_wr(DDRAM_WE),

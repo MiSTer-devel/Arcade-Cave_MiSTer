@@ -72,6 +72,8 @@ class Main extends Module {
     val cpuClock = Input(Clock())
     /** CPU reset */
     val cpuReset = Input(Bool())
+    /** Asserted when the screen is rotated */
+    val rotate = Input(Bool())
     /** Player port */
     val player = new PlayerIO
     /** Video port */
@@ -86,6 +88,8 @@ class Main extends Module {
     val ddr = DDRIO(Config.ddrConfig)
     /** SDRAM port */
     val sdram = SDRAMIO(Config.sdramConfig)
+    /** MiSTer frame buffer port */
+    val frameBuffer = new mister.FrameBufferIO
   })
 
   // Registers
@@ -144,6 +148,7 @@ class Main extends Module {
   val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
+  cave.io.rotate := io.rotate
   cave.io.player := io.player
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }
@@ -159,10 +164,18 @@ class Main extends Module {
   }
 
   // Update the frame buffer read index after a vertical blank
-  val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)
-  when(Util.rising(vBlank)) {
+  when(Util.rising(videoTiming.io.vBlank)) {
     frameBufferReadIndex := nextIndex(frameBufferReadIndex, frameBufferWriteIndex)
   }
+
+  // MiSTer frame buffer
+  io.frameBuffer.enable := io.rotate
+  io.frameBuffer.hSize := Config.SCREEN_HEIGHT.U
+  io.frameBuffer.vSize := Config.SCREEN_WIDTH.U
+  io.frameBuffer.format := mister.FrameBufferIO.FORMAT_32BPP.U
+  io.frameBuffer.base := Config.FRAME_BUFFER_OFFSET.U + (frameBufferReadIndex ## 0.U(19.W))
+  io.frameBuffer.stride := (Config.SCREEN_HEIGHT * 4).U
+  io.frameBuffer.forceBlank := false.B
 }
 
 object Main extends App {
