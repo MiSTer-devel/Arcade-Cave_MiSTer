@@ -53,6 +53,8 @@ class GPU extends Module {
     val generateFrame = Input(Bool())
     /** Asserted when the screen is rotated */
     val rotate = Input(Bool())
+    /** Asserted when the screen is flipped */
+    val flip = Input(Bool())
     /** Asserted when the frame is complete */
     val frameDone = Output(Bool())
     /** Video registers port */
@@ -156,7 +158,7 @@ class GPU extends Module {
     State.layer0 -> layerProcessor.io.frameBuffer,
     State.layer1 -> layerProcessor.io.frameBuffer,
     State.layer2 -> layerProcessor.io.frameBuffer
-  )).mapAddr(GPU.linearizeAddr(io.rotate)))
+  )).mapAddr(GPU.linearizeAddr(io.rotate, io.flip)))
   frameBuffer.io.portB <> io.frameBufferDMA
 
   // Decode raw pixel data from the frame buffer
@@ -224,13 +226,14 @@ object GPU {
    *
    * @param addr The address value.
    */
-  def linearizeAddr(rotate: Bool)(addr: UInt): UInt = {
+  def linearizeAddr(rotate: Bool, flip: Bool)(addr: UInt): UInt = {
     val x = addr.head(log2Up(Config.SCREEN_WIDTH))
     val y = addr.tail(log2Up(Config.SCREEN_WIDTH))
     val x_ = (Config.SCREEN_WIDTH - 1).U - x
+    val y_ = (Config.SCREEN_HEIGHT - 1).U - y
     Mux(rotate,
-      (x_ * Config.SCREEN_HEIGHT.U) + y,
-      (y * Config.SCREEN_WIDTH.U) + x
+      Mux(flip, (x * Config.SCREEN_HEIGHT.U) + y_, (x_ * Config.SCREEN_HEIGHT.U) + y),
+      Mux(flip, (y_ * Config.SCREEN_WIDTH.U) + x_, (y * Config.SCREEN_WIDTH.U) + x)
     )
   }
 

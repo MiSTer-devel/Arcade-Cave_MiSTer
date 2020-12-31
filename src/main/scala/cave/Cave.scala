@@ -56,6 +56,8 @@ class Cave extends Module {
     val cpuReset = Input(Reset())
     /** Asserted when the screen is rotated */
     val rotate = Input(Bool())
+    /** Asserted when the screen is flipped */
+    val flip = Input(Bool())
     /** Asserted when the frame is complete */
     val frameDone = Output(Bool())
     /** Player port */
@@ -82,6 +84,7 @@ class Cave extends Module {
   val gpu = Module(new GPU)
   gpu.io.generateFrame := Util.rising(ShiftRegister(generateFrame, 2))
   gpu.io.rotate := io.rotate
+  gpu.io.flip := io.flip
   io.frameDone := gpu.io.frameDone
   io.tileRom <> gpu.io.tileRom
   io.frameBufferDMA <> gpu.io.frameBufferDMA
