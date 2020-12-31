@@ -52,8 +52,8 @@ import chisel3.util._
 /**
  * The top-level module.
  *
- * This module abstracts the rest of the arcade hardware from MiSTer-specific things (e.g. memory
- * multiplexer) that are not part of the original arcade hardware design.
+ * The main module abstracts the rest of the arcade hardware from MiSTer-specific things (e.g.
+ * memory arbiter, frame buffer) that are not part of the original arcade hardware design.
  */
 class Main extends Module {
   val io = IO(new Bundle {
@@ -84,12 +84,12 @@ class Main extends Module {
   // Registers
   val swapReg = RegInit(false.B)
 
-  // Video timing
-  //
   // The video timing module runs in the video clock domain. It doesn't use the video reset signal,
   // because the video timing signals should always be generated. Otherwise, the progress bar won't
   // be visible while the core is loading.
-  val videoTiming = withClockAndReset(io.videoClock, io.videoReset) { Module(new VideoTiming(Config.videoTimingConfig)) }
+  val videoTiming = withClockAndReset(io.videoClock, io.videoReset) {
+    Module(new VideoTiming(Config.videoTimingConfig))
+  }
   videoTiming.io <> io.video
 
   // The swap register selects which frame buffer is being used for reading/writing pixel data.
@@ -113,15 +113,6 @@ class Main extends Module {
   mem.io.ddr <> ddr.io.mem
   mem.io.sdram <> sdram.io.mem
 
-  // Video DMA
-  val videoDMA = Module(new VideoDMA(
-    addr = Config.FRAME_BUFFER_OFFSET,
-    numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
-    burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
-  ))
-  videoDMA.io.swap := swapReg
-  videoDMA.io.ddr <> mem.io.videoDMA
-
   // Frame buffer DMA
   val frameBufferDMA = Module(new FrameBufferDMA(
     addr = Config.FRAME_BUFFER_OFFSET,
@@ -130,6 +121,15 @@ class Main extends Module {
   ))
   frameBufferDMA.io.swap := !swapReg
   frameBufferDMA.io.ddr <> mem.io.frameBufferDMA
+
+  // Video DMA
+  val videoDMA = Module(new VideoDMA(
+    addr = Config.FRAME_BUFFER_OFFSET,
+    numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
+    burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
+  ))
+  videoDMA.io.swap := swapReg
+  videoDMA.io.ddr <> mem.io.videoDMA
 
   // Video FIFO
   val videoFIFO = Module(new VideoFIFO)
@@ -148,8 +148,8 @@ class Main extends Module {
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }
   cave.io.tileRom <> mem.io.tileRom
   cave.io.video <> videoTiming.io
-  cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
   cave.io.audio <> io.audio
+  cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
   frameBufferDMA.io.start := cave.io.frameDone
 }
 

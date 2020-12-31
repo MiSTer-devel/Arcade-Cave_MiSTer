@@ -45,7 +45,7 @@ import chisel3._
 import chisel3.util._
 
 /**
- * The video FIFO is a queue used to buffer pixel data that is ready to be output to the display.
+ * The video FIFO is used to buffer pixel data that is ready to be output to the display.
  *
  * When the video FIFO requires pixel data, it is fetched from DDR memory using a DMA transfer.
  */
@@ -82,8 +82,8 @@ class VideoFIFO extends Module {
     override def desiredName = "video_fifo"
   }
 
-  // Pixel data may be read by the consumer once the video FIFO has been drained and filled. This
-  // register needs to be clocked in the video clock domain.
+  // Pixel data may be read by the consumer once the video FIFO has been drained and filled. These
+  // registers need to be clocked in the video clock domain.
   val drainReg = withClockAndReset(io.videoClock, io.videoReset) { RegInit(false.B) }
   val fillReg = withClockAndReset(io.videoClock, io.videoReset) { RegInit(false.B) }
 
@@ -96,6 +96,7 @@ class VideoFIFO extends Module {
   videoFifo.io.wrclk := clock
   videoFifo.io.wrreq := io.pixelData.valid
 
+  // Toggle drain/fill registers
   withClockAndReset(io.videoClock, io.videoReset) {
     when(Util.falling(io.video.vBlank) && videoFifo.io.rdempty) { drainReg := true.B }
     when(Util.rising(io.video.vBlank) && !videoFifo.io.rdempty && drainReg) { fillReg := true.B }

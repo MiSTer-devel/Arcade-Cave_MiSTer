@@ -64,12 +64,12 @@ class Cave extends Module {
     val soundRom = new SoundRomIO
     /** Tile ROM port */
     val tileRom = new TileRomIO
-    /** Frame buffer DMA port */
-    val frameBufferDMA = Flipped(new FrameBufferDMAIO)
     /** Video port */
     val video = Input(new VideoIO)
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
+    /** Frame buffer DMA port */
+    val frameBufferDMA = Flipped(new FrameBufferDMAIO)
   })
 
   // Wires
