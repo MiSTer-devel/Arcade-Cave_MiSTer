@@ -144,7 +144,7 @@ class GPU extends Module {
     dataWidthA = Config.FRAME_BUFFER_DATA_WIDTH,
     depthA = Some(Config.FRAME_BUFFER_DEPTH),
     addrWidthB = Config.FRAME_BUFFER_DMA_ADDR_WIDTH,
-    dataWidthB = Config.FRAME_BUFFER_DMA_DATA_WIDTH,
+    dataWidthB = Config.FRAME_BUFFER_DATA_WIDTH * Config.FRAME_BUFFER_DMA_PIXELS,
     depthB = Some(Config.FRAME_BUFFER_DMA_DEPTH),
     maskEnable = false
   ))
@@ -156,6 +156,11 @@ class GPU extends Module {
     State.layer2 -> layerProcessor.io.frameBuffer
   )).mapAddr(GPU.linearizeAddr))
   frameBuffer.io.portB <> io.frameBufferDMA
+
+  // Decode raw pixel data from the frame buffer
+  io.frameBufferDMA.dout := GPU
+    .decodePixels(frameBuffer.io.portB.dout, Config.FRAME_BUFFER_DMA_PIXELS)
+    .reduce(_ ## _)
 
   // Default to the previous state
   nextState := stateReg
@@ -238,14 +243,22 @@ object GPU {
   }
 
   /**
-   * Decodes the palette data into an RGB value.
+   * Decodes a list of pixels.
    *
-   * Colors are 15-bit GBR values (i.e. GGGGGBBBBBRRRRR).
-   *
-   * @param data The palette data.
+   * @param data The pixel data.
+   * @param n    The number of pixels.
+   * @return A list of 24-bit pixel values.
    */
-  def decodePaletteData(data: Bits): RGB = {
-    val words = Util.decode(data, 3, Config.BITS_PER_CHANNEL)
-    RGB(words(1).asUInt, words(2).asUInt, words(0).asUInt)
-  }
+  def decodePixels(data: Bits, n: Int): Seq[Bits] =
+    Util
+      // Decode pixel data
+      .decode(data, n * 3, Config.BITS_PER_CHANNEL)
+      // Convert channels values to 8BPP
+      .map { c => c(4, 0) ## c(4, 2) }
+      // Group channels
+      .grouped(3).toSeq
+      // Reorder channels
+      .map { case Seq(r, b, g) => Cat(r, g, b) }
+      // Swap pixels values
+      .reverse
 }

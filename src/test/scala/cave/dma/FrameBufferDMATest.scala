@@ -86,12 +86,12 @@ class FrameBufferDMATest extends FlatSpec with ChiselScalatestTester with Matche
     }
   }
 
-  it should "pad the pixel data" in {
+  it should "pack the pixel data" in {
     test(mkDMA()) { dut =>
       dut.io.start.poke(true.B)
       dut.clock.step()
-      dut.io.frameBufferDMA.dout.poke(0x22228889999C444L.U)
-      dut.io.ddr.din.expect(0x1111222233334444L.U)
+      dut.io.frameBufferDMA.dout.poke(0x112233445566L.U)
+      dut.io.ddr.din.expect(0x0011223300445566L.U)
     }
   }
 

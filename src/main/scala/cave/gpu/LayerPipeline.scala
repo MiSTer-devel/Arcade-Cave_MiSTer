@@ -77,7 +77,7 @@ class LayerPipeline extends Module {
   // Registers
   val layerInfoReg = RegEnable(io.layerInfo.bits, io.layerInfo.valid)
   val tileInfoReg = RegEnable(io.tileInfo.bits, updateTileInfo)
-  val paletteReg = Reg(new PaletteEntry)
+  val paletteEntryReg = Reg(new PaletteEntry)
 
   // Tile PISOs
   val smallTilePiso = Module(new PISO(Config.SMALL_TILE_SIZE, Config.SMALL_TILE_BPP))
@@ -159,7 +159,7 @@ class LayerPipeline extends Module {
   }
 
   // The tiles use the second 64 palettes, and use 16 colors (out of 256 possible in a palette)
-  paletteReg := PaletteEntry(
+  paletteEntryReg := PaletteEntry(
     1.U ## tileInfoReg.colorCode,
     Mux(layerInfoReg.smallTile, smallTilePiso.io.dout, largeTilePiso.io.dout)
   )
@@ -190,17 +190,16 @@ class LayerPipeline extends Module {
   //
   // The transparency flag must be delayed by one cycle, as for the colors (since the colors come
   // from the palette RAM they arrive one cycle later).
-  val frameBufferWrite = valid && hasPriority && !RegNext(paletteReg.isTransparent) && visible
+  val frameBufferWrite = valid && hasPriority && !RegNext(paletteEntryReg.isTransparent) && visible
   val frameBufferAddr = stage2Pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0) ##
                         stage2Pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
-  val frameBufferData = GPU.decodePaletteData(io.paletteRam.dout)
 
   // Outputs
   io.layerInfo.ready := true.B
   io.tileInfo.ready := updateTileInfo
   io.pixelData.ready := readFifo
   io.paletteRam.rd := true.B
-  io.paletteRam.addr := paletteReg.asUInt
+  io.paletteRam.addr := paletteEntryReg.asUInt
   io.priority.read.rd := true.B
   io.priority.read.addr := priorityReadAddr
   io.priority.write.wr := frameBufferWrite
@@ -210,7 +209,7 @@ class LayerPipeline extends Module {
   io.frameBuffer.wr := frameBufferWrite
   io.frameBuffer.addr := frameBufferAddr
   io.frameBuffer.mask := 0.U
-  io.frameBuffer.din := frameBufferData.asUInt
+  io.frameBuffer.din := io.paletteRam.dout
   io.done := done
 }
 

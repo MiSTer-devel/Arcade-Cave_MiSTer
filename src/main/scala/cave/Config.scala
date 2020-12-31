@@ -159,10 +159,10 @@ object Config {
 
   /** The number of bits per color channel for the DDR frame buffer */
   val DDR_FRAME_BUFFER_BITS_PER_CHANNEL = 8
-  /** The number of bits per pixel in the DDR frame buffer */
+  /** The bit depth of a DDR frame buffer pixel */
   val DDR_FRAME_BUFFER_BPP = 32
 
-  /** The number of bits per pixel in the frame buffer */
+  /** The bit depth of a raw frame buffer pixel */
   val FRAME_BUFFER_BPP = 15
   /** The depth of the frame buffer in words */
   val FRAME_BUFFER_DEPTH = SCREEN_WIDTH * SCREEN_HEIGHT
@@ -175,6 +175,8 @@ object Config {
   /** The width of the frame buffer data bus */
   val FRAME_BUFFER_DATA_WIDTH = FRAME_BUFFER_BPP
 
+  /** The bit depth of a frame buffer DMA pixel */
+  val FRAME_BUFFER_DMA_BPP = 24
   /** The number of pixels transferred per word during frame buffer DMA */
   val FRAME_BUFFER_DMA_PIXELS = 2
   /** The depth of the frame buffer DMA in words */
@@ -182,7 +184,7 @@ object Config {
   /** The width of the frame buffer DMA address bus */
   val FRAME_BUFFER_DMA_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DMA_DEPTH)
   /** The width of the frame buffer DMA data bus */
-  val FRAME_BUFFER_DMA_DATA_WIDTH = FRAME_BUFFER_BPP * FRAME_BUFFER_DMA_PIXELS
+  val FRAME_BUFFER_DMA_DATA_WIDTH = FRAME_BUFFER_DMA_BPP * FRAME_BUFFER_DMA_PIXELS
   /** The number of words to transfer during frame buffer DMA */
   val FRAME_BUFFER_DMA_NUM_WORDS = SCREEN_WIDTH * SCREEN_HEIGHT * DDR_FRAME_BUFFER_BPP / ddrConfig.dataWidth
   /** The length of a burst during a frame buffer DMA transfer */
