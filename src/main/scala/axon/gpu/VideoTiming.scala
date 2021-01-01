@@ -101,8 +101,8 @@ case class VideoTimingConfig(clockFreq: Double,
  */
 class VideoTiming(config: VideoTimingConfig) extends Module {
   val io = IO(new Bundle {
-    /** Display offset value */
-    val offset = Input(new SVec2(4))
+    /** CRT offset */
+    val offset = Input(new SVec2(Config.SCREEN_OFFSET_WIDTH))
     /** Video port */
     val video = Output(new VideoIO)
   })

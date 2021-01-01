@@ -67,8 +67,8 @@ class Main extends Module {
     val cpuClock = Input(Clock())
     /** CPU reset */
     val cpuReset = Input(Bool())
-    /** Screen offset */
-    val offset = Input(new SVec2(4))
+    /** CRT offset */
+    val offset = Input(new SVec2(Config.SCREEN_OFFSET_WIDTH))
     /** Asserted when the screen is rotated */
     val rotate = Input(Bool())
     /** Asserted when the screen is flipped */
@@ -95,9 +95,7 @@ class Main extends Module {
   val frameBufferWriteIndex = RegInit(0.U)
   val frameBufferReadIndex = RegInit(0.U)
 
-  // The video timing module runs in the video clock domain. It doesn't use the video reset signal,
-  // because the video timing signals should always be generated. Otherwise, the progress bar won't
-  // be visible while the core is loading.
+  // Video timing
   val videoTiming = withClockAndReset(io.videoClock, io.videoReset) {
     Module(new VideoTiming(Config.videoTimingConfig))
   }
