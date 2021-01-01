@@ -99,7 +99,8 @@ class Main extends Module {
   val videoTiming = withClockAndReset(io.videoClock, io.videoReset) {
     Module(new VideoTiming(Config.videoTimingConfig))
   }
-  videoTiming.io <> io.video
+  videoTiming.io.offset := SVec2.zero
+  io.video := videoTiming.io.video
 
   // DDR controller
   val ddr = Module(new DDR(Config.ddrConfig))
@@ -137,7 +138,7 @@ class Main extends Module {
   val videoFIFO = Module(new VideoFIFO)
   videoFIFO.io.videoClock := io.videoClock
   videoFIFO.io.videoReset := io.videoReset
-  videoFIFO.io.video <> videoTiming.io
+  videoFIFO.io.video <> videoTiming.io.video
   videoFIFO.io.pixelData <> videoDMA.io.pixelData
   io.rgb := videoFIFO.io.rgb
 
@@ -151,7 +152,7 @@ class Main extends Module {
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }
   cave.io.tileRom <> mem.io.tileRom
-  cave.io.video <> videoTiming.io
+  cave.io.video <> videoTiming.io.video
   cave.io.audio <> io.audio
   cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
   frameBufferDMA.io.start := cave.io.frameDone
@@ -162,7 +163,7 @@ class Main extends Module {
   }
 
   // Update the frame buffer read index after a vertical blank
-  val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)
+  val vBlank = ShiftRegister(videoTiming.io.video.vBlank, 2)
   when(Util.rising(vBlank)) {
     frameBufferReadIndex := nextIndex(frameBufferReadIndex, frameBufferWriteIndex)
   }

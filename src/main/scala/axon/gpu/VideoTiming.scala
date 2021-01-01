@@ -105,7 +105,10 @@ case class VideoTimingConfig(hDisplay: Int,
  * @param config The video timing configuration.
  */
 class VideoTiming(config: VideoTimingConfig) extends Module {
-  val io = IO(new VideoIO)
+  val io = IO(new Bundle {
+    /** Video port */
+    val video = Output(new VideoIO)
+  })
 
   // Counters
   val (x, xWrap) = Counter.static(config.hEndSync, init = config.hInit)
@@ -123,10 +126,10 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
   val vDisplay = y >= config.vBeginDisplay.U && y < config.vEndDisplay.U
 
   // Outputs
-  io.pos := pos
-  io.hSync := hSync
-  io.vSync := vSync
-  io.hBlank := !hDisplay
-  io.vBlank := !vDisplay
-  io.enable := hDisplay & vDisplay
+  io.video.pos := pos
+  io.video.hSync := hSync
+  io.video.vSync := vSync
+  io.video.hBlank := !hDisplay
+  io.video.vBlank := !vDisplay
+  io.video.enable := hDisplay & vDisplay
 }
