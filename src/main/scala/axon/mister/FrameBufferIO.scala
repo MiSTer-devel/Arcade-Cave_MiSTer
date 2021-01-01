@@ -70,4 +70,6 @@ object FrameBufferIO {
   val FORMAT_24BPP = 0x5
   /** 32 bits per pixel */
   val FORMAT_32BPP = 0x6
+  /** BGR pixel format */
+  val FORMAT_BGR = 0x10
 }
