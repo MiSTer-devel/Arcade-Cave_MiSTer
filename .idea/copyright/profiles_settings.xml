@@ -1,7 +1,7 @@
 <component name="CopyrightManager">
-  <settings default="nullobject">
+  <settings>
     <module2copyright>
-      <element module="All" copyright="nullobject" />
+      <element module="All" copyright="nullobject (MIT)" />
     </module2copyright>
     <LanguageOptions name="__TEMPLATE__" />
   </settings>
