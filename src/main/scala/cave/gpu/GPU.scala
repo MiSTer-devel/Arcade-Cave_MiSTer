@@ -260,14 +260,14 @@ object GPU {
    */
   def decodePixels(data: Bits, n: Int): Seq[Bits] =
     Util
-      // Decode pixel data
+      // Decode channels
       .decode(data, n * 3, Config.BITS_PER_CHANNEL)
-      // Convert channels values to 8BPP
+      // Convert channel values to 8BPP
       .map { c => c(4, 0) ## c(4, 2) }
       // Group channels
       .grouped(3).toSeq
-      // Reorder channels
-      .map { case Seq(r, b, g) => Cat(r, g, b) }
+      // Reorder channels (BRG -> BGR)
+      .map { case Seq(b, r, g) => Cat(b, g, r) }
       // Swap pixels values
       .reverse
 }
