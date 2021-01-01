@@ -67,6 +67,8 @@ class Main extends Module {
     val cpuClock = Input(Clock())
     /** CPU reset */
     val cpuReset = Input(Bool())
+    /** Screen offset */
+    val offset = Input(new SVec2(4))
     /** Asserted when the screen is rotated */
     val rotate = Input(Bool())
     /** Asserted when the screen is flipped */
@@ -99,7 +101,7 @@ class Main extends Module {
   val videoTiming = withClockAndReset(io.videoClock, io.videoReset) {
     Module(new VideoTiming(Config.videoTimingConfig))
   }
-  videoTiming.io.offset := SVec2.zero
+  videoTiming.io.offset := io.offset
   io.video := videoTiming.io.video
 
   // DDR controller
