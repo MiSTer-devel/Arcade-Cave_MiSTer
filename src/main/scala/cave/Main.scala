@@ -162,7 +162,8 @@ class Main extends Module {
   }
 
   // Update the frame buffer read index after a vertical blank
-  when(Util.rising(videoTiming.io.vBlank)) {
+  val vBlank = ShiftRegister(videoTiming.io.vBlank, 2)
+  when(Util.rising(vBlank)) {
     frameBufferReadIndex := nextIndex(frameBufferReadIndex, frameBufferWriteIndex)
   }
 
