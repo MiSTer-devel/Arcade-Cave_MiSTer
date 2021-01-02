@@ -149,8 +149,7 @@ localparam CONF_STR = {
     "O1,Aspect Ratio,Original,Full Screen;",
     "O2,Orientation,Horz,Vert;",
     "O3,Flip Screen,Off,On;",
-    "O46,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
-    "O7,Debug,Off,On;",
+    "O46,Scandoubler,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
     "-;",
     "DIP;",
     "-;",
@@ -188,7 +187,6 @@ wire [31:0] status;
 wire        forced_scandoubler;
 wire [21:0] gamma_bus;
 wire        direct_video;
-wire        debug;
 
 wire [24:0] ioctl_addr;
 wire [15:0] ioctl_dout;
@@ -225,8 +223,6 @@ hps_io #(.STRLEN($size(CONF_STR)>>3), .WIDE(1)) hps_io (
 
     .ps2_key(ps2_key)
 );
-
-assign debug = status[7];
 
 ////////////////////////////////////////////////////////////////////////////////
 // VIDEO
