@@ -1,9 +1,9 @@
 <misterromdescription>
   <name>DoDonPachi (Japan)</name>
   <mameversion>0220</mameversion>
-  <setname>ddonpach</setname>
-  <mratimestamp>20200617</mratimestamp>
-  <year>1990</year>
+  <setname>ddonpachj</setname>
+  <mratimestamp>20210102</mratimestamp>
+  <year>1997</year>
   <manufacturer>CAVE</manufacturer>
   <category>Shooter</category>
   <rbf>cave</rbf>
@@ -11,11 +11,11 @@
   <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,X,R,L,Start" />
 
   <!-- ROM data -->
-  <rom index="0" zip="ddonpachj.zip" md5="none">
+  <rom index="0" zip="ddonpachj.zip" md5="f7ea580bd89e789712cb1524e808d9b1">
     <!-- main CPU -->
     <interleave output="16">
-      <part name=u27.bin" crc="b5cdc8d3" map="10" />
-      <part name=u26.bin" crc="6bbb063a" map="01" />
+      <part name=u27.bin" crc="2432ff9b" map="10" />
+      <part name=u26.bin" crc="4f3a914a" map="01" />
     </interleave>
 
     <!-- sprites -->

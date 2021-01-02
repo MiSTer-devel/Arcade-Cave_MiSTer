@@ -2,8 +2,8 @@
   <name>DoDonPachi</name>
   <mameversion>0220</mameversion>
   <setname>ddonpach</setname>
-  <mratimestamp>20200617</mratimestamp>
-  <year>1990</year>
+  <mratimestamp>20210102</mratimestamp>
+  <year>1997</year>
   <manufacturer>CAVE</manufacturer>
   <category>Shooter</category>
   <rbf>cave</rbf>
@@ -11,7 +11,7 @@
   <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,X,R,L,Start" />
 
   <!-- ROM data -->
-  <rom index="0" zip="ddonpach.zip" md5="none">
+  <rom index="0" zip="ddonpach.zip" md5="f85911efc7f275e2d4ef55b1c6007412">
     <!-- main CPU -->
     <interleave output="16">
       <part name="b1.u27" crc="b5cdc8d3" map="10" />
