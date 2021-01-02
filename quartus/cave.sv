@@ -154,7 +154,7 @@ localparam CONF_STR = {
     "DIP;",
     "-;",
     "R0,Reset;",
-    "J1,B0,B1,B2,Start,Coin,Pause,Service;",
+    "J1,B0,B1,B2,Start,Coin,Pause;",
     "V,v",`BUILD_DATE
 };
 
@@ -316,7 +316,6 @@ wire player_1_button_3 = key_space | joystick_0[6];
 wire player_1_start    = key_1     | joystick_0[7];
 wire player_1_coin     = key_5     | joystick_0[8];
 wire player_1_pause    = key_p     | joystick_0[9];
-wire player_1_service  = key_9     | joystick_0[10];
 wire player_2_up       = key_r     | joystick_1[3];
 wire player_2_down     = key_f     | joystick_1[2];
 wire player_2_left     = key_d     | joystick_1[1];
@@ -326,8 +325,9 @@ wire player_2_button_2 = key_s     | joystick_1[5];
 wire player_2_button_3 = key_q     | joystick_1[6];
 wire player_2_start    = key_2     | joystick_1[7];
 wire player_2_coin     = key_6     | joystick_1[8];
-wire player_2_pause    =             joystick_0[9];
-wire player_2_service  = key_0     | joystick_1[10];
+wire player_2_pause    =             joystick_1[9];
+wire service_1         = key_9;
+wire service_2         = key_0;
 
 ////////////////////////////////////////////////////////////////////////////////
 // CAVE
@@ -392,9 +392,24 @@ Main main (
     .io_rotate(status[2]),
     .io_flip(status[3]),
     // Player input signals
-    .io_player_player1({player_1_service, player_1_coin, player_1_start, player_1_button_3, player_1_button_2, player_1_button_1, player_1_right, player_1_left, player_1_down, player_1_up}),
-    .io_player_player2({player_2_service, layer_2_coin, player_2_start, player_2_button_3, player_2_button_2, player_2_button_1, player_2_right, player_2_left, player_2_down, player_2_up}),
-    .io_player_pause(player_1_pause | player_2_pause),
+    .io_joystick_player1_up(player_1_up),
+    .io_joystick_player1_down(player_1_down),
+    .io_joystick_player1_left(player_1_left),
+    .io_joystick_player1_right(player_1_right),
+    .io_joystick_player1_buttons({player_1_button_3, player_1_button_2, player_1_button_1}),
+    .io_joystick_player1_start(player_1_start),
+    .io_joystick_player1_coin(player_1_coin),
+    .io_joystick_player1_pause(player_1_pause),
+    .io_joystick_player2_up(player_2_up),
+    .io_joystick_player2_down(player_2_down),
+    .io_joystick_player2_left(player_2_left),
+    .io_joystick_player2_right(player_2_right),
+    .io_joystick_player2_buttons({player_2_button_3, player_2_button_2, player_2_button_1}),
+    .io_joystick_player2_start(player_2_start),
+    .io_joystick_player2_coin(player_2_coin),
+    .io_joystick_player2_pause(player_2_pause),
+    .io_joystick_service1(service_1),
+    .io_joystick_service2(service_2),
     // Video signals
     .io_video_hSync(hsync),
     .io_video_vSync(vsync),

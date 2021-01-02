@@ -44,6 +44,10 @@ import chisel3.util._
 
 /** Represents the CAVE arcade hardware. */
 class Cave extends Module {
+  private def decodePlayer(player: PlayerIO) = {
+    Cat(player.coin, player.start, player.buttons, player.right, player.left, player.down, player.up)
+  }
+
   val io = IO(new Bundle {
     /** CPU clock domain */
     val cpuClock = Input(Clock())
@@ -55,8 +59,8 @@ class Cave extends Module {
     val flip = Input(Bool())
     /** Asserted when the frame is complete */
     val frameDone = Output(Bool())
-    /** Player port */
-    val player = new PlayerIO
+    /** Joystick port */
+    val joystick = new JoystickIO
     /** Program ROM port */
     val progRom = new ProgRomIO
     /** Sound ROM port */
@@ -87,7 +91,7 @@ class Cave extends Module {
   // The CPU and registers run in the CPU clock domain
   withClockAndReset(io.cpuClock, io.cpuReset) {
     // Registers
-    val pause = Util.rising(ShiftRegister(io.player.pause, 2))
+    val pause = Util.rising(ShiftRegister(io.joystick.player1.pause || io.joystick.player2.pause, 2))
     val vBlank = Util.rising(ShiftRegister(io.video.vBlank, 2))
     val vBlankIRQ = RegInit(false.B)
     val iplReg = RegInit(0.U)
@@ -219,9 +223,9 @@ class Cave extends Module {
     memMap(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
     memMap(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
     memMap(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-    memMap(0xd00000).r { (_, _) => "b111111".U ## ~io.player.player1 }
+    memMap(0xd00000).r { (_, _) => "b111111".U ## ~io.joystick.service1 ## ~decodePlayer(io.joystick.player1) }
     // FIXME: The EEPROM output data shouldn't need to be inverted.
-    memMap(0xd00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b1".U ## ~io.player.player2 }
+    memMap(0xd00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b11".U ## ~decodePlayer(io.joystick.player2) }
     memMap(0xe00000).writeMem(eeprom.io.mem)
   }
 }

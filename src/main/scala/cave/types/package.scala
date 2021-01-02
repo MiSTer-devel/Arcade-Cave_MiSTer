@@ -43,12 +43,26 @@ package object types {
 
   /** Player IO */
   class PlayerIO extends Bundle {
-    /** Player 1 input */
-    val player1 = Input(Bits(Config.PLAYER_DATA_WIDTH.W))
-    /** Player 2 input */
-    val player2 = Input(Bits(Config.PLAYER_DATA_WIDTH.W))
-    /** Pause flag */
+    val up = Input(Bool())
+    val down = Input(Bool())
+    val left = Input(Bool())
+    val right = Input(Bool())
+    val buttons = Input(Bits(Config.JOYSTICK_BUTTON_COUNT.W))
+    val start = Input(Bool())
+    val coin = Input(Bool())
     val pause = Input(Bool())
+  }
+
+  /** Joystick IO */
+  class JoystickIO extends Bundle {
+    /** Player 1 input */
+    val player1 = new PlayerIO
+    /** Player 2 input */
+    val player2 = new PlayerIO
+    /** Service button 1 */
+    val service1 = Input(Bool())
+    /** Service button 2 */
+    val service2 = Input(Bool())
   }
 
   /** Priority IO */

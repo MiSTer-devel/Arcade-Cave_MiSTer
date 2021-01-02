@@ -73,8 +73,8 @@ class Main extends Module {
     val rotate = Input(Bool())
     /** Asserted when the screen is flipped */
     val flip = Input(Bool())
-    /** Player port */
-    val player = new PlayerIO
+    /** Joystick port */
+    val joystick = new JoystickIO
     /** Video port */
     val video = Output(new VideoIO)
     /** Download port */
@@ -148,7 +148,7 @@ class Main extends Module {
   cave.io.cpuReset := io.cpuReset
   cave.io.rotate := io.rotate
   cave.io.flip := io.flip
-  cave.io.player := io.player
+  cave.io.joystick <> io.joystick
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }
   cave.io.tileRom <> mem.io.tileRom

@@ -85,7 +85,8 @@ object Config {
     vRetrace = 2,
   )
 
-  val PLAYER_DATA_WIDTH = 10
+  /** The number of joystick buttons */
+  val JOYSTICK_BUTTON_COUNT = 3
 
   val SPRITE_CODE_WIDTH = 18
   val SPRITE_POS_WIDTH = 10
