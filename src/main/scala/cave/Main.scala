@@ -67,6 +67,8 @@ class Main extends Module {
     val cpuClock = Input(Clock())
     /** CPU reset */
     val cpuReset = Input(Bool())
+    /** CRT offset */
+    val offset = Input(new SVec2(Config.SCREEN_OFFSET_WIDTH))
     /** Asserted when the screen is rotated */
     val rotate = Input(Bool())
     /** Asserted when the screen is flipped */
@@ -93,13 +95,12 @@ class Main extends Module {
   val frameBufferWriteIndex = RegInit(0.U)
   val frameBufferReadIndex = RegInit(0.U)
 
-  // The video timing module runs in the video clock domain. It doesn't use the video reset signal,
-  // because the video timing signals should always be generated. Otherwise, the progress bar won't
-  // be visible while the core is loading.
+  // Video timing
   val videoTiming = withClockAndReset(io.videoClock, io.videoReset) {
     Module(new VideoTiming(Config.videoTimingConfig))
   }
-  videoTiming.io <> io.video
+  videoTiming.io.offset := io.offset
+  io.video := videoTiming.io.video
 
   // DDR controller
   val ddr = Module(new DDR(Config.ddrConfig))
@@ -137,7 +138,7 @@ class Main extends Module {
   val videoFIFO = Module(new VideoFIFO)
   videoFIFO.io.videoClock := io.videoClock
   videoFIFO.io.videoReset := io.videoReset
-  videoFIFO.io.video <> videoTiming.io
+  videoFIFO.io.video <> videoTiming.io.video
   videoFIFO.io.pixelData <> videoDMA.io.pixelData
   io.rgb := videoFIFO.io.rgb
 
@@ -151,7 +152,7 @@ class Main extends Module {
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }
   cave.io.tileRom <> mem.io.tileRom
-  cave.io.video <> videoTiming.io
+  cave.io.video <> videoTiming.io.video
   cave.io.audio <> io.audio
   cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
   frameBufferDMA.io.start := cave.io.frameDone
@@ -162,7 +163,8 @@ class Main extends Module {
   }
 
   // Update the frame buffer read index after a vertical blank
-  when(Util.rising(videoTiming.io.vBlank)) {
+  val vBlank = ShiftRegister(videoTiming.io.video.vBlank, 2)
+  when(Util.rising(vBlank)) {
     frameBufferReadIndex := nextIndex(frameBufferReadIndex, frameBufferWriteIndex)
   }
 

@@ -144,6 +144,8 @@ assign VIDEO_ARY = status[1] ? 8'd9  : status[2] ? 8'd4 : 8'd3;
 `include "build_id.v"
 localparam CONF_STR = {
     "cave;;",
+    "OOR,CRT H adjust,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;",
+    "OSV,CRT V adjust,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;",
     "O1,Aspect Ratio,Original,Full Screen;",
     "O2,Orientation,Horz,Vert;",
     "O3,Flip Screen,Off,On;",
@@ -246,6 +248,7 @@ assign VGA_R  = r;
 assign VGA_G  = g;
 assign VGA_B  = b;
 assign VGA_SL = sl[1:0];
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // CONTROLS
@@ -388,6 +391,8 @@ Main main (
     .io_cpuClock(clk_cpu),
     .io_cpuReset(reset_cpu_2),
     // Rotate
+    .io_offset_x(status[27:24]),
+    .io_offset_y(status[31:28]),
     .io_rotate(status[2]),
     .io_flip(status[3]),
     // Player input signals

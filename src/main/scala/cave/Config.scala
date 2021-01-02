@@ -40,9 +40,17 @@ import chisel3.util.log2Ceil
 object Config {
   /** System clock frequency (Hz) */
   val CLOCK_FREQ = 96000000
-
   /** CPU clock frequency (Hz) */
   val CPU_CLOCK_FREQ = 32000000
+  /** Video clock frequency (Hz) */
+  val VIDEO_CLOCK_FREQ = 6600000
+
+  /** The screen width in pixels */
+  val SCREEN_WIDTH = 320
+  /** The screen height in pixels */
+  val SCREEN_HEIGHT = 240
+  /** The display offset width */
+  val SCREEN_OFFSET_WIDTH = 4
 
   /** YMZ280B configuration */
   val ymzConfig = YMZ280BConfig(
@@ -59,21 +67,20 @@ object Config {
     burstLength = 4
   )
 
-  /** The screen width in pixels */
-  val SCREEN_WIDTH = 320
-  /** The screen height in pixels */
-  val SCREEN_HEIGHT = 240
-
   /** Video timing configuration */
   val videoTimingConfig = VideoTimingConfig(
+    clockFreq = VIDEO_CLOCK_FREQ,
+    // The horizontal frequency differs from the original hardware in order to improve compatibility
+    // with different CRTs. This has no effect on the output frame rate.
+    hFreq = 15750,
+    // The precise frame rate as measured from the original hardware
+    vFreq = 57.55,
     hDisplay = SCREEN_WIDTH,
-    hFrontPorch = 5,
-    hRetrace = 23,
-    hBackPorch = 34,
     vDisplay = SCREEN_HEIGHT,
+    hFrontPorch = 22,
     vFrontPorch = 12,
+    hRetrace = 20,
     vRetrace = 2,
-    vBackPorch = 19
   )
 
   val PLAYER_DATA_WIDTH = 10
@@ -141,9 +148,9 @@ object Config {
   val NUM_PALETTES = 128
   /** The number of colors per palette */
   val NUM_COLORS = 256
-  /** The width of a palette entry palette index  */
+  /** The width of a palette entry palette index */
   val PALETTE_ENTRY_PALETTE_WIDTH = log2Ceil(NUM_PALETTES)
-  /** The width of a palette entry color index  */
+  /** The width of a palette entry color index */
   val PALETTE_ENTRY_COLOR_WIDTH = log2Ceil(NUM_COLORS)
 
   val LAYER_REGS_COUNT = 3

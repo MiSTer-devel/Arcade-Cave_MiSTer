@@ -32,65 +32,63 @@
 
 package axon.gpu
 
-import axon.types.Vec2
+import axon.Util
+import axon.types.{SVec2, Vec2}
 import axon.util.Counter
+import cave.Config
 import chisel3._
+import chisel3.util._
 
-/** Represents the video timing signals. */
+/** Represents the video signals. */
 class VideoIO extends Bundle {
-  /** The enable signal is asserted when the beam is in the display region. */
+  /** Asserted when the beam is in the display region. */
   val enable = Output(Bool())
-  /** Position */
+  /** Beam position */
   val pos = Output(new Vec2(9))
-  /** The horizontal sync signal. */
+  /** Horizontal sync */
   val hSync = Output(Bool())
-  /** The vertical sync signal. */
+  /** Vertical sync */
   val vSync = Output(Bool())
-  /** The horizontal blanking signal. */
+  /** Horizontal blank */
   val hBlank = Output(Bool())
-  /** The vertical blanking signal. */
+  /** Vertical blank */
   val vBlank = Output(Bool())
 }
 
 /**
  * Represents the video timing configuration.
  *
- * @param hDisplay    The horizontal width.
+ * @param clockFreq   The pixel clock frequency (Hz).
+ * @param hFreq       The horizontal frequency (Hz).
+ * @param hDisplay    The horizontal display width.
  * @param hFrontPorch The width of the horizontal front porch region.
  * @param hRetrace    The width of the horizontal retrace region.
- * @param hBackPorch  The width of the horizontal front porch region.
  * @param hOffset     The horizontal offset.
  * @param hInit       The initial horizontal position (for testing).
- * @param vDisplay    The vertical height.
+ * @param vFreq       The vertical frequency (Hz).
+ * @param vDisplay    The vertical display height.
  * @param vFrontPorch The width of the vertical front porch region.
  * @param vRetrace    The width of the vertical retrace region.
- * @param vBackPorch  The width of the vertical front porch region.
  * @param vOffset     The vertical offset.
  * @param vInit       The initial vertical position (for testing).
  */
-case class VideoTimingConfig(hDisplay: Int,
+case class VideoTimingConfig(clockFreq: Double,
+                             hFreq: Double,
+                             hDisplay: Int,
                              hFrontPorch: Int,
                              hRetrace: Int,
-                             hBackPorch: Int,
                              hOffset: Int = 0,
                              hInit: Int = 0,
+                             vFreq: Double,
                              vDisplay: Int,
                              vFrontPorch: Int,
                              vRetrace: Int,
-                             vBackPorch: Int,
                              vOffset: Int = 0,
                              vInit: Int = 0) {
-  // Horizontal
-  val hBeginSync = hBackPorch + hDisplay + hFrontPorch
-  val hEndSync = hBackPorch + hDisplay + hFrontPorch + hRetrace
-  val hBeginDisplay = hBackPorch
-  val hEndDisplay = hBackPorch + hDisplay
-
-  // Vertical
-  val vBeginSync = vBackPorch + vDisplay + vFrontPorch
-  val vEndSync = vBackPorch + vDisplay + vFrontPorch + vRetrace
-  val vBeginDisplay = vBackPorch
-  val vEndDisplay = vBackPorch + vDisplay
+  /** Total width in pixels */
+  val width = math.ceil(clockFreq / hFreq).toInt
+  /** Total height in pixels */
+  val height = math.ceil(hFreq / vFreq).toInt
 }
 
 /**
@@ -105,28 +103,53 @@ case class VideoTimingConfig(hDisplay: Int,
  * @param config The video timing configuration.
  */
 class VideoTiming(config: VideoTimingConfig) extends Module {
-  val io = IO(new VideoIO)
+  val io = IO(new Bundle {
+    /** CRT offset */
+    val offset = Input(new SVec2(Config.SCREEN_OFFSET_WIDTH))
+    /** Video port */
+    val video = Output(new VideoIO)
+  })
+
+  // Wires
+  val vSync = Wire(Bool())
+
+  // Latching the CRT offset value during the display region can momentarily change the display
+  // dimensions, which may in turn cause issues with other devices (e.g. video FIFO). To avoid this
+  // problem the offset value must be latched during a vertical sync.
+  val offsetReg = RegEnable(io.offset, vSync)
 
   // Counters
-  val (x, xWrap) = Counter.static(config.hEndSync, init = config.hInit)
-  val (y, yWrap) = Counter.static(config.vEndSync, enable = xWrap, init = config.vInit)
+  val (x, xWrap) = Counter.static(config.width, init = config.hInit)
+  val (y, yWrap) = Counter.static(config.height, enable = xWrap, init = config.vInit)
 
-  // Adjust the position so the display region begins at the origin
-  val pos = Vec2(x - config.hOffset.U, y - config.vOffset.U)
+  // Horizontal regions
+  val hBeginDisplay = (config.width.S - config.hDisplay.S - config.hFrontPorch.S - config.hRetrace.S + offsetReg.x).asUInt
+  val hEndDisplay = (config.width.S - config.hFrontPorch.S - config.hRetrace.S + offsetReg.x).asUInt
+  val hBeginSync = config.width.U - config.hRetrace.U
+  val hEndSync = config.width.U
+
+  // Vertical regions
+  val vBeginDisplay = (config.height.S - config.vDisplay.S - config.vFrontPorch.S - config.vRetrace.S + offsetReg.y).asUInt
+  val vEndDisplay = (config.height.S - config.vFrontPorch.S - config.vRetrace.S + offsetReg.y).asUInt
+  val vBeginSync = config.height.U - config.vRetrace.U
+  val vEndSync = config.height.U
+
+  // Offset the position so the display region begins at the origin
+  val pos = Vec2(x - hBeginDisplay, y - vBeginDisplay)
 
   // Sync signals
-  val hSync = x >= config.hBeginSync.U && x < config.hEndSync.U
-  val vSync = y >= config.vBeginSync.U && y < config.vEndSync.U
+  val hSync = x >= hBeginSync && x < hEndSync
+  vSync := y >= vBeginSync && y < vEndSync
 
-  // Display signals
-  val hDisplay = x >= config.hBeginDisplay.U && x < config.hEndDisplay.U
-  val vDisplay = y >= config.vBeginDisplay.U && y < config.vEndDisplay.U
+  // Blanking signals
+  val hBlank = x < hBeginDisplay || x >= hEndDisplay
+  val vBlank = y < vBeginDisplay || y >= vEndDisplay
 
   // Outputs
-  io.pos := pos
-  io.hSync := hSync
-  io.vSync := vSync
-  io.hBlank := !hDisplay
-  io.vBlank := !vDisplay
-  io.enable := hDisplay & vDisplay
+  io.video.pos := pos
+  io.video.hSync := hSync
+  io.video.vSync := vSync
+  io.video.hBlank := hBlank
+  io.video.vBlank := vBlank
+  io.video.enable := !(hBlank || vBlank)
 }
