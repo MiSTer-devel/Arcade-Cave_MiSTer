@@ -58,20 +58,20 @@ case class YMZ280BConfig(clockFreq: Double,
                          cpuAddrWidth: Int = 1,
                          cpuDataWidth: Int = 8,
                          numChannels: Int = 8) {
-  /** The number of registers in the register file. */
+  /** The number of registers in the register file */
   val numRegs = 256
-  /** The width of the pitch value. */
+  /** The width of the pitch value */
   val pitchWidth = 8
-  /** The width of the level value. */
+  /** The width of the level value */
   val levelWidth = 8
-  /** The width of the pan value. */
+  /** The width of the pan value */
   val panWidth = 4
-  /** The maximum frequency. */
+  /** The maximum frequency */
   val maxFreq = 44100D
-  /** The width of the linear interpolation index value. */
+  /** The width of the linear interpolation index value */
   val lerpIndexWidth = (pitchWidth + sampleFreq / maxFreq).ceil.toInt
-  /** The internal sample width. */
-  val internalSampleWidth = 24
+  /** The internal sample width */
+  val internalSampleWidth = 17
 }
 
 /**

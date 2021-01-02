@@ -56,13 +56,25 @@ class Audio(private val n: Int) extends Bundle {
    * @param b The maximum value.
    */
   def clamp(a: Int, b: Int): Audio = Audio(Util.clamp(left, a, b), Util.clamp(right, a, b))(n)
+
+  /**
+   * Resizes the width of the sample.
+   *
+   * The sample will be truncated to the new width.
+   *
+   * @param m The new sample width.
+   */
+  def resize(m: Int): Audio = {
+    assert(m < n, "The new sample width must be smaller than the original")
+    Audio(left.head(m).asSInt, right.head(m).asSInt)(m)
+  }
 }
 
 object Audio {
   /**
    * Constructs an audio sample from the left and right channel values.
    *
-   * @param left The left channel value.
+   * @param left  The left channel value.
    * @param right The right channel value.
    */
   def apply(left: SInt, right: SInt)(n: Int): Audio = {
