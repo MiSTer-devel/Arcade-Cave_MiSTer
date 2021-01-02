@@ -32,14 +32,13 @@
 
 package axon.gpu
 
-import axon.Util
 import axon.types.{SVec2, Vec2}
 import axon.util.Counter
 import cave.Config
 import chisel3._
 import chisel3.util._
 
-/** Represents the video signals. */
+/** Represents the analog video signals. */
 class VideoIO extends Bundle {
   /** Asserted when the beam is in the display region. */
   val enable = Output(Bool())
@@ -63,13 +62,11 @@ class VideoIO extends Bundle {
  * @param hDisplay    The horizontal display width.
  * @param hFrontPorch The width of the horizontal front porch region.
  * @param hRetrace    The width of the horizontal retrace region.
- * @param hOffset     The horizontal offset.
  * @param hInit       The initial horizontal position (for testing).
  * @param vFreq       The vertical frequency (Hz).
  * @param vDisplay    The vertical display height.
  * @param vFrontPorch The width of the vertical front porch region.
  * @param vRetrace    The width of the vertical retrace region.
- * @param vOffset     The vertical offset.
  * @param vInit       The initial vertical position (for testing).
  */
 case class VideoTimingConfig(clockFreq: Double,
@@ -77,13 +74,11 @@ case class VideoTimingConfig(clockFreq: Double,
                              hDisplay: Int,
                              hFrontPorch: Int,
                              hRetrace: Int,
-                             hOffset: Int = 0,
                              hInit: Int = 0,
                              vFreq: Double,
                              vDisplay: Int,
                              vFrontPorch: Int,
                              vRetrace: Int,
-                             vOffset: Int = 0,
                              vInit: Int = 0) {
   /** Total width in pixels */
   val width = math.ceil(clockFreq / hFreq).toInt
@@ -134,7 +129,7 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
   val vBeginSync = config.height.U - config.vRetrace.U
   val vEndSync = config.height.U
 
-  // Offset the position so the display region begins at the origin
+  // Offset the position vector so the display region begins at the origin (i.e. (0, 0))
   val pos = Vec2(x - hBeginDisplay, y - vBeginDisplay)
 
   // Sync signals
