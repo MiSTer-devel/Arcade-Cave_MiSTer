@@ -44,8 +44,18 @@ import chisel3.util._
 
 /** Represents the CAVE arcade hardware. */
 class Cave extends Module {
-  private def decodePlayer(player: PlayerIO) = {
-    Cat(player.coin, player.start, player.buttons, player.right, player.left, player.down, player.up)
+  /**
+   * Encodes the player IO into a bitvector value.
+   *
+   * @param player The player interface.
+   * @return A bitvector representing the player inputs.
+   */
+  private def encodePlayer(player: PlayerIO): Bits = {
+    // If the coin signal is asserted for too long (i.e. the player holds the coin button down),
+    // then it will trigger a "coin error" and the game will reboot. To prevent this from happening,
+    // the coin signal must be converted to a pulse.
+    val coin = Util.pulseSync(Config.COIN_PULSE_WIDTH, player.coin)
+    Cat(coin, player.start, player.buttons, player.right, player.left, player.down, player.up)
   }
 
   val io = IO(new Bundle {
@@ -223,9 +233,9 @@ class Cave extends Module {
     memMap(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
     memMap(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
     memMap(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-    memMap(0xd00000).r { (_, _) => "b111111".U ## ~io.joystick.service1 ## ~decodePlayer(io.joystick.player1) }
+    memMap(0xd00000).r { (_, _) => "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1) }
     // FIXME: The EEPROM output data shouldn't need to be inverted.
-    memMap(0xd00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b11".U ## ~decodePlayer(io.joystick.player2) }
+    memMap(0xd00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b11".U ## ~encodePlayer(io.joystick.player2) }
     memMap(0xe00000).writeMem(eeprom.io.mem)
   }
 }

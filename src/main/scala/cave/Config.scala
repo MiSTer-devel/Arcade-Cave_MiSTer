@@ -54,6 +54,9 @@ object Config {
   /** The display offset width */
   val SCREEN_OFFSET_WIDTH = 4
 
+  /** The width of a coin pulse (ns) */
+  val COIN_PULSE_WIDTH = (100000000 / Config.CPU_CLOCK_PERIOD).ceil.toInt // 100ms
+
   /** YMZ280B configuration */
   val ymzConfig = YMZ280BConfig(
     clockFreq = CPU_CLOCK_FREQ,
