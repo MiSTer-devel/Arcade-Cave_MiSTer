@@ -39,11 +39,13 @@ import chisel3.util.log2Ceil
 
 object Config {
   /** System clock frequency (Hz) */
-  val CLOCK_FREQ = 96000000
+  val CLOCK_FREQ = 96000000D
   /** CPU clock frequency (Hz) */
-  val CPU_CLOCK_FREQ = 32000000
+  val CPU_CLOCK_FREQ = 32000000D
+  /** CPU clock period (ns) */
+  val CPU_CLOCK_PERIOD = 1 / CPU_CLOCK_FREQ * 1000000000
   /** Video clock frequency (Hz) */
-  val VIDEO_CLOCK_FREQ = 6600000
+  val VIDEO_CLOCK_FREQ = 6600000D
 
   /** The screen width in pixels */
   val SCREEN_WIDTH = 320
