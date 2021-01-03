@@ -245,6 +245,27 @@ class UtilTest extends FlatSpec with ChiselScalatestTester with Matchers {
     }
   }
 
+  "pulseSync" should "trigger a pulse" in {
+    test(new Module {
+      val io = IO(new Bundle {
+        val a = Input(Bool())
+        val b = Output(Bool())
+      })
+      io.b := Util.pulseSync(2, io.a)
+    }) { dut =>
+      dut.io.a.poke(true.B)
+      dut.io.b.expect(false.B)
+      dut.clock.step()
+      dut.io.b.expect(true.B)
+      dut.clock.step()
+      dut.io.b.expect(true.B)
+      dut.clock.step()
+      dut.io.b.expect(false.B)
+      dut.clock.step()
+      dut.io.a.poke(false.B)
+    }
+  }
+
   "toggle" should "toggle a bit" in {
     test(new Module {
       val io = IO(new Bundle {

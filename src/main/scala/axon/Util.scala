@@ -32,6 +32,7 @@
 
 package axon
 
+import axon.util.Counter
 import chisel3._
 import chisel3.util._
 
@@ -178,6 +179,26 @@ object Util {
   }
 
   /**
+   * Latches a signal when the given trigger is asserted.
+   *
+   * The output will remain stable until the latch is triggered or cleared.
+   *
+   * @param s     The signal value.
+   * @param t     The trigger value.
+   * @param clear The clear signal.
+   */
+  def latch[T <: Data](s: T, t: Bool, clear: Bool): T = {
+    val dataReg = RegEnable(s, t)
+    val enableReg = RegInit(false.B)
+    when(t) {
+      enableReg := true.B
+    }.elsewhen(clear) {
+      enableReg := false.B
+    }
+    Mux(enableReg && !clear, dataReg, s)
+  }
+
+  /**
    * Synchronously latches and clears a signal.
    *
    * Once latched, the output will remain stable until the latch is cleared by the clear signal.
@@ -196,23 +217,16 @@ object Util {
   }
 
   /**
-   * Latches a signal when the given trigger is asserted.
+   * Synchronously triggers a pulse of the given width.
    *
-   * The output will remain stable until the latch is triggered or cleared.
-   *
-   * @param s     The signal value.
-   * @param t     The trigger value.
-   * @param clear The clear signal.
+   * @param n The pulse width.
+   * @param t The trigger value.
    */
-  def latch[T <: Data](s: T, t: Bool, clear: Bool): T = {
-    val dataReg = RegEnable(s, t)
-    val enableReg = RegInit(false.B)
-    when(t) {
-      enableReg := true.B
-    }.elsewhen(clear) {
-      enableReg := false.B
-    }
-    Mux(enableReg && !clear, dataReg, s)
+  def pulseSync(n: Int, t: Bool): Bool = {
+    val s = Wire(Bool())
+    val (_, pulseCounterWrap) = Counter.static(n, s)
+    s := latchSync(rising(t), pulseCounterWrap)
+    s
   }
 
   /**
