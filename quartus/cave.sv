@@ -391,7 +391,7 @@ Main main (
     .io_offset_y(status[31:28]),
     .io_rotate(status[2]),
     .io_flip(status[3]),
-    // Player input signals
+    // Joystick signals
     .io_joystick_player1_up(player_1_up),
     .io_joystick_player1_down(player_1_down),
     .io_joystick_player1_left(player_1_left),

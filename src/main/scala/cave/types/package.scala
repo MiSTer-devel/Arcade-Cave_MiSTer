@@ -41,30 +41,6 @@ package object types {
     override def cloneType: this.type = new FrameBufferDMAIO().asInstanceOf[this.type]
   }
 
-  /** Player IO */
-  class PlayerIO extends Bundle {
-    val up = Input(Bool())
-    val down = Input(Bool())
-    val left = Input(Bool())
-    val right = Input(Bool())
-    val buttons = Input(Bits(Config.JOYSTICK_BUTTON_COUNT.W))
-    val start = Input(Bool())
-    val coin = Input(Bool())
-    val pause = Input(Bool())
-  }
-
-  /** Joystick IO */
-  class JoystickIO extends Bundle {
-    /** Player 1 input */
-    val player1 = new PlayerIO
-    /** Player 2 input */
-    val player2 = new PlayerIO
-    /** Service button 1 */
-    val service1 = Input(Bool())
-    /** Service button 2 */
-    val service2 = Input(Bool())
-  }
-
   /** Priority IO */
   class PriorityIO extends Bundle {
     /** Write-only port */
@@ -86,5 +62,37 @@ package object types {
   /** Tile ROM IO */
   class TileRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH) {
     override def cloneType: this.type = new TileRomIO().asInstanceOf[this.type]
+  }
+
+  /** Player IO */
+  class PlayerIO extends Bundle {
+    /** Player up */
+    val up = Input(Bool())
+    /** Player down */
+    val down = Input(Bool())
+    /** Player left */
+    val left = Input(Bool())
+    /** Player right */
+    val right = Input(Bool())
+    /** Player buttons */
+    val buttons = Input(Bits(Config.PLAYER_BUTTON_COUNT.W))
+    /** Player start */
+    val start = Input(Bool())
+    /** Player coin */
+    val coin = Input(Bool())
+    /** Player pause */
+    val pause = Input(Bool())
+  }
+
+  /** Joystick IO */
+  class JoystickIO extends Bundle {
+    /** Player 1 input */
+    val player1 = new PlayerIO
+    /** Player 2 input */
+    val player2 = new PlayerIO
+    /** Service button 1 */
+    val service1 = Input(Bool())
+    /** Service button 2 */
+    val service2 = Input(Bool())
   }
 }

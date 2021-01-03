@@ -54,9 +54,6 @@ object Config {
   /** The display offset width */
   val SCREEN_OFFSET_WIDTH = 4
 
-  /** The width of a coin pulse (ns) */
-  val COIN_PULSE_WIDTH = (100000000 / Config.CPU_CLOCK_PERIOD).ceil.toInt // 100ms
-
   /** YMZ280B configuration */
   val ymzConfig = YMZ280BConfig(
     clockFreq = CPU_CLOCK_FREQ,
@@ -88,8 +85,10 @@ object Config {
     vRetrace = 2,
   )
 
-  /** The number of joystick buttons */
-  val JOYSTICK_BUTTON_COUNT = 3
+  /** The number of player buttons */
+  val PLAYER_BUTTON_COUNT = 3
+  /** The width of the pulse generated when a player presses the coin button */
+  val PLAYER_COIN_PULSE_WIDTH = (100000000 / CPU_CLOCK_PERIOD).ceil.toInt // 100ms
 
   val SPRITE_CODE_WIDTH = 18
   val SPRITE_POS_WIDTH = 10

@@ -54,7 +54,7 @@ class Cave extends Module {
     // If the coin signal is asserted for too long (i.e. the player holds the coin button down),
     // then it will trigger a "coin error" and the game will reboot. To prevent this from happening,
     // the coin signal must be converted to a pulse.
-    val coin = Util.pulseSync(Config.COIN_PULSE_WIDTH, player.coin)
+    val coin = Util.pulseSync(Config.PLAYER_COIN_PULSE_WIDTH, player.coin)
     Cat(coin, player.start, player.buttons, player.right, player.left, player.down, player.up)
   }
 
