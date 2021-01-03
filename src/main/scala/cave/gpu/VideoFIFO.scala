@@ -33,7 +33,7 @@
 package cave.gpu
 
 import axon.Util
-import axon.gpu.VideoIO
+import axon.gfx.VideoIO
 import axon.types.RGB
 import cave.Config
 import chisel3._

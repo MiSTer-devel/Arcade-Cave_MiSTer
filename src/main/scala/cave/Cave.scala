@@ -34,7 +34,7 @@ package cave
 
 import axon._
 import axon.cpu.m68k._
-import axon.gpu._
+import axon.gfx._
 import axon.mem._
 import axon.snd._
 import cave.gpu._

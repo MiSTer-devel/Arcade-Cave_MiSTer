@@ -32,7 +32,7 @@
 
 package cave
 
-import axon.gpu.VideoTimingConfig
+import axon.gfx.VideoTimingConfig
 import axon.mem.{DDRConfig, SDRAMConfig}
 import axon.snd.YMZ280BConfig
 import chisel3.util.log2Ceil

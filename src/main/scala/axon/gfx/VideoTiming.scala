@@ -30,7 +30,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.gpu
+package axon.gfx
 
 import axon.types.{SVec2, Vec2}
 import axon.util.Counter
