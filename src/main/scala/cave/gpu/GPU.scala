@@ -41,17 +41,23 @@ import cave.types._
 import chisel3._
 import chisel3.util._
 
-/** Graphics Processor */
+/** GPU control interface. */
+class GPUCtrlIO extends Bundle {
+  /** Asserted when a frame is requested */
+  val frameStart = Input(Bool())
+  /** Asserted when a frame is complete */
+  val frameDone = Output(Bool())
+  /** Asserted when the screen is rotated */
+  val rotate = Input(Bool())
+  /** Asserted when the screen is flipped */
+  val flip = Input(Bool())
+}
+
+/** Graphics processing unit (GPU). */
 class GPU extends Module {
   val io = IO(new Bundle {
-    /** Generate a new frame */
-    val generateFrame = Input(Bool())
-    /** Asserted when the screen is rotated */
-    val rotate = Input(Bool())
-    /** Asserted when the screen is flipped */
-    val flip = Input(Bool())
-    /** Asserted when the frame is complete */
-    val frameDone = Output(Bool())
+    /** Control port */
+    val ctrl = new GPUCtrlIO
     /** Video registers port */
     val videoRegs = Input(Bits(Config.VIDEO_REGS_GPU_DATA_WIDTH.W))
     /** Layer 0 registers port */
@@ -153,7 +159,7 @@ class GPU extends Module {
     State.layer0 -> layerProcessor.io.frameBuffer,
     State.layer1 -> layerProcessor.io.frameBuffer,
     State.layer2 -> layerProcessor.io.frameBuffer
-  )).mapAddr(GPU.linearizeAddr(io.rotate, io.flip)))
+  )).mapAddr(GPU.linearizeAddr(io.ctrl.rotate, io.ctrl.flip)))
   frameBuffer.io.portB <> io.frameBufferDMA
 
   // Decode raw pixel data from the frame buffer
@@ -168,7 +174,7 @@ class GPU extends Module {
   switch(stateReg) {
     // Wait for a new frame
     is(State.idle) {
-      when(io.generateFrame) { nextState := State.clear }
+      when(io.ctrl.frameStart) { nextState := State.clear }
     }
 
     // Clears the frame buffer
@@ -201,7 +207,7 @@ class GPU extends Module {
   }
 
   // Outputs
-  io.frameDone := stateReg === State.done
+  io.ctrl.frameDone := stateReg === State.done
   io.paletteRam <> ReadMemIO.mux(stateReg === State.sprite, spriteProcessor.io.paletteRam, layerProcessor.io.paletteRam)
   io.tileRom <> BurstReadMemIO.mux(Seq(
     (stateReg === State.sprite) -> spriteProcessor.io.tileRom,
