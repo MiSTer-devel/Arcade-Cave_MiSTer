@@ -224,6 +224,36 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
     }
   }
 
+  it should "reset the address nibble when restarting a channel" in {
+    test(mkChannelController()) { dut =>
+      // Start
+      dut.io.enable.poke(true.B)
+      dut.io.mem.valid.poke(true.B)
+      startChannel(dut, index = 0, pitch = 127)
+
+      // Process
+      waitForProcess(dut)
+      dut.io.debug.channelReg.nibble.expect(false.B)
+      waitForNext(dut)
+      dut.io.debug.channelReg.nibble.expect(true.B)
+
+      // Stop
+      waitForIdle(dut)
+      stopChannel(dut, index = 0)
+      dut.clock.step()
+
+      // Start
+      waitForIdle(dut)
+      startChannel(dut, index = 0, pitch = 127)
+
+      // Process
+      waitForProcess(dut)
+      dut.io.debug.channelReg.nibble.expect(false.B)
+      waitForNext(dut)
+      dut.io.debug.channelReg.nibble.expect(true.B)
+    }
+  }
+
   behavior of "playing"
 
   it should "play a looped sample" in {

@@ -56,6 +56,7 @@ class ChannelState(private val config: YMZ280BConfig) extends Bundle {
     enable := true.B
     active := true.B
     done := false.B
+    nibble := false.B
     addr := startAddr
     loopStart := false.B
     audioPipelineState := AudioPipelineState.default(config)

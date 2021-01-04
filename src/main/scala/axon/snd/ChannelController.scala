@@ -74,6 +74,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
       val write = Output(Bool())
       val next = Output(Bool())
       val done = Output(Bool())
+      val channelReg = Output(new ChannelState(config))
     }
   })
 
@@ -213,6 +214,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   io.debug.write := stateReg === State.write
   io.debug.next := stateReg === State.next
   io.debug.done := stateReg === State.done
+  io.debug.channelReg := channelStateReg
 
   printf(p"ChannelController(state: $stateReg, index: $channelCounter ($channelCounterWrap), channelState: $channelStateReg, audio: $accumulatorReg ($outputCounterWrap))\n")
 }
