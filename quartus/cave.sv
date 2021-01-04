@@ -143,19 +143,19 @@ assign VIDEO_ARY = status[1] ? 8'd9  : status[2] ? 8'd4 : 8'd3;
 
 `include "build_id.v"
 localparam CONF_STR = {
-    "cave;;",
-    "OOR,CRT H adjust,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;",
-    "OSV,CRT V adjust,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;",
-    "O1,Aspect Ratio,Original,Full Screen;",
-    "O2,Orientation,Horz,Vert;",
-    "O3,Flip Screen,Off,On;",
-    "O46,Scandoubler,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
-    "-;",
-    "DIP;",
-    "-;",
-    "R0,Reset;",
-    "J1,B0,B1,B2,Start,Coin,Pause;",
-    "V,v",`BUILD_DATE
+  "cave;;",
+  "OOR,CRT H adjust,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;",
+  "OSV,CRT V adjust,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;",
+  "O1,Aspect Ratio,Original,Full Screen;",
+  "O2,Orientation,Horz,Vert;",
+  "O3,Flip Screen,Off,On;",
+  "O46,Scandoubler,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
+  "-;",
+  "DIP;",
+  "-;",
+  "R0,Reset;",
+  "J1,B0,B1,B2,Start,Coin,Pause;",
+  "V,v",`BUILD_DATE
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -166,13 +166,13 @@ wire clk_sys, clk_sdram, clk_video, clk_cpu;
 wire locked;
 
 pll pll (
-    .refclk(CLK_50M),
-    .rst(RESET),
-    .outclk_0(clk_sys),
-    .outclk_1(clk_sdram),
-    .outclk_2(clk_video),
-    .outclk_3(clk_cpu),
-    .locked(locked)
+  .refclk(CLK_50M),
+  .rst(RESET),
+  .outclk_0(clk_sys),
+  .outclk_1(clk_sdram),
+  .outclk_2(clk_video),
+  .outclk_3(clk_cpu),
+  .locked(locked)
 );
 
 assign DDRAM_CLK = clk_sys;
@@ -199,29 +199,29 @@ wire [10:0] ps2_key;
 wire  [10:0] joystick_0, joystick_1;
 
 hps_io #(.STRLEN($size(CONF_STR)>>3), .WIDE(1)) hps_io (
-    .clk_sys(clk_sys),
-    .HPS_BUS(HPS_BUS),
+  .clk_sys(clk_sys),
+  .HPS_BUS(HPS_BUS),
 
-    .conf_str(CONF_STR),
+  .conf_str(CONF_STR),
 
-    .buttons(buttons),
-    .status(status),
-    .status_menumask(direct_video),
-    .forced_scandoubler(forced_scandoubler),
-    .gamma_bus(gamma_bus),
-    .direct_video(direct_video),
+  .buttons(buttons),
+  .status(status),
+  .status_menumask(direct_video),
+  .forced_scandoubler(forced_scandoubler),
+  .gamma_bus(gamma_bus),
+  .direct_video(direct_video),
 
-    .ioctl_addr(ioctl_addr),
-    .ioctl_dout(ioctl_dout),
-    .ioctl_wr(ioctl_wr),
-    .ioctl_wait(ioctl_wait),
-    .ioctl_download(ioctl_download),
-    .ioctl_index(ioctl_index),
+  .ioctl_addr(ioctl_addr),
+  .ioctl_dout(ioctl_dout),
+  .ioctl_wr(ioctl_wr),
+  .ioctl_wait(ioctl_wait),
+  .ioctl_download(ioctl_download),
+  .ioctl_index(ioctl_index),
 
-    .joystick_0(joystick_0),
-    .joystick_1(joystick_1),
+  .joystick_0(joystick_0),
+  .joystick_1(joystick_1),
 
-    .ps2_key(ps2_key)
+  .ps2_key(ps2_key)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -244,7 +244,6 @@ assign VGA_R  = r;
 assign VGA_G  = g;
 assign VGA_B  = b;
 assign VGA_SL = sl[1:0];
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // CONTROLS
@@ -276,34 +275,34 @@ reg key_g     = 0;
 reg key_p     = 0;
 
 always @(posedge clk_sys) begin
-reg old_state;
-old_state <= ps2_key[10];
+  reg old_state;
+  old_state <= ps2_key[10];
 
-if (old_state != ps2_key[10]) begin
-case (code)
-  'h75: key_up    <= pressed;
-  'h72: key_down  <= pressed;
-  'h6B: key_left  <= pressed;
-  'h74: key_right <= pressed;
-  'h14: key_ctrl  <= pressed;
-  'h11: key_alt   <= pressed;
-  'h29: key_space <= pressed;
-  'h16: key_1     <= pressed;
-  'h1E: key_2     <= pressed;
-  'h2E: key_5     <= pressed;
-  'h36: key_6     <= pressed;
-  'h46: key_9     <= pressed;
-  'h45: key_0     <= pressed;
-  'h1C: key_a     <= pressed;
-  'h1B: key_s     <= pressed;
-  'h15: key_q     <= pressed;
-  'h2D: key_r     <= pressed;
-  'h2B: key_f     <= pressed;
-  'h23: key_d     <= pressed;
-  'h34: key_g     <= pressed;
-  'h4d: key_p     <= pressed;
-endcase
-end
+  if (old_state != ps2_key[10]) begin
+    case (code)
+      'h75: key_up    <= pressed;
+      'h72: key_down  <= pressed;
+      'h6B: key_left  <= pressed;
+      'h74: key_right <= pressed;
+      'h14: key_ctrl  <= pressed;
+      'h11: key_alt   <= pressed;
+      'h29: key_space <= pressed;
+      'h16: key_1     <= pressed;
+      'h1E: key_2     <= pressed;
+      'h2E: key_5     <= pressed;
+      'h36: key_6     <= pressed;
+      'h46: key_9     <= pressed;
+      'h45: key_0     <= pressed;
+      'h1C: key_a     <= pressed;
+      'h1B: key_s     <= pressed;
+      'h15: key_q     <= pressed;
+      'h2D: key_r     <= pressed;
+      'h2B: key_f     <= pressed;
+      'h23: key_d     <= pressed;
+      'h34: key_g     <= pressed;
+      'h4d: key_p     <= pressed;
+    endcase
+  end
 end
 
 wire player_1_up       = key_up    | joystick_0[3];
@@ -342,9 +341,9 @@ logic reset_sys_1;
 logic reset_sys_2;
 
 always_ff @(posedge clk_sys) begin
-    reset_sys_0 <= reset_sys;
-    reset_sys_1 <= reset_sys_0;
-    reset_sys_2 <= reset_sys_1;
+  reset_sys_0 <= reset_sys;
+  reset_sys_1 <= reset_sys_0;
+  reset_sys_2 <= reset_sys_1;
 end
 
 logic reset_video_0;
@@ -352,9 +351,9 @@ logic reset_video_1;
 logic reset_video_2;
 
 always_ff @(posedge clk_video) begin
-    reset_video_0 <= reset_video;
-    reset_video_1 <= reset_video_0;
-    reset_video_2 <= reset_video_1;
+  reset_video_0 <= reset_video;
+  reset_video_1 <= reset_video_0;
+  reset_video_2 <= reset_video_1;
 end
 
 logic reset_cpu_0;
@@ -362,9 +361,9 @@ logic reset_cpu_1;
 logic reset_cpu_2;
 
 always_ff @(posedge clk_cpu) begin
-    reset_cpu_0 <= reset_cpu;
-    reset_cpu_1 <= reset_cpu_0;
-    reset_cpu_2 <= reset_cpu_1;
+  reset_cpu_0 <= reset_cpu;
+  reset_cpu_1 <= reset_cpu_0;
+  reset_cpu_2 <= reset_cpu_1;
 end
 
 wire [31:0] ddr_addr;
@@ -377,89 +376,89 @@ assign SDRAM_DQ = sdram_oe ? sdram_din : 16'bZ;
 assign sdram_dout = SDRAM_DQ;
 
 Main main (
-    // Fast clock domain
-    .clock(clk_sys),
-    .reset(reset_sys_2),
-    // Video clock domain
-    .io_videoClock(clk_video),
-    .io_videoReset(reset_video_2),
-    // CPU clock domain
-    .io_cpuClock(clk_cpu),
-    .io_cpuReset(reset_cpu_2),
-    // Rotate
-    .io_offset_x(status[27:24]),
-    .io_offset_y(status[31:28]),
-    .io_rotate(status[2]),
-    .io_flip(status[3]),
-    // Joystick signals
-    .io_joystick_player1_up(player_1_up),
-    .io_joystick_player1_down(player_1_down),
-    .io_joystick_player1_left(player_1_left),
-    .io_joystick_player1_right(player_1_right),
-    .io_joystick_player1_buttons({player_1_button_3, player_1_button_2, player_1_button_1}),
-    .io_joystick_player1_start(player_1_start),
-    .io_joystick_player1_coin(player_1_coin),
-    .io_joystick_player1_pause(player_1_pause),
-    .io_joystick_player2_up(player_2_up),
-    .io_joystick_player2_down(player_2_down),
-    .io_joystick_player2_left(player_2_left),
-    .io_joystick_player2_right(player_2_right),
-    .io_joystick_player2_buttons({player_2_button_3, player_2_button_2, player_2_button_1}),
-    .io_joystick_player2_start(player_2_start),
-    .io_joystick_player2_coin(player_2_coin),
-    .io_joystick_player2_pause(player_2_pause),
-    .io_joystick_service1(service_1),
-    .io_joystick_service2(service_2),
-    // Video signals
-    .io_video_hSync(hsync),
-    .io_video_vSync(vsync),
-    .io_video_hBlank(hblank),
-    .io_video_vBlank(vblank),
-    .io_video_enable(video_enable),
-    // Frame buffer signals
-    .io_frameBuffer_enable(FB_EN),
-    .io_frameBuffer_hSize(FB_WIDTH),
-    .io_frameBuffer_vSize(FB_HEIGHT),
-    .io_frameBuffer_format(FB_FORMAT),
-    .io_frameBuffer_base(FB_BASE),
-    .io_frameBuffer_stride(FB_STRIDE),
-    .io_frameBuffer_vBlank(FB_VBL),
-    .io_frameBuffer_lowLat(FB_LL),
-    .io_frameBuffer_forceBlank(FB_FORCE_BLANK),
-    // DDR
-    .io_ddr_rd(DDRAM_RD),
-    .io_ddr_wr(DDRAM_WE),
-    .io_ddr_addr(ddr_addr),
-    .io_ddr_mask(DDRAM_BE),
-    .io_ddr_din(DDRAM_DIN),
-    .io_ddr_dout(DDRAM_DOUT),
-    .io_ddr_waitReq(DDRAM_BUSY),
-    .io_ddr_valid(DDRAM_DOUT_READY),
-    .io_ddr_burstLength(DDRAM_BURSTCNT),
-    // SDRAM
-    .io_sdram_cke(SDRAM_CKE),
-    .io_sdram_cs_n(SDRAM_nCS),
-    .io_sdram_ras_n(SDRAM_nRAS),
-    .io_sdram_cas_n(SDRAM_nCAS),
-    .io_sdram_we_n(SDRAM_nWE),
-    .io_sdram_oe(sdram_oe),
-    .io_sdram_bank(SDRAM_BA),
-    .io_sdram_addr(SDRAM_A),
-    .io_sdram_din(sdram_din),
-    .io_sdram_dout(sdram_dout),
-    // Download
-    .io_download_cs(ioctl_download),
-    .io_download_wr(ioctl_wr),
-    .io_download_waitReq(ioctl_wait),
-    .io_download_addr(ioctl_addr),
-    .io_download_dout(ioctl_dout),
-    // RGB output
-    .io_rgb_r(r),
-    .io_rgb_g(g),
-    .io_rgb_b(b),
-    // Audio output
-    .io_audio_left(AUDIO_L),
-    .io_audio_right(AUDIO_R)
+  // Fast clock domain
+  .clock(clk_sys),
+  .reset(reset_sys_2),
+  // Video clock domain
+  .io_videoClock(clk_video),
+  .io_videoReset(reset_video_2),
+  // CPU clock domain
+  .io_cpuClock(clk_cpu),
+  .io_cpuReset(reset_cpu_2),
+  // Rotate
+  .io_offset_x(status[27:24]),
+  .io_offset_y(status[31:28]),
+  .io_rotate(status[2]),
+  .io_flip(status[3]),
+  // Joystick signals
+  .io_joystick_player1_up(player_1_up),
+  .io_joystick_player1_down(player_1_down),
+  .io_joystick_player1_left(player_1_left),
+  .io_joystick_player1_right(player_1_right),
+  .io_joystick_player1_buttons({player_1_button_3, player_1_button_2, player_1_button_1}),
+  .io_joystick_player1_start(player_1_start),
+  .io_joystick_player1_coin(player_1_coin),
+  .io_joystick_player1_pause(player_1_pause),
+  .io_joystick_player2_up(player_2_up),
+  .io_joystick_player2_down(player_2_down),
+  .io_joystick_player2_left(player_2_left),
+  .io_joystick_player2_right(player_2_right),
+  .io_joystick_player2_buttons({player_2_button_3, player_2_button_2, player_2_button_1}),
+  .io_joystick_player2_start(player_2_start),
+  .io_joystick_player2_coin(player_2_coin),
+  .io_joystick_player2_pause(player_2_pause),
+  .io_joystick_service1(service_1),
+  .io_joystick_service2(service_2),
+  // Video signals
+  .io_video_hSync(hsync),
+  .io_video_vSync(vsync),
+  .io_video_hBlank(hblank),
+  .io_video_vBlank(vblank),
+  .io_video_enable(video_enable),
+  // Frame buffer signals
+  .io_frameBuffer_enable(FB_EN),
+  .io_frameBuffer_hSize(FB_WIDTH),
+  .io_frameBuffer_vSize(FB_HEIGHT),
+  .io_frameBuffer_format(FB_FORMAT),
+  .io_frameBuffer_base(FB_BASE),
+  .io_frameBuffer_stride(FB_STRIDE),
+  .io_frameBuffer_vBlank(FB_VBL),
+  .io_frameBuffer_lowLat(FB_LL),
+  .io_frameBuffer_forceBlank(FB_FORCE_BLANK),
+  // DDR
+  .io_ddr_rd(DDRAM_RD),
+  .io_ddr_wr(DDRAM_WE),
+  .io_ddr_addr(ddr_addr),
+  .io_ddr_mask(DDRAM_BE),
+  .io_ddr_din(DDRAM_DIN),
+  .io_ddr_dout(DDRAM_DOUT),
+  .io_ddr_waitReq(DDRAM_BUSY),
+  .io_ddr_valid(DDRAM_DOUT_READY),
+  .io_ddr_burstLength(DDRAM_BURSTCNT),
+  // SDRAM
+  .io_sdram_cke(SDRAM_CKE),
+  .io_sdram_cs_n(SDRAM_nCS),
+  .io_sdram_ras_n(SDRAM_nRAS),
+  .io_sdram_cas_n(SDRAM_nCAS),
+  .io_sdram_we_n(SDRAM_nWE),
+  .io_sdram_oe(sdram_oe),
+  .io_sdram_bank(SDRAM_BA),
+  .io_sdram_addr(SDRAM_A),
+  .io_sdram_din(sdram_din),
+  .io_sdram_dout(sdram_dout),
+  // Download
+  .io_download_cs(ioctl_download),
+  .io_download_wr(ioctl_wr),
+  .io_download_waitReq(ioctl_wait),
+  .io_download_addr(ioctl_addr),
+  .io_download_dout(ioctl_dout),
+  // RGB output
+  .io_rgb_r(r),
+  .io_rgb_g(g),
+  .io_rgb_b(b),
+  // Audio output
+  .io_audio_left(AUDIO_L),
+  .io_audio_right(AUDIO_R)
 );
 
 endmodule
