@@ -146,8 +146,11 @@ class Main extends Module {
   val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
-  cave.io.rotate := io.rotate
-  cave.io.flip := io.flip
+  cave.io.gpuCtrl.frameStart := false.B
+  frameBufferDMA.io.start := cave.io.gpuCtrl.dmaStart
+  cave.io.gpuCtrl.dmaReady := frameBufferDMA.io.ready
+  cave.io.gpuCtrl.rotate := io.rotate
+  cave.io.gpuCtrl.flip := io.flip
   cave.io.joystick <> io.joystick
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }
@@ -155,10 +158,9 @@ class Main extends Module {
   cave.io.video <> videoTiming.io.video
   cave.io.audio <> io.audio
   cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
-  frameBufferDMA.io.start := cave.io.frameDone
 
-  // Update the frame buffer write index after a new frame has been written to DDR memory
-  when(Util.falling(frameBufferDMA.io.busy)) {
+  // Update the frame buffer write index when a frame is complete
+  when(Util.rising(cave.io.gpuCtrl.frameReady)) {
     frameBufferWriteIndex := nextIndex(frameBufferWriteIndex, frameBufferReadIndex)
   }
 
