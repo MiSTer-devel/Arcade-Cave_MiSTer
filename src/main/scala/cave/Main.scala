@@ -148,7 +148,7 @@ class Main extends Module {
   cave.io.cpuReset := io.cpuReset
   cave.io.gpuCtrl.start := false.B
   frameBufferDMA.io.start := cave.io.gpuCtrl.dmaStart
-  cave.io.gpuCtrl.dmaReady := !frameBufferDMA.io.busy
+  cave.io.gpuCtrl.dmaReady := frameBufferDMA.io.ready
   cave.io.gpuCtrl.rotate := io.rotate
   cave.io.gpuCtrl.flip := io.flip
   cave.io.joystick <> io.joystick
