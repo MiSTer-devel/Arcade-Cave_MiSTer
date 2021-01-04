@@ -183,7 +183,7 @@ class CacheEntry(private val config: CacheConfig) extends Bundle {
  *
  * @param config The cache configuration.
  */
-class CacheMem(config: CacheConfig) extends Module {
+class Cache(config: CacheConfig) extends Module {
   // Sanity check
   assert(config.inDataWidth >= 8, "Input data width must be at least 8")
   assert(config.outDataWidth >= 8, "Output data width must be at least 8")

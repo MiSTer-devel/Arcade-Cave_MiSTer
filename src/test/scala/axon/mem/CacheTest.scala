@@ -47,9 +47,9 @@ trait CacheMemTestHelpers {
     offset = 0x1000
   )
 
-  protected def mkCacheMem(config: CacheConfig = cacheConfig) = new CacheMem(config)
+  protected def mkCacheMem(config: CacheConfig = cacheConfig) = new Cache(config)
 
-  protected def readCache(dut: CacheMem, addr: Int) = {
+  protected def readCache(dut: Cache, addr: Int) = {
     dut.io.in.rd.poke(true.B)
     dut.io.in.wr.poke(false.B)
     dut.io.in.addr.poke(addr.U)
@@ -61,7 +61,7 @@ trait CacheMemTestHelpers {
     result
   }
 
-  protected def writeCache(dut: CacheMem, addr: Int, data: Int) = {
+  protected def writeCache(dut: Cache, addr: Int, data: Int) = {
     dut.io.in.rd.poke(false.B)
     dut.io.in.wr.poke(true.B)
     dut.io.in.addr.poke(addr.U)
@@ -71,7 +71,7 @@ trait CacheMemTestHelpers {
     waitForIdle(dut)
   }
 
-  protected def fillCacheLine(dut: CacheMem, addr: Int, data: Seq[Int]) = {
+  protected def fillCacheLine(dut: Cache, addr: Int, data: Seq[Int]) = {
     dut.io.in.rd.poke(true.B)
     dut.io.in.wr.poke(false.B)
     dut.io.in.addr.poke(addr.U)
@@ -91,35 +91,35 @@ trait CacheMemTestHelpers {
     waitForIdle(dut)
   }
 
-  protected def waitForIdle(dut: CacheMem) =
+  protected def waitForIdle(dut: Cache) =
     while (!dut.io.debug.idle.peek().litToBoolean) { dut.clock.step() }
 
-  protected def waitForLatch(dut: CacheMem) =
+  protected def waitForLatch(dut: Cache) =
     while (!dut.io.debug.latch.peek().litToBoolean) { dut.clock.step() }
 
-  protected def waitForCheck(dut: CacheMem) =
+  protected def waitForCheck(dut: Cache) =
     while (!dut.io.debug.check.peek().litToBoolean) { dut.clock.step() }
 
-  protected def waitForFill(dut: CacheMem) =
+  protected def waitForFill(dut: Cache) =
     while (!dut.io.debug.fill.peek().litToBoolean) { dut.clock.step() }
 
-  protected def waitForFillWait(dut: CacheMem) =
+  protected def waitForFillWait(dut: Cache) =
     while (!dut.io.debug.fillWait.peek().litToBoolean) { dut.clock.step() }
 
-  protected def waitForEvict(dut: CacheMem) =
+  protected def waitForEvict(dut: Cache) =
     while (!dut.io.debug.evict.peek().litToBoolean) { dut.clock.step() }
 
-  protected def waitForEvictWait(dut: CacheMem) =
+  protected def waitForEvictWait(dut: Cache) =
     while (!dut.io.debug.evictWait.peek().litToBoolean) { dut.clock.step() }
 
-  protected def waitForMerge(dut: CacheMem) =
+  protected def waitForMerge(dut: Cache) =
     while (!dut.io.debug.merge.peek().litToBoolean) { dut.clock.step() }
 
-  protected def waitForWrite(dut: CacheMem) =
+  protected def waitForWrite(dut: Cache) =
     while (!dut.io.debug.write.peek().litToBoolean) { dut.clock.step() }
 }
 
-class CacheMemTest extends FlatSpec with ChiselScalatestTester with Matchers with CacheMemTestHelpers {
+class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with CacheMemTestHelpers {
   behavior of "FSM"
 
   it should "move to the latch state after a request" in {

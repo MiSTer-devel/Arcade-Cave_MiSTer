@@ -69,7 +69,7 @@ class MemSys extends Module {
   //
   // A download cache is used to buffer download data, so that a complete word can be written to
   // memory.
-  val ddrDownloadCache = Module(new CacheMem(CacheConfig(
+  val ddrDownloadCache = Module(new Cache(CacheConfig(
     inAddrWidth = DownloadIO.ADDR_WIDTH,
     inDataWidth = DownloadIO.DATA_WIDTH,
     outAddrWidth = Config.ddrConfig.addrWidth,
@@ -84,7 +84,7 @@ class MemSys extends Module {
   //
   // A download cache is used to buffer download data, so that a complete word can be written to
   // memory.
-  val sdramDownloadCache = Module(new CacheMem(CacheConfig(
+  val sdramDownloadCache = Module(new Cache(CacheConfig(
     inAddrWidth = DownloadIO.ADDR_WIDTH,
     inDataWidth = DownloadIO.DATA_WIDTH,
     outAddrWidth = Config.sdramConfig.addrWidth,
@@ -96,7 +96,7 @@ class MemSys extends Module {
   sdramDownloadCache.io.in <> io.download.asAsyncReadWriteMemIO
 
   // Program ROM cache
-  val progRomCache = Module(new CacheMem(CacheConfig(
+  val progRomCache = Module(new Cache(CacheConfig(
     inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
     inDataWidth = Config.PROG_ROM_DATA_WIDTH,
     outAddrWidth = Config.sdramConfig.addrWidth,
@@ -109,7 +109,7 @@ class MemSys extends Module {
   progRomCache.io.in.asAsyncReadMemIO <> io.progRom
 
   // Sound ROM cache
-  val soundRomCache = Module(new CacheMem(CacheConfig(
+  val soundRomCache = Module(new Cache(CacheConfig(
     inAddrWidth = Config.SOUND_ROM_ADDR_WIDTH,
     inDataWidth = Config.SOUND_ROM_DATA_WIDTH,
     outAddrWidth = Config.sdramConfig.addrWidth,
