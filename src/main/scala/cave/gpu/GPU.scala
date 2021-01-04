@@ -47,6 +47,10 @@ class GPUCtrlIO extends Bundle {
   val frameStart = Input(Bool())
   /** Asserted when a frame is complete */
   val frameDone = Output(Bool())
+  /** Asserted when a DMA transfer is requested  */
+  val dmaStart = Output(Bool())
+  /** Asserted when the DMA controller is ready  */
+  val dmaReady = Input(Bool())
   /** Asserted when the screen is rotated */
   val rotate = Input(Bool())
   /** Asserted when the screen is flipped */
@@ -84,7 +88,7 @@ class GPU extends Module {
 
   // States
   object State {
-    val idle :: clear :: sprite :: layer0 :: layer1 :: layer2 :: done :: Nil = Enum(7)
+    val idle :: clear :: sprite :: layer0 :: layer1 :: layer2 :: dmaStart :: dmaWait :: done :: Nil = Enum(9)
   }
 
   // Wires
@@ -199,7 +203,17 @@ class GPU extends Module {
 
     // Renders layer 2
     is(State.layer2) {
-      when(layerProcessor.io.done) { nextState := State.done }
+      when(layerProcessor.io.done) { nextState := State.dmaStart }
+    }
+
+    // Wait for the frame buffer DMA transfer to complete
+    is(State.dmaStart) {
+      when(io.ctrl.dmaReady) { nextState := State.dmaWait }
+    }
+
+    // Wait for the frame buffer DMA transfer to complete
+    is(State.dmaWait) {
+      when(io.ctrl.dmaReady) { nextState := State.done }
     }
 
     // All done
@@ -207,6 +221,7 @@ class GPU extends Module {
   }
 
   // Outputs
+  io.ctrl.dmaStart := stateReg === State.dmaStart
   io.ctrl.frameDone := stateReg === State.done
   io.paletteRam <> ReadMemIO.mux(stateReg === State.sprite, spriteProcessor.io.paletteRam, layerProcessor.io.paletteRam)
   io.tileRom <> BurstReadMemIO.mux(Seq(

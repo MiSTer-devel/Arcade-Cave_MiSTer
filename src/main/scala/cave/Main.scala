@@ -147,7 +147,8 @@ class Main extends Module {
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.gpuCtrl.frameStart := false.B
-  frameBufferDMA.io.start := cave.io.gpuCtrl.frameDone
+  frameBufferDMA.io.start := cave.io.gpuCtrl.dmaStart
+  cave.io.gpuCtrl.dmaReady := !frameBufferDMA.io.busy
   cave.io.gpuCtrl.rotate := io.rotate
   cave.io.gpuCtrl.flip := io.flip
   cave.io.joystick <> io.joystick
@@ -158,8 +159,8 @@ class Main extends Module {
   cave.io.audio <> io.audio
   cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
 
-  // Update the frame buffer write index after a new frame has been written to DDR memory
-  when(Util.falling(frameBufferDMA.io.busy)) {
+  // Update the frame buffer write index when a frame is complete
+  when(cave.io.gpuCtrl.frameDone) {
     frameBufferWriteIndex := nextIndex(frameBufferWriteIndex, frameBufferReadIndex)
   }
 
