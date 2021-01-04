@@ -37,22 +37,29 @@ import chisel3._
 /**
  * A PISO (parallel-in, serial-out) used to buffer data.
  *
+ * @param t              The input data type.
  * @param n              The number of elements.
- * @param width          The data width.
  * @param emptyThreshold The threshold at which the [[isAlmostEmpty]] flag will be asserted.
  */
-class PISO(n: Int, width: Int, emptyThreshold: Int = 1) extends Module {
+class PISO[T <: Data](t: T, n: Int, emptyThreshold: Int = 1) extends Module {
   val io = IO(new Bundle {
+    /** Write enable */
     val wr = Input(Bool())
+    /** Asserted when the PISO is empty */
     val isEmpty = Output(Bool())
+    /** Asserted when the PISO is almost empty */
     val isAlmostEmpty = Output(Bool())
-    val din = Input(Vec(n, Bits(width.W)))
-    val dout = Output(Bits(width.W))
+    /** Data input port */
+    val din = Input(Vec(n, t))
+    /** Data output port */
+    val dout = Output(t)
   })
 
-  val pisoReg = Reg(Vec(n, Bits(width.W)))
+  // Registers
+  val pisoReg = Reg(Vec(n, t))
   val pisoCounterReg = RegInit(0.U)
 
+  // Control signals
   val pisoEmpty = pisoCounterReg === 0.U
   val pisoAlmostEmpty = pisoCounterReg === emptyThreshold.U
 

@@ -67,7 +67,7 @@ class SpriteBlitter extends Module {
   val paletteEntryReg = Reg(new PaletteEntry)
 
   // Tile PISO
-  val tilePiso = Module(new PISO(Config.LARGE_TILE_SIZE, Config.LARGE_TILE_BPP))
+  val tilePiso = Module(new PISO(Bits(Config.LARGE_TILE_BPP.W), Config.LARGE_TILE_SIZE))
   tilePiso.io.wr := readFifo
   tilePiso.io.din := VecInit(SpriteBlitter.decodeTile(io.pixelData.bits))
 
