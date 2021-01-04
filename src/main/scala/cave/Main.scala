@@ -146,7 +146,7 @@ class Main extends Module {
   val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
-  cave.io.gpuCtrl.frameStart := false.B
+  cave.io.gpuCtrl.start := false.B
   frameBufferDMA.io.start := cave.io.gpuCtrl.dmaStart
   cave.io.gpuCtrl.dmaReady := !frameBufferDMA.io.busy
   cave.io.gpuCtrl.rotate := io.rotate
@@ -160,7 +160,7 @@ class Main extends Module {
   cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
 
   // Update the frame buffer write index when a frame is complete
-  when(cave.io.gpuCtrl.frameDone) {
+  when(Util.rising(cave.io.gpuCtrl.ready)) {
     frameBufferWriteIndex := nextIndex(frameBufferWriteIndex, frameBufferReadIndex)
   }
 

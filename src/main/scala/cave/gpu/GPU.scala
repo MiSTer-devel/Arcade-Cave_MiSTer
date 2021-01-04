@@ -44,9 +44,9 @@ import chisel3.util._
 /** GPU control interface. */
 class GPUCtrlIO extends Bundle {
   /** Asserted when a frame is requested */
-  val frameStart = Input(Bool())
-  /** Asserted when a frame is complete */
-  val frameDone = Output(Bool())
+  val start = Input(Bool())
+  /** Asserted when the GPU is ready */
+  val ready = Output(Bool())
   /** Asserted when a DMA transfer is requested  */
   val dmaStart = Output(Bool())
   /** Asserted when the DMA controller is ready  */
@@ -88,7 +88,7 @@ class GPU extends Module {
 
   // States
   object State {
-    val idle :: clear :: sprite :: layer0 :: layer1 :: layer2 :: dmaStart :: dmaWait :: done :: Nil = Enum(9)
+    val idle :: clear :: sprite :: layer0 :: layer1 :: layer2 :: dmaStart :: dmaWait :: Nil = Enum(8)
   }
 
   // Wires
@@ -178,7 +178,7 @@ class GPU extends Module {
   switch(stateReg) {
     // Wait for a new frame
     is(State.idle) {
-      when(io.ctrl.frameStart) { nextState := State.clear }
+      when(io.ctrl.start) { nextState := State.clear }
     }
 
     // Clears the frame buffer
@@ -213,16 +213,13 @@ class GPU extends Module {
 
     // Wait for the frame buffer DMA transfer to complete
     is(State.dmaWait) {
-      when(io.ctrl.dmaReady) { nextState := State.done }
+      when(io.ctrl.dmaReady) { nextState := State.idle }
     }
-
-    // All done
-    is(State.done) { nextState := State.idle }
   }
 
   // Outputs
   io.ctrl.dmaStart := stateReg === State.dmaStart
-  io.ctrl.frameDone := stateReg === State.done
+  io.ctrl.ready := stateReg === State.idle
   io.paletteRam <> ReadMemIO.mux(stateReg === State.sprite, spriteProcessor.io.paletteRam, layerProcessor.io.paletteRam)
   io.tileRom <> BurstReadMemIO.mux(Seq(
     (stateReg === State.sprite) -> spriteProcessor.io.tileRom,
