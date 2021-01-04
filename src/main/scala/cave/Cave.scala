@@ -63,10 +63,14 @@ class Cave extends Module {
     val cpuClock = Input(Clock())
     /** CPU reset */
     val cpuReset = Input(Reset())
+    /** Asserted when the screen is rotated */
+    val rotate = Input(Bool())
+    /** Asserted when the screen is flipped */
+    val flip = Input(Bool())
+    /** Asserted when the frame is complete */
+    val frameDone = Output(Bool())
     /** Joystick port */
     val joystick = new JoystickIO
-    /** GPU control port */
-    val gpuCtrl = new GPUCtrlIO
     /** Program ROM port */
     val progRom = new ProgRomIO
     /** Sound ROM port */
@@ -82,13 +86,15 @@ class Cave extends Module {
   })
 
   // Wires
-  val frameStart = WireInit(false.B)
+  val generateFrame = WireInit(false.B)
   val intAck = Wire(Bool())
 
   // GPU
   val gpu = Module(new GPU)
-  gpu.io.ctrl <> io.gpuCtrl
-  gpu.io.ctrl.frameStart := Util.rising(ShiftRegister(frameStart, 2))
+  gpu.io.generateFrame := Util.rising(ShiftRegister(generateFrame, 2))
+  gpu.io.rotate := io.rotate
+  gpu.io.flip := io.flip
+  io.frameDone := gpu.io.frameDone
   io.tileRom <> gpu.io.tileRom
   io.frameBufferDMA <> gpu.io.frameBufferDMA
 
@@ -222,7 +228,7 @@ class Cave extends Module {
       result.bitSet(0.U, !vBlankIRQ) // clear bit 0 during a vertical blank
     }
     memMap(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
-    memMap(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
+    memMap(0x800004).w { (_, _, data) => generateFrame := data === 0x01f0.U }
     memMap(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
     memMap(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
     memMap(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)

@@ -41,8 +41,8 @@ import chisel3._
 import chisel3.util._
 
 /**
- * A direct memory access (DMA) controller used to write pixel data to a frame buffer stored in DDR
- * memory.
+ * A direct memory access (DMA) controller used to write pixel data to a frame buffer stored in
+ * DDR memory.
  *
  * @param addr        The start address of the transfer.
  * @param numWords    The number of words to transfer.
@@ -55,8 +55,8 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
   val io = IO(new Bundle {
     /** Start the transfer */
     val start = Input(Bool())
-    /** Asserted when the DMA controller is ready */
-    val ready = Output(Bool())
+    /** Asserted when the DMA controller is busy */
+    val busy = Output(Bool())
     /** The index of the frame buffer to write */
     val frameBufferIndex = Input(UInt(2.W))
     /** Frame buffer DMA port */
@@ -97,7 +97,7 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
   when(io.start) { busyReg := true.B }.elsewhen(burstCounterDone) { busyReg := false.B }
 
   // Outputs
-  io.ready := !busyReg
+  io.busy := busyReg
   io.frameBufferDMA.rd := true.B
   io.frameBufferDMA.addr := Mux(effectiveWrite, totalCounter +& 1.U, totalCounter)
   io.ddr.wr := busyReg

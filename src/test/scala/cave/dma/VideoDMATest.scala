@@ -41,15 +41,14 @@ trait VideoDMATestHelpers {
 }
 
 class VideoDMATest extends FlatSpec with ChiselScalatestTester with Matchers with VideoDMATestHelpers {
-  it should "deassert the ready signal during a transfer" in {
+  it should "assert the busy signal during a transfer" in {
     test(mkDMA()) { dut =>
       dut.io.pixelData.ready.poke(true.B)
-      dut.io.ready.expect(true.B)
       dut.clock.step()
-      dut.io.ready.expect(false.B)
+      dut.io.busy.expect(true.B)
       dut.io.ddr.burstDone.poke(true.B)
       dut.clock.step(3)
-      dut.io.ready.expect(true.B)
+      dut.io.busy.expect(false.B)
     }
   }
 

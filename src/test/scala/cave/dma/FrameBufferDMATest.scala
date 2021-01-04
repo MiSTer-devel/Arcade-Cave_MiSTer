@@ -41,16 +41,15 @@ trait FrameBufferDMATestHelpers {
 }
 
 class FrameBufferDMATest extends FlatSpec with ChiselScalatestTester with Matchers with FrameBufferDMATestHelpers {
-  it should "deassert the ready signal during a transfer" in {
+  it should "assert the busy signal during a transfer" in {
     test(mkDMA()) { dut =>
       dut.io.start.poke(true.B)
-      dut.io.ready.expect(true.B)
       dut.clock.step()
+      dut.io.busy.expect(true.B)
       dut.io.start.poke(false.B)
       dut.io.ddr.burstDone.poke(true.B)
-      dut.io.ready.expect(false.B)
       dut.clock.step(2)
-      dut.io.ready.expect(true.B)
+      dut.io.busy.expect(false.B)
     }
   }
 
