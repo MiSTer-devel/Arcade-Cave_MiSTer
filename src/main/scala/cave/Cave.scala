@@ -82,13 +82,13 @@ class Cave extends Module {
   })
 
   // Wires
-  val gpuStart = WireInit(false.B)
+  val frameStart = WireInit(false.B)
   val intAck = Wire(Bool())
 
   // GPU
   val gpu = Module(new GPU)
   gpu.io.ctrl <> io.gpuCtrl
-  gpu.io.ctrl.start := Util.rising(ShiftRegister(gpuStart, 2))
+  gpu.io.ctrl.frameStart := Util.rising(ShiftRegister(frameStart, 2))
   io.tileRom <> gpu.io.tileRom
   io.frameBufferDMA <> gpu.io.frameBufferDMA
 
@@ -222,7 +222,7 @@ class Cave extends Module {
       result.bitSet(0.U, !vBlankIRQ) // clear bit 0 during a vertical blank
     }
     memMap(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
-    memMap(0x800004).w { (_, _, data) => gpuStart := data === 0x01f0.U }
+    memMap(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
     memMap(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
     memMap(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
     memMap(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
