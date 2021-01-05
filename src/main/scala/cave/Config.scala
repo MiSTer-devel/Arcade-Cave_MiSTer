@@ -197,6 +197,11 @@ object Config {
   /** The length of a burst during a frame buffer DMA transfer */
   val FRAME_BUFFER_DMA_BURST_LENGTH = 128
 
+  /** The width of the priority buffer address bus */
+  val PRIO_BUFFER_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DEPTH)
+  /** The width of the priority buffer data bus */
+  val PRIO_BUFFER_DATA_WIDTH = 2
+
   /** The width of a priority value */
   val PRIO_WIDTH = 2
   /** The width of a color code value */

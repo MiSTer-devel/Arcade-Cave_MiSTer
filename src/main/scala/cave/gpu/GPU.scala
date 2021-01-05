@@ -34,7 +34,6 @@ package cave.gpu
 
 import axon._
 import axon.mem._
-import axon.types._
 import axon.util.Counter
 import cave._
 import cave.types._
@@ -111,15 +110,12 @@ class GPU extends Module {
   // The clear memory interface is used for writing blank pixels
   val clearMem = GPU.clearMem(x ## y)
 
-  // Priority RAM
-  //
-  // The priority RAM is used by the sprite and tilemap layers for reading/writing pixel priority
-  // data during rendering.
+  // The priority RAM is used by the layers for buffering pixel priority data during rendering
   val priorityRam = Module(new DualPortRam(
-    addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
-    dataWidthA = Config.PRIO_WIDTH,
-    addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH,
-    dataWidthB = Config.PRIO_WIDTH,
+    addrWidthA = Config.PRIO_BUFFER_ADDR_WIDTH,
+    dataWidthA = Config.PRIO_BUFFER_DATA_WIDTH,
+    addrWidthB = Config.PRIO_BUFFER_ADDR_WIDTH,
+    dataWidthB = Config.PRIO_BUFFER_DATA_WIDTH,
     maskEnable = false
   ))
   priorityRam.io.portA <> WriteMemIO.mux(stateReg, Seq(
@@ -131,8 +127,6 @@ class GPU extends Module {
   ))
   priorityRam.io.portB <> ReadMemIO.mux(stateReg === State.sprite, spriteProcessor.io.priority.read, layerProcessor.io.priority.read)
 
-  // Frame buffer
-  //
   // The frame buffer is used by the sprite and tilemap layers for writing pixel data during
   // rendering.
   //

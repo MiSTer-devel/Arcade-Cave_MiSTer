@@ -168,14 +168,13 @@ class LayerPipeline extends Module {
   // Calculate priority
   val priorityReadAddr = stage1Pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0) ##
                          stage1Pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
+  val priorityReadData = io.priority.read.dout
   val priorityWriteData = ShiftRegister(tileInfoReg.priority, 2)
 
-  // Calculate the pixel priority
-  //
   // The current pixel has priority if it has more priority than the previous pixel. Otherwise, if
   // the pixel priorities are the same then it depends on the layer priorities.
-  val hasPriority = (priorityWriteData > io.priority.read.dout) ||
-                    (priorityWriteData === io.priority.read.dout && layerInfoReg.priority >= io.lastLayerPriority)
+  val hasPriority = (priorityWriteData > priorityReadData) ||
+                    (priorityWriteData === priorityReadData && layerInfoReg.priority >= io.lastLayerPriority)
 
   // Calculate visibility
   val visible = Util.between(stage2Pos.x, 0 until Config.SCREEN_WIDTH) &&

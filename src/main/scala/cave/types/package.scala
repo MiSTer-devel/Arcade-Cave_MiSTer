@@ -44,9 +44,9 @@ package object types {
   /** Priority IO */
   class PriorityIO extends Bundle {
     /** Write-only port */
-    val write = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.PRIO_WIDTH)
+    val write = WriteMemIO(Config.PRIO_BUFFER_ADDR_WIDTH, Config.PRIO_BUFFER_DATA_WIDTH)
     /** Read-only port */
-    val read = ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.PRIO_WIDTH)
+    val read = ReadMemIO(Config.PRIO_BUFFER_ADDR_WIDTH, Config.PRIO_BUFFER_DATA_WIDTH)
   }
 
   /** Program ROM IO */

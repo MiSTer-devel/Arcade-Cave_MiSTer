@@ -124,11 +124,12 @@ class SpriteBlitter extends Module {
   // Calculate priority
   val priorityReadAddr = stage1Pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0) ##
                          stage1Pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
+  val priorityReadData = io.priority.read.dout
   val priorityWriteData = ShiftRegister(spriteInfoReg.priority, 2)
 
   // The current sprite has priority if it has more priority or the same priority as the previous
   // sprite (all priority should be 0 at start).
-  val hasPriority = priorityWriteData >= io.priority.read.dout
+  val hasPriority = priorityWriteData >= priorityReadData
 
   // Calculate visibility
   val visible = Util.between(stage2Pos.x, 0 until Config.SCREEN_WIDTH) &&
