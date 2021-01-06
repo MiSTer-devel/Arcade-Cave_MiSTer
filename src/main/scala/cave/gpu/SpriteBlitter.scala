@@ -121,25 +121,16 @@ class SpriteBlitter extends Module {
   // Set done flag
   val done = ShiftRegister(spriteDone, 2, false.B, true.B)
 
-  // Calculate priority
-  val priorityReadAddr = stage1Pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0) ##
-                         stage1Pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
-  val priorityReadData = io.priority.read.dout
-  val priorityWriteData = ShiftRegister(spriteInfoReg.priority, 2)
-
-  // The current sprite has priority if it has more priority or the same priority as the previous
-  // sprite (all priority should be 0 at start).
-  val hasPriority = priorityWriteData >= priorityReadData
-
   // Calculate visibility
   val visible = Util.between(stage2Pos.x, 0 until Config.SCREEN_WIDTH) &&
                 Util.between(stage2Pos.y, 0 until Config.SCREEN_HEIGHT)
 
-  // Calculate frame buffer data
-  //
-  // The transparency flag must be delayed by one cycle, as for the colors (since the colors come
-  // from the palette RAM they arrive one cycle later).
-  val frameBufferWrite = valid && hasPriority && !RegNext(paletteEntryReg.isTransparent) && visible
+  // Set priority data
+  val priorityWriteData = ShiftRegister(spriteInfoReg.priority, 2)
+
+  // Set frame buffer data. The transparency flag must be delayed by one cycle, as for the colors
+  // (since the colors come from the palette RAM they arrive one cycle later).
+  val frameBufferWrite = valid && !RegNext(paletteEntryReg.isTransparent) && visible
   val frameBufferAddr = stage2Pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0) ##
                         stage2Pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
 
@@ -148,8 +139,8 @@ class SpriteBlitter extends Module {
   io.pixelData.ready := readFifo
   io.paletteRam.rd := true.B
   io.paletteRam.addr := paletteEntryReg.asUInt
-  io.priority.read.rd := true.B
-  io.priority.read.addr := priorityReadAddr
+  io.priority.read.rd := false.B
+  io.priority.read.addr := 0.U
   io.priority.write.wr := frameBufferWrite
   io.priority.write.addr := frameBufferAddr
   io.priority.write.mask := 0.U
