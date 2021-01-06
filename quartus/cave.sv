@@ -129,8 +129,6 @@ module emu (
   output  [6:0] USER_OUT
 );
 
-assign VGA_F1 = 0;
-
 assign AUDIO_S   = 1;
 assign AUDIO_MIX = 0;
 
@@ -236,14 +234,16 @@ wire [2:0] fx = status[6:4];
 wire [2:0] sl = fx ? fx - 1'd1 : 3'd0;
 
 assign CLK_VIDEO = clk_video;
-assign CE_PIXEL = '1;
+assign CE_PIXEL = 1;
 assign VGA_DE = video_enable;
 assign VGA_HS = hsync;
 assign VGA_VS = vsync;
 assign VGA_R  = r;
 assign VGA_G  = g;
 assign VGA_B  = b;
+assign VGA_F1 = 0;
 assign VGA_SL = sl[1:0];
+assign VGA_SCALER = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
 // CONTROLS

@@ -201,7 +201,7 @@ class GPU extends Module {
       when(layerProcessor.io.done) { nextState := State.dmaStart }
     }
 
-    // Wait for the frame buffer DMA transfer to complete
+    // Wait for the frame buffer DMA transfer to start
     is(State.dmaStart) {
       when(io.ctrl.dmaReady) { nextState := State.dmaWait }
     }
