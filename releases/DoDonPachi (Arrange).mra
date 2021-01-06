@@ -1,0 +1,30 @@
+<misterromdescription>
+  <name>DoDonPachi (Arrange)</name>
+  <mameversion>0226</mameversion>
+  <setname>ddonpacha</setname>
+  <mratimestamp>20201213012519</mratimestamp>
+  <year>2012</year>
+  <manufacturer>hack (trap15)</manufacturer>
+  <category>Army / Airforce</category>
+  <rbf>cave</rbf>
+  <mameinfo parent="ddonpach" cpp="cave" input="cave" />
+  <display type="raster" rotate="270" />
+
+  <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,X,R,L,Start" />
+
+  <rom index="0" zip="ddonpach.zip|ddonpacha.zip" md5="none">
+    <interleave output="16">
+      <part crc="44b899ae" name="arrange_u27.bin" map="10"/>
+      <part crc="727a09a8" name="arrange_u26.bin" map="01"/>
+    </interleave>
+    <part crc="14b260ec" name="u50.bin"/>
+    <part crc="0f3e5148" name="arrange_u51.bin"/>
+    <part crc="02492ee0" name="u52.bin"/>
+    <part crc="cb4c10f0" name="u53.bin"/>
+    <part crc="903096a7" name="u60.bin"/>
+    <part crc="d89b7631" name="u61.bin"/>
+    <part crc="42e4c6c5" name="arrange_u62.bin"/>
+    <part crc="9dfdafaf" name="u6.bin"/>
+    <part crc="795b17d5" name="u7.bin"/>
+  </rom>
+</misterromdescription>
