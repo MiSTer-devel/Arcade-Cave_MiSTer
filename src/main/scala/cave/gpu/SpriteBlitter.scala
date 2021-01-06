@@ -115,22 +115,18 @@ class SpriteBlitter extends Module {
   // The sprites use the first 64 palettes, and use 16 colors (out of 256 possible in a palette)
   paletteEntryReg := PaletteEntry(spriteInfoReg.colorCode, tilePiso.io.dout)
 
-  // Set valid flag
+  // Set valid/done flags
   val valid = ShiftRegister(!pisoEmpty, 2, false.B, true.B)
-
-  // Set done flag
   val done = ShiftRegister(spriteDone, 2, false.B, true.B)
-
-  // Calculate visibility
-  val visible = Util.between(stage2Pos.x, 0 until Config.SCREEN_WIDTH) &&
-                Util.between(stage2Pos.y, 0 until Config.SCREEN_HEIGHT)
 
   // Set priority data
   val priorityWriteData = ShiftRegister(spriteInfoReg.priority, 2)
 
   // Set frame buffer data. The transparency flag must be delayed by one cycle, as for the colors
   // (since the colors come from the palette RAM they arrive one cycle later).
-  val frameBufferWrite = valid && !RegNext(paletteEntryReg.isTransparent) && visible
+  val frameBufferWrite = valid &&
+                         GPU.isVisible(stage2Pos) &&
+                         !RegNext(paletteEntryReg.isTransparent)
   val frameBufferAddr = stage2Pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0) ##
                         stage2Pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
 
