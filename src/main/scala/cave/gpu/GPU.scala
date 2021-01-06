@@ -228,16 +228,18 @@ object GPU {
   }
 
   /**
-   * Creates a virtual write-only memory interface that writes blank pixels at the given address.
+   * Creates a virtual write-only memory interface that writes a constant value to the given
+   * address.
    *
    * @param addr The address value.
+   * @param data The constant value.
    */
-  def clearMem(addr: UInt): WriteMemIO = {
+  def clearMem(addr: UInt, data: Bits = 0.U): WriteMemIO = {
     val mem = Wire(WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH))
     mem.wr := true.B
     mem.addr := addr
     mem.mask := 0.U
-    mem.din := 0.U
+    mem.din := data
     mem
   }
 
