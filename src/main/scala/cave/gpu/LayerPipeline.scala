@@ -159,13 +159,11 @@ class LayerPipeline extends Module {
     Mux(layerInfoReg.smallTile, smallTilePiso.io.dout, largeTilePiso.io.dout)
   )
 
-  // Set valid flag
+  // Set valid/done flags
   val valid = ShiftRegister(!pisoEmpty, 2, false.B, true.B)
-
-  // Set done flag
   val done = ShiftRegister(tileDone, 2, false.B, true.B)
 
-  // Calculate priority
+  // Set priority data
   val priorityReadAddr = stage1Pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0) ##
                          stage1Pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
   val priorityReadData = io.priority.read.dout
@@ -176,15 +174,12 @@ class LayerPipeline extends Module {
   val hasPriority = (priorityWriteData > priorityReadData) ||
                     (priorityWriteData === priorityReadData && layerInfoReg.priority >= io.lastLayerPriority)
 
-  // Calculate visibility
-  val visible = Util.between(stage2Pos.x, 0 until Config.SCREEN_WIDTH) &&
-                Util.between(stage2Pos.y, 0 until Config.SCREEN_HEIGHT)
-
-  // Calculate frame buffer data
-  //
-  // The transparency flag must be delayed by one cycle, as for the colors (since the colors come
-  // from the palette RAM they arrive one cycle later).
-  val frameBufferWrite = valid && hasPriority && !RegNext(paletteEntryReg.isTransparent) && visible
+  // Set frame buffer data. The transparency flag must be delayed by one cycle, as for the colors
+  // (since the colors come from the palette RAM they arrive one cycle later).
+  val frameBufferWrite = valid &&
+                         hasPriority &&
+                         GPU.isVisible(stage2Pos) &&
+                         !RegNext(paletteEntryReg.isTransparent)
   val frameBufferAddr = stage2Pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0) ##
                         stage2Pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
 
