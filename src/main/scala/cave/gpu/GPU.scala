@@ -41,17 +41,27 @@ import cave.types._
 import chisel3._
 import chisel3.util._
 
-/** Graphics Processor */
+/** GPU control interface. */
+class GPUCtrlIO extends Bundle {
+  /** Asserted when a frame is requested */
+  val frameStart = Input(Bool())
+  /** Asserted when the GPU is ready */
+  val frameReady = Output(Bool())
+  /** Asserted when a DMA transfer is requested  */
+  val dmaStart = Output(Bool())
+  /** Asserted when the DMA controller is ready  */
+  val dmaReady = Input(Bool())
+  /** Asserted when the screen is rotated */
+  val rotate = Input(Bool())
+  /** Asserted when the screen is flipped */
+  val flip = Input(Bool())
+}
+
+/** Graphics processing unit (GPU). */
 class GPU extends Module {
   val io = IO(new Bundle {
-    /** Generate a new frame */
-    val generateFrame = Input(Bool())
-    /** Asserted when the screen is rotated */
-    val rotate = Input(Bool())
-    /** Asserted when the screen is flipped */
-    val flip = Input(Bool())
-    /** Asserted when the frame is complete */
-    val frameDone = Output(Bool())
+    /** Control port */
+    val ctrl = new GPUCtrlIO
     /** Video registers port */
     val videoRegs = Input(Bits(Config.VIDEO_REGS_GPU_DATA_WIDTH.W))
     /** Layer 0 registers port */
@@ -78,7 +88,7 @@ class GPU extends Module {
 
   // States
   object State {
-    val idle :: clear :: sprite :: layer0 :: layer1 :: layer2 :: done :: Nil = Enum(7)
+    val idle :: clear :: sprite :: layer0 :: layer1 :: layer2 :: dmaStart :: dmaWait :: Nil = Enum(8)
   }
 
   // Wires
@@ -148,7 +158,7 @@ class GPU extends Module {
     State.layer0 -> layerProcessor.io.frameBuffer,
     State.layer1 -> layerProcessor.io.frameBuffer,
     State.layer2 -> layerProcessor.io.frameBuffer
-  )).mapAddr(GPU.linearizeAddr(io.rotate, io.flip)))
+  )).mapAddr(GPU.linearizeAddr(io.ctrl.rotate, io.ctrl.flip)))
   frameBuffer.io.portB <> io.frameBufferDMA
 
   // Decode raw pixel data from the frame buffer
@@ -163,7 +173,7 @@ class GPU extends Module {
   switch(stateReg) {
     // Wait for a new frame
     is(State.idle) {
-      when(io.generateFrame) { nextState := State.clear }
+      when(io.ctrl.frameStart) { nextState := State.clear }
     }
 
     // Clears the frame buffer
@@ -188,15 +198,23 @@ class GPU extends Module {
 
     // Renders layer 2
     is(State.layer2) {
-      when(layerProcessor.io.done) { nextState := State.done }
+      when(layerProcessor.io.done) { nextState := State.dmaStart }
     }
 
-    // All done
-    is(State.done) { nextState := State.idle }
+    // Wait for the frame buffer DMA transfer to complete
+    is(State.dmaStart) {
+      when(io.ctrl.dmaReady) { nextState := State.dmaWait }
+    }
+
+    // Wait for the frame buffer DMA transfer to complete
+    is(State.dmaWait) {
+      when(io.ctrl.dmaReady) { nextState := State.idle }
+    }
   }
 
   // Outputs
-  io.frameDone := stateReg === State.done
+  io.ctrl.dmaStart := stateReg === State.dmaStart
+  io.ctrl.frameReady := stateReg === State.idle
   io.paletteRam <> ReadMemIO.mux(stateReg === State.sprite, spriteProcessor.io.paletteRam, layerProcessor.io.paletteRam)
   io.tileRom <> BurstReadMemIO.mux(Seq(
     (stateReg === State.sprite) -> spriteProcessor.io.tileRom,
