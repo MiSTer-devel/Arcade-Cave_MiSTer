@@ -51,13 +51,6 @@ import chisel3.util._
  * memory arbiter, frame buffer) that are not part of the original arcade hardware design.
  */
 class Main extends Module {
-  /** Returns the next frame buffer index for the given indices */
-  private def nextIndex(a: UInt, b: UInt) =
-    MuxCase(1.U, Seq(
-      ((a === 0.U && b === 1.U) || (a === 1.U && b === 0.U)) -> 2.U,
-      ((a === 1.U && b === 2.U) || (a === 2.U && b === 1.U)) -> 0.U
-    ))
-
   val io = IO(new Bundle {
     /** Video clock domain */
     val videoClock = Input(Clock())
@@ -91,9 +84,24 @@ class Main extends Module {
     val frameBuffer = new mister.FrameBufferIO
   })
 
+  /** Returns the next frame buffer index for the given indices */
+  private def nextIndex(a: UInt, b: UInt) = {
+    val index = Wire(UInt())
+    when(!io.frameBuffer.lowLat) {
+      index := MuxCase(1.U, Seq(
+        ((a === 0.U && b === 1.U) || (a === 1.U && b === 0.U)) -> 2.U,
+        ((a === 1.U && b === 2.U) || (a === 2.U && b === 1.U)) -> 0.U
+      ))
+    } otherwise {
+      index := b
+    }
+    index
+  }
+
   // Registers
-  val frameBufferWriteIndex = RegInit(0.U)
-  val frameBufferReadIndex = RegInit(0.U)
+  val frameBufferReadIndex1 = withClockAndReset(io.videoClock, io.videoReset) { RegInit(0.U(2.W)) }
+  val frameBufferReadIndex2 = withClockAndReset(io.videoClock, io.videoReset) { RegInit(0.U(2.W)) }
+  val frameBufferWriteIndex = withClockAndReset(io.videoClock, io.videoReset) { RegInit(1.U(2.W)) }
 
   // Video timing
   val videoTiming = withClockAndReset(io.videoClock, io.videoReset) {
@@ -131,7 +139,7 @@ class Main extends Module {
     numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
-  videoDMA.io.frameBufferIndex := frameBufferReadIndex
+  videoDMA.io.frameBufferIndex := frameBufferReadIndex1
   videoDMA.io.ddr <> mem.io.videoDMA
 
   // Video FIFO
@@ -159,15 +167,22 @@ class Main extends Module {
   cave.io.audio <> io.audio
   cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
 
-  // Update the frame buffer write index when a frame is complete
-  when(Util.rising(cave.io.gpuCtrl.frameReady)) {
-    frameBufferWriteIndex := nextIndex(frameBufferWriteIndex, frameBufferReadIndex)
-  }
+  // Toggle flip registers after vertical blank
+  withClockAndReset(io.videoClock, io.videoReset) {
+    // Analog vblank
+    when(Util.rising(io.video.vBlank)) {
+      frameBufferReadIndex1 := frameBufferWriteIndex
+    }
 
-  // Update the frame buffer read index after a vertical blank
-  val vBlank = ShiftRegister(videoTiming.io.video.vBlank, 2)
-  when(Util.rising(vBlank)) {
-    frameBufferReadIndex := nextIndex(frameBufferReadIndex, frameBufferWriteIndex)
+    // Digital vblank
+    when(Util.rising(io.frameBuffer.vBlank)) {
+      frameBufferReadIndex2 := nextIndex(frameBufferReadIndex2, frameBufferWriteIndex)
+    }
+
+    // GPU drawing a new frame
+    when(Util.falling(ShiftRegister(cave.io.gpuCtrl.frameReady, 2))) {
+      frameBufferWriteIndex := nextIndex(frameBufferWriteIndex, frameBufferReadIndex2)
+    }
   }
 
   // MiSTer frame buffer
@@ -175,7 +190,7 @@ class Main extends Module {
   io.frameBuffer.hSize := Mux(io.rotate, Config.SCREEN_HEIGHT.U, Config.SCREEN_WIDTH.U)
   io.frameBuffer.vSize := Mux(io.rotate, Config.SCREEN_WIDTH.U, Config.SCREEN_HEIGHT.U)
   io.frameBuffer.format := mister.FrameBufferIO.FORMAT_32BPP.U
-  io.frameBuffer.base := Config.FRAME_BUFFER_OFFSET.U + (flipReg ## 0.U(19.W))
+  io.frameBuffer.base := Config.FRAME_BUFFER_OFFSET.U + (frameBufferReadIndex2 ## 0.U(19.W))
   io.frameBuffer.stride := Mux(io.rotate, (Config.SCREEN_HEIGHT * 4).U, (Config.SCREEN_WIDTH * 4).U)
   io.frameBuffer.forceBlank := false.B
 }
