@@ -127,7 +127,7 @@ class MemSys extends Module {
   ddrArbiter.io.in(1).asBurstReadMemIO <> io.videoDMA // top priority required for video FIFO
   ddrArbiter.io.in(2).asBurstWriteMemIO <> io.frameBufferDMA
   ddrArbiter.io.in(3).asBurstReadMemIO <> io.tileRom
-  ddrArbiter.io.in(3).addr := io.tileRom.addr + Config.DDR_DOWNLOAD_OFFSET.U
+  ddrArbiter.io.in(3).addr := io.tileRom.addr + Config.DDR_DOWNLOAD_OFFSET.U // TODO: use an address transform
   ddrArbiter.io.out <> io.ddr
 
   // SDRAM arbiter

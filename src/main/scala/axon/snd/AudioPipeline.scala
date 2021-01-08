@@ -140,7 +140,7 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
 
   // Apply level
   when(stateReg === State.level) {
-    sampleReg := sampleReg * (inputReg.level +& 1.U) >> 8
+    sampleReg := sampleReg * (inputReg.level +& 1.U) >> 9
   }
 
   // Apply pan

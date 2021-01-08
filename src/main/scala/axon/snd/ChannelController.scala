@@ -201,7 +201,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   io.active := stateReg === State.check && active
   io.done := stateReg === State.check && done
   io.audio.valid := outputCounterWrap
-  io.audio.bits := accumulatorReg.resize(config.sampleWidth)
+  io.audio.bits := accumulatorReg.clamp(-32768, 32767)
   io.mem.rd := memRead
   io.mem.addr := memAddr
   io.debug.init := stateReg === State.init
