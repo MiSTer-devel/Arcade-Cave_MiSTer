@@ -38,11 +38,9 @@ import axon.mem._
 import axon.snd._
 import axon.types._
 import cave.dma._
-import cave.gpu._
 import cave.types._
 import chisel3._
 import chisel3.stage._
-import chisel3.util._
 
 /**
  * The top-level module.
@@ -66,49 +64,23 @@ class Main extends Module {
     val rotate = Input(Bool())
     /** Asserted when the screen is flipped */
     val flip = Input(Bool())
-    /** Joystick port */
-    val joystick = new JoystickIO
     /** Video port */
     val video = Output(new VideoIO)
-    /** Download port */
-    val download = DownloadIO()
     /** RGB output */
     val rgb = Output(new RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL))
+    /** Frame buffer port */
+    val frameBuffer = new mister.FrameBufferIO
+    /** Joystick port */
+    val joystick = new JoystickIO
+    /** Download port */
+    val download = DownloadIO()
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** DDR port */
     val ddr = DDRIO(Config.ddrConfig)
     /** SDRAM port */
     val sdram = SDRAMIO(Config.sdramConfig)
-    /** MiSTer frame buffer port */
-    val frameBuffer = new mister.FrameBufferIO
   })
-
-  /** Returns the next frame buffer index for the given indices */
-  private def nextIndex(a: UInt, b: UInt) = {
-    val index = Wire(UInt())
-    when(!io.frameBuffer.lowLat) {
-      index := MuxCase(1.U, Seq(
-        ((a === 0.U && b === 1.U) || (a === 1.U && b === 0.U)) -> 2.U,
-        ((a === 1.U && b === 2.U) || (a === 2.U && b === 1.U)) -> 0.U
-      ))
-    } otherwise {
-      index := b
-    }
-    index
-  }
-
-  // Registers
-  val frameBufferReadIndex1 = withClockAndReset(io.videoClock, io.videoReset) { RegInit(0.U(2.W)) }
-  val frameBufferReadIndex2 = withClockAndReset(io.videoClock, io.videoReset) { RegInit(0.U(2.W)) }
-  val frameBufferWriteIndex = withClockAndReset(io.videoClock, io.videoReset) { RegInit(1.U(2.W)) }
-
-  // Video timing
-  val videoTiming = withClockAndReset(io.videoClock, io.videoReset) {
-    Module(new VideoTiming(Config.videoTimingConfig))
-  }
-  videoTiming.io.offset := io.offset
-  io.video := videoTiming.io.video
 
   // DDR controller
   val ddr = Module(new DDR(Config.ddrConfig))
@@ -124,13 +96,24 @@ class Main extends Module {
   mem.io.ddr <> ddr.io.mem
   mem.io.sdram <> sdram.io.mem
 
+  // Video subsystem
+  val videoSys = Module(new VideoSys)
+  videoSys.io.videoClock := io.videoClock
+  videoSys.io.videoReset := io.videoReset
+  videoSys.io.offset := io.offset
+  videoSys.io.rotate := io.rotate
+  videoSys.io.flip := io.flip
+  videoSys.io.video <> io.video
+  videoSys.io.frameBuffer <> io.frameBuffer
+  videoSys.io.rgb <> io.rgb
+
   // Frame buffer DMA
   val frameBufferDMA = Module(new FrameBufferDMA(
     addr = Config.FRAME_BUFFER_OFFSET,
     numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
-  frameBufferDMA.io.frameBufferIndex := frameBufferWriteIndex
+  frameBufferDMA.io.frameBufferIndex := videoSys.io.frameBufferDMAIndex
   frameBufferDMA.io.ddr <> mem.io.frameBufferDMA
 
   // Video DMA
@@ -139,16 +122,9 @@ class Main extends Module {
     numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
-  videoDMA.io.frameBufferIndex := frameBufferReadIndex1
+  videoDMA.io.frameBufferIndex := videoSys.io.videoDMAIndex
+  videoDMA.io.pixelData <> videoSys.io.pixelData
   videoDMA.io.ddr <> mem.io.videoDMA
-
-  // Video FIFO
-  val videoFIFO = Module(new VideoFIFO)
-  videoFIFO.io.videoClock := io.videoClock
-  videoFIFO.io.videoReset := io.videoReset
-  videoFIFO.io.video <> videoTiming.io.video
-  videoFIFO.io.pixelData <> videoDMA.io.pixelData
-  io.rgb := videoFIFO.io.rgb
 
   // Cave
   val cave = Module(new Cave)
@@ -163,36 +139,10 @@ class Main extends Module {
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }
   cave.io.tileRom <> mem.io.tileRom
-  cave.io.video <> videoTiming.io.video
+  cave.io.video <> videoSys.io.video
   cave.io.audio <> io.audio
   cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
-
-  // Toggle flip registers after vertical blank
-  withClockAndReset(io.videoClock, io.videoReset) {
-    // Analog vblank
-    when(Util.rising(io.video.vBlank)) {
-      frameBufferReadIndex1 := frameBufferWriteIndex
-    }
-
-    // Digital vblank
-    when(Util.rising(io.frameBuffer.vBlank)) {
-      frameBufferReadIndex2 := nextIndex(frameBufferReadIndex2, frameBufferWriteIndex)
-    }
-
-    // GPU drawing a new frame
-    when(Util.falling(ShiftRegister(cave.io.gpuCtrl.frameReady, 2))) {
-      frameBufferWriteIndex := nextIndex(frameBufferWriteIndex, frameBufferReadIndex2)
-    }
-  }
-
-  // MiSTer frame buffer
-  io.frameBuffer.enable := true.B
-  io.frameBuffer.hSize := Mux(io.rotate, Config.SCREEN_HEIGHT.U, Config.SCREEN_WIDTH.U)
-  io.frameBuffer.vSize := Mux(io.rotate, Config.SCREEN_WIDTH.U, Config.SCREEN_HEIGHT.U)
-  io.frameBuffer.format := mister.FrameBufferIO.FORMAT_32BPP.U
-  io.frameBuffer.base := Config.FRAME_BUFFER_OFFSET.U + (frameBufferReadIndex2 ## 0.U(19.W))
-  io.frameBuffer.stride := Mux(io.rotate, (Config.SCREEN_HEIGHT * 4).U, (Config.SCREEN_WIDTH * 4).U)
-  io.frameBuffer.forceBlank := false.B
+  videoSys.io.gpuReady := cave.io.gpuCtrl.frameReady
 }
 
 object Main extends App {
