@@ -1,12 +1,10 @@
 set sys_clk "emu|pll|pll_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk"
-set sdram_clk "emu|pll|pll_inst|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk"
-set video_clk "emu|pll|pll_inst|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk"
-set cpu_clk "emu|pll|pll_inst|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk"
+set video_clk "emu|pll|pll_inst|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk"
+set cpu_clk "emu|pll|pll_inst|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk"
 
 # Decouple clock groups
 set_clock_groups -asynchronous \
   -group [get_clocks $sys_clk] \
-  -group [get_clocks $sdram_clk] \
   -group [get_clocks $video_clk] \
   -group [get_clocks $cpu_clk]
 
@@ -14,17 +12,6 @@ set_clock_groups -asynchronous \
 set_multicycle_path -start -from [get_clocks $sys_clk] -to [get_clocks $cpu_clk] -setup 2
 set_multicycle_path -start -from [get_clocks $sys_clk] -to [get_clocks $cpu_clk] -hold 1
 
-# Data access delay (tAC) plus a small margin to allow for propagation delay
-set_input_delay -clock $sdram_clk -max [expr 6.0 + 0.5] [get_ports {SDRAM_DQ[*]}]
-
-# Data output hold time (tOH)
-set_input_delay -clock $sdram_clk -min 2.5 [get_ports {SDRAM_DQ[*]}]
-
-# Data input setup time (tIS)
-set_output_delay -clock $sdram_clk -max 1.5 [get_ports {SDRAM_A* SDRAM_BA* SDRAM_D* SDRAM_CKE SDRAM_n*}]
-
-# Data input hold time (tIH)
-set_output_delay -clock $sdram_clk -min -0.8 [get_ports {SDRAM_A* SDRAM_BA* SDRAM_D* SDRAM_CKE SDRAM_n*}]
-
-# Set a multicycle path relationship between the system and SDRAM clocks
-set_multicycle_path -end -from [get_clocks $sdram_clk] -to [get_clocks $sys_clk] -setup 2
+# Set a multicycle path relationship between the SDRAM ports and the system clock
+set_multicycle_path -start -from [get_ports {SDRAM_A* SDRAM_BA* SDRAM_D* SDRAM_CKE SDRAM_n* SDRAM_DQ[*]}] -to [get_clocks $sys_clk] -setup 2
+set_multicycle_path -start -from [get_ports {SDRAM_A* SDRAM_BA* SDRAM_D* SDRAM_CKE SDRAM_n* SDRAM_DQ[*]}] -to [get_clocks $sys_clk] -hold 1
