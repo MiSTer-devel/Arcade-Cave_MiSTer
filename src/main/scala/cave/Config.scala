@@ -76,7 +76,7 @@ object Config {
     // with different CRTs. This has no effect on the output frame rate.
     hFreq = 15750,
     // The precise frame rate as measured from the original hardware
-    vFreq = 57.55,
+    vFreq = 57.5,
     hDisplay = SCREEN_WIDTH,
     vDisplay = SCREEN_HEIGHT,
     hFrontPorch = 22,
