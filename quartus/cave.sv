@@ -144,10 +144,11 @@ localparam CONF_STR = {
   "cave;;",
   "OOR,CRT H adjust,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;",
   "OSV,CRT V adjust,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;",
-  "O1,Aspect Ratio,Original,Full Screen;",
-  "O2,Orientation,Horz,Vert;",
+  "D0O1,Aspect Ratio,Original,Full Screen;",
+  "D0O2,Orientation,Horz,Vert;",
   "O3,Flip Screen,Off,On;",
   "O46,Scandoubler,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
+  "d1O7,ROM Storage,SDRAM,DDR3;",
   "-;",
   "DIP;",
   "-;",
@@ -185,6 +186,7 @@ wire [31:0] status;
 wire        forced_scandoubler;
 wire [21:0] gamma_bus;
 wire        direct_video;
+wire [15:0] sdram_sz;
 
 wire [24:0] ioctl_addr;
 wire [15:0] ioctl_dout;
@@ -194,7 +196,9 @@ wire        ioctl_download;
 wire  [7:0] ioctl_index;
 
 wire [10:0] ps2_key;
-wire  [10:0] joystick_0, joystick_1;
+wire [10:0] joystick_0, joystick_1;
+
+wire sdram_available = |sdram_sz[14:0];
 
 hps_io #(.STRLEN($size(CONF_STR)>>3), .WIDE(1)) hps_io (
   .clk_sys(clk_sys),
@@ -204,10 +208,11 @@ hps_io #(.STRLEN($size(CONF_STR)>>3), .WIDE(1)) hps_io (
 
   .buttons(buttons),
   .status(status),
-  .status_menumask(direct_video),
+  .status_menumask({sdram_available, direct_video}),
   .forced_scandoubler(forced_scandoubler),
   .gamma_bus(gamma_bus),
   .direct_video(direct_video),
+  .sdram_sz(sdram_sz),
 
   .ioctl_addr(ioctl_addr),
   .ioctl_dout(ioctl_dout),
@@ -436,6 +441,7 @@ Main main (
   .io_ddr_valid(DDRAM_DOUT_READY),
   .io_ddr_burstLength(DDRAM_BURSTCNT),
   // SDRAM
+  .io_sdramAvailable(sdram_available & ~status[7]),
   .io_sdram_cke(SDRAM_CKE),
   .io_sdram_cs_n(SDRAM_nCS),
   .io_sdram_ras_n(SDRAM_nRAS),

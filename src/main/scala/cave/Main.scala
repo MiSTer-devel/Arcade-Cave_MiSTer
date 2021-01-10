@@ -80,6 +80,8 @@ class Main extends Module {
     val ddr = DDRIO(Config.ddrConfig)
     /** SDRAM port */
     val sdram = SDRAMIO(Config.sdramConfig)
+    /** Asserted when SDRAM is available */
+    val sdramAvailable = Input(Bool())
   })
 
   // DDR controller
@@ -95,6 +97,7 @@ class Main extends Module {
   mem.io.download <> io.download
   mem.io.ddr <> ddr.io.mem
   mem.io.sdram <> sdram.io.mem
+  mem.io.sdramAvailable := io.sdramAvailable
 
   // Video subsystem
   val videoSys = Module(new VideoSys)

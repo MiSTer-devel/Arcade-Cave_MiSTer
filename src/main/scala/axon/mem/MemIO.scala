@@ -73,7 +73,8 @@ object ReadMemIO {
   def apply(addrWidth: Int, dataWidth: Int): ReadMemIO = new ReadMemIO(addrWidth, dataWidth)
 
   /**
-   * Multiplexes requests from two read-only memory interfaces to a single read-only memory interface.
+   * Multiplexes requests from two read-only memory interfaces to a single read-only memory
+   * interface.
    *
    * @param select Selects between the two memory interfaces.
    * @param a      The first interface.
@@ -89,16 +90,16 @@ object ReadMemIO {
   }
 
   /**
-   * Demultiplexes requests from a single read-only memory interface to multiple read-only memory interfaces. The
-   * request is routed to the interface matching a given key.
+   * Demultiplexes requests from a single read-only memory interface to multiple read-only memory
+   * interfaces. The request is routed to the interface matching a given key.
    *
    * @param key  The key to used to select the interface.
    * @param outs A list of key-interface pairs.
    */
   def demux[K <: UInt](key: K, outs: Seq[(K, ReadMemIO)]): ReadMemIO = {
     val mem = Wire(chiselTypeOf(outs.head._2))
-    outs.foreach { case (_, out) =>
-      out.rd := mem.rd
+    outs.foreach { case (k, out) =>
+      out.rd := k === key && mem.rd
       out.addr := mem.addr
     }
     val doutMap = outs.map(a => a._1 -> a._2.dout)

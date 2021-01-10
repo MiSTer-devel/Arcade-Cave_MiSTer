@@ -33,6 +33,7 @@
 package axon.mem
 
 import chisel3._
+import chisel3.util._
 
 trait WaitIO {
   /** The wait request signal is asserted when the device isn't ready to proceed with the request */
@@ -123,4 +124,29 @@ class AsyncReadWriteMemIO protected(addrWidth: Int, dataWidth: Int) extends Read
 
 object AsyncReadWriteMemIO {
   def apply(addrWidth: Int, dataWidth: Int) = new AsyncReadWriteMemIO(addrWidth, dataWidth)
+
+  /**
+   * Demultiplexes requests from a single read-write memory interface to multiple read-write memory
+   * interfaces. The request is routed to the interface matching a given key.
+   *
+   * @param key  The key to used to select the interface.
+   * @param outs A list of key-interface pairs.
+   */
+  def demux[K <: UInt](key: K, outs: Seq[(K, AsyncReadWriteMemIO)]): AsyncReadWriteMemIO = {
+    val mem = Wire(chiselTypeOf(outs.head._2))
+    outs.foreach { case (k, out) =>
+      out.rd := k === key && mem.rd
+      out.wr := k === key && mem.wr
+      out.addr := mem.addr
+      out.mask := mem.mask
+      out.din := mem.din
+    }
+    val waitReqMap = outs.map(a => a._1 -> a._2.waitReq)
+    val validMap = outs.map(a => a._1 -> a._2.valid)
+    val doutMap = outs.map(a => a._1 -> a._2.dout)
+    mem.waitReq := MuxLookup(key, 0.U, waitReqMap)
+    mem.valid := MuxLookup(key, 0.U, validMap)
+    mem.dout := MuxLookup(key, 0.U, doutMap)
+    mem
+  }
 }

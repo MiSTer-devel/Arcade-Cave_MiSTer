@@ -63,12 +63,12 @@ class MemSys extends Module {
     val ddr = BurstReadWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
     /** SDRAM port */
     val sdram = BurstReadWriteMemIO(Config.sdramConfig.addrWidth, Config.sdramConfig.dataWidth)
+    /** Asserted when SDRAM is available */
+    val sdramAvailable = Input(Bool())
   })
 
-  // DDR download cache
-  //
-  // A download cache is used to buffer download data, so that a complete word can be written to
-  // memory.
+  // The DDR download cache is used to buffer download data, so that a complete word can be written
+  // to memory.
   val ddrDownloadCache = Module(new Cache(CacheConfig(
     inAddrWidth = DownloadIO.ADDR_WIDTH,
     inDataWidth = DownloadIO.DATA_WIDTH,
@@ -80,10 +80,8 @@ class MemSys extends Module {
   )))
   ddrDownloadCache.io.in <> io.download.asAsyncReadWriteMemIO
 
-  // SDRAM download cache
-  //
-  // A download cache is used to buffer download data, so that a complete word can be written to
-  // memory.
+  // The SDRAM download cache is used to buffer download data, so that a complete word can be
+  // written to memory.
   val sdramDownloadCache = Module(new Cache(CacheConfig(
     inAddrWidth = DownloadIO.ADDR_WIDTH,
     inDataWidth = DownloadIO.DATA_WIDTH,
@@ -96,7 +94,16 @@ class MemSys extends Module {
   sdramDownloadCache.io.in <> io.download.asAsyncReadWriteMemIO
 
   // Program ROM cache
-  val progRomCache = Module(new Cache(CacheConfig(
+  val progRomCache1 = Module(new Cache(CacheConfig(
+    inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
+    inDataWidth = Config.PROG_ROM_DATA_WIDTH,
+    outAddrWidth = Config.ddrConfig.addrWidth,
+    outDataWidth = Config.ddrConfig.dataWidth,
+    lineWidth = 4,
+    depth = 256,
+    offset = Config.DDR_DOWNLOAD_OFFSET + Config.PROG_ROM_OFFSET
+  )))
+  val progRomCache2 = Module(new Cache(CacheConfig(
     inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
     inDataWidth = Config.PROG_ROM_DATA_WIDTH,
     outAddrWidth = Config.sdramConfig.addrWidth,
@@ -106,10 +113,19 @@ class MemSys extends Module {
     offset = Config.PROG_ROM_OFFSET,
     wrapping = true
   )))
-  progRomCache.io.in.asAsyncReadMemIO <> io.progRom
 
   // Sound ROM cache
-  val soundRomCache = Module(new Cache(CacheConfig(
+  val soundRomCache1 = Module(new Cache(CacheConfig(
+    inAddrWidth = Config.SOUND_ROM_ADDR_WIDTH,
+    inDataWidth = Config.SOUND_ROM_DATA_WIDTH,
+    outAddrWidth = Config.ddrConfig.addrWidth,
+    outDataWidth = Config.ddrConfig.dataWidth,
+    lineWidth = 4,
+    depth = 256,
+    offset = Config.DDR_DOWNLOAD_OFFSET + Config.SOUND_ROM_OFFSET,
+    wrapping = true
+  )))
+  val soundRomCache2 = Module(new Cache(CacheConfig(
     inAddrWidth = Config.SOUND_ROM_ADDR_WIDTH,
     inDataWidth = Config.SOUND_ROM_DATA_WIDTH,
     outAddrWidth = Config.sdramConfig.addrWidth,
@@ -119,24 +135,35 @@ class MemSys extends Module {
     offset = Config.SOUND_ROM_OFFSET,
     wrapping = true
   )))
-  soundRomCache.io.in.asAsyncReadMemIO <> io.soundRom
 
   // DDR arbiter
-  val ddrArbiter = Module(new MemArbiter(4, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
+  val ddrArbiter = Module(new MemArbiter(6, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
   ddrArbiter.io.in(0) <> ddrDownloadCache.io.out
-  ddrArbiter.io.in(1).asBurstReadMemIO <> io.videoDMA // top priority required for video FIFO
-  ddrArbiter.io.in(2).asBurstWriteMemIO <> io.frameBufferDMA
-  ddrArbiter.io.in(3).asBurstReadMemIO <> io.tileRom
-  ddrArbiter.io.in(3).addr := io.tileRom.addr + Config.DDR_DOWNLOAD_OFFSET.U // TODO: use an address transform
+  ddrArbiter.io.in(1) <> progRomCache1.io.out
+  ddrArbiter.io.in(2) <> soundRomCache1.io.out
+  ddrArbiter.io.in(3).asBurstReadMemIO <> io.videoDMA // top priority required for video FIFO
+  ddrArbiter.io.in(4).asBurstWriteMemIO <> io.frameBufferDMA
+  ddrArbiter.io.in(5).asBurstReadMemIO <> io.tileRom
+  ddrArbiter.io.in(5).addr := io.tileRom.addr + Config.DDR_DOWNLOAD_OFFSET.U // TODO: use an address transform
   ddrArbiter.io.out <> io.ddr
 
   // SDRAM arbiter
   val sdramArbiter = Module(new MemArbiter(3, Config.sdramConfig.addrWidth, Config.sdramConfig.dataWidth))
   sdramArbiter.io.in(0) <> sdramDownloadCache.io.out
-  sdramArbiter.io.in(1) <> soundRomCache.io.out
-  sdramArbiter.io.in(2) <> progRomCache.io.out
+  sdramArbiter.io.in(1) <> soundRomCache2.io.out
+  sdramArbiter.io.in(2) <> progRomCache2.io.out
   sdramArbiter.io.out <> io.sdram
 
+  io.progRom <> AsyncReadWriteMemIO.demux(io.sdramAvailable, Seq(
+    false.B -> progRomCache1.io.in,
+    true.B -> progRomCache2.io.in
+  )).asAsyncReadMemIO
+
+  io.soundRom <> AsyncReadWriteMemIO.demux(io.sdramAvailable, Seq(
+    false.B -> soundRomCache1.io.in,
+    true.B -> soundRomCache2.io.in
+  )).asAsyncReadMemIO
+
   // Wait until both DDR and SDRAM are ready
-  io.download.waitReq := ddrDownloadCache.io.in.waitReq || sdramDownloadCache.io.in.waitReq
+  io.download.waitReq := ddrDownloadCache.io.in.waitReq || (io.sdramAvailable && sdramDownloadCache.io.in.waitReq)
 }
