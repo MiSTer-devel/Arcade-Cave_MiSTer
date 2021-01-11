@@ -50,23 +50,6 @@ trait BurstIO {
  */
 class BurstReadMemIO protected(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addrWidth, dataWidth) with BurstIO {
   override def cloneType: this.type = new BurstReadMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
-
-  /**
-   * Maps the address using the given function.
-   *
-   * @param f The transform function.
-   */
-  override def mapAddr(f: UInt => UInt): BurstReadMemIO = {
-    val mem = Wire(chiselTypeOf(this))
-    mem.rd := this.rd
-    mem.burstLength := this.burstLength
-    mem.addr := f(this.addr)
-    this.burstDone := mem.burstDone
-    this.waitReq := mem.waitReq
-    this.valid := mem.valid
-    this.dout := mem.dout
-    mem
-  }
 }
 
 object BurstReadMemIO {

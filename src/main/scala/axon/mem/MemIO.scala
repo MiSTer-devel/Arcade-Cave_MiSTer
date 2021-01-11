@@ -54,19 +54,6 @@ class ReadMemIO protected(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidt
   val dout = Input(UInt(dataWidth.W))
 
   override def cloneType: this.type = new ReadMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
-
-  /**
-   * Maps the address using the given function.
-   *
-   * @param f The transform function.
-   */
-  def mapAddr(f: UInt => UInt): ReadMemIO = {
-    val mem = Wire(chiselTypeOf(this))
-    mem.rd := this.rd
-    mem.addr := f(this.addr)
-    this.dout := mem.dout
-    mem
-  }
 }
 
 object ReadMemIO {
@@ -206,22 +193,6 @@ class ReadWriteMemIO protected(addrWidth: Int, dataWidth: Int) extends MemIO(add
     addr := mem.addr
     mask := mem.mask
     din := mem.din
-    mem
-  }
-
-  /**
-   * Maps the address using the given function.
-   *
-   * @param f The transform function.
-   */
-  def mapAddr(f: UInt => UInt): ReadWriteMemIO = {
-    val mem = Wire(chiselTypeOf(this))
-    mem.rd := this.rd
-    mem.wr := this.wr
-    mem.addr := f(this.addr)
-    mem.mask := this.mask
-    mem.din := this.din
-    this.dout := mem.dout
     mem
   }
 }
