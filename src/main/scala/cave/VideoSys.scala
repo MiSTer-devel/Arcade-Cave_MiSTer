@@ -101,8 +101,15 @@ class VideoSys extends Module {
     videoTiming.io.video <> io.video
     videoTiming.io.video <> videoFIFO.io.video
 
-    // Toggle read index
-    when(Util.rising(io.video.vBlank)) { readIndex1 := writeIndex }
+    // Toggle read/write index
+    when(Util.rising(io.video.vBlank)) {
+      when(io.frameBuffer.lowLat) {
+        writeIndex := ~writeIndex(0)
+      } otherwise {
+        writeIndex := nextIndex(writeIndex, readIndex2)
+      }
+      readIndex1 := writeIndex
+    }
 
     // Toggle read index
     when(Util.rising(io.frameBuffer.vBlank)) {
@@ -110,15 +117,6 @@ class VideoSys extends Module {
         readIndex2 := ~writeIndex(0)
       } otherwise {
         readIndex2 := nextIndex(readIndex2, writeIndex)
-      }
-    }
-
-    // Toggle write index
-    when(Util.falling(ShiftRegister(io.gpuReady, 2))) {
-      when(io.frameBuffer.lowLat) {
-        writeIndex := ~writeIndex(0)
-      } otherwise {
-        writeIndex := nextIndex(writeIndex, readIndex2)
       }
     }
 
