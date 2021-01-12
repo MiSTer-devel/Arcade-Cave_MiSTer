@@ -56,14 +56,14 @@ class VideoSys extends Module {
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
-    /** Asserted when the GPU is ready */
-    val gpuReady = Input(Bool())
     /** CRT offset */
     val offset = Input(new SVec2(Config.SCREEN_OFFSET_WIDTH))
     /** Asserted when the screen is rotated */
     val rotate = Input(Bool())
     /** Asserted when the screen is flipped */
     val flip = Input(Bool())
+    /** Asserted when the game is paused */
+    val pause = Input(Bool())
     /** Video port */
     val video = Output(new VideoIO)
     /** RGB output */
@@ -102,7 +102,7 @@ class VideoSys extends Module {
     videoTiming.io.video <> videoFIFO.io.video
 
     // Toggle read/write index
-    when(Util.rising(io.video.vBlank)) {
+    when(Util.rising(io.video.vBlank) && !io.pause) {
       when(io.frameBuffer.lowLat) {
         writeIndex := ~writeIndex(0)
       } otherwise {
@@ -111,8 +111,8 @@ class VideoSys extends Module {
       readIndex1 := writeIndex
     }
 
-    // Toggle read index
-    when(Util.rising(io.frameBuffer.vBlank)) {
+    // Toggle HDMI read index
+    when(Util.rising(io.frameBuffer.vBlank) && !io.pause) {
       when(io.frameBuffer.lowLat) {
         readIndex2 := ~writeIndex(0)
       } otherwise {

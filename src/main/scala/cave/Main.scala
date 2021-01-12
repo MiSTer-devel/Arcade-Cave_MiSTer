@@ -84,6 +84,9 @@ class Main extends Module {
     val sdramAvailable = Input(Bool())
   })
 
+  // Toggle pause register
+  val pauseReg = Util.toggle(Util.rising(io.joystick.player1.pause || io.joystick.player2.pause))
+
   // DDR controller
   val ddr = Module(new DDR(Config.ddrConfig))
   ddr.io.ddr <> io.ddr
@@ -106,6 +109,7 @@ class Main extends Module {
   videoSys.io.offset := io.offset
   videoSys.io.rotate := io.rotate
   videoSys.io.flip := io.flip
+  videoSys.io.pause := pauseReg
   videoSys.io.video <> io.video
   videoSys.io.frameBuffer <> io.frameBuffer
   videoSys.io.rgb <> io.rgb
@@ -133,6 +137,7 @@ class Main extends Module {
   val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
+  cave.io.pause := pauseReg
   cave.io.gpuCtrl.frameStart := false.B
   frameBufferDMA.io.start := cave.io.gpuCtrl.dmaStart
   cave.io.gpuCtrl.dmaReady := frameBufferDMA.io.ready
@@ -145,7 +150,6 @@ class Main extends Module {
   cave.io.video <> videoSys.io.video
   cave.io.audio <> io.audio
   cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
-  videoSys.io.gpuReady := cave.io.gpuCtrl.frameReady
 }
 
 object Main extends App {
