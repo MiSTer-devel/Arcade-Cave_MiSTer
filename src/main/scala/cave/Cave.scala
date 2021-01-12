@@ -70,8 +70,10 @@ class Cave extends Module {
     val options = new OptionsIO
     /** Joystick port */
     val joystick = new JoystickIO
-    /** GPU control port */
-    val gpuCtrl = new GPUCtrlIO
+    /** Asserted when a frame is ready */
+    val frameReady = Output(Bool())
+    /** Asserted when the DMA controller is ready */
+    val dmaReady = Input(Bool())
     /** Program ROM port */
     val progRom = new ProgRomIO
     /** Sound ROM port */
@@ -92,8 +94,9 @@ class Cave extends Module {
 
   // GPU
   val gpu = Module(new GPU)
-  gpu.io.ctrl <> io.gpuCtrl
-  gpu.io.ctrl.frameReq := Util.rising(ShiftRegister(frameStart, 2))
+  gpu.io.frameReq := Util.rising(ShiftRegister(frameStart, 2))
+  io.frameReady := gpu.io.frameReady
+  gpu.io.dmaReady := io.dmaReady
   gpu.io.options <> io.options
   io.tileRom <> gpu.io.tileRom
   io.frameBufferDMA <> gpu.io.frameBufferDMA

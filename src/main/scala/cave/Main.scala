@@ -139,9 +139,8 @@ class Main extends Module {
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.pause := pauseReg
-  cave.io.gpuCtrl.frameReq := false.B
-  frameBufferDMA.io.start := cave.io.gpuCtrl.frameReady
-  cave.io.gpuCtrl.dmaReady := frameBufferDMA.io.ready
+  frameBufferDMA.io.start := cave.io.frameReady
+  cave.io.dmaReady := frameBufferDMA.io.ready
   cave.io.options <> io.options
   cave.io.joystick <> io.joystick
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }

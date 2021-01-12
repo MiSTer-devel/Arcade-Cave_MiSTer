@@ -41,21 +41,15 @@ import cave.types._
 import chisel3._
 import chisel3.util._
 
-/** GPU control interface. */
-class GPUCtrlIO extends Bundle {
-  /** Asserted when a frame is requested */
-  val frameReq = Input(Bool())
-  /** Asserted when a frame is ready */
-  val frameReady = Output(Bool())
-  /** Asserted when the DMA controller is ready */
-  val dmaReady = Input(Bool())
-}
-
 /** Graphics processing unit (GPU). */
 class GPU extends Module {
   val io = IO(new Bundle {
-    /** Control port */
-    val ctrl = new GPUCtrlIO
+    /** Asserted when a frame is requested */
+    val frameReq = Input(Bool())
+    /** Asserted when a frame is ready */
+    val frameReady = Output(Bool())
+    /** Asserted when the DMA controller is ready */
+    val dmaReady = Input(Bool())
     /** Options port */
     val options = new OptionsIO
     /** Video registers port */
@@ -169,7 +163,7 @@ class GPU extends Module {
   switch(stateReg) {
     // Wait for a new frame
     is(State.idle) {
-      when(io.ctrl.frameReq) { nextState := State.clear }
+      when(io.frameReq) { nextState := State.clear }
     }
 
     // Clears the frame buffer
@@ -199,17 +193,17 @@ class GPU extends Module {
 
     // Wait for the frame buffer DMA transfer to start
     is(State.dmaStart) {
-      when(io.ctrl.dmaReady) { nextState := State.dmaWait }
+      when(io.dmaReady) { nextState := State.dmaWait }
     }
 
     // Wait for the frame buffer DMA transfer to complete
     is(State.dmaWait) {
-      when(io.ctrl.dmaReady) { nextState := State.idle }
+      when(io.dmaReady) { nextState := State.idle }
     }
   }
 
   // Outputs
-  io.ctrl.frameReady := stateReg === State.dmaStart
+  io.frameReady := stateReg === State.dmaStart
   io.paletteRam <> ReadMemIO.mux(stateReg === State.sprite, spriteProcessor.io.paletteRam, layerProcessor.io.paletteRam)
   io.tileRom <> BurstReadMemIO.mux(Seq(
     (stateReg === State.sprite) -> spriteProcessor.io.tileRom,
