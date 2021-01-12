@@ -51,8 +51,6 @@ object Config {
   val SCREEN_WIDTH = 320
   /** The screen height in pixels */
   val SCREEN_HEIGHT = 240
-  /** The display offset width */
-  val SCREEN_OFFSET_WIDTH = 4
 
   /** YMZ280B configuration */
   val ymzConfig = YMZ280BConfig(

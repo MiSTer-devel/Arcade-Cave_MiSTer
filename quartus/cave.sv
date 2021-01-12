@@ -388,11 +388,11 @@ Main main (
   // CPU clock domain
   .io_cpuClock(clk_cpu),
   .io_cpuReset(reset_cpu_2),
-  // Rotate
-  .io_offset_x(status[27:24]),
-  .io_offset_y(status[31:28]),
-  .io_rotate(status[2]),
-  .io_flip(status[3]),
+  // Options
+  .io_options_offset_x(status[27:24]),
+  .io_options_offset_y(status[31:28]),
+  .io_options_rotate(status[2]),
+  .io_options_flip(status[3]),
   // Joystick signals
   .io_joystick_player1_up(player_1_up),
   .io_joystick_player1_down(player_1_down),

@@ -60,12 +60,8 @@ class VideoSys extends Module {
     val forceBlank = Input(Bool())
     /** Asserted when the game is paused */
     val pause = Input(Bool())
-    /** CRT offset */
-    val offset = Input(new SVec2(Config.SCREEN_OFFSET_WIDTH))
-    /** Asserted when the screen is rotated */
-    val rotate = Input(Bool())
-    /** Asserted when the screen is flipped */
-    val flip = Input(Bool())
+    /** Options port */
+    val options = new OptionsIO
     /** Video port */
     val video = Output(new VideoIO)
     /** RGB output */
@@ -98,7 +94,7 @@ class VideoSys extends Module {
 
     // Video timing
     val videoTiming = Module(new VideoTiming(Config.videoTimingConfig))
-    videoTiming.io.offset := io.offset
+    videoTiming.io.offset := io.options.offset
     videoTiming.io.video <> io.video
     videoTiming.io.video <> videoFIFO.io.video
 
@@ -126,11 +122,11 @@ class VideoSys extends Module {
 
     // MiSTer frame buffer signals
     io.frameBuffer.enable := true.B
-    io.frameBuffer.hSize := Mux(io.rotate, Config.SCREEN_HEIGHT.U, Config.SCREEN_WIDTH.U)
-    io.frameBuffer.vSize := Mux(io.rotate, Config.SCREEN_WIDTH.U, Config.SCREEN_HEIGHT.U)
+    io.frameBuffer.hSize := Mux(io.options.rotate, Config.SCREEN_HEIGHT.U, Config.SCREEN_WIDTH.U)
+    io.frameBuffer.vSize := Mux(io.options.rotate, Config.SCREEN_WIDTH.U, Config.SCREEN_HEIGHT.U)
     io.frameBuffer.format := mister.FrameBufferIO.FORMAT_32BPP.U
     io.frameBuffer.base := Config.FRAME_BUFFER_OFFSET.U + (readIndex2 ## 0.U(19.W))
-    io.frameBuffer.stride := Mux(io.rotate, (Config.SCREEN_HEIGHT * 4).U, (Config.SCREEN_WIDTH * 4).U)
+    io.frameBuffer.stride := Mux(io.options.rotate, (Config.SCREEN_HEIGHT * 4).U, (Config.SCREEN_WIDTH * 4).U)
     io.frameBuffer.forceBlank := io.forceBlank
 
     // Set DMA frame buffer indices

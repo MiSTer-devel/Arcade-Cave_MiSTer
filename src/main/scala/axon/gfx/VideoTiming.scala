@@ -32,9 +32,8 @@
 
 package axon.gfx
 
-import axon.types.{SVec2, Vec2}
+import axon.types._
 import axon.util.Counter
-import cave.Config
 import chisel3._
 import chisel3.util._
 
@@ -100,7 +99,7 @@ case class VideoTimingConfig(clockFreq: Double,
 class VideoTiming(config: VideoTimingConfig) extends Module {
   val io = IO(new Bundle {
     /** CRT offset */
-    val offset = Input(new SVec2(Config.SCREEN_OFFSET_WIDTH))
+    val offset = Input(new SVec2(OptionsIO.SCREEN_OFFSET_WIDTH))
     /** Video port */
     val video = Output(new VideoIO)
   })

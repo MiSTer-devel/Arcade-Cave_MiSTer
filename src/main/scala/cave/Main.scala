@@ -58,12 +58,6 @@ class Main extends Module {
     val cpuClock = Input(Clock())
     /** CPU reset */
     val cpuReset = Input(Bool())
-    /** CRT offset */
-    val offset = Input(new SVec2(Config.SCREEN_OFFSET_WIDTH))
-    /** Asserted when the screen is rotated */
-    val rotate = Input(Bool())
-    /** Asserted when the screen is flipped */
-    val flip = Input(Bool())
     /** Video port */
     val video = Output(new VideoIO)
     /** RGB output */
@@ -82,6 +76,8 @@ class Main extends Module {
     val sdram = SDRAMIO(Config.sdramConfig)
     /** Asserted when SDRAM is available */
     val sdramAvailable = Input(Bool())
+    /** Options port */
+    val options = new OptionsIO
     /** LED port */
     val led = Output(new Bundle {
       val power = Bool()
@@ -114,9 +110,7 @@ class Main extends Module {
   videoSys.io.videoReset := io.videoReset
   videoSys.io.forceBlank := io.cpuReset
   videoSys.io.pause := pauseReg
-  videoSys.io.offset := io.offset
-  videoSys.io.rotate := io.rotate
-  videoSys.io.flip := io.flip
+  videoSys.io.options <> io.options
   videoSys.io.video <> io.video
   videoSys.io.rgb <> io.rgb
   videoSys.io.frameBuffer <> io.frameBuffer
@@ -148,8 +142,8 @@ class Main extends Module {
   cave.io.gpuCtrl.gpuStart := false.B
   frameBufferDMA.io.start := cave.io.gpuCtrl.dmaStart
   cave.io.gpuCtrl.dmaReady := frameBufferDMA.io.ready
-  cave.io.gpuCtrl.rotate := io.rotate
-  cave.io.gpuCtrl.flip := io.flip
+  cave.io.gpuCtrl.rotate := io.options.rotate
+  cave.io.gpuCtrl.flip := io.options.flip
   cave.io.joystick <> io.joystick
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }
