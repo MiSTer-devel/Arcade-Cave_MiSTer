@@ -44,9 +44,9 @@ import chisel3.util._
 /** GPU control interface. */
 class GPUCtrlIO extends Bundle {
   /** Asserted when a frame is requested */
-  val frameStart = Input(Bool())
+  val gpuStart = Input(Bool())
   /** Asserted when the GPU is ready */
-  val frameReady = Output(Bool())
+  val gpuReady = Output(Bool())
   /** Asserted when a DMA transfer is requested  */
   val dmaStart = Output(Bool())
   /** Asserted when the DMA controller is ready  */
@@ -173,7 +173,7 @@ class GPU extends Module {
   switch(stateReg) {
     // Wait for a new frame
     is(State.idle) {
-      when(io.ctrl.frameStart) { nextState := State.clear }
+      when(io.ctrl.gpuStart) { nextState := State.clear }
     }
 
     // Clears the frame buffer
@@ -214,7 +214,7 @@ class GPU extends Module {
 
   // Outputs
   io.ctrl.dmaStart := stateReg === State.dmaStart
-  io.ctrl.frameReady := stateReg === State.idle
+  io.ctrl.gpuReady := stateReg === State.idle
   io.paletteRam <> ReadMemIO.mux(stateReg === State.sprite, spriteProcessor.io.paletteRam, layerProcessor.io.paletteRam)
   io.tileRom <> BurstReadMemIO.mux(Seq(
     (stateReg === State.sprite) -> spriteProcessor.io.tileRom,

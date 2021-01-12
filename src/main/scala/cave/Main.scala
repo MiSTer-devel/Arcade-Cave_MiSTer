@@ -138,7 +138,7 @@ class Main extends Module {
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.pause := pauseReg
-  cave.io.gpuCtrl.frameStart := false.B
+  cave.io.gpuCtrl.gpuStart := false.B
   frameBufferDMA.io.start := cave.io.gpuCtrl.dmaStart
   cave.io.gpuCtrl.dmaReady := frameBufferDMA.io.ready
   cave.io.gpuCtrl.rotate := io.rotate
