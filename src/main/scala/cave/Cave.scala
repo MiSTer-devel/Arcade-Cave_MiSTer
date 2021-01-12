@@ -93,7 +93,7 @@ class Cave extends Module {
   // GPU
   val gpu = Module(new GPU)
   gpu.io.ctrl <> io.gpuCtrl
-  gpu.io.ctrl.gpuStart := Util.rising(ShiftRegister(frameStart, 2))
+  gpu.io.ctrl.frameReq := Util.rising(ShiftRegister(frameStart, 2))
   gpu.io.options <> io.options
   io.tileRom <> gpu.io.tileRom
   io.frameBufferDMA <> gpu.io.frameBufferDMA
