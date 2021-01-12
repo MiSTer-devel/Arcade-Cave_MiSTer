@@ -106,13 +106,14 @@ class Main extends Module {
   val videoSys = Module(new VideoSys)
   videoSys.io.videoClock := io.videoClock
   videoSys.io.videoReset := io.videoReset
+  videoSys.io.forceBlank := io.cpuReset
+  videoSys.io.pause := pauseReg
   videoSys.io.offset := io.offset
   videoSys.io.rotate := io.rotate
   videoSys.io.flip := io.flip
-  videoSys.io.pause := pauseReg
   videoSys.io.video <> io.video
-  videoSys.io.frameBuffer <> io.frameBuffer
   videoSys.io.rgb <> io.rgb
+  videoSys.io.frameBuffer <> io.frameBuffer
 
   // Frame buffer DMA
   val frameBufferDMA = Module(new FrameBufferDMA(

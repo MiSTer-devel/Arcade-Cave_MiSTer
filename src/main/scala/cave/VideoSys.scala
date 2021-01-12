@@ -56,14 +56,16 @@ class VideoSys extends Module {
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
+    /** Asserted when the video output should be blank */
+    val forceBlank = Input(Bool())
+    /** Asserted when the game is paused */
+    val pause = Input(Bool())
     /** CRT offset */
     val offset = Input(new SVec2(Config.SCREEN_OFFSET_WIDTH))
     /** Asserted when the screen is rotated */
     val rotate = Input(Bool())
     /** Asserted when the screen is flipped */
     val flip = Input(Bool())
-    /** Asserted when the game is paused */
-    val pause = Input(Bool())
     /** Video port */
     val video = Output(new VideoIO)
     /** RGB output */
@@ -86,7 +88,6 @@ class VideoSys extends Module {
   videoFIFO.io.videoClock := io.videoClock
   videoFIFO.io.videoReset := io.videoReset
   videoFIFO.io.pixelData <> io.pixelData
-  videoFIFO.io.rgb <> io.rgb
 
   // Most of the video timing modules run in the video clock domain
   withClockAndReset(io.videoClock, io.videoReset) {
@@ -102,7 +103,7 @@ class VideoSys extends Module {
     videoTiming.io.video <> videoFIFO.io.video
 
     // Toggle read/write index
-    when(Util.rising(io.video.vBlank) && !io.pause) {
+    when(!io.pause && Util.rising(io.video.vBlank)) {
       when(io.frameBuffer.lowLat) {
         writeIndex := ~writeIndex(0)
       } otherwise {
@@ -112,7 +113,7 @@ class VideoSys extends Module {
     }
 
     // Toggle HDMI read index
-    when(Util.rising(io.frameBuffer.vBlank) && !io.pause) {
+    when(!io.pause && Util.rising(io.frameBuffer.vBlank)) {
       when(io.frameBuffer.lowLat) {
         readIndex2 := ~writeIndex(0)
       } otherwise {
@@ -120,16 +121,19 @@ class VideoSys extends Module {
       }
     }
 
-    // Set MiSTer frame buffer signals
+    // Disable RGB output when the force blank signal is asserted
+    io.rgb := Mux(io.forceBlank, RGB(0.U(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL.W)), videoFIFO.io.rgb)
+
+    // MiSTer frame buffer signals
     io.frameBuffer.enable := true.B
     io.frameBuffer.hSize := Mux(io.rotate, Config.SCREEN_HEIGHT.U, Config.SCREEN_WIDTH.U)
     io.frameBuffer.vSize := Mux(io.rotate, Config.SCREEN_WIDTH.U, Config.SCREEN_HEIGHT.U)
     io.frameBuffer.format := mister.FrameBufferIO.FORMAT_32BPP.U
     io.frameBuffer.base := Config.FRAME_BUFFER_OFFSET.U + (readIndex2 ## 0.U(19.W))
     io.frameBuffer.stride := Mux(io.rotate, (Config.SCREEN_HEIGHT * 4).U, (Config.SCREEN_WIDTH * 4).U)
-    io.frameBuffer.forceBlank := false.B
+    io.frameBuffer.forceBlank := io.forceBlank
 
-    // Transfer buffer indices to system clock domain
+    // Set DMA frame buffer indices
     io.frameBufferDMAIndex := withClock(sysClock) { ShiftRegister(writeIndex, 2) }
     io.videoDMAIndex := withClock(sysClock) { ShiftRegister(readIndex1, 2) }
   }
