@@ -37,6 +37,7 @@ import axon.cpu.m68k._
 import axon.gfx._
 import axon.mem._
 import axon.snd._
+import axon.types._
 import cave.gpu._
 import cave.types._
 import chisel3._
@@ -65,6 +66,8 @@ class Cave extends Module {
     val cpuReset = Input(Reset())
     /** Asserted when the game is paused */
     val pause = Input(Bool())
+    /** Options port */
+    val options = new OptionsIO
     /** Joystick port */
     val joystick = new JoystickIO
     /** GPU control port */
@@ -91,6 +94,7 @@ class Cave extends Module {
   val gpu = Module(new GPU)
   gpu.io.ctrl <> io.gpuCtrl
   gpu.io.ctrl.gpuStart := Util.rising(ShiftRegister(frameStart, 2))
+  gpu.io.options <> io.options
   io.tileRom <> gpu.io.tileRom
   io.frameBufferDMA <> gpu.io.frameBufferDMA
 

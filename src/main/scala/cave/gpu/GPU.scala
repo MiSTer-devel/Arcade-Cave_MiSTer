@@ -51,10 +51,6 @@ class GPUCtrlIO extends Bundle {
   val dmaStart = Output(Bool())
   /** Asserted when the DMA controller is ready */
   val dmaReady = Input(Bool())
-  /** Asserted when the screen is rotated */
-  val rotate = Input(Bool())
-  /** Asserted when the screen is flipped */
-  val flip = Input(Bool())
 }
 
 /** Graphics processing unit (GPU). */
@@ -62,6 +58,8 @@ class GPU extends Module {
   val io = IO(new Bundle {
     /** Control port */
     val ctrl = new GPUCtrlIO
+    /** Options port */
+    val options = new OptionsIO
     /** Video registers port */
     val videoRegs = Input(Bits(Config.VIDEO_REGS_GPU_DATA_WIDTH.W))
     /** Layer 0 registers port */
@@ -158,7 +156,7 @@ class GPU extends Module {
     State.layer0 -> layerProcessor.io.frameBuffer,
     State.layer1 -> layerProcessor.io.frameBuffer,
     State.layer2 -> layerProcessor.io.frameBuffer
-  )).mapAddr(GPU.linearizeAddr(io.ctrl.rotate, io.ctrl.flip)))
+  )).mapAddr(GPU.linearizeAddr(io.options.rotate, io.options.flip)))
   frameBuffer.io.portB <> io.frameBufferDMA
 
   // Decode raw pixel data from the frame buffer

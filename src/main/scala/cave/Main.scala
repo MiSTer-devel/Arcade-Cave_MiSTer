@@ -142,8 +142,7 @@ class Main extends Module {
   cave.io.gpuCtrl.gpuStart := false.B
   frameBufferDMA.io.start := cave.io.gpuCtrl.dmaStart
   cave.io.gpuCtrl.dmaReady := frameBufferDMA.io.ready
-  cave.io.gpuCtrl.rotate := io.options.rotate
-  cave.io.gpuCtrl.flip := io.options.flip
+  cave.io.options <> io.options
   cave.io.joystick <> io.joystick
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }
