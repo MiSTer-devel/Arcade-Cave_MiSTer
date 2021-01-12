@@ -337,8 +337,8 @@ wire service_2         = key_0;
 // CAVE
 ////////////////////////////////////////////////////////////////////////////////
 
-wire reset_sys = RESET | buttons[1] | ~locked;
-wire reset_video = RESET | buttons[1] | ~locked;
+wire reset_sys = RESET | ~locked;
+wire reset_video = RESET | ~locked;
 wire reset_cpu = RESET | status[0] | buttons[1] | ~locked;
 
 logic reset_sys_0;
