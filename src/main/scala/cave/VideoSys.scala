@@ -56,14 +56,14 @@ class VideoSys extends Module {
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
-    /** Asserted when the GPU is ready */
-    val gpuReady = Input(Bool())
     /** CRT offset */
     val offset = Input(new SVec2(Config.SCREEN_OFFSET_WIDTH))
     /** Asserted when the screen is rotated */
     val rotate = Input(Bool())
     /** Asserted when the screen is flipped */
     val flip = Input(Bool())
+    /** Asserted when the game is paused */
+    val pause = Input(Bool())
     /** Video port */
     val video = Output(new VideoIO)
     /** RGB output */
@@ -101,24 +101,22 @@ class VideoSys extends Module {
     videoTiming.io.video <> io.video
     videoTiming.io.video <> videoFIFO.io.video
 
-    // Toggle read index
-    when(Util.rising(io.video.vBlank)) { readIndex1 := writeIndex }
-
-    // Toggle read index
-    when(Util.rising(io.frameBuffer.vBlank)) {
-      when(io.frameBuffer.lowLat) {
-        readIndex2 := ~writeIndex(0)
-      } otherwise {
-        readIndex2 := nextIndex(readIndex2, writeIndex)
-      }
-    }
-
-    // Toggle write index
-    when(Util.falling(ShiftRegister(io.gpuReady, 2))) {
+    // Toggle read/write index
+    when(Util.rising(io.video.vBlank) && !io.pause) {
       when(io.frameBuffer.lowLat) {
         writeIndex := ~writeIndex(0)
       } otherwise {
         writeIndex := nextIndex(writeIndex, readIndex2)
+      }
+      readIndex1 := writeIndex
+    }
+
+    // Toggle HDMI read index
+    when(Util.rising(io.frameBuffer.vBlank) && !io.pause) {
+      when(io.frameBuffer.lowLat) {
+        readIndex2 := ~writeIndex(0)
+      } otherwise {
+        readIndex2 := nextIndex(readIndex2, writeIndex)
       }
     }
 

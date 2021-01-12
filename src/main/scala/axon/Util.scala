@@ -44,7 +44,7 @@ object Util {
    * @param n The value to check.
    * @param r The range.
    */
-  def between(n: UInt, r: Range): Bool = between(n, r.start.U, r.end.U)
+  def between(n: UInt, r: Range): Bool = between(n, r.start.U, r.last.U)
 
   /**
    * Checks whether a signed value is in the given range.
@@ -52,7 +52,7 @@ object Util {
    * @param n The value to check.
    * @param r The range.
    */
-  def between(n: SInt, r: Range): Bool = between(n, r.start.S, r.end.S)
+  def between(n: SInt, r: Range): Bool = between(n, r.start.S, r.last.S)
 
   /**
    * Checks whether an unsigned value is in the given range.

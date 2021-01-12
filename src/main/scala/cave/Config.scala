@@ -72,10 +72,7 @@ object Config {
   /** Video timing configuration */
   val videoTimingConfig = VideoTimingConfig(
     clockFreq = VIDEO_CLOCK_FREQ,
-    // The horizontal frequency differs from the original hardware in order to improve compatibility
-    // with different CRTs. This has no effect on the output frame rate.
-    hFreq = 15750,
-    // The precise frame rate as measured from the original hardware
+    hFreq = 15720,
     vFreq = 57.5,
     hDisplay = SCREEN_WIDTH,
     vDisplay = SCREEN_HEIGHT,

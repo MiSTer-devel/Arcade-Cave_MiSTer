@@ -63,6 +63,8 @@ class Cave extends Module {
     val cpuClock = Input(Clock())
     /** CPU reset */
     val cpuReset = Input(Reset())
+    /** Asserted when the game is paused */
+    val pause = Input(Bool())
     /** Joystick port */
     val joystick = new JoystickIO
     /** GPU control port */
@@ -88,21 +90,20 @@ class Cave extends Module {
   // GPU
   val gpu = Module(new GPU)
   gpu.io.ctrl <> io.gpuCtrl
-  gpu.io.ctrl.frameStart := Util.rising(ShiftRegister(frameStart, 2))
+  gpu.io.ctrl.gpuStart := Util.rising(ShiftRegister(frameStart, 2))
   io.tileRom <> gpu.io.tileRom
   io.frameBufferDMA <> gpu.io.frameBufferDMA
 
   // The CPU and registers run in the CPU clock domain
   withClockAndReset(io.cpuClock, io.cpuReset) {
     // Registers
-    val pause = Util.rising(ShiftRegister(io.joystick.player1.pause || io.joystick.player2.pause, 2))
     val vBlank = Util.rising(ShiftRegister(io.video.vBlank, 2))
     val vBlankIRQ = RegInit(false.B)
     val iplReg = RegInit(0.U)
 
     // M68K CPU
     val cpu = Module(new CPU)
-    cpu.io.halt := Util.toggle(pause)
+    cpu.io.halt := ShiftRegister(io.pause, 2)
     cpu.io.dtack := false.B
     cpu.io.vpa := intAck // autovectored interrupts
     cpu.io.ipl := iplReg
