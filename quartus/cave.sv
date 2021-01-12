@@ -132,8 +132,6 @@ module emu (
 assign AUDIO_S   = 1;
 assign AUDIO_MIX = 0;
 
-assign LED_DISK  = 0;
-assign LED_POWER = 0;
 assign BUTTONS = 0;
 
 assign VIDEO_ARX = status[1] ? 8'd16 : status[2] ? 8'd3 : 8'd4;
@@ -464,7 +462,11 @@ Main main (
   .io_rgb_b(b),
   // Audio output
   .io_audio_left(AUDIO_L),
-  .io_audio_right(AUDIO_R)
+  .io_audio_right(AUDIO_R),
+  // LEDs
+  .io_led_power(LED_POWER[0]),
+  .io_led_disk(LED_DISK[0]),
+  .io_led_user(LED_USER)
 );
 
 endmodule

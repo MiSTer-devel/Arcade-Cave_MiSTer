@@ -82,6 +82,12 @@ class Main extends Module {
     val sdram = SDRAMIO(Config.sdramConfig)
     /** Asserted when SDRAM is available */
     val sdramAvailable = Input(Bool())
+    /** LED port */
+    val led = Output(new Bundle {
+      val power = Bool()
+      val disk = Bool()
+      val user = Bool()
+    })
   })
 
   // Toggle pause register
@@ -106,13 +112,14 @@ class Main extends Module {
   val videoSys = Module(new VideoSys)
   videoSys.io.videoClock := io.videoClock
   videoSys.io.videoReset := io.videoReset
+  videoSys.io.forceBlank := io.cpuReset
+  videoSys.io.pause := pauseReg
   videoSys.io.offset := io.offset
   videoSys.io.rotate := io.rotate
   videoSys.io.flip := io.flip
-  videoSys.io.pause := pauseReg
   videoSys.io.video <> io.video
-  videoSys.io.frameBuffer <> io.frameBuffer
   videoSys.io.rgb <> io.rgb
+  videoSys.io.frameBuffer <> io.frameBuffer
 
   // Frame buffer DMA
   val frameBufferDMA = Module(new FrameBufferDMA(
@@ -150,6 +157,11 @@ class Main extends Module {
   cave.io.video <> videoSys.io.video
   cave.io.audio <> io.audio
   cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
+
+  // Set LED outputs
+  io.led.power := false.B
+  io.led.disk := false.B
+  io.led.user := io.download.cs
 }
 
 object Main extends App {
