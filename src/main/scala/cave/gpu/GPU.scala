@@ -174,21 +174,37 @@ class GPU extends Module {
     // Renders the sprites
     is(State.sprite) {
       when(spriteProcessor.io.done) { nextState := State.layer0 }
+      when(io.options.layer.sprite) {
+        priorityRam.io.portA.wr := false.B
+        frameBuffer.io.portA.wr := false.B
+      }
     }
 
     // Renders layer 0
     is(State.layer0) {
       when(layerProcessor.io.done) { nextState := State.layer1 }
+      when(io.options.layer.layer0) {
+        priorityRam.io.portA.wr := false.B
+        frameBuffer.io.portA.wr := false.B
+      }
     }
 
     // Renders layer 1
     is(State.layer1) {
       when(layerProcessor.io.done) { nextState := State.layer2 }
+      when(io.options.layer.layer1) {
+        priorityRam.io.portA.wr := false.B
+        frameBuffer.io.portA.wr := false.B
+      }
     }
 
     // Renders layer 2
     is(State.layer2) {
       when(layerProcessor.io.done) { nextState := State.dmaStart }
+      when(io.options.layer.layer2) {
+        priorityRam.io.portA.wr := false.B
+        frameBuffer.io.portA.wr := false.B
+      }
     }
 
     // Wait for the frame buffer DMA transfer to start

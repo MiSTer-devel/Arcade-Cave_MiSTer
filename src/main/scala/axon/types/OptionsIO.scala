@@ -42,6 +42,13 @@ class OptionsIO extends Bundle {
   val rotate = Input(Bool())
   /** Asserted when the screen is flipped */
   val flip = Input(Bool())
+  /** Layer enable flags */
+  val layer = Input(new Bundle {
+    val sprite = Bool()
+    val layer0 = Bool()
+    val layer1 = Bool()
+    val layer2 = Bool()
+  })
 }
 
 object OptionsIO {
