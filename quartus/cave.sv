@@ -398,7 +398,7 @@ Main main (
   .io_options_offset_y(status[31:28]),
   .io_options_rotate(status[2]),
   .io_options_flip(status[3]),
-  .io_options_layer_sprite(status[10]),
+  .io_options_layer_sprites(status[10]),
   .io_options_layer_layer0(status[11]),
   .io_options_layer_layer1(status[12]),
   .io_options_layer_layer2(status[13]),

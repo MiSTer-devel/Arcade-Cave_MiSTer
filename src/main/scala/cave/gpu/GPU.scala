@@ -78,7 +78,7 @@ class GPU extends Module {
 
   // States
   object State {
-    val idle :: clear :: sprite :: layer0 :: layer1 :: layer2 :: dmaStart :: dmaWait :: Nil = Enum(8)
+    val idle :: clear :: sprites :: layer0 :: layer1 :: layer2 :: dmaStart :: dmaWait :: Nil = Enum(8)
   }
 
   // Wires
@@ -104,7 +104,7 @@ class GPU extends Module {
 
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
-  spriteProcessor.io.start := RegNext(stateReg =/= State.sprite && nextState === State.sprite)
+  spriteProcessor.io.start := RegNext(stateReg =/= State.sprites && nextState === State.sprites)
   spriteProcessor.io.spriteBank := io.videoRegs(64)
   spriteProcessor.io.spriteRam <> io.spriteRam
 
@@ -121,12 +121,12 @@ class GPU extends Module {
   ))
   priorityRam.io.portA <> WriteMemIO.mux(stateReg, Seq(
     State.clear -> clearMem,
-    State.sprite -> spriteProcessor.io.priority.write,
+    State.sprites -> spriteProcessor.io.priority.write,
     State.layer0 -> layerProcessor.io.priority.write,
     State.layer1 -> layerProcessor.io.priority.write,
     State.layer2 -> layerProcessor.io.priority.write
   ))
-  priorityRam.io.portB <> ReadMemIO.mux(stateReg === State.sprite, spriteProcessor.io.priority.read, layerProcessor.io.priority.read)
+  priorityRam.io.portB <> ReadMemIO.mux(stateReg === State.sprites, spriteProcessor.io.priority.read, layerProcessor.io.priority.read)
 
   // The frame buffer is used by the sprite and tilemap layers for writing pixel data during
   // rendering.
@@ -144,7 +144,7 @@ class GPU extends Module {
   ))
   frameBuffer.io.portA <> RegNext(WriteMemIO.mux(stateReg, Seq(
     State.clear -> clearMem,
-    State.sprite -> spriteProcessor.io.frameBuffer,
+    State.sprites -> spriteProcessor.io.frameBuffer,
     State.layer0 -> layerProcessor.io.frameBuffer,
     State.layer1 -> layerProcessor.io.frameBuffer,
     State.layer2 -> layerProcessor.io.frameBuffer
@@ -168,13 +168,13 @@ class GPU extends Module {
 
     // Clears the frame buffer
     is(State.clear) {
-      when(clearDone) { nextState := State.sprite }
+      when(clearDone) { nextState := State.sprites }
     }
 
     // Renders the sprites
-    is(State.sprite) {
+    is(State.sprites) {
       when(spriteProcessor.io.done) { nextState := State.layer0 }
-      when(io.options.layer.sprite) {
+      when(io.options.layer.sprites) {
         priorityRam.io.portA.wr := false.B
         frameBuffer.io.portA.wr := false.B
       }
@@ -220,13 +220,13 @@ class GPU extends Module {
 
   // Outputs
   io.frameReady := stateReg === State.dmaStart
-  io.paletteRam <> ReadMemIO.mux(stateReg === State.sprite, spriteProcessor.io.paletteRam, layerProcessor.io.paletteRam)
+  io.paletteRam <> ReadMemIO.mux(stateReg === State.sprites, spriteProcessor.io.paletteRam, layerProcessor.io.paletteRam)
   io.tileRom <> BurstReadMemIO.mux(Seq(
-    (stateReg === State.sprite) -> spriteProcessor.io.tileRom,
+    (stateReg === State.sprites) -> spriteProcessor.io.tileRom,
     (stateReg === State.layer0 || stateReg === State.layer1 || stateReg === State.layer2) -> layerProcessor.io.tileRom
   ))
   io.tileRom.addr := MuxLookup(stateReg, DontCare, Seq(
-    State.sprite -> (spriteProcessor.io.tileRom.addr + Config.SPRITE_ROM_OFFSET.U),
+    State.sprites -> (spriteProcessor.io.tileRom.addr + Config.SPRITE_ROM_OFFSET.U),
     State.layer0 -> (layerProcessor.io.tileRom.addr + Config.LAYER_0_ROM_OFFSET.U),
     State.layer1 -> (layerProcessor.io.tileRom.addr + Config.LAYER_1_ROM_OFFSET.U),
     State.layer2 -> (layerProcessor.io.tileRom.addr + Config.LAYER_2_ROM_OFFSET.U)
