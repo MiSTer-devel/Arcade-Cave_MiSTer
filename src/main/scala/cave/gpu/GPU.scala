@@ -47,9 +47,9 @@ class GPUCtrlIO extends Bundle {
   val gpuStart = Input(Bool())
   /** Asserted when the GPU is ready */
   val gpuReady = Output(Bool())
-  /** Asserted when a DMA transfer is requested  */
+  /** Asserted when a DMA transfer is requested */
   val dmaStart = Output(Bool())
-  /** Asserted when the DMA controller is ready  */
+  /** Asserted when the DMA controller is ready */
   val dmaReady = Input(Bool())
   /** Asserted when the screen is rotated */
   val rotate = Input(Bool())
