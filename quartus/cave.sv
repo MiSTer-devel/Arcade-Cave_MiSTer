@@ -142,22 +142,24 @@ localparam CONF_STR = {
   "cave;;",
   "OOR,CRT H adjust,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;",
   "OSV,CRT V adjust,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;",
-  "D0O1,Aspect Ratio,Original,Full Screen;",
-  "D0O2,Orientation,Horz,Vert;",
+  "D0O1,Aspect Ratio,4:3,16:9;",
+  "D0O2,Orientation,Horizontal,Vertical;",
   "O3,Flip Screen,Off,On;",
   "O46,Scandoubler,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
-  "d1O7,ROM Storage,SDRAM,DDR3;",
   "-;",
-  "P1,Debug;",
+  "P1,Advanced;",
   "P1-;",
-  "P1OA,Sprites,On,Off;",
-  "P1OB,Layer 0,On,Off;",
-  "P1OC,Layer 1,On,Off;",
-  "P1OD,Layer 2,On,Off;",
+  "d1P1O7,ROM Storage,SDRAM,DDR3;",
+  "P2,Debug;",
+  "P2-;",
+  "P2OA,Sprites,On,Off;",
+  "P2OB,Layer 0,On,Off;",
+  "P2OC,Layer 1,On,Off;",
+  "P2OD,Layer 2,On,Off;",
   "-;",
   "R0,Reset;",
   "J1,B0,B1,B2,Start,Coin,Pause;",
-  "V,v",`BUILD_DATE
+  "V,v",`BUILD_DATE," - Made with love by nullobject.;"
 };
 
 ////////////////////////////////////////////////////////////////////////////////
