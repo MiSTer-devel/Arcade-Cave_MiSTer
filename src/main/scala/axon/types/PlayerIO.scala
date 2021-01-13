@@ -30,37 +30,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave
+package axon.types
 
-import axon.mem._
 import chisel3._
 
-package object types {
-  /** Frame buffer DMA IO */
-  class FrameBufferDMAIO extends ReadMemIO(Config.FRAME_BUFFER_DMA_ADDR_WIDTH, Config.FRAME_BUFFER_DMA_DATA_WIDTH) {
-    override def cloneType: this.type = new FrameBufferDMAIO().asInstanceOf[this.type]
-  }
+/** An interface that contains the player controls. */
+class PlayerIO private extends Bundle {
+  /** Player up */
+  val up = Input(Bool())
+  /** Player down */
+  val down = Input(Bool())
+  /** Player left */
+  val left = Input(Bool())
+  /** Player right */
+  val right = Input(Bool())
+  /** Player buttons */
+  val buttons = Input(Bits(PlayerIO.BUTTON_COUNT.W))
+  /** Player start */
+  val start = Input(Bool())
+  /** Player coin */
+  val coin = Input(Bool())
+  /** Player pause */
+  val pause = Input(Bool())
+}
 
-  /** Priority IO */
-  class PriorityIO extends Bundle {
-    /** Write-only port */
-    val write = WriteMemIO(Config.PRIO_BUFFER_ADDR_WIDTH, Config.PRIO_BUFFER_DATA_WIDTH)
-    /** Read-only port */
-    val read = ReadMemIO(Config.PRIO_BUFFER_ADDR_WIDTH, Config.PRIO_BUFFER_DATA_WIDTH)
-  }
+object PlayerIO {
+  /** The number of buttons */
+  val BUTTON_COUNT = 3
 
-  /** Program ROM IO */
-  class ProgRomIO extends AsyncReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH) {
-    override def cloneType: this.type = new ProgRomIO().asInstanceOf[this.type]
-  }
-
-  /** Sound ROM IO */
-  class SoundRomIO extends AsyncReadMemIO(Config.SOUND_ROM_ADDR_WIDTH, Config.SOUND_ROM_DATA_WIDTH) {
-    override def cloneType: this.type = new SoundRomIO().asInstanceOf[this.type]
-  }
-
-  /** Tile ROM IO */
-  class TileRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH) {
-    override def cloneType: this.type = new TileRomIO().asInstanceOf[this.type]
-  }
+  def apply() = new PlayerIO
 }

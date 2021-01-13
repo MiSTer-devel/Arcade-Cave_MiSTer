@@ -59,13 +59,13 @@ class VideoSys extends Module {
     /** Asserted when video output should be disabled */
     val forceBlank = Input(Bool())
     /** Options port */
-    val options = new OptionsIO
+    val options = OptionsIO()
     /** Video port */
-    val video = new VideoIO
+    val video = VideoIO()
     /** RGB output */
     val rgb = Output(new RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL))
     /** Frame buffer port */
-    val frameBuffer = new mister.FrameBufferIO
+    val frameBuffer = mister.FrameBufferIO()
     /** Pixel data port */
     val pixelData = Flipped(DecoupledIO(Bits(Config.ddrConfig.dataWidth.W)))
     /** Frame buffer DMA index */

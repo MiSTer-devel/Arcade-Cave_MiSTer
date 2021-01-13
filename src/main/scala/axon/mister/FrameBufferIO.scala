@@ -35,7 +35,7 @@ package axon.mister
 import chisel3._
 
 /** MiSTer frame buffer IO */
-class FrameBufferIO extends Bundle {
+class FrameBufferIO private extends Bundle {
   /** Asserted when the frame buffer is enabled */
   val enable = Output(Bool())
   /** The horizontal size of the frame buffer */
@@ -67,4 +67,6 @@ object FrameBufferIO {
   val FORMAT_32BPP = 0x6
   /** BGR pixel format */
   val FORMAT_BGR = 0x10
+
+  def apply() = new FrameBufferIO
 }

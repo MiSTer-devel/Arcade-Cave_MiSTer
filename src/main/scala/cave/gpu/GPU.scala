@@ -51,7 +51,7 @@ class GPU extends Module {
     /** Asserted when the DMA controller is ready */
     val dmaReady = Input(Bool())
     /** Options port */
-    val options = new OptionsIO
+    val options = OptionsIO()
     /** Video registers port */
     val videoRegs = Input(Bits(Config.VIDEO_REGS_GPU_DATA_WIDTH.W))
     /** Layer 0 registers port */

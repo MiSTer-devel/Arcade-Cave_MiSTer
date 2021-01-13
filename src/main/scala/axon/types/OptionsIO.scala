@@ -34,8 +34,8 @@ package axon.types
 
 import chisel3._
 
-/** An interface for the user options. */
-class OptionsIO extends Bundle {
+/** An interface that contains the user options. */
+class OptionsIO private extends Bundle {
   /** CRT offset */
   val offset = Input(new SVec2(OptionsIO.SCREEN_OFFSET_WIDTH))
   /** Asserted when the screen is rotated */
@@ -54,4 +54,6 @@ class OptionsIO extends Bundle {
 object OptionsIO {
   /** The width of the screen offset value */
   val SCREEN_OFFSET_WIDTH = 4
+
+  def apply() = new OptionsIO
 }

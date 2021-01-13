@@ -38,7 +38,6 @@ import axon.mem._
 import axon.snd._
 import axon.types._
 import cave.dma._
-import cave.types._
 import chisel3._
 import chisel3.stage._
 
@@ -59,13 +58,13 @@ class Main extends Module {
     /** CPU reset */
     val cpuReset = Input(Bool())
     /** Video port */
-    val video = new VideoIO
+    val video = VideoIO()
     /** RGB output */
     val rgb = Output(new RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL))
     /** Frame buffer port */
-    val frameBuffer = new mister.FrameBufferIO
+    val frameBuffer = mister.FrameBufferIO()
     /** Joystick port */
-    val joystick = new JoystickIO
+    val joystick = JoystickIO()
     /** Download port */
     val download = DownloadIO()
     /** Audio port */
@@ -77,7 +76,7 @@ class Main extends Module {
     /** Asserted when SDRAM is available */
     val sdramAvailable = Input(Bool())
     /** Options port */
-    val options = new OptionsIO
+    val options = OptionsIO()
     /** LED port */
     val led = Output(new Bundle {
       val power = Bool()

@@ -38,7 +38,7 @@ import chisel3._
 import chisel3.util._
 
 /** Represents the analog video signals. */
-class VideoIO extends Bundle {
+class VideoIO private extends Bundle {
   /** Asserted when the beam is in the display region. */
   val enable = Output(Bool())
   /** Beam position */
@@ -51,6 +51,10 @@ class VideoIO extends Bundle {
   val hBlank = Output(Bool())
   /** Vertical blank */
   val vBlank = Output(Bool())
+}
+
+object VideoIO {
+  def apply() = new VideoIO
 }
 
 /**
@@ -101,7 +105,7 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
     /** CRT offset */
     val offset = Input(new SVec2(OptionsIO.SCREEN_OFFSET_WIDTH))
     /** Video port */
-    val video = Output(new VideoIO)
+    val video = Output(VideoIO())
   })
 
   // Wires

@@ -30,37 +30,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave
+package axon.types
 
-import axon.mem._
 import chisel3._
 
-package object types {
-  /** Frame buffer DMA IO */
-  class FrameBufferDMAIO extends ReadMemIO(Config.FRAME_BUFFER_DMA_ADDR_WIDTH, Config.FRAME_BUFFER_DMA_DATA_WIDTH) {
-    override def cloneType: this.type = new FrameBufferDMAIO().asInstanceOf[this.type]
-  }
+/** An interface that contains the player controls and service buttons. */
+class JoystickIO private extends Bundle {
+  /** Player 1 input */
+  val player1 = PlayerIO()
+  /** Player 2 input */
+  val player2 = PlayerIO()
+  /** Service button 1 */
+  val service1 = Input(Bool())
+  /** Service button 2 */
+  val service2 = Input(Bool())
+}
 
-  /** Priority IO */
-  class PriorityIO extends Bundle {
-    /** Write-only port */
-    val write = WriteMemIO(Config.PRIO_BUFFER_ADDR_WIDTH, Config.PRIO_BUFFER_DATA_WIDTH)
-    /** Read-only port */
-    val read = ReadMemIO(Config.PRIO_BUFFER_ADDR_WIDTH, Config.PRIO_BUFFER_DATA_WIDTH)
-  }
-
-  /** Program ROM IO */
-  class ProgRomIO extends AsyncReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH) {
-    override def cloneType: this.type = new ProgRomIO().asInstanceOf[this.type]
-  }
-
-  /** Sound ROM IO */
-  class SoundRomIO extends AsyncReadMemIO(Config.SOUND_ROM_ADDR_WIDTH, Config.SOUND_ROM_DATA_WIDTH) {
-    override def cloneType: this.type = new SoundRomIO().asInstanceOf[this.type]
-  }
-
-  /** Tile ROM IO */
-  class TileRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH) {
-    override def cloneType: this.type = new TileRomIO().asInstanceOf[this.type]
-  }
+object JoystickIO {
+  def apply() = new JoystickIO
 }

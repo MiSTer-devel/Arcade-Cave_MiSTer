@@ -70,9 +70,9 @@ class Cave extends Module {
     /** Asserted when the DMA controller is ready */
     val dmaReady = Input(Bool())
     /** Options port */
-    val options = new OptionsIO
+    val options = OptionsIO()
     /** Joystick port */
-    val joystick = new JoystickIO
+    val joystick = JoystickIO()
     /** Program ROM port */
     val progRom = new ProgRomIO
     /** Sound ROM port */

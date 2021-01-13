@@ -80,8 +80,6 @@ object Config {
     vRetrace = 2,
   )
 
-  /** The number of player buttons */
-  val PLAYER_BUTTON_COUNT = 3
   /** The width of the pulse generated when a player presses the coin button */
   val PLAYER_COIN_PULSE_WIDTH = (100000000 / CPU_CLOCK_PERIOD).ceil.toInt // 100ms
 
