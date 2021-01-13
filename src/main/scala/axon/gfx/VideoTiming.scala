@@ -35,7 +35,6 @@ package axon.gfx
 import axon.types._
 import axon.util.Counter
 import chisel3._
-import chisel3.util._
 
 /** Represents the analog video signals. */
 class VideoIO private extends Bundle {
@@ -108,27 +107,19 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
     val video = Output(VideoIO())
   })
 
-  // Wires
-  val vSync = Wire(Bool())
-
-  // Latching the CRT offset value during the display region can momentarily change the display
-  // dimensions, which may in turn cause issues with other devices (e.g. video FIFO). To avoid this
-  // problem the offset value must be latched during a vertical sync.
-  val offsetReg = RegEnable(io.offset, vSync)
-
   // Counters
   val (x, xWrap) = Counter.static(config.width, init = config.hInit)
   val (y, yWrap) = Counter.static(config.height, enable = xWrap, init = config.vInit)
 
   // Horizontal regions
-  val hBeginDisplay = (config.width.S - config.hDisplay.S - config.hFrontPorch.S - config.hRetrace.S + offsetReg.x).asUInt
-  val hEndDisplay = (config.width.S - config.hFrontPorch.S - config.hRetrace.S + offsetReg.x).asUInt
+  val hBeginDisplay = (config.width.S - config.hDisplay.S - config.hFrontPorch.S - config.hRetrace.S + io.offset.x).asUInt
+  val hEndDisplay = (config.width.S - config.hFrontPorch.S - config.hRetrace.S + io.offset.x).asUInt
   val hBeginSync = config.width.U - config.hRetrace.U
   val hEndSync = config.width.U
 
   // Vertical regions
-  val vBeginDisplay = (config.height.S - config.vDisplay.S - config.vFrontPorch.S - config.vRetrace.S + offsetReg.y).asUInt
-  val vEndDisplay = (config.height.S - config.vFrontPorch.S - config.vRetrace.S + offsetReg.y).asUInt
+  val vBeginDisplay = (config.height.S - config.vDisplay.S - config.vFrontPorch.S - config.vRetrace.S + io.offset.y).asUInt
+  val vEndDisplay = (config.height.S - config.vFrontPorch.S - config.vRetrace.S + io.offset.y).asUInt
   val vBeginSync = config.height.U - config.vRetrace.U
   val vEndSync = config.height.U
 
@@ -137,7 +128,7 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
 
   // Sync signals
   val hSync = x >= hBeginSync && x < hEndSync
-  vSync := y >= vBeginSync && y < vEndSync
+  val vSync = y >= vBeginSync && y < vEndSync
 
   // Blanking signals
   val hBlank = x < hBeginDisplay || x >= hEndDisplay
