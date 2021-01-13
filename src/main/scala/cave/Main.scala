@@ -59,7 +59,7 @@ class Main extends Module {
     /** CPU reset */
     val cpuReset = Input(Bool())
     /** Video port */
-    val video = Output(new VideoIO)
+    val video = new VideoIO
     /** RGB output */
     val rgb = Output(new RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL))
     /** Frame buffer port */
@@ -86,9 +86,6 @@ class Main extends Module {
     })
   })
 
-  // Toggle pause register
-  val pauseReg = Util.toggle(Util.rising(io.joystick.player1.pause || io.joystick.player2.pause))
-
   // DDR controller
   val ddr = Module(new DDR(Config.ddrConfig))
   ddr.io.ddr <> io.ddr
@@ -109,7 +106,6 @@ class Main extends Module {
   videoSys.io.videoClock := io.videoClock
   videoSys.io.videoReset := io.videoReset
   videoSys.io.forceBlank := io.cpuReset
-  videoSys.io.pause := pauseReg
   videoSys.io.options <> io.options
   videoSys.io.video <> io.video
   videoSys.io.rgb <> io.rgb
@@ -138,7 +134,7 @@ class Main extends Module {
   val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
-  cave.io.pause := pauseReg
+  cave.io.vBlank <> videoSys.io.video.vBlank
   frameBufferDMA.io.start := cave.io.frameReady
   cave.io.dmaReady := frameBufferDMA.io.ready
   cave.io.options <> io.options
@@ -146,7 +142,6 @@ class Main extends Module {
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }
   cave.io.tileRom <> mem.io.tileRom
-  cave.io.video <> videoSys.io.video
   cave.io.audio <> io.audio
   cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
 

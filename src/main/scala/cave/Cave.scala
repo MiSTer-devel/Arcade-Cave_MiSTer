@@ -34,7 +34,6 @@ package cave
 
 import axon._
 import axon.cpu.m68k._
-import axon.gfx._
 import axon.mem._
 import axon.snd._
 import axon.types._
@@ -64,24 +63,22 @@ class Cave extends Module {
     val cpuClock = Input(Clock())
     /** CPU reset */
     val cpuReset = Input(Reset())
-    /** Asserted when the game is paused */
-    val pause = Input(Bool())
-    /** Options port */
-    val options = new OptionsIO
-    /** Joystick port */
-    val joystick = new JoystickIO
+    /** Vertical blank */
+    val vBlank = Input(Bool())
     /** Asserted when a frame is ready */
     val frameReady = Output(Bool())
     /** Asserted when the DMA controller is ready */
     val dmaReady = Input(Bool())
+    /** Options port */
+    val options = new OptionsIO
+    /** Joystick port */
+    val joystick = new JoystickIO
     /** Program ROM port */
     val progRom = new ProgRomIO
     /** Sound ROM port */
     val soundRom = new SoundRomIO
     /** Tile ROM port */
     val tileRom = new TileRomIO
-    /** Video port */
-    val video = Input(new VideoIO)
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** Frame buffer DMA port */
@@ -104,13 +101,14 @@ class Cave extends Module {
   // The CPU and registers run in the CPU clock domain
   withClockAndReset(io.cpuClock, io.cpuReset) {
     // Registers
-    val vBlank = Util.rising(ShiftRegister(io.video.vBlank, 2))
+    val vBlank = Util.rising(ShiftRegister(io.vBlank, 2))
     val vBlankIRQ = RegInit(false.B)
     val iplReg = RegInit(0.U)
+    val pauseReg = Util.toggle(Util.rising(io.joystick.player1.pause || io.joystick.player2.pause))
 
     // M68K CPU
     val cpu = Module(new CPU)
-    cpu.io.halt := ShiftRegister(io.pause, 2)
+    cpu.io.halt := pauseReg
     cpu.io.dtack := false.B
     cpu.io.vpa := intAck // autovectored interrupts
     cpu.io.ipl := iplReg
@@ -239,5 +237,8 @@ class Cave extends Module {
     // FIXME: The EEPROM output data shouldn't need to be inverted.
     memMap(0xd00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b11".U ## ~encodePlayer(io.joystick.player2) }
     memMap(0xe00000).writeMem(eeprom.io.mem)
+
+    // When the game is paused, request frames at the start of every vertical blank
+    when(pauseReg) { frameStart := vBlank }
   }
 }

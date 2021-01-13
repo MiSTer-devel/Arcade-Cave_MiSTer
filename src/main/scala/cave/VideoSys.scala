@@ -56,14 +56,12 @@ class VideoSys extends Module {
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
-    /** Asserted when the video output should be blank */
+    /** Asserted when video output should be disabled */
     val forceBlank = Input(Bool())
-    /** Asserted when the game is paused */
-    val pause = Input(Bool())
     /** Options port */
     val options = new OptionsIO
     /** Video port */
-    val video = Output(new VideoIO)
+    val video = new VideoIO
     /** RGB output */
     val rgb = Output(new RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL))
     /** Frame buffer port */
@@ -99,7 +97,7 @@ class VideoSys extends Module {
     videoTiming.io.video <> videoFIFO.io.video
 
     // Toggle read/write index
-    when(!io.pause && Util.rising(io.video.vBlank)) {
+    when(Util.rising(io.video.vBlank)) {
       when(io.frameBuffer.lowLat) {
         writeIndex := ~writeIndex(0)
       } otherwise {
@@ -109,7 +107,7 @@ class VideoSys extends Module {
     }
 
     // Toggle HDMI read index
-    when(!io.pause && Util.rising(io.frameBuffer.vBlank)) {
+    when(Util.rising(io.frameBuffer.vBlank)) {
       when(io.frameBuffer.lowLat) {
         readIndex2 := ~writeIndex(0)
       } otherwise {
