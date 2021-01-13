@@ -38,10 +38,12 @@ import chisel3._
 class OptionsIO private extends Bundle {
   /** CRT offset */
   val offset = Input(new SVec2(OptionsIO.SCREEN_OFFSET_WIDTH))
-  /** Asserted when the screen is rotated */
+  /** Asserted when screen rotation is enabled */
   val rotate = Input(Bool())
-  /** Asserted when the screen is flipped */
+  /** Asserted when screen flipping is enabled */
   val flip = Input(Bool())
+  /** Asserted when video compatibility (60Hz) mode is enabled */
+  val compatibility = Input(Bool())
   /** Layer enable flags */
   val layer = Input(new Bundle {
     val sprites = Bool()

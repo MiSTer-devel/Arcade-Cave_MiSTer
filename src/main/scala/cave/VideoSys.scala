@@ -74,14 +74,18 @@ class VideoSys extends Module {
     val videoDMAIndex = Output(UInt(2.W))
   })
 
-  // System clock
+  // System clock alias
   val sysClock = clock
+
+  // Wires
+  val video = Wire(VideoIO())
 
   // Video FIFO
   val videoFIFO = Module(new VideoFIFO)
   videoFIFO.io.videoClock := io.videoClock
   videoFIFO.io.videoReset := io.videoReset
   videoFIFO.io.pixelData <> io.pixelData
+  videoFIFO.io.video <> video
 
   // Most of the video timing modules run in the video clock domain
   withClockAndReset(io.videoClock, io.videoReset) {
@@ -91,10 +95,17 @@ class VideoSys extends Module {
     val writeIndex = RegInit(1.U(2.W))
 
     // Video timing
-    val videoTiming = Module(new VideoTiming(Config.videoTimingConfig))
-    videoTiming.io.offset := io.options.offset
-    videoTiming.io.video <> io.video
-    videoTiming.io.video <> videoFIFO.io.video
+    val originalVideoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
+    originalVideoTiming.io.offset := io.options.offset
+    val compatibilityVideoTiming = Module(new VideoTiming(Config.compatibilityVideoTimingConfig))
+    compatibilityVideoTiming.io.offset := io.options.offset
+
+    // The compatibility option should only be latched during a vertical blank. This avoids any
+    // sudden changes in the video timing, and possible corruption of the video FIFO.
+    val compatibilityReg = RegEnable(io.options.compatibility, originalVideoTiming.io.video.vBlank && compatibilityVideoTiming.io.video.vBlank)
+
+    // Select between original or compatibility video timing
+    video := Mux(compatibilityReg, compatibilityVideoTiming.io.video, originalVideoTiming.io.video)
 
     // Toggle read/write index
     when(Util.rising(io.video.vBlank)) {
@@ -130,5 +141,8 @@ class VideoSys extends Module {
     // Set DMA frame buffer indices
     io.frameBufferDMAIndex := withClock(sysClock) { ShiftRegister(writeIndex, 2) }
     io.videoDMAIndex := withClock(sysClock) { ShiftRegister(readIndex1, 2) }
+
+    // Set video signals
+    io.video <> video
   }
 }
