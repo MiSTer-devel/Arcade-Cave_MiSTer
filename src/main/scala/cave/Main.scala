@@ -78,11 +78,7 @@ class Main extends Module {
     /** Options port */
     val options = OptionsIO()
     /** LED port */
-    val led = Output(new Bundle {
-      val power = Bool()
-      val disk = Bool()
-      val user = Bool()
-    })
+    val led = mister.LEDIO()
   })
 
   // DDR controller
