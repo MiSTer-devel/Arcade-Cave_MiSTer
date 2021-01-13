@@ -8,7 +8,7 @@
   <category>Shooter</category>
   <rbf>cave</rbf>
 
-  <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,X,R,L,Start" />
+  <buttons names="Shots/Laser,Spread/Laser Bomber,Full-Auto,Start,Coin,Pause" default="A,B,X,R,L,Start" />
 
   <!-- ROM data -->
   <rom index="0" zip="ddonpach.zip" md5="f85911efc7f275e2d4ef55b1c6007412">
