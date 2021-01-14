@@ -246,18 +246,45 @@ wire hblank, vblank;
 wire video_enable;
 wire [2:0] fx = status[6:4];
 wire [2:0] sl = fx ? fx - 1'd1 : 3'd0;
+wire       scandoubler = fx || forced_scandoubler;
 
 assign CLK_VIDEO = clk_video;
-assign CE_PIXEL = 1;
-assign VGA_DE = video_enable;
-assign VGA_HS = hsync;
-assign VGA_VS = vsync;
-assign VGA_R  = r;
-assign VGA_G  = g;
-assign VGA_B  = b;
 assign VGA_F1 = 0;
 assign VGA_SL = sl[1:0];
 assign VGA_SCALER = 0;
+
+reg ce_pix;
+always @(posedge clk_video) begin
+        reg [1:0] div;
+
+        div <= div + 1'd1;
+        ce_pix <= !div;
+end
+
+video_mixer #(.LINE_LENGTH(320), .HALF_DEPTH(0), .GAMMA(1)) video_mixer
+(
+    .*,
+
+    .clk_vid(clk_video),
+    .ce_pix(ce_pix),
+    .ce_pix_out(CE_PIXEL),
+
+    .scanlines(0),
+    .scandoubler(scandoubler),
+    .hq2x(scale==1),
+
+    .mono(0),
+
+    .R(r),
+    .G(g),
+    .B(b),
+
+    // Positive pulses.
+    .HSync(hsync),
+    .VSync(vsync),
+    .HBlank(hblank),
+    .VBlank(vblank)
+);
 
 ////////////////////////////////////////////////////////////////////////////////
 // CONTROLS
@@ -364,7 +391,7 @@ logic reset_video_0;
 logic reset_video_1;
 logic reset_video_2;
 
-always_ff @(posedge clk_video) begin
+always_ff @(posedge ce_pix) begin
   reset_video_0 <= reset_video;
   reset_video_1 <= reset_video_0;
   reset_video_2 <= reset_video_1;
@@ -394,7 +421,7 @@ Main main (
   .clock(clk_sys),
   .reset(reset_sys_2),
   // Video clock domain
-  .io_videoClock(clk_video),
+  .io_videoClock(ce_pix),
   .io_videoReset(reset_video_2),
   // CPU clock domain
   .io_cpuClock(clk_cpu),
