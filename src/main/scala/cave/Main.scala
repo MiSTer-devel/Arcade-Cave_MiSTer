@@ -140,7 +140,7 @@ class Main extends Module {
 
   // Set LED outputs
   io.led.power := false.B
-  io.led.disk := false.B
+  io.led.disk := io.download.waitReq
   io.led.user := io.download.cs
 }
 
