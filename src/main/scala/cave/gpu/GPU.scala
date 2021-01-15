@@ -78,14 +78,22 @@ class GPU extends Module {
 
   // States
   object State {
-    val idle :: clear :: sprites :: layer0 :: layer1 :: layer2 :: dmaStart :: dmaWait :: Nil = Enum(8)
+    val idle :: background :: clear :: sprites :: layer0 :: layer1 :: layer2 :: dmaStart :: dmaWait :: Nil = Enum(9)
   }
 
   // Wires
   val nextState = Wire(UInt())
 
+  // The fill color used to clear the frame buffer must be read from palette RAM. The read request
+  // is defined using a memory interface, so that it can be multiplexed with the other palette RAM
+  // requests.
+  val backgroundColorMem = Wire(ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH))
+  backgroundColorMem.rd := true.B
+  backgroundColorMem.addr := GPU.backgroundPen.asUInt
+
   // Registers
   val stateReg = RegNext(nextState, State.idle)
+  val backgroundColorReg = RegEnable(backgroundColorMem.dout, 0.U, stateReg === State.background)
 
   // Counters
   val (x, xWrap) = Counter.static(Config.SCREEN_WIDTH, enable = stateReg === State.clear)
@@ -108,9 +116,6 @@ class GPU extends Module {
   spriteProcessor.io.spriteBank := io.videoRegs(64)
   spriteProcessor.io.spriteRam <> io.spriteRam
 
-  // The clear memory interface is used for writing blank pixels
-  val clearMem = GPU.clearMem(x ## y)
-
   // The priority RAM is used by the layers for buffering pixel priority data during rendering
   val priorityRam = Module(new DualPortRam(
     addrWidthA = Config.PRIO_BUFFER_ADDR_WIDTH,
@@ -120,7 +125,7 @@ class GPU extends Module {
     maskEnable = false
   ))
   priorityRam.io.portA <> WriteMemIO.mux(stateReg, Seq(
-    State.clear -> clearMem,
+    State.clear -> GPU.clearMem(x ## y),
     State.sprites -> spriteProcessor.io.priority.write,
     State.layer0 -> layerProcessor.io.priority.write,
     State.layer1 -> layerProcessor.io.priority.write,
@@ -143,7 +148,7 @@ class GPU extends Module {
     maskEnable = false
   ))
   frameBuffer.io.portA <> RegNext(WriteMemIO.mux(stateReg, Seq(
-    State.clear -> clearMem,
+    State.clear -> GPU.clearMem(x ## y, backgroundColorReg),
     State.sprites -> spriteProcessor.io.frameBuffer,
     State.layer0 -> layerProcessor.io.frameBuffer,
     State.layer1 -> layerProcessor.io.frameBuffer,
@@ -163,8 +168,11 @@ class GPU extends Module {
   switch(stateReg) {
     // Wait for a new frame
     is(State.idle) {
-      when(io.frameReq) { nextState := State.clear }
+      when(io.frameReq) { nextState := State.background }
     }
+
+    // Latch the background color
+    is(State.background) { nextState := State.clear }
 
     // Clears the frame buffer
     is(State.clear) {
@@ -220,7 +228,12 @@ class GPU extends Module {
 
   // Outputs
   io.frameReady := stateReg === State.dmaStart
-  io.paletteRam <> ReadMemIO.mux(stateReg === State.sprites, spriteProcessor.io.paletteRam, layerProcessor.io.paletteRam)
+  io.paletteRam <> ReadMemIO.muxLookup(stateReg, backgroundColorMem, Seq(
+    State.sprites -> spriteProcessor.io.paletteRam,
+    State.layer0 -> layerProcessor.io.paletteRam,
+    State.layer1 -> layerProcessor.io.paletteRam,
+    State.layer2 -> layerProcessor.io.paletteRam
+  ))
   io.tileRom <> BurstReadMemIO.mux(Seq(
     (stateReg === State.sprites) -> spriteProcessor.io.tileRom,
     (stateReg === State.layer0 || stateReg === State.layer1 || stateReg === State.layer2) -> layerProcessor.io.tileRom
@@ -234,6 +247,9 @@ class GPU extends Module {
 }
 
 object GPU {
+  /** Returns the palette entry used to clear the frame buffer. */
+  def backgroundPen = PaletteEntry(0x7f.U, 0.U)
+
   /**
    * Converts an X/Y address to a linear address.
    *
