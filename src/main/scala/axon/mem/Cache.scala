@@ -221,8 +221,11 @@ class Cache(config: CacheConfig) extends Module {
   val requestReg = RegEnable(request, nextState === State.latch)
 
   // Offset register
-  val offset = (io.in.addr >> log2Ceil(config.inBytes)) (log2Up(config.inWords) - 1, 0)
-  val offsetReg = RegEnable(offset, nextState === State.latch)
+  val offsetReg = {
+    val addr = io.in.addr >> log2Ceil(config.inBytes)
+    val offset = addr(log2Up(config.inWords) - 1, 0)
+    RegEnable(offset, nextState === State.latch)
+  }
 
   // Cache entry memory
   val cacheEntryMem = SyncReadMem(config.depth, Bits(new CacheEntry(config).getWidth.W))
