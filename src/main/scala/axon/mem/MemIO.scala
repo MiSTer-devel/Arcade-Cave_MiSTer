@@ -77,6 +77,27 @@ object ReadMemIO {
   }
 
   /**
+   * Multiplexes requests from read-only memory interfaces to a single read-only memory
+   * interface.
+   *
+   * @param key     The key to used to select the interface.
+   * @param default The default interface.
+   * @param outs    A list of key-interface pairs.
+   */
+  def muxLookup[K <: UInt](key: K, default: ReadMemIO, mapping: Seq[(K, ReadMemIO)]): ReadMemIO = {
+    val mem = Wire(chiselTypeOf(mapping.head._2))
+    val rdMap = mapping.map(a => a._1 -> a._2.rd)
+    val addrMap = mapping.map(a => a._1 -> a._2.addr)
+    mem.rd := MuxLookup(key, default.rd, rdMap)
+    mem.addr := MuxLookup(key, default.addr, addrMap)
+    default.dout := mem.dout
+    mapping.foreach { case (_, out) =>
+      out.dout := mem.dout
+    }
+    mem
+  }
+
+  /**
    * Demultiplexes requests from a single read-only memory interface to multiple read-only memory
    * interfaces. The request is routed to the interface matching a given key.
    *
