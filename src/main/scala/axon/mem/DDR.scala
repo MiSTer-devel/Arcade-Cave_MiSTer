@@ -49,8 +49,11 @@ object DDRIO {
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
+ * @param offset    The offset of the address.
  */
-case class DDRConfig(addrWidth: Int = 32, dataWidth: Int = 64)
+case class DDRConfig(addrWidth: Int = 32,
+                     dataWidth: Int = 64,
+                     offset: Int = 0)
 
 /**
  * Handles reading/writing data to a DDR memory device.
@@ -103,6 +106,7 @@ class DDR(config: DDRConfig) extends Module {
   // Outputs
   io.mem.burstDone := burstCounterDone
   io.ddr.burstLength := burstLength
+  io.ddr.addr := io.mem.addr +& config.offset.U
   io.ddr.rd := io.mem.rd && stateReg =/= State.readWait
   io.ddr.wr := io.mem.wr || stateReg === State.writeWait
   io.debug.burstCounter := burstCounter
