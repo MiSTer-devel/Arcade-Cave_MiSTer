@@ -56,7 +56,7 @@ class DownloadIO private extends Bundle {
     val wire = Wire(AsyncReadWriteMemIO(DownloadIO.ADDR_WIDTH, DownloadIO.DATA_WIDTH))
     wire.rd := false.B
     wire.wr := cs && wr
-    waitReq := wr && wire.waitReq
+    waitReq := cs && wr && wire.waitReq
     wire.addr := addr
     wire.mask := Fill(wire.maskWidth, 1.U)
     wire.din := dout
