@@ -45,7 +45,33 @@ trait DDRTestHelpers {
 class DDRTest extends FlatSpec with ChiselScalatestTester with Matchers with DDRTestHelpers {
   behavior of "read"
 
-  it should "read from DDR memory" in {
+  it should "read from DDR memory (burst=1)" in {
+    test(mkDDR()) { dut =>
+      // Request
+      dut.io.mem.burstLength.poke(1.U)
+      dut.io.mem.rd.poke(true.B)
+      dut.io.mem.addr.poke(1.U)
+      dut.io.ddr.rd.expect(true.B)
+      dut.io.ddr.addr.expect(1.U)
+      dut.clock.step()
+      dut.io.ddr.rd.expect(false.B)
+
+      // Data
+      dut.io.mem.rd.poke(false.B)
+      dut.io.ddr.valid.poke(true.B)
+      dut.io.ddr.dout.poke(0x1234.U)
+      dut.io.mem.burstDone.expect(true.B)
+      dut.io.mem.valid.expect(true.B)
+      dut.io.mem.dout.expect(0x1234.U)
+      dut.clock.step()
+
+      // Done
+      dut.io.mem.burstDone.expect(false.B)
+      dut.io.mem.rd.expect(false.B)
+    }
+  }
+
+  it should "read from DDR memory (burst=2)" in {
     test(mkDDR()) { dut =>
       // Request
       dut.io.mem.burstLength.poke(2.U)
@@ -110,7 +136,26 @@ class DDRTest extends FlatSpec with ChiselScalatestTester with Matchers with DDR
 
   behavior of "write"
 
-  it should "write to DDR memory" in {
+  it should "write to DDR memory (burst=1)" in {
+    test(mkDDR()) { dut =>
+      // Request
+      dut.io.mem.burstLength.poke(1.U)
+      dut.io.mem.wr.poke(true.B)
+      dut.io.mem.addr.poke(1.U)
+      dut.io.mem.din.poke(0x1234.U)
+      dut.io.ddr.wr.expect(true.B)
+      dut.io.ddr.addr.expect(1.U)
+      dut.io.ddr.din.expect(0x1234.U)
+      dut.clock.step()
+      dut.io.mem.wr.poke(false.B)
+
+      // Done
+      dut.io.mem.burstDone.expect(false.B)
+      dut.io.ddr.wr.expect(false.B)
+    }
+  }
+
+  it should "write to DDR memory (burst=2)" in {
     test(mkDDR()) { dut =>
       // Request
       dut.io.mem.burstLength.poke(2.U)
