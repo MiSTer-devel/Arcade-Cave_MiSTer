@@ -207,7 +207,7 @@ wire  [7:0] ioctl_index;
 wire [10:0] ps2_key;
 wire [10:0] joystick_0, joystick_1;
 
-wire sdram_available = |sdram_sz[14:0];
+wire sdram_available = |sdram_sz[1:0];
 
 hps_io #(.STRLEN($size(CONF_STR)>>3), .WIDE(1)) hps_io (
   .clk_sys(clk_sys),
@@ -400,6 +400,7 @@ Main main (
   .io_cpuClock(clk_cpu),
   .io_cpuReset(reset_cpu_2),
   // Options
+  .io_options_sdram(sdram_available & ~status[8]),
   .io_options_offset_x(status[27:24]),
   .io_options_offset_y(status[31:28]),
   .io_options_rotate(status[2]),
@@ -455,7 +456,6 @@ Main main (
   .io_ddr_valid(DDRAM_DOUT_READY),
   .io_ddr_burstLength(DDRAM_BURSTCNT),
   // SDRAM
-  .io_sdramAvailable(sdram_available & ~status[8]),
   .io_sdram_cke(SDRAM_CKE),
   .io_sdram_cs_n(SDRAM_nCS),
   .io_sdram_ras_n(SDRAM_nRAS),

@@ -63,8 +63,8 @@ class MemSys extends Module {
     val ddr = BurstReadWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
     /** SDRAM port */
     val sdram = BurstReadWriteMemIO(Config.sdramConfig.addrWidth, Config.sdramConfig.dataWidth)
-    /** Asserted when SDRAM is available */
-    val sdramAvailable = Input(Bool())
+    /** Options port */
+    val options = OptionsIO()
   })
 
   // The DDR download cache is used to buffer download data, so that a complete word can be written
@@ -141,7 +141,7 @@ class MemSys extends Module {
   ddrArbiter.io.in(0) <> ddrDownloadCache.io.out
   ddrArbiter.io.in(1) <> progRomCache1.io.out
   ddrArbiter.io.in(2) <> soundRomCache1.io.out
-  ddrArbiter.io.in(3).asBurstReadMemIO <> io.videoDMA // top priority required for video FIFO
+  ddrArbiter.io.in(3).asBurstReadMemIO <> io.videoDMA
   ddrArbiter.io.in(4).asBurstWriteMemIO <> io.frameBufferDMA
   ddrArbiter.io.in(5).asBurstReadMemIO <> io.tileRom
   ddrArbiter.io.in(5).addr := io.tileRom.addr + Config.DDR_DOWNLOAD_OFFSET.U // TODO: use an address transform
@@ -154,16 +154,16 @@ class MemSys extends Module {
   sdramArbiter.io.in(2) <> progRomCache2.io.out
   sdramArbiter.io.out <> io.sdram
 
-  io.progRom <> AsyncReadWriteMemIO.demux(io.sdramAvailable, Seq(
+  io.progRom <> AsyncReadWriteMemIO.demux(io.options.sdram, Seq(
     false.B -> progRomCache1.io.in,
     true.B -> progRomCache2.io.in
   )).asAsyncReadMemIO
 
-  io.soundRom <> AsyncReadWriteMemIO.demux(io.sdramAvailable, Seq(
+  io.soundRom <> AsyncReadWriteMemIO.demux(io.options.sdram, Seq(
     false.B -> soundRomCache1.io.in,
     true.B -> soundRomCache2.io.in
   )).asAsyncReadMemIO
 
   // Wait until both DDR and SDRAM are ready
-  io.download.waitReq := ddrDownloadCache.io.in.waitReq || (io.sdramAvailable && sdramDownloadCache.io.in.waitReq)
+  io.download.waitReq := ddrDownloadCache.io.in.waitReq || (io.options.sdram && sdramDownloadCache.io.in.waitReq)
 }
