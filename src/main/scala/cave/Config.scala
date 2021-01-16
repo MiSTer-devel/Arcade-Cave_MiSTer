@@ -93,6 +93,11 @@ object Config {
     vRetrace = 2,
   )
 
+  /** Game constants */
+  object Game {
+    val DODONPACHI = 0
+  }
+
   /** The width of the pulse generated when a player presses the coin button */
   val PLAYER_COIN_PULSE_WIDTH = (100000000 / CPU_CLOCK_PERIOD).ceil.toInt // 100ms
 
