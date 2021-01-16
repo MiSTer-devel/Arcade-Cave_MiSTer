@@ -350,9 +350,9 @@ wire reset_sys = RESET | ~locked;
 wire reset_video = RESET | ~locked;
 wire reset_cpu = RESET | status[0] | buttons[1] | ~locked;
 
-logic reset_sys_0;
-logic reset_sys_1;
-logic reset_sys_2;
+reg reset_sys_0 = '1;
+reg reset_sys_1 = '1;
+reg reset_sys_2 = '1;
 
 always_ff @(posedge clk_sys) begin
   reset_sys_0 <= reset_sys;
@@ -360,9 +360,9 @@ always_ff @(posedge clk_sys) begin
   reset_sys_2 <= reset_sys_1;
 end
 
-logic reset_video_0;
-logic reset_video_1;
-logic reset_video_2;
+reg reset_video_0 = '1;
+reg reset_video_1 = '1;
+reg reset_video_2 = '1;
 
 always_ff @(posedge clk_video) begin
   reset_video_0 <= reset_video;
@@ -370,9 +370,9 @@ always_ff @(posedge clk_video) begin
   reset_video_2 <= reset_video_1;
 end
 
-logic reset_cpu_0;
-logic reset_cpu_1;
-logic reset_cpu_2;
+reg reset_cpu_0 = '1;
+reg reset_cpu_1 = '1;
+reg reset_cpu_2 = '1;
 
 always_ff @(posedge clk_cpu) begin
   reset_cpu_0 <= reset_cpu;
