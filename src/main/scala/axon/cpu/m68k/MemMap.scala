@@ -65,14 +65,7 @@ class MemMap(cpu: CPUIO) {
    *
    * @param a The address.
    */
-  def apply(a: Int) = new Mapping(cpu, URange(a.to(a)))
-
-  /**
-   * Create a memory map for the given address range.
-   *
-   * @param r The address range.
-   */
-  def apply(r: Range) = new Mapping(cpu, URange(r))
+  def apply(a: Int): Mapping = apply(a.to(a))
 
   /**
    * Create a memory map for the given address range.

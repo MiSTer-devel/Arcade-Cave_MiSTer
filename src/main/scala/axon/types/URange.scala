@@ -58,5 +58,7 @@ object URange {
     wire.to := to
     wire
   }
+
+  implicit def range2URange(r: Range): URange = URange(r)
 }
 
