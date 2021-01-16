@@ -68,6 +68,17 @@ object Sprite {
   /**
    * Decodes a sprite from the given data.
    *
+   * @param data The sprite data.
+   * @return The decoded sprite.
+   */
+  def decode(data: Bits, zoomed: Boolean = false): Sprite = {
+    val words = Util.decode(data, 8, 16)
+    if (zoomed) decodeZoomedSprite(words) else decodeSprite(words)
+  }
+
+  /**
+   * Decodes a sprite.
+   *
    * {{{
    * word   bits                  description
    * -----+-fedc-ba98-7654-3210-+----------------
@@ -81,15 +92,9 @@ object Sprite {
    *    3 | ---- --xx xxxx xxxx | y position
    *    4 | xxxx xxxx ---- ---- | tile size x
    *      | ---- ---- xxxx xxxx | tile size y
-   *    5 | ---- ---- ---- - -- |
-   *    6 | xxxx xxxx xxxx xxxx | zoom x
-   *    7 | xxxx xxxx xxxx xxxx | zoom y
    * }}}
-   *
-   * @param data The sprite data.
    */
-  def decode(data: Bits): Sprite = {
-    val words = Util.decode(data, 8, 16)
+  private def decodeSprite(words: Seq[Bits]): Sprite = {
     val sprite = Wire(new Sprite)
     sprite.priority := words(0)(5, 4)
     sprite.colorCode := words(0)(13, 8)
@@ -98,7 +103,40 @@ object Sprite {
     sprite.flipY := words(0)(2)
     sprite.pos := SVec2(words(2)(9, 0).asSInt, words(3)(9, 0).asSInt)
     sprite.tileSize := Vec2(words(4)(15, 8), words(4)(7, 0))
-    sprite.zoom := Vec2(words(6)(15, 0), words(7)(15, 0))
+    sprite.zoom := Vec2.zero
+    sprite
+  }
+
+  /**
+   * Decodes a zoomed sprite.
+   *
+   * {{{
+   * word   bits                  description
+   * -----+-fedc-ba98-7654-3210-+----------------
+   *    0 | ---- --xx xxxx xxxx | x position
+   *    1 | ---- --xx xxxx xxxx | y position
+   *    2 | --xx xxxx ---- ---- | color
+   *      | ---- ---- --xx ---- | priority
+   *      | ---- ---- ---- x--- | flip x
+   *      | ---- ---- ---- -x-- | flip y
+   *      | ---- ---- ---- --xx | code hi
+   *    3 | xxxx xxxx xxxx xxxx | code lo
+   *    4 | xxxx xxxx xxxx xxxx | zoom x
+   *    5 | xxxx xxxx xxxx xxxx | zoom y
+   *    6 | xxxx xxxx ---- ---- | tile size x
+   *      | ---- ---- xxxx xxxx | tile size y
+   * }}}
+   */
+  private def decodeZoomedSprite(words: Seq[Bits]): Sprite = {
+    val sprite = Wire(new Sprite)
+    sprite.priority := words(2)(5, 4)
+    sprite.colorCode := words(2)(13, 8)
+    sprite.code := words(2)(1, 0) ## words(3)(15, 0)
+    sprite.flipX := words(2)(3)
+    sprite.flipY := words(2)(2)
+    sprite.pos := SVec2(words(0)(9, 0).asSInt, words(1)(9, 0).asSInt)
+    sprite.tileSize := Vec2(words(6)(15, 8), words(6)(7, 0))
+    sprite.zoom := Vec2(words(4)(15, 0), words(5)(15, 0))
     sprite
   }
 }
