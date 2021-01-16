@@ -209,7 +209,7 @@ class Cave extends Module {
     when(vBlank) { vBlankIRQ := true.B }
 
     // Memory map
-    new MemMap(cpu.io) { map =>
+    new MemMap(cpu.io, io.gameIndex === Config.DODONPACHI.U) { map =>
       map(0x000000 to 0x0fffff).readMem(io.progRom)
       map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
       map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
