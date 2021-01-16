@@ -137,7 +137,7 @@ assign BUTTONS = 0;
 assign VIDEO_ARX = status[1] ? 8'd16 : status[2] ? 8'd3 : 8'd4;
 assign VIDEO_ARY = status[1] ? 8'd9  : status[2] ? 8'd4 : 8'd3;
 
-// Required for Blister
+// Required for BlisSTer
 assign USER_OUT = '1;
 
 `include "build_id.v"
@@ -167,24 +167,71 @@ localparam CONF_STR = {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// CLOCKS
+// CLOCK AND RESET
 ////////////////////////////////////////////////////////////////////////////////
 
-wire clk_sys, clk_sdram, clk_video, clk_cpu;
 wire locked;
+wire clk_sys, clk_sdram, clk_video, clk_cpu;
+reg  reset_pll = 0;
+wire reset_sys = RESET | ~locked;
+reg  reset_sys_0 = 1;
+reg  reset_sys_1 = 1;
+wire reset_video = RESET | ~locked;
+reg  reset_video_0 = 1;
+reg  reset_video_1 = 1;
+wire reset_cpu = RESET | status[0] | buttons[1] | ~locked;
+reg  reset_cpu_0 = 1;
+reg  reset_cpu_1 = 1;
+
+// Resets the PLL if it loses lock
+always @(posedge clk_sys or posedge RESET) begin
+  reg last_locked;
+  reg [7:0] rst_cnt;
+
+  if (RESET) begin
+    reset_pll <= 0;
+    rst_cnt <= 8'h00;
+  end else begin
+    last_locked <= locked;
+    if (last_locked && !locked) begin
+      rst_cnt <= 8'hff; // keep reset high for 256 cycles
+      reset_pll <= 1;
+    end else begin
+      if (rst_cnt != 8'h00)
+        rst_cnt <= rst_cnt - 8'h1;
+      else
+        reset_pll <= 0;
+    end
+  end
+end
 
 pll pll (
   .refclk(CLK_50M),
-  .rst(RESET),
+  .rst(reset_pll),
+  .locked(locked),
   .outclk_0(clk_sys),
   .outclk_1(clk_sdram),
   .outclk_2(clk_video),
-  .outclk_3(clk_cpu),
-  .locked(locked)
+  .outclk_3(clk_cpu)
 );
 
 assign DDRAM_CLK = clk_sys;
 assign SDRAM_CLK = clk_sdram;
+
+always_ff @(posedge clk_sys) begin
+  reset_sys_0 <= reset_sys;
+  reset_sys_1 <= reset_sys_0;
+end
+
+always_ff @(posedge clk_video) begin
+  reset_video_0 <= reset_video;
+  reset_video_1 <= reset_video_0;
+end
+
+always_ff @(posedge clk_cpu) begin
+  reset_cpu_0 <= reset_cpu;
+  reset_cpu_1 <= reset_cpu_0;
+end
 
 ////////////////////////////////////////////////////////////////////////////////
 // HPS IO
@@ -346,40 +393,6 @@ wire service_2         = key_0;
 // CAVE
 ////////////////////////////////////////////////////////////////////////////////
 
-wire reset_sys = RESET | ~locked;
-wire reset_video = RESET | ~locked;
-wire reset_cpu = RESET | status[0] | buttons[1] | ~locked;
-
-reg reset_sys_0 = '1;
-reg reset_sys_1 = '1;
-reg reset_sys_2 = '1;
-
-always_ff @(posedge clk_sys) begin
-  reset_sys_0 <= reset_sys;
-  reset_sys_1 <= reset_sys_0;
-  reset_sys_2 <= reset_sys_1;
-end
-
-reg reset_video_0 = '1;
-reg reset_video_1 = '1;
-reg reset_video_2 = '1;
-
-always_ff @(posedge clk_video) begin
-  reset_video_0 <= reset_video;
-  reset_video_1 <= reset_video_0;
-  reset_video_2 <= reset_video_1;
-end
-
-reg reset_cpu_0 = '1;
-reg reset_cpu_1 = '1;
-reg reset_cpu_2 = '1;
-
-always_ff @(posedge clk_cpu) begin
-  reset_cpu_0 <= reset_cpu;
-  reset_cpu_1 <= reset_cpu_0;
-  reset_cpu_2 <= reset_cpu_1;
-end
-
 wire [31:0] ddr_addr;
 wire        sdram_oe;
 wire [15:0] sdram_din;
@@ -392,13 +405,13 @@ assign sdram_dout = SDRAM_DQ;
 Main main (
   // Fast clock domain
   .clock(clk_sys),
-  .reset(reset_sys_2),
+  .reset(reset_sys_1),
   // Video clock domain
   .io_videoClock(clk_video),
-  .io_videoReset(reset_video_2),
+  .io_videoReset(reset_video_1),
   // CPU clock domain
   .io_cpuClock(clk_cpu),
-  .io_cpuReset(reset_cpu_2),
+  .io_cpuReset(reset_cpu_1),
   // Options
   .io_options_sdram(sdram_available & ~status[8]),
   .io_options_offset_x(status[27:24]),
