@@ -42,7 +42,11 @@ import cave.types._
 import chisel3._
 import chisel3.util._
 
-/** Represents the CAVE arcade hardware. */
+/**
+ * Represents the first-generation CAVE arcade hardware.
+ *
+ * This module contains the CPU, GPU, sound processor, RAM, ROM, and memory maps.
+ */
 class Cave extends Module {
   /**
    * Encodes the player IO into a bitvector value.
