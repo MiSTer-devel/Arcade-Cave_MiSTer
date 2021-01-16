@@ -40,6 +40,7 @@ import axon.types._
 import cave.dma._
 import chisel3._
 import chisel3.stage._
+import chisel3.util._
 
 /**
  * The top-level module.
@@ -78,6 +79,12 @@ class Main extends Module {
     /** LED port */
     val led = mister.LEDIO()
   })
+
+  // Latch game index when data is written to the download port
+  val gameIndexReg = {
+    val enable = io.download.cs && io.download.wr && io.download.index === DownloadIO.GAME_INDEX.U
+    RegEnable(io.download.dout, 0.U, enable)
+  }
 
   // DDR controller
   val ddr = Module(new DDR(Config.ddrConfig))
@@ -127,9 +134,10 @@ class Main extends Module {
   val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
-  cave.io.vBlank <> videoSys.io.video.vBlank
+  cave.io.vBlank := videoSys.io.video.vBlank
   frameBufferDMA.io.start := cave.io.frameReady
   cave.io.dmaReady := frameBufferDMA.io.ready
+  cave.io.gameIndex := gameIndexReg
   cave.io.options <> io.options
   cave.io.joystick <> io.joystick
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }

@@ -470,6 +470,7 @@ Main main (
   .io_download_cs(ioctl_download),
   .io_download_wr(ioctl_wr),
   .io_download_waitReq(ioctl_wait),
+  .io_download_index(ioctl_index),
   .io_download_addr(ioctl_addr),
   .io_download_dout(ioctl_dout),
   // RGB output

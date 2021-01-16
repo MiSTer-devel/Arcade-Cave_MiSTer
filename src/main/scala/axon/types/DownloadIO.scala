@@ -71,6 +71,12 @@ object DownloadIO {
   val ADDR_WIDTH = 27
   /** The width of the data bus */
   val DATA_WIDTH = 16
+  /** ROM data index */
+  val ROM_INDEX = 0
+  /** Game index */
+  val GAME_INDEX = 1
+  /** DIP switch index */
+  val DIP_INDEX = 254
 
   def apply() = new DownloadIO
 }
