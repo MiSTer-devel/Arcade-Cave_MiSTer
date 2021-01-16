@@ -44,7 +44,7 @@ import chisel3._
  *
  * @param cpu The CPU IO port.
  */
-class MemMap(cpu: CPUIO) {
+class MemMap(cpu: CPUIO, enable: Bool = true.B) {
   // Registers
   val dinReg = RegInit(0.U(CPU.DATA_WIDTH.W))
   val dtackReg = RegInit(false.B)
@@ -72,7 +72,7 @@ class MemMap(cpu: CPUIO) {
    *
    * @param r The address range.
    */
-  def apply(r: URange) = new Mapping(cpu, r)
+  def apply(r: URange) = new Mapping(cpu, r, enable)
 
   /**
    * Represents a memory mapped address range.
@@ -80,7 +80,7 @@ class MemMap(cpu: CPUIO) {
    * @param cpu The CPU IO port.
    * @param r   The address range.
    */
-  class Mapping(cpu: CPUIO, r: URange) {
+  class Mapping(cpu: CPUIO, r: URange, enable: Bool) {
     // The CPU address bus is only 23 bits, because the LSB is inferred from the UDS and LDS
     // signals. However, we still need to use a 24-bit value when comparing the address to a byte
     // range.
@@ -90,7 +90,7 @@ class MemMap(cpu: CPUIO) {
     val offset = addr - r.from
 
     // Chip select
-    val cs = Util.between(addr, r)
+    val cs = enable && Util.between(addr, r)
 
     /**
      * Maps an address range to the given read-write memory port.
