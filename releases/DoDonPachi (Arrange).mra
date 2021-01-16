@@ -12,6 +12,11 @@
 
   <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,X,R,L,Start" />
 
+  <!-- select game -->
+  <rom index="1">
+    <part>0</part>
+  </rom>
+
   <rom index="0" zip="ddonpach.zip|ddonpacha.zip" md5="none">
     <interleave output="16">
       <part crc="44b899ae" name="arrange_u27.bin" map="10"/>
