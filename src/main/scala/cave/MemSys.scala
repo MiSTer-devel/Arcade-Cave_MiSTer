@@ -78,7 +78,7 @@ class MemSys extends Module {
     depth = 1,
     offset = Config.DDR_DOWNLOAD_OFFSET
   )))
-  ddrDownloadCache.io.in <> io.download.asAsyncReadWriteMemIO
+  ddrDownloadCache.io.in <> io.download.asAsyncReadWriteMemIO(DownloadIO.ROM_INDEX)
 
   // The SDRAM download cache is used to buffer download data, so that a complete word can be
   // written to memory.
@@ -91,7 +91,7 @@ class MemSys extends Module {
     depth = 1,
     wrapping = true
   )))
-  sdramDownloadCache.io.in <> io.download.asAsyncReadWriteMemIO
+  sdramDownloadCache.io.in <> io.download.asAsyncReadWriteMemIO(DownloadIO.ROM_INDEX)
 
   // Program ROM cache
   val progRomCache1 = Module(new Cache(CacheConfig(
