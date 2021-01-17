@@ -99,13 +99,13 @@ class VideoFIFO extends Module {
     when(Util.rising(io.video.vBlank) && !videoFifo.io.rdempty && drainReg) { fillReg := true.B }
   }
 
+  // Fetch pixel data when the FIFO is almost empty
+  io.pixelData.ready := io.enable && drainReg && videoFifo.io.wrusedw < FETCH_THRESHOLD.U
+
   // Decode a 32-bit pixel (ignoring the first 8 bits)
   io.rgb := {
     val bits = videoFifo.io.q(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL * 3 - 1, 0)
     val channels = Util.decode(bits, 3, Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL)
     RGB(channels)
   }
-
-  // Fetch pixel data when the FIFO is almost empty
-  io.pixelData.ready := io.enable && drainReg && videoFifo.io.wrusedw < FETCH_THRESHOLD.U
 }
