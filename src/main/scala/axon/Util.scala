@@ -176,7 +176,7 @@ object Util {
    * @param s     The signal value.
    * @param clear The clear signal.
    */
-  def latch(s: Bool, clear: Bool): Bool = {
+  def latch(s: Bool, clear: Bool = false.B): Bool = {
     val enableReg = RegInit(false.B)
     when(s) {
       enableReg := true.B
@@ -214,7 +214,7 @@ object Util {
    * @param s     The signal value.
    * @param clear The clear signal.
    */
-  def latchSync(s: Bool, clear: Bool): Bool = {
+  def latchSync(s: Bool, clear: Bool = false.B): Bool = {
     val enableReg = RegInit(false.B)
     when(clear) {
       enableReg := false.B
