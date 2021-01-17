@@ -185,15 +185,15 @@ reg  reset_cpu_1 = 1;
 
 // Resets the PLL if it loses lock
 always @(posedge clk_sys or posedge RESET) begin
-  reg last_locked;
+  reg old_locked;
   reg [7:0] rst_cnt;
 
   if (RESET) begin
     reset_pll <= 0;
     rst_cnt <= 8'h00;
   end else begin
-    last_locked <= locked;
-    if (last_locked && !locked) begin
+    old_locked <= locked;
+    if (old_locked && !locked) begin
       rst_cnt <= 8'hff; // keep reset high for 256 cycles
       reset_pll <= 1;
     end else begin
@@ -218,17 +218,17 @@ pll pll (
 assign DDRAM_CLK = clk_sys;
 assign SDRAM_CLK = clk_sdram;
 
-always_ff @(posedge clk_sys) begin
+always @(posedge clk_sys) begin
   reset_sys_0 <= reset_sys;
   reset_sys_1 <= reset_sys_0;
 end
 
-always_ff @(posedge clk_video) begin
+always @(posedge clk_video) begin
   reset_video_0 <= reset_video;
   reset_video_1 <= reset_video_0;
 end
 
-always_ff @(posedge clk_cpu) begin
+always @(posedge clk_cpu) begin
   reset_cpu_0 <= reset_cpu;
   reset_cpu_1 <= reset_cpu_0;
 end
