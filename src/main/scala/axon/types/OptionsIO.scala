@@ -53,11 +53,15 @@ class OptionsIO private extends Bundle {
     val layer1 = Bool()
     val layer2 = Bool()
   })
+  /** Game index */
+  val gameIndex = Input(UInt(OptionsIO.GAME_INDEX_WIDTH.W))
 }
 
 object OptionsIO {
   /** The width of the screen offset value */
   val SCREEN_OFFSET_WIDTH = 4
+  /** The width of the game index */
+  val GAME_INDEX_WIDTH = 4
 
   def apply() = new OptionsIO
 }

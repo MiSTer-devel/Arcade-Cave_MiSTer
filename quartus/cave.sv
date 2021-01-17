@@ -423,6 +423,7 @@ Main main (
   .io_options_layer_layer0(status[11]),
   .io_options_layer_layer1(status[12]),
   .io_options_layer_layer2(status[13]),
+  .io_options_gameIndex(status[19:16]),
   // Joystick signals
   .io_joystick_player1_up(player_1_up),
   .io_joystick_player1_down(player_1_down),

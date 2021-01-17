@@ -73,8 +73,6 @@ class Cave extends Module {
     val frameReady = Output(Bool())
     /** Asserted when the DMA controller is ready */
     val dmaReady = Input(Bool())
-    /** The index of the current game */
-    val gameIndex = Input(UInt(4.W))
     /** Options port */
     val options = OptionsIO()
     /** Joystick port */

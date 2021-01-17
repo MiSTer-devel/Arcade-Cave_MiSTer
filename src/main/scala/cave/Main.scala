@@ -80,10 +80,13 @@ class Main extends Module {
     val led = mister.LEDIO()
   })
 
-  // Latch game index when data is written to the download port
-  val gameIndexReg = {
+  // Latch the game index when data is written to the download port (i.e. the game index is set by a
+  // MRA file). Otherwise the game index will default to the value set in the options.
+  val gameIndex = {
     val enable = io.download.cs && io.download.wr && io.download.index === DownloadIO.GAME_INDEX.U
-    RegEnable(io.download.dout, 0.U, enable)
+    val reg = RegEnable(io.download.dout(OptionsIO.GAME_INDEX_WIDTH - 1, 0), 0.U, enable)
+    val latched = Util.latchSync(enable)
+    Mux(latched, reg, io.options.gameIndex)
   }
 
   // DDR controller
@@ -137,8 +140,8 @@ class Main extends Module {
   cave.io.vBlank := videoSys.io.video.vBlank
   frameBufferDMA.io.start := cave.io.frameReady
   cave.io.dmaReady := frameBufferDMA.io.ready
-  cave.io.gameIndex := gameIndexReg
   cave.io.options <> io.options
+  cave.io.options.gameIndex := gameIndex // override game index
   cave.io.joystick <> io.joystick
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }
