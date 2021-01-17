@@ -53,6 +53,8 @@ class VideoFIFO extends Module {
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Reset())
+    /** Asserted when the video FIFO is enabled */
+    val enable = Input(Bool())
     /** Video port */
     val video = Input(VideoIO())
     /** Pixel data port */
@@ -105,5 +107,5 @@ class VideoFIFO extends Module {
   }
 
   // Fetch pixel data when the FIFO is almost empty
-  io.pixelData.ready := drainReg && videoFifo.io.wrusedw < FETCH_THRESHOLD.U
+  io.pixelData.ready := io.enable && drainReg && videoFifo.io.wrusedw < FETCH_THRESHOLD.U
 }
