@@ -308,7 +308,7 @@ object GPU {
    * @param pos The pixel position.
    * @return A boolean value indicating whether the pixel is visible.
    */
-  def isVisible(pos: Vec2): Bool =
+  def isVisible(pos: UVec2): Bool =
     Util.between(pos.x, 0 until Config.SCREEN_WIDTH) &&
     Util.between(pos.y, 0 until Config.SCREEN_HEIGHT)
 

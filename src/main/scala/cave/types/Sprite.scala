@@ -53,12 +53,12 @@ class Sprite extends Bundle {
   /** Position */
   val pos = new SVec2(Config.SPRITE_POS_WIDTH)
   /** Tile size */
-  val tileSize = new Vec2(Config.SPRITE_TILE_SIZE_WIDTH)
+  val tileSize = new UVec2(Config.SPRITE_TILE_SIZE_WIDTH)
   /** Zoom */
-  val zoom = new Vec2(Config.SPRITE_ZOOM_WIDTH)
+  val zoom = new UVec2(Config.SPRITE_ZOOM_WIDTH)
 
   /** Sprite size in pixels */
-  def size: Vec2 = tileSize << log2Ceil(Config.LARGE_TILE_SIZE).U
+  def size: UVec2 = tileSize << log2Ceil(Config.LARGE_TILE_SIZE).U
 
   /** Asserted when the sprite is enabled */
   def isEnabled: Bool = tileSize.x =/= 0.U && tileSize.y =/= 0.U
@@ -102,8 +102,8 @@ object Sprite {
     sprite.flipX := words(0)(3)
     sprite.flipY := words(0)(2)
     sprite.pos := SVec2(words(2)(9, 0).asSInt, words(3)(9, 0).asSInt)
-    sprite.tileSize := Vec2(words(4)(15, 8), words(4)(7, 0))
-    sprite.zoom := Vec2.zero
+    sprite.tileSize := UVec2(words(4)(15, 8), words(4)(7, 0))
+    sprite.zoom := UVec2.zero
     sprite
   }
 
@@ -135,8 +135,8 @@ object Sprite {
     sprite.flipX := words(2)(3)
     sprite.flipY := words(2)(2)
     sprite.pos := SVec2(words(0)(9, 0).asSInt, words(1)(9, 0).asSInt)
-    sprite.tileSize := Vec2(words(6)(15, 8), words(6)(7, 0))
-    sprite.zoom := Vec2(words(4)(15, 0), words(5)(15, 0))
+    sprite.tileSize := UVec2(words(6)(15, 8), words(6)(7, 0))
+    sprite.zoom := UVec2(words(4)(15, 0), words(5)(15, 0))
     sprite
   }
 }
