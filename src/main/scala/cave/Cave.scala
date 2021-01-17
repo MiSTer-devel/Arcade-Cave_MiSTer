@@ -209,41 +209,40 @@ class Cave extends Module {
     when(vBlank) { vBlankIRQ := true.B }
 
     // Memory map
-    new MemMap(cpu.io, io.gameIndex === Config.DODONPACHI.U) { map =>
-      map(0x000000 to 0x0fffff).readMem(io.progRom)
-      map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-      map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
-      map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-      map(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
-      // Access to 0x5fxxxx appears in DoDonPachi on attract loop when showing the air stage on frame
-      // 9355 (i.e. after roughly 2 min 30 sec). The game is accessing data relative to a Layer 1
-      // address and underflows. These accesses do nothing, but should be acknowledged in order not to
-      // block the CPU.
-      //
-      // The reason these accesses appear is probably because it made the layer update routine simpler
-      // to write (no need to handle edge cases). These accesses are simply ignored by the hardware.
-      map(0x5f0000 to 0x5fffff).ignore()
-      map(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
-      map(0x700000 to 0x70ffff).readWriteMem(layer2Ram.io.portA)
-      // IRQ cause
-      map(0x800000 to 0x800007).r { (_, offset) =>
-        // FIXME: In MAME, the VBLANK IRQ is cleared at offset 4. This means that the IRQ is cleared
-        // before it gets queried (at offset 0). Needs more investigation.
-        when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
-        val result = WireInit(7.U)
-        result.bitSet(0.U, !vBlankIRQ) // clear bit 0 during a vertical blank
-      }
-      map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
-      map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
-      map(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
-      map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
-      map(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
-      map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-      map(0xd00000).r { (_, _) => "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1) }
-      // FIXME: The EEPROM output data shouldn't need to be inverted.
-      map(0xd00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b11".U ## ~encodePlayer(io.joystick.player2) }
-      map(0xe00000).writeMem(eeprom.io.mem)
+    val map = new MemMap(cpu.io)
+    map(0x000000 to 0x0fffff).readMem(io.progRom)
+    map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
+    map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
+    map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
+    map(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
+    // Access to 0x5fxxxx appears in DoDonPachi on attract loop when showing the air stage on frame
+    // 9355 (i.e. after roughly 2 min 30 sec). The game is accessing data relative to a Layer 1
+    // address and underflows. These accesses do nothing, but should be acknowledged in order not to
+    // block the CPU.
+    //
+    // The reason these accesses appear is probably because it made the layer update routine simpler
+    // to write (no need to handle edge cases). These accesses are simply ignored by the hardware.
+    map(0x5f0000 to 0x5fffff).ignore()
+    map(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
+    map(0x700000 to 0x70ffff).readWriteMem(layer2Ram.io.portA)
+    // IRQ cause
+    map(0x800000 to 0x800007).r { (_, offset) =>
+      // FIXME: In MAME, the VBLANK IRQ is cleared at offset 4. This means that the IRQ is cleared
+      // before it gets queried (at offset 0). Needs more investigation.
+      when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
+      val result = WireInit(7.U)
+      result.bitSet(0.U, !vBlankIRQ) // clear bit 0 during a vertical blank
     }
+    map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+    map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
+    map(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
+    map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
+    map(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
+    map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
+    map(0xd00000).r { (_, _) => "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1) }
+    // FIXME: The EEPROM output data shouldn't need to be inverted.
+    map(0xd00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b11".U ## ~encodePlayer(io.joystick.player2) }
+    map(0xe00000).writeMem(eeprom.io.mem)
 
     // When the game is paused, request frames at the start of every vertical blank
     when(pauseReg) { frameStart := vBlank }
