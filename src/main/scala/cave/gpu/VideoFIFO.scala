@@ -98,7 +98,7 @@ class VideoFIFO extends Module {
   }
 
   // Fetch pixel data when the FIFO is almost empty
-  io.pixelData.ready := drainReg && videoFifo.io.wrusedw < FETCH_THRESHOLD.U
+  io.pixelData.ready := ShiftRegister(drainReg, 2) && videoFifo.io.wrusedw < FETCH_THRESHOLD.U
 
   // Decode a 32-bit pixel (ignoring the first 8 bits)
   io.rgb := {
