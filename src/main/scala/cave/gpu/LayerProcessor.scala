@@ -77,10 +77,10 @@ class LayerProcessor extends Module {
   val stateReg = RegInit(State.idle)
   val layerInfoReg = RegEnable(Layer.decode(io.layerRegs), stateReg === State.regInfo)
   val tileInfoReg = RegEnable(Tile.decode(io.layerRam.dout), updateTileInfo)
-  val tileInfoTakenReg = Reg(Bool())
-  val burstTodoReg = Reg(Bool())
-  val burstReadyReg = Reg(Bool())
-  val lastLayerPriorityReg = Reg(UInt())
+  val tileInfoTakenReg = RegInit(false.B)
+  val burstTodoReg = RegInit(false.B)
+  val burstReadyReg = RegInit(false.B)
+  val lastLayerPriorityReg = RegInit(0.U)
 
   // Tile FIFO
   val tileFifo = Module(new TileFIFO)
