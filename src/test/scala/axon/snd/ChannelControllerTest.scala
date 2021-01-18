@@ -372,8 +372,8 @@ class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Mat
 
       // Valid
       waitForAudioValid(dut)
-      dut.io.audio.bits.left.expect(31.S)
-      dut.io.audio.bits.right.expect(31.S)
+      dut.io.audio.bits.left.expect(30.S)
+      dut.io.audio.bits.right.expect(30.S)
     }
   }
 
