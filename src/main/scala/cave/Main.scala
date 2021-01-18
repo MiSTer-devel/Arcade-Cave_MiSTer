@@ -89,9 +89,6 @@ class Main extends Module {
     Mux(latched, reg, io.options.gameIndex)
   }
 
-  // Enable video system after a download has completed
-  val videoSysEnable = Util.latchSync(Util.falling(io.download.cs))
-
   // DDR controller
   val ddr = Module(new DDR(Config.ddrConfig))
   ddr.io.ddr <> io.ddr
@@ -111,7 +108,6 @@ class Main extends Module {
   val videoSys = Module(new VideoSys)
   videoSys.io.videoClock := io.videoClock
   videoSys.io.videoReset := io.videoReset
-  videoSys.io.enable := videoSysEnable
   videoSys.io.forceBlank := io.cpuReset
   videoSys.io.options <> io.options
   videoSys.io.video <> io.video

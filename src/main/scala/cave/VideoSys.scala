@@ -56,8 +56,6 @@ class VideoSys extends Module {
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
-    /** Asserted when the video system is enabled */
-    val enable = Input(Bool())
     /** Asserted when video output should be disabled */
     val forceBlank = Input(Bool())
     /** Options port */
@@ -86,7 +84,6 @@ class VideoSys extends Module {
   val videoFIFO = Module(new VideoFIFO)
   videoFIFO.io.videoClock := io.videoClock
   videoFIFO.io.videoReset := io.videoReset
-  videoFIFO.io.enable := io.enable
   videoFIFO.io.pixelData <> io.pixelData
   videoFIFO.io.video <> video
 
@@ -137,7 +134,7 @@ class VideoSys extends Module {
     io.rgb := Mux(io.forceBlank, RGB(0.U(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL.W)), videoFIFO.io.rgb)
 
     // MiSTer frame buffer signals
-    io.frameBuffer.enable := io.enable
+    io.frameBuffer.enable := true.B
     io.frameBuffer.hSize := Mux(io.options.rotate, Config.SCREEN_HEIGHT.U, Config.SCREEN_WIDTH.U)
     io.frameBuffer.vSize := Mux(io.options.rotate, Config.SCREEN_WIDTH.U, Config.SCREEN_HEIGHT.U)
     io.frameBuffer.format := mister.FrameBufferIO.FORMAT_32BPP.U
