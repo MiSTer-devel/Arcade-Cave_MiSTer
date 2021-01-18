@@ -91,11 +91,11 @@ class DDR(config: DDRConfig) extends Module {
     (stateReg === State.readWait && io.ddr.valid)
 
   // Burst counter
-  val (burstCounter, burstCounterDone) = Counter.dynamic(burstLength, burstCounterEnable)
+  val (burstCounter, burstCounterWrap) = Counter.dynamic(burstLength, burstCounterEnable)
 
   // FSM
   stateReg := MuxCase(stateReg, Seq(
-    burstCounterDone -> State.idle,
+    burstCounterWrap -> State.idle,
     read -> State.readWait,
     write -> State.writeWait
   ))
@@ -104,12 +104,12 @@ class DDR(config: DDRConfig) extends Module {
   io.mem <> io.ddr
 
   // Outputs
-  io.mem.burstDone := burstCounterDone
-  io.ddr.burstLength := burstLength
-  io.ddr.addr := io.mem.addr +& config.offset.U
+  io.mem.burstDone := burstCounterWrap
   io.ddr.rd := io.mem.rd && stateReg =/= State.readWait
   io.ddr.wr := io.mem.wr || stateReg === State.writeWait
+  io.ddr.addr := io.mem.addr +& config.offset.U
+  io.ddr.burstLength := burstLength
   io.debug.burstCounter := burstCounter
 
-  printf(p"DDR(state: $stateReg, counter: $burstCounter ($burstCounterDone)\n")
+  printf(p"DDR(state: $stateReg, counter: $burstCounter ($burstCounterWrap)\n")
 }

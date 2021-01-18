@@ -66,8 +66,8 @@ class DDRTest extends FlatSpec with ChiselScalatestTester with Matchers with DDR
       dut.clock.step()
 
       // Done
+      dut.io.ddr.rd.expect(false.B)
       dut.io.mem.burstDone.expect(false.B)
-      dut.io.mem.rd.expect(false.B)
     }
   }
 
@@ -96,8 +96,8 @@ class DDRTest extends FlatSpec with ChiselScalatestTester with Matchers with DDR
       dut.clock.step()
 
       // Done
+      dut.io.ddr.rd.expect(false.B)
       dut.io.mem.burstDone.expect(false.B)
-      dut.io.mem.rd.expect(false.B)
     }
   }
 
@@ -150,8 +150,8 @@ class DDRTest extends FlatSpec with ChiselScalatestTester with Matchers with DDR
       dut.io.mem.wr.poke(false.B)
 
       // Done
-      dut.io.mem.burstDone.expect(false.B)
       dut.io.ddr.wr.expect(false.B)
+      dut.io.mem.burstDone.expect(false.B)
     }
   }
 
@@ -176,8 +176,8 @@ class DDRTest extends FlatSpec with ChiselScalatestTester with Matchers with DDR
       dut.clock.step()
 
       // Done
-      dut.io.mem.burstDone.expect(false.B)
       dut.io.ddr.wr.expect(false.B)
+      dut.io.mem.burstDone.expect(false.B)
     }
   }
 
