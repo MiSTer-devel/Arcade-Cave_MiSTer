@@ -225,11 +225,8 @@ class Cave extends Module {
     map(0x700000 to 0x70ffff).readWriteMem(layer2Ram.io.portA)
     // IRQ cause
     map(0x800000 to 0x800007).r { (_, offset) =>
-      // FIXME: In MAME, the VBLANK IRQ is cleared at offset 4. This means that the IRQ is cleared
-      // before it gets queried (at offset 0). Needs more investigation.
       when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
-      val result = WireInit(7.U)
-      result.bitSet(0.U, !vBlankIRQ) // clear bit 0 during a vertical blank
+      Cat(1.U, 1.U, !vBlankIRQ)
     }
     map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
