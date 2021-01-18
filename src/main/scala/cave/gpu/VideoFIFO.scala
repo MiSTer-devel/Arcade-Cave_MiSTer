@@ -84,12 +84,12 @@ class VideoFIFO extends Module {
 
   // Video FIFO
   val videoFifo = Module(new VideoFIFOBlackBox)
-  videoFifo.io.aclr := reset
-  videoFifo.io.data := io.pixelData.bits
+  videoFifo.io.aclr := io.videoReset
   videoFifo.io.rdclk := io.videoClock
   videoFifo.io.rdreq := io.video.enable && fillReg
   videoFifo.io.wrclk := clock
   videoFifo.io.wrreq := io.pixelData.valid
+  videoFifo.io.data := io.pixelData.bits
 
   // Toggle drain/fill registers
   withClockAndReset(io.videoClock, io.videoReset) {
