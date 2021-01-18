@@ -105,8 +105,9 @@ class Cave extends Module {
   // The CPU and registers run in the CPU clock domain
   withClockAndReset(io.cpuClock, io.cpuReset) {
     // Registers
-    val vBlank = Util.rising(ShiftRegister(io.vBlank, 2))
+    val vBlank = ShiftRegister(io.vBlank, 2)
     val vBlankIRQ = RegInit(false.B)
+    val unknownIRQ = RegInit(false.B)
     val iplReg = RegInit(0.U)
     val pauseReg = Util.toggle(Util.rising(io.joystick.player1.pause || io.joystick.player2.pause))
 
@@ -201,12 +202,12 @@ class Cave extends Module {
     intAck := cpu.io.as && cpu.io.fc === 7.U
 
     // Set and clear interrupt priority level register
-    when(vBlankIRQ || soundIRQ) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
+    when(vBlankIRQ || soundIRQ || unknownIRQ) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
 
     // Set vertical blank IRQ
-    when(vBlank) { vBlankIRQ := true.B }
+    when(Util.rising(vBlank)) { vBlankIRQ := true.B }
 
-    // Memory map
+      // Memory map
     val map = new MemMap(cpu.io)
     map(0x000000 to 0x0fffff).readMem(io.progRom)
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
@@ -226,7 +227,8 @@ class Cave extends Module {
     // IRQ cause
     map(0x800000 to 0x800007).r { (_, offset) =>
       when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
-      Cat(1.U, 1.U, !vBlankIRQ)
+      when(offset === 6.U) { unknownIRQ := false.B } // clear unknown IRQ
+      Cat(1.U, !unknownIRQ, !vBlankIRQ)
     }
     map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
