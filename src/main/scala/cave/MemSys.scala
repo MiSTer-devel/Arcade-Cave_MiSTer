@@ -105,7 +105,7 @@ class MemSys extends Module {
     lineWidth = 4,
     depth = 256
   )))
-  progRomCache1.io.offset := Config.DDR_DOWNLOAD_OFFSET.U + io.gameConfig.progRomOffset
+  progRomCache1.io.offset := io.gameConfig.progRomOffset + Config.DDR_DOWNLOAD_OFFSET.U
   val progRomCache2 = Module(new Cache(CacheConfig(
     inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
     inDataWidth = Config.PROG_ROM_DATA_WIDTH,
@@ -127,7 +127,7 @@ class MemSys extends Module {
     depth = 256,
     wrapping = true
   )))
-  soundRomCache1.io.offset := Config.DDR_DOWNLOAD_OFFSET.U + io.gameConfig.soundRomOffset
+  soundRomCache1.io.offset := io.gameConfig.soundRomOffset + Config.DDR_DOWNLOAD_OFFSET.U
   val soundRomCache2 = Module(new Cache(CacheConfig(
     inAddrWidth = Config.SOUND_ROM_ADDR_WIDTH,
     inDataWidth = Config.SOUND_ROM_DATA_WIDTH,
@@ -147,7 +147,7 @@ class MemSys extends Module {
   ddrArbiter.io.in(3).asBurstReadMemIO <> io.videoDMA
   ddrArbiter.io.in(4).asBurstWriteMemIO <> io.frameBufferDMA
   ddrArbiter.io.in(5).asBurstReadMemIO <> io.tileRom
-  ddrArbiter.io.in(5).addr := io.tileRom.addr + Config.DDR_DOWNLOAD_OFFSET.U // TODO: use an address transform
+  ddrArbiter.io.in(5).addr := io.tileRom.addr + Config.DDR_DOWNLOAD_OFFSET.U // override tile ROM address
   ddrArbiter.io.out <> io.ddr
 
   // SDRAM arbiter
