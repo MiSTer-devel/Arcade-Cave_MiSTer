@@ -107,7 +107,7 @@ class DDR(config: DDRConfig) extends Module {
   io.mem.burstDone := burstCounterWrap
   io.ddr.rd := io.mem.rd && stateReg =/= State.readWait
   io.ddr.wr := io.mem.wr || stateReg === State.writeWait
-  io.ddr.addr := io.mem.addr +& config.offset.U
+  io.ddr.addr := io.mem.addr + config.offset.U
   io.ddr.burstLength := burstLength
   io.debug.burstCounter := burstCounter
 
