@@ -64,6 +64,8 @@ object GameConfig {
   val DODONPACHI = 0
   /** Dangun Feveron */
   val DANGUN_FEVERON = 1
+  /** ESP Ra.De. */
+  val ESPRADE = 2
 
   def apply() = new GameConfig
 
@@ -74,7 +76,8 @@ object GameConfig {
    */
   def apply(index: UInt): GameConfig = {
     MuxLookup(index, dodonpachiConfig, Seq(
-      DANGUN_FEVERON.U -> dangunFeveronConfig
+      DANGUN_FEVERON.U -> dangunFeveronConfig,
+      ESPRADE.U -> espradeConfig
     ))
   }
 
@@ -104,6 +107,21 @@ object GameConfig {
     wire.soundRomOffset := 0x00d00000.U
     wire.numColors := 16.U
     wire.numLayers := 2.U
+    wire.spriteZoom := true.B
+    wire
+  }
+
+  private def espradeConfig = {
+    val wire = Wire(new GameConfig)
+    wire.index := ESPRADE.U
+    wire.progRomOffset := 0x00000000.U
+    wire.spriteRomOffset := 0x00100000.U
+    wire.layer0RomOffset := 0x01100000.U
+    wire.layer1RomOffset := 0x01900000.U
+    wire.layer2RomOffset := 0x02100000.U
+    wire.soundRomOffset := 0x02500000.U
+    wire.numColors := 256.U
+    wire.numLayers := 3.U
     wire.spriteZoom := true.B
     wire
   }
