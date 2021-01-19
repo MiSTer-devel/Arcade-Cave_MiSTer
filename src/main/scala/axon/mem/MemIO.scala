@@ -54,6 +54,11 @@ class ReadMemIO protected(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidt
   val dout = Input(UInt(dataWidth.W))
 
   override def cloneType: this.type = new ReadMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
+
+  def default() = {
+    rd := false.B
+    addr := DontCare
+  }
 }
 
 object ReadMemIO {
@@ -147,6 +152,13 @@ class WriteMemIO protected(addrWidth: Int, dataWidth: Int) extends MemIO(addrWid
     mem.din := this.din
     mem
   }
+
+  def default() = {
+    wr := false.B
+    addr := DontCare
+    mask := DontCare
+    din := DontCare
+  }
 }
 
 object WriteMemIO {
@@ -215,6 +227,14 @@ class ReadWriteMemIO protected(addrWidth: Int, dataWidth: Int) extends MemIO(add
     mask := mem.mask
     din := mem.din
     mem
+  }
+
+  def default() = {
+    rd := false.B
+    wr := false.B
+    addr := DontCare
+    mask := DontCare
+    din := DontCare
   }
 }
 

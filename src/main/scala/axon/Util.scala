@@ -32,7 +32,6 @@
 
 package axon
 
-import axon.types.URange
 import axon.util.Counter
 import chisel3._
 import chisel3.util._
@@ -46,13 +45,6 @@ object Util {
    * @param r The range.
    */
   def between(n: UInt, r: Range): Bool = between(n, r.start.U, r.last.U)
-  /**
-   * Checks whether an unsigned value is in the given range.
-   *
-   * @param n The value to check.
-   * @param r The range.
-   */
-  def between(n: UInt, r: URange): Bool = between(n, r.from, r.to)
 
   /**
    * Checks whether a signed value is in the given range.

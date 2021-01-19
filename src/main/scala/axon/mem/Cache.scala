@@ -44,7 +44,6 @@ import chisel3.util._
  * @param outDataWidth The width of the output data bus.
  * @param depth        The number of entries in the cache.
  * @param lineWidth    The number of words in a cache line.
- * @param offset       The offset of the output address.
  * @param wrapping     A boolean indicating whether burst wrapping should be enabled for the cache.
  *                     When a wrapping burst reaches a burst boundary, the address wraps back to the
  *                     previous burst boundary.
@@ -55,7 +54,6 @@ case class CacheConfig(inAddrWidth: Int,
                        outDataWidth: Int,
                        lineWidth: Int,
                        depth: Int,
-                       offset: Int = 0,
                        wrapping: Boolean = false) {
   /** The width of a cache address index */
   val indexWidth = log2Ceil(depth)
@@ -193,6 +191,8 @@ class Cache(config: CacheConfig) extends Module {
     val in = Flipped(AsyncReadWriteMemIO(config.inAddrWidth, config.inDataWidth))
     /** Output port */
     val out = BurstReadWriteMemIO(config.outAddrWidth, config.outDataWidth)
+    /** Output address offset */
+    val offset = Input(UInt(config.outAddrWidth.W))
     /** Debug port */
     val debug = Output(new Bundle {
       val idle = Bool()
@@ -278,7 +278,7 @@ class Cache(config: CacheConfig) extends Module {
     }
     val evictAddr = CacheAddress(cacheEntryReg.tag, requestReg.addr.index, 0.U)(config)
     val addr = Mux(stateReg === State.fill, fillAddr, evictAddr).asUInt
-    (addr << log2Ceil(config.outBytes)).asUInt +& config.offset.U
+    (addr << log2Ceil(config.outBytes)).asUInt +& io.offset
   }
 
   // Write cache entry

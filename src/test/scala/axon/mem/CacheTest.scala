@@ -43,8 +43,7 @@ trait CacheMemTestHelpers {
     outAddrWidth = 16,
     outDataWidth = 16,
     lineWidth = 2,
-    depth = 8,
-    offset = 0x1000
+    depth = 8
   )
 
   protected def mkCacheMem(config: CacheConfig = cacheConfig) = new Cache(config)
@@ -311,6 +310,7 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
       waitForIdle(dut)
 
       // Read
+      dut.io.offset.poke(0x1000.U)
       dut.io.in.rd.poke(true.B)
       dut.io.in.addr.poke(3.U)
       dut.clock.step()
@@ -343,6 +343,7 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
       waitForIdle(dut)
 
       // Read
+      dut.io.offset.poke(0x1000.U)
       dut.io.in.rd.poke(true.B)
       dut.io.in.addr.poke(3.U)
       dut.clock.step()
@@ -377,6 +378,7 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
       writeCache(dut, 2, 0xab)
 
       // Read
+      dut.io.offset.poke(0x1000.U)
       dut.io.in.rd.poke(true.B)
       dut.io.in.addr.poke(0x23.U)
       dut.clock.step()
@@ -463,6 +465,7 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
       waitForIdle(dut)
 
       // Write
+      dut.io.offset.poke(0x1000.U)
       dut.io.in.wr.poke(true.B)
       dut.io.in.addr.poke(1.U)
       dut.io.in.din.poke(0xab.U)
@@ -502,6 +505,7 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
       writeCache(dut, 2, 0xab)
 
       // Write
+      dut.io.offset.poke(0x1000.U)
       dut.io.in.wr.poke(true.B)
       dut.io.in.addr.poke(0x20.U)
       dut.io.in.din.poke(0xcd.U)

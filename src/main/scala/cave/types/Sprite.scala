@@ -68,12 +68,13 @@ object Sprite {
   /**
    * Decodes a sprite from the given data.
    *
-   * @param data The sprite data.
+   * @param data   The sprite data.
+   * @param zoomed A boolean value indicating whether the sprite is zoomed.
    * @return The decoded sprite.
    */
-  def decode(data: Bits, zoomed: Boolean = false): Sprite = {
+  def decode(data: Bits, zoomed: Bool): Sprite = {
     val words = Util.decode(data, 8, 16)
-    if (zoomed) decodeZoomedSprite(words) else decodeSprite(words)
+    Mux(zoomed, decodeZoomedSprite(words), decodeSprite(words))
   }
 
   /**
