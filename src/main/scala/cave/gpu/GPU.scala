@@ -249,10 +249,10 @@ class GPU extends Module {
     (stateReg === State.layer0 || stateReg === State.layer1 || stateReg === State.layer2) -> layerProcessor.io.tileRom
   ))
   io.tileRom.addr := MuxLookup(stateReg, DontCare, Seq(
-    State.sprites -> (spriteProcessor.io.tileRom.addr + io.gameConfig.tileRomOffset + Config.SPRITE_ROM_OFFSET.U),
-    State.layer0 -> (layerProcessor.io.tileRom.addr + io.gameConfig.tileRomOffset + Config.LAYER_0_ROM_OFFSET.U),
-    State.layer1 -> (layerProcessor.io.tileRom.addr + io.gameConfig.tileRomOffset + Config.LAYER_1_ROM_OFFSET.U),
-    State.layer2 -> (layerProcessor.io.tileRom.addr + io.gameConfig.tileRomOffset + Config.LAYER_2_ROM_OFFSET.U)
+    State.sprites -> (spriteProcessor.io.tileRom.addr + io.gameConfig.spriteRomOffset),
+    State.layer0 -> (layerProcessor.io.tileRom.addr + io.gameConfig.layer0RomOffset),
+    State.layer1 -> (layerProcessor.io.tileRom.addr + io.gameConfig.layer1RomOffset),
+    State.layer2 -> (layerProcessor.io.tileRom.addr + io.gameConfig.layer2RomOffset)
   ))
 }
 

@@ -2,8 +2,8 @@
   <name>Dangun Feveron</name>
   <mameversion>0226</mameversion>
   <setname>dfeveron</setname>
-  <mratimestamp>20200617</mratimestamp>
-  <year>1990</year>
+  <mratimestamp>20210119</mratimestamp>
+  <year>1998</year>
   <manufacturer>CAVE</manufacturer>
   <category>Shooter</category>
   <rbf>cave</rbf>
@@ -16,7 +16,7 @@
   </rom>
 
   <!-- ROM data -->
-  <rom index="0" zip="dfeveron.zip" md5="none">
+  <rom index="0" zip="dfeveron.zip" md5="3be07bd9ba00d68ba34f5925517e0968">
     <!-- main CPU -->
     <interleave output="16">
       <part name="cv01-u34.bin" crc="be87f19d" map="10" />

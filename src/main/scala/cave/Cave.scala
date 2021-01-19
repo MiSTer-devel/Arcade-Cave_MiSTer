@@ -142,28 +142,28 @@ class Cave extends Module {
 
     // Layer 0 RAM
     val layer0Ram = Module(new TrueDualPortRam(
-      addrWidthA = Config.LAYER_0_RAM_ADDR_WIDTH,
-      dataWidthA = Config.LAYER_0_RAM_DATA_WIDTH,
-      addrWidthB = Config.LAYER_0_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LAYER_0_RAM_GPU_DATA_WIDTH
+      addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
+      dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
+      addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
+      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH
     ))
     layer0Ram.io.clockB := clock
 
     // Layer 1 RAM
     val layer1Ram = Module(new TrueDualPortRam(
-      addrWidthA = Config.LAYER_1_RAM_ADDR_WIDTH,
-      dataWidthA = Config.LAYER_1_RAM_DATA_WIDTH,
-      addrWidthB = Config.LAYER_1_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LAYER_1_RAM_GPU_DATA_WIDTH
+      addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
+      dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
+      addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
+      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH
     ))
     layer1Ram.io.clockB := clock
 
     // Layer 2 RAM
     val layer2Ram = Module(new TrueDualPortRam(
-      addrWidthA = Config.LAYER_2_RAM_ADDR_WIDTH,
-      dataWidthA = Config.LAYER_2_RAM_DATA_WIDTH,
-      addrWidthB = Config.LAYER_2_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LAYER_2_RAM_GPU_DATA_WIDTH
+      addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
+      dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
+      addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
+      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH
     ))
     layer2Ram.io.clockB := clock
 
@@ -228,7 +228,7 @@ class Cave extends Module {
     map(0x800000 to 0x800007).r { (_, offset) =>
       when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
       when(offset === 6.U) { unknownIRQ := false.B } // clear unknown IRQ
-      Cat(1.U, !unknownIRQ, !vBlankIRQ)
+      Cat(0.U, !unknownIRQ, !vBlankIRQ)
     }
     map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
@@ -268,6 +268,17 @@ class Cave extends Module {
       // FIXME: The EEPROM output data shouldn't need to be inverted.
       map(0xb00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b11".U ## ~encodePlayer(io.joystick.player2) }
       map(0xc00000).writeMem(eeprom.io.mem)
+    }
+
+    // ESP Ra.De.
+    when(io.gameConfig.index === GameConfig.ESPRADE.U) {
+      map(0x700000 to 0x707fff).readWriteMem(layer2Ram.io.portA)
+      map(0x800008 to 0x800fff).ignore()
+      map(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
+      map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
+      map(0xd00000).r { (_, _) => "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1) }
+      map(0xd00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b11".U ## ~encodePlayer(io.joystick.player2) }
+      map(0xe00000).writeMem(eeprom.io.mem)
     }
 
     // When the game is paused, request frames at the start of every vertical blank
