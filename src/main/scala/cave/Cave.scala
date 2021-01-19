@@ -236,7 +236,7 @@ class Cave extends Module {
     map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
 
     // DoDonPachi
-    when(io.gameConfig.index === GameConfig.DODONPACHI.U) {
+    when(io.gameConfig.index === GameConfig.DDONPACH.U) {
       // Access to 0x5fxxxx appears in DoDonPachi on attract loop when showing the air stage on frame
       // 9355 (i.e. after roughly 2 min 30 sec). The game is accessing data relative to a Layer 1
       // address and underflows. These accesses do nothing, but should be acknowledged in order not to
@@ -254,7 +254,7 @@ class Cave extends Module {
     }
 
     // Dangun Feveron
-    when(io.gameConfig.index === GameConfig.DANGUN_FEVERON.U) {
+    when(io.gameConfig.index === GameConfig.DFEVERON.U) {
       // Secondary RAM
       val secondaryRam = Module(new SinglePortRam(
         addrWidth = Config.SECONDARY_RAM_ADDR_WIDTH,

@@ -61,9 +61,9 @@ class GameConfig extends Bundle {
 
 object GameConfig {
   /** Dangun Feveron */
-  val DANGUN_FEVERON = 0
+  val DFEVERON = 0
   /** DoDonPachi */
-  val DODONPACHI = 1
+  val DDONPACH = 1
   /** DonPachi */
   val DONPACHI = 2
   /** ESP Ra.De. */
@@ -77,15 +77,15 @@ object GameConfig {
    * @param index The game index.
    */
   def apply(index: UInt): GameConfig = {
-    MuxLookup(index, dodonpachiConfig, Seq(
-      DANGUN_FEVERON.U -> dangunFeveronConfig,
-      ESPRADE.U -> espradeConfig
+    MuxLookup(index, ddonpach, Seq(
+      DFEVERON.U -> dfeveron,
+      ESPRADE.U -> esprade
     ))
   }
 
-  private def dangunFeveronConfig = {
+  private def dfeveron = {
     val wire = Wire(new GameConfig)
-    wire.index := DANGUN_FEVERON.U
+    wire.index := DFEVERON.U
     wire.progRomOffset := 0x00000000.U
     wire.spriteRomOffset := 0x00100000.U
     wire.layer0RomOffset := 0x00900000.U
@@ -98,9 +98,9 @@ object GameConfig {
     wire
   }
 
-  private def dodonpachiConfig = {
+  private def ddonpach = {
     val wire = Wire(new GameConfig)
-    wire.index := DODONPACHI.U
+    wire.index := DDONPACH.U
     wire.progRomOffset := 0x00000000.U
     wire.spriteRomOffset := 0x00100000.U
     wire.layer0RomOffset := 0x00900000.U
@@ -113,7 +113,7 @@ object GameConfig {
     wire
   }
 
-  private def espradeConfig = {
+  private def esprade = {
     val wire = Wire(new GameConfig)
     wire.index := ESPRADE.U
     wire.progRomOffset := 0x00000000.U
