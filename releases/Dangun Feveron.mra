@@ -12,7 +12,7 @@
 
   <!-- select game -->
   <rom index="1">
-    <part>1</part>
+    <part>0</part>
   </rom>
 
   <!-- ROM data -->

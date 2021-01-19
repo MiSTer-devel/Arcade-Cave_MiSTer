@@ -60,12 +60,14 @@ class GameConfig extends Bundle {
 }
 
 object GameConfig {
-  /** DoDonPachi */
-  val DODONPACHI = 0
   /** Dangun Feveron */
-  val DANGUN_FEVERON = 1
+  val DANGUN_FEVERON = 0
+  /** DoDonPachi */
+  val DODONPACHI = 1
+  /** DonPachi */
+  val DONPACHI = 2
   /** ESP Ra.De. */
-  val ESPRADE = 2
+  val ESPRADE = 3
 
   def apply() = new GameConfig
 
@@ -81,21 +83,6 @@ object GameConfig {
     ))
   }
 
-  private def dodonpachiConfig = {
-    val wire = Wire(new GameConfig)
-    wire.index := DODONPACHI.U
-    wire.progRomOffset := 0x00000000.U
-    wire.spriteRomOffset := 0x00100000.U
-    wire.layer0RomOffset := 0x00900000.U
-    wire.layer1RomOffset := 0x00b00000.U
-    wire.layer2RomOffset := 0x00d00000.U
-    wire.soundRomOffset := 0x00f00000.U
-    wire.numColors := 256.U
-    wire.numLayers := 3.U
-    wire.spriteZoom := false.B
-    wire
-  }
-
   private def dangunFeveronConfig = {
     val wire = Wire(new GameConfig)
     wire.index := DANGUN_FEVERON.U
@@ -108,6 +95,21 @@ object GameConfig {
     wire.numColors := 16.U
     wire.numLayers := 2.U
     wire.spriteZoom := true.B
+    wire
+  }
+
+  private def dodonpachiConfig = {
+    val wire = Wire(new GameConfig)
+    wire.index := DODONPACHI.U
+    wire.progRomOffset := 0x00000000.U
+    wire.spriteRomOffset := 0x00100000.U
+    wire.layer0RomOffset := 0x00900000.U
+    wire.layer1RomOffset := 0x00b00000.U
+    wire.layer2RomOffset := 0x00d00000.U
+    wire.soundRomOffset := 0x00f00000.U
+    wire.numColors := 256.U
+    wire.numLayers := 3.U
+    wire.spriteZoom := false.B
     wire
   }
 

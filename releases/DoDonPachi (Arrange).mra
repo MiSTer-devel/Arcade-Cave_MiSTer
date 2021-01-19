@@ -2,10 +2,10 @@
   <name>DoDonPachi (Arrange)</name>
   <mameversion>0226</mameversion>
   <setname>ddonpach</setname>
-  <mratimestamp>20201213012519</mratimestamp>
+  <mratimestamp>20210102</mratimestamp>
   <year>2012</year>
   <manufacturer>hack (trap15)</manufacturer>
-  <category>Army / Airforce</category>
+  <categoryShooter</category>
   <rbf>cave</rbf>
   <mameinfo parent="ddonpach" cpp="cave" input="cave" />
   <display type="raster" rotate="270" />
@@ -14,7 +14,7 @@
 
   <!-- select game -->
   <rom index="1">
-    <part>0</part>
+    <part>1</part>
   </rom>
 
   <rom index="0" zip="ddonpach.zip|ddonpacha.zip" md5="none">
