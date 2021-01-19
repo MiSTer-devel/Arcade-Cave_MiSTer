@@ -278,7 +278,7 @@ class Cache(config: CacheConfig) extends Module {
     }
     val evictAddr = CacheAddress(cacheEntryReg.tag, requestReg.addr.index, 0.U)(config)
     val addr = Mux(stateReg === State.fill, fillAddr, evictAddr).asUInt
-    (addr << log2Ceil(config.outBytes)).asUInt +& io.offset
+    (addr << log2Ceil(config.outBytes)).asUInt + io.offset
   }
 
   // Write cache entry
