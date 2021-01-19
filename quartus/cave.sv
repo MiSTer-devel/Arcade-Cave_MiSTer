@@ -245,7 +245,7 @@ wire [21:0] gamma_bus;
 wire        direct_video;
 wire [15:0] sdram_sz;
 
-wire [24:0] ioctl_addr;
+wire [26:0] ioctl_addr;
 wire [15:0] ioctl_dout;
 wire        ioctl_wr;
 wire        ioctl_wait;
