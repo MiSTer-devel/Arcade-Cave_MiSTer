@@ -38,8 +38,8 @@ import chisel3._
 
 /** Represents the analog video signals. */
 class VideoIO private extends Bundle {
-  /** Asserted when the beam is in the display region. */
-  val enable = Output(Bool())
+  /** Asserted when the pixel clock is enabled */
+  val pixelClockEnable = Output(Bool())
   /** Beam position */
   val pos = Output(new UVec2(9))
   /** Horizontal sync */
@@ -50,6 +50,8 @@ class VideoIO private extends Bundle {
   val hBlank = Output(Bool())
   /** Vertical blank */
   val vBlank = Output(Bool())
+  /** Asserted when the beam is in the display region */
+  val enable = Output(Bool())
 }
 
 object VideoIO {
@@ -59,7 +61,8 @@ object VideoIO {
 /**
  * Represents the video timing configuration.
  *
- * @param clockFreq   The pixel clock frequency (Hz).
+ * @param clockFreq   The video clock frequency (Hz).
+ * @param clockDiv    The video clock divider.
  * @param hFreq       The horizontal frequency (Hz).
  * @param hDisplay    The horizontal display width.
  * @param hFrontPorch The width of the horizontal front porch region.
@@ -72,6 +75,7 @@ object VideoIO {
  * @param vInit       The initial vertical position (for testing).
  */
 case class VideoTimingConfig(clockFreq: Double,
+                             clockDiv: Int,
                              hFreq: Double,
                              hDisplay: Int,
                              hFrontPorch: Int,
@@ -83,7 +87,7 @@ case class VideoTimingConfig(clockFreq: Double,
                              vRetrace: Int,
                              vInit: Int = 0) {
   /** Total width in pixels */
-  val width = math.ceil(clockFreq / hFreq).toInt
+  val width = math.ceil(clockFreq / clockDiv / hFreq).toInt
   /** Total height in pixels */
   val height = math.ceil(hFreq / vFreq).toInt
 }
@@ -108,8 +112,9 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
   })
 
   // Counters
-  val (x, xWrap) = Counter.static(config.width, init = config.hInit)
-  val (y, yWrap) = Counter.static(config.height, enable = xWrap, init = config.vInit)
+  val (_, clockDivWrap) = Counter.static(config.clockDiv)
+  val (x, xWrap) = Counter.static(config.width, enable = clockDivWrap, init = config.hInit)
+  val (y, yWrap) = Counter.static(config.height, enable = clockDivWrap && xWrap, init = config.vInit)
 
   // Horizontal regions
   val hBeginDisplay = (config.width.S - config.hDisplay.S - config.hFrontPorch.S - config.hRetrace.S + io.offset.x).asUInt
@@ -135,6 +140,7 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
   val vBlank = y < vBeginDisplay || y >= vEndDisplay
 
   // Outputs
+  io.video.pixelClockEnable := clockDivWrap
   io.video.pos := pos
   io.video.hSync := hSync
   io.video.vSync := vSync

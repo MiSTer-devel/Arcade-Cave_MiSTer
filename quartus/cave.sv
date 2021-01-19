@@ -224,7 +224,7 @@ always @(posedge clk_sys) begin
   reset_sys_1 <= reset_sys_0;
 end
 
-always @(posedge ce_pix) begin
+always @(posedge clk_video) begin
   reset_video_0 <= reset_video;
   reset_video_1 <= reset_video_0;
 end
@@ -300,14 +300,6 @@ assign CLK_VIDEO = clk_video;
 assign VGA_F1 = 0;
 assign VGA_SL = sl[1:0];
 assign VGA_SCALER = 0;
-
-reg ce_pix;
-always @(posedge clk_video) begin
-  reg [1:0] div;
-
-  div <= div + 1'd1;
-  ce_pix <= !div;
-end
 
 video_mixer #(.LINE_LENGTH(320), .HALF_DEPTH(0), .GAMMA(1)) video_mixer (
   .*,
@@ -434,7 +426,7 @@ Main main (
   .clock(clk_sys),
   .reset(reset_sys_1),
   // Video clock domain
-  .io_videoClock(ce_pix),
+  .io_videoClock(clk_video),
   .io_videoReset(reset_video_1),
   // CPU clock domain
   .io_cpuClock(clk_cpu),
@@ -471,6 +463,7 @@ Main main (
   .io_joystick_service1(service_1),
   .io_joystick_service2(service_2),
   // Video signals
+  .io_video_pixelClockEnable(ce_pix),
   .io_video_hSync(hsync),
   .io_video_vSync(vsync),
   .io_video_hBlank(hblank),
