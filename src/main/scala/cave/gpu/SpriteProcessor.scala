@@ -46,6 +46,8 @@ import chisel3.util._
  */
 class SpriteProcessor(numSprites: Int = 1024) extends Module {
   val io = IO(new Bundle {
+    /** Game config port */
+    val gameConfig = Input(GameConfig())
     /** Start flag */
     val start = Input(Bool())
     /** Done flag */
@@ -70,7 +72,7 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   }
 
   // Decode sprite info
-  val spriteInfo = Sprite.decode(io.spriteRam.dout)
+  val spriteInfo = Sprite.decode(io.spriteRam.dout, io.gameConfig.spriteZoom)
 
   // Wires
   val effectiveRead = Wire(Bool())
@@ -81,10 +83,10 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
 
   // Registers
   val stateReg = RegInit(State.idle)
-  val spriteInfoTaken = Reg(Bool())
-  val burstTodo = Reg(Bool())
-  val burstReady = Reg(Bool())
   val spriteInfoReg = RegEnable(spriteInfo, updateSpriteInfo)
+  val spriteInfoTaken = RegInit(false.B)
+  val burstTodo = RegInit(false.B)
+  val burstReady = RegInit(false.B)
   val burstCounterMax = RegEnable(spriteInfo.tileSize.x * spriteInfo.tileSize.y, updateSpriteInfo)
 
   // Tile FIFO
@@ -110,6 +112,7 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
 
   // Sprite blitter
   val spriteBlitter = Module(new SpriteBlitter)
+  spriteBlitter.io.gameConfig <> io.gameConfig
   spriteBlitter.io.spriteInfo.bits := spriteInfoReg
   pipelineReady := spriteBlitter.io.spriteInfo.ready
   spriteBlitter.io.spriteInfo.valid := updateSpriteInfo
@@ -204,6 +207,6 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   io.spriteRam.rd := true.B
   io.spriteRam.addr := spriteRamAddr
   io.tileRom.rd := spriteBurstRead
-  io.tileRom.addr := tileRomAddr + Config.TILE_ROM_OFFSET.U
+  io.tileRom.addr := tileRomAddr
   io.tileRom.burstLength := 16.U
 }

@@ -42,7 +42,11 @@ import cave.types._
 import chisel3._
 import chisel3.util._
 
-/** Represents the CAVE arcade hardware. */
+/**
+ * Represents the first-generation CAVE arcade hardware.
+ *
+ * This module contains the CPU, GPU, sound processor, RAM, ROM, and memory maps.
+ */
 class Cave extends Module {
   /**
    * Encodes the player IO into a bitvector value.
@@ -69,6 +73,8 @@ class Cave extends Module {
     val frameReady = Output(Bool())
     /** Asserted when the DMA controller is ready */
     val dmaReady = Input(Bool())
+    /** Game config port */
+    val gameConfig = Input(GameConfig())
     /** Options port */
     val options = OptionsIO()
     /** Joystick port */
@@ -94,6 +100,7 @@ class Cave extends Module {
   gpu.io.frameReq := Util.rising(ShiftRegister(frameStart, 2))
   io.frameReady := gpu.io.frameReady
   gpu.io.dmaReady := io.dmaReady
+  gpu.io.gameConfig <> io.gameConfig
   gpu.io.options <> io.options
   io.tileRom <> gpu.io.tileRom
   io.frameBufferDMA <> gpu.io.frameBufferDMA
@@ -101,8 +108,9 @@ class Cave extends Module {
   // The CPU and registers run in the CPU clock domain
   withClockAndReset(io.cpuClock, io.cpuReset) {
     // Registers
-    val vBlank = Util.rising(ShiftRegister(io.vBlank, 2))
+    val vBlank = ShiftRegister(io.vBlank, 2)
     val vBlankIRQ = RegInit(false.B)
+    val unknownIRQ = RegInit(false.B)
     val iplReg = RegInit(0.U)
     val pauseReg = Util.toggle(Util.rising(io.joystick.player1.pause || io.joystick.player2.pause))
 
@@ -134,28 +142,28 @@ class Cave extends Module {
 
     // Layer 0 RAM
     val layer0Ram = Module(new TrueDualPortRam(
-      addrWidthA = Config.LAYER_0_RAM_ADDR_WIDTH,
-      dataWidthA = Config.LAYER_0_RAM_DATA_WIDTH,
-      addrWidthB = Config.LAYER_0_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LAYER_0_RAM_GPU_DATA_WIDTH
+      addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
+      dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
+      addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
+      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH
     ))
     layer0Ram.io.clockB := clock
 
     // Layer 1 RAM
     val layer1Ram = Module(new TrueDualPortRam(
-      addrWidthA = Config.LAYER_1_RAM_ADDR_WIDTH,
-      dataWidthA = Config.LAYER_1_RAM_DATA_WIDTH,
-      addrWidthB = Config.LAYER_1_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LAYER_1_RAM_GPU_DATA_WIDTH
+      addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
+      dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
+      addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
+      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH
     ))
     layer1Ram.io.clockB := clock
 
     // Layer 2 RAM
     val layer2Ram = Module(new TrueDualPortRam(
-      addrWidthA = Config.LAYER_2_RAM_ADDR_WIDTH,
-      dataWidthA = Config.LAYER_2_RAM_DATA_WIDTH,
-      addrWidthB = Config.LAYER_2_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LAYER_2_RAM_GPU_DATA_WIDTH
+      addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
+      dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
+      addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
+      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH
     ))
     layer2Ram.io.clockB := clock
 
@@ -197,46 +205,81 @@ class Cave extends Module {
     intAck := cpu.io.as && cpu.io.fc === 7.U
 
     // Set and clear interrupt priority level register
-    when(vBlankIRQ || soundIRQ) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
+    when(vBlankIRQ || soundIRQ || unknownIRQ) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
 
     // Set vertical blank IRQ
-    when(vBlank) { vBlankIRQ := true.B }
+    when(Util.rising(vBlank)) { vBlankIRQ := true.B }
+
+    // Set memory interface defaults
+    layer2Regs.io.mem.default()
+    layer2Ram.io.portA.default()
+    paletteRam.io.portA.default()
+    eeprom.io.mem.default()
 
     // Memory map
-    val memMap = new MemMap(cpu.io)
-    memMap(0x000000 to 0x0fffff).readMem(io.progRom)
-    memMap(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-    memMap(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
-    memMap(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-    memMap(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
-    // Access to 0x5fxxxx appears in DoDonPachi on attract loop when showing the air stage on frame
-    // 9355 (i.e. after roughly 2 min 30 sec). The game is accessing data relative to a Layer 1
-    // address and underflows. These accesses do nothing, but should be acknowledged in order not to
-    // block the CPU.
-    //
-    // The reason these accesses appear is probably because it made the layer update routine simpler
-    // to write (no need to handle edge cases). These accesses are simply ignored by the hardware.
-    memMap(0x5f0000 to 0x5fffff).ignore()
-    memMap(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
-    memMap(0x700000 to 0x70ffff).readWriteMem(layer2Ram.io.portA)
+    val map = new MemMap(cpu.io)
+    map(0x000000 to 0x0fffff).readMem(io.progRom)
+    map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
+    map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
+    map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
+    map(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
+    map(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
     // IRQ cause
-    memMap(0x800000 to 0x800007).r { (_, offset) =>
-      // FIXME: In MAME, the VBLANK IRQ is cleared at offset 4. This means that the IRQ is cleared
-      // before it gets queried (at offset 0). Needs more investigation.
+    map(0x800000 to 0x800007).r { (_, offset) =>
       when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
-      val result = WireInit(7.U)
-      result.bitSet(0.U, !vBlankIRQ) // clear bit 0 during a vertical blank
+      when(offset === 6.U) { unknownIRQ := false.B } // clear unknown IRQ
+      Cat(0.U, !unknownIRQ, !vBlankIRQ)
     }
-    memMap(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
-    memMap(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
-    memMap(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
-    memMap(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
-    memMap(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
-    memMap(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-    memMap(0xd00000).r { (_, _) => "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1) }
-    // FIXME: The EEPROM output data shouldn't need to be inverted.
-    memMap(0xd00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b11".U ## ~encodePlayer(io.joystick.player2) }
-    memMap(0xe00000).writeMem(eeprom.io.mem)
+    map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+    map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
+    map(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
+    map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
+
+    // DoDonPachi
+    when(io.gameConfig.index === GameConfig.DDONPACH.U) {
+      // Access to 0x5fxxxx appears in DoDonPachi on attract loop when showing the air stage on frame
+      // 9355 (i.e. after roughly 2 min 30 sec). The game is accessing data relative to a Layer 1
+      // address and underflows. These accesses do nothing, but should be acknowledged in order not to
+      // block the CPU.
+      //
+      // The reason these accesses appear is probably because it made the layer update routine simpler
+      // to write (no need to handle edge cases). These accesses are simply ignored by the hardware.
+      map(0x5f0000 to 0x5fffff).ignore()
+      map(0x700000 to 0x70ffff).readWriteMem(layer2Ram.io.portA)
+      map(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
+      map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
+      map(0xd00000).r { (_, _) => "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1) }
+      map(0xd00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b11".U ## ~encodePlayer(io.joystick.player2) }
+      map(0xe00000).writeMem(eeprom.io.mem)
+    }
+
+    // Dangun Feveron
+    when(io.gameConfig.index === GameConfig.DFEVERON.U) {
+      // Secondary RAM
+      val secondaryRam = Module(new SinglePortRam(
+        addrWidth = Config.SECONDARY_RAM_ADDR_WIDTH,
+        dataWidth = Config.SECONDARY_RAM_DATA_WIDTH
+      ))
+      map(0x110000 to 0x2fffff).ignore()
+      map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
+      map(0x710000 to 0x710bff).ignore()
+      map(0x710c00 to 0x710fff).readWriteMem(secondaryRam.io)
+      map(0xb00000).r { (_, _) => "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1) }
+      // FIXME: The EEPROM output data shouldn't need to be inverted.
+      map(0xb00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b11".U ## ~encodePlayer(io.joystick.player2) }
+      map(0xc00000).writeMem(eeprom.io.mem)
+    }
+
+    // ESP Ra.De.
+    when(io.gameConfig.index === GameConfig.ESPRADE.U) {
+      map(0x700000 to 0x707fff).readWriteMem(layer2Ram.io.portA)
+      map(0x800008 to 0x800fff).ignore()
+      map(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
+      map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
+      map(0xd00000).r { (_, _) => "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1) }
+      map(0xd00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b11".U ## ~encodePlayer(io.joystick.player2) }
+      map(0xe00000).writeMem(eeprom.io.mem)
+    }
 
     // When the game is paused, request frames at the start of every vertical blank
     when(pauseReg) { frameStart := vBlank }

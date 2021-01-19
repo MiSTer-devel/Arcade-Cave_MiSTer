@@ -44,6 +44,8 @@ import chisel3.util._
 /** The layer pipeline renders a tilemap layer. */
 class LayerPipeline extends Module {
   val io = IO(new Bundle {
+    /** Game config port */
+    val gameConfig = Input(GameConfig())
     /** Layer index */
     val layerIndex = Input(UInt(2.W))
     /** Previous layer priority value */
@@ -104,13 +106,13 @@ class LayerPipeline extends Module {
   val tileDone = Mux(layerInfoReg.smallTile, smallTileDone, largeTileDone)
 
   // Pixel position
-  val pixelPos = Vec2(x, y)
+  val pixelPos = UVec2(x, y)
 
   // Tile position
   val tilePos = {
     val x = Mux(layerInfoReg.smallTile, col ## 0.U(3.W), col ## miniTileX ## 0.U(3.W))
     val y = Mux(layerInfoReg.smallTile, row ## 0.U(3.W), row ## miniTileY ## 0.U(3.W))
-    Vec2(x, y)
+    UVec2(x, y)
   }
 
   // Tile offset
@@ -118,7 +120,7 @@ class LayerPipeline extends Module {
     val offset = layerInfoReg.scroll + Layer.magicOffset(io.layerIndex)
     val x = Mux(layerInfoReg.smallTile, offset.x(2, 0), offset.x(3, 0))
     val y = Mux(layerInfoReg.smallTile, offset.y(2, 0), offset.y(3, 0))
-    Vec2(x, y)
+    UVec2(x, y)
   }
 
   // Pixel position pipeline
@@ -188,7 +190,7 @@ class LayerPipeline extends Module {
   io.tileInfo.ready := updateTileInfo
   io.pixelData.ready := readFifo
   io.paletteRam.rd := true.B
-  io.paletteRam.addr := paletteEntryReg.asUInt
+  io.paletteRam.addr := paletteEntryReg.toAddr(io.gameConfig.numColors)
   io.priority.read.rd := true.B
   io.priority.read.addr := priorityReadAddr
   io.priority.write.wr := frameBufferWrite
@@ -204,7 +206,7 @@ class LayerPipeline extends Module {
 
 object LayerPipeline {
   /**
-   * Decodes a small tile from the given pixel data.
+   * Decodes a 8x8 tile from the given pixel data.
    *
    * Small tile pixels are encoded as 8-bit words.
    *
@@ -218,7 +220,7 @@ object LayerPipeline {
       .toSeq
 
   /**
-   * Decodes a small tile from the given pixel data.
+   * Decodes a 16x16 tile from the given pixel data.
    *
    * Large tile pixels are encoded as 4-bit words.
    *

@@ -101,17 +101,8 @@ object Config {
   val SPRITE_TILE_SIZE_WIDTH = 8
   val SPRITE_ZOOM_WIDTH = 16
 
-  val PROG_ROM_OFFSET = 0x00000000
-  val TILE_ROM_OFFSET = 0x00100000
-  val SOUND_ROM_OFFSET = 0x00f00000
-  val FRAME_BUFFER_OFFSET = 0x2400000
+  val FRAME_BUFFER_OFFSET = 0x02400000
   val DDR_DOWNLOAD_OFFSET = 0x30000000
-
-  // Layer offsets
-  val SPRITE_ROM_OFFSET = 0x0000000
-  val LAYER_0_ROM_OFFSET = 0x0800000
-  val LAYER_1_ROM_OFFSET = 0x0a00000
-  val LAYER_2_ROM_OFFSET = 0x0c00000
 
   val PROG_ROM_ADDR_WIDTH = 20 // 1MB
   val PROG_ROM_DATA_WIDTH = 16
@@ -125,28 +116,18 @@ object Config {
   val MAIN_RAM_ADDR_WIDTH = 15
   val MAIN_RAM_DATA_WIDTH = 16
 
+  val SECONDARY_RAM_ADDR_WIDTH = 10
+  val SECONDARY_RAM_DATA_WIDTH = 16
+
   val SPRITE_RAM_ADDR_WIDTH = 15
   val SPRITE_RAM_DATA_WIDTH = 16
   val SPRITE_RAM_GPU_ADDR_WIDTH = 12
   val SPRITE_RAM_GPU_DATA_WIDTH = 128
 
+  val LAYER_RAM_ADDR_WIDTH = 14
+  val LAYER_RAM_DATA_WIDTH = 16
   val LAYER_RAM_GPU_ADDR_WIDTH = 13
   val LAYER_RAM_GPU_DATA_WIDTH = 32
-
-  val LAYER_0_RAM_ADDR_WIDTH = 14
-  val LAYER_0_RAM_DATA_WIDTH = 16
-  val LAYER_0_RAM_GPU_ADDR_WIDTH = 13
-  val LAYER_0_RAM_GPU_DATA_WIDTH = 32
-
-  val LAYER_1_RAM_ADDR_WIDTH = 14
-  val LAYER_1_RAM_DATA_WIDTH = 16
-  val LAYER_1_RAM_GPU_ADDR_WIDTH = 13
-  val LAYER_1_RAM_GPU_DATA_WIDTH = 32
-
-  val LAYER_2_RAM_ADDR_WIDTH = 13
-  val LAYER_2_RAM_DATA_WIDTH = 16
-  val LAYER_2_RAM_GPU_ADDR_WIDTH = 12
-  val LAYER_2_RAM_GPU_DATA_WIDTH = 32
 
   val PALETTE_RAM_ADDR_WIDTH = 15
   val PALETTE_RAM_DATA_WIDTH = 16
@@ -155,14 +136,6 @@ object Config {
 
   /** The number of bits per color channel */
   val BITS_PER_CHANNEL = 5
-  /** The number of palettes */
-  val NUM_PALETTES = 128
-  /** The number of colors per palette */
-  val NUM_COLORS = 256
-  /** The width of a palette entry palette index */
-  val PALETTE_ENTRY_PALETTE_WIDTH = log2Ceil(NUM_PALETTES)
-  /** The width of a palette entry color index */
-  val PALETTE_ENTRY_COLOR_WIDTH = log2Ceil(NUM_COLORS)
 
   val LAYER_REGS_COUNT = 3
   val LAYER_REGS_GPU_DATA_WIDTH = 48

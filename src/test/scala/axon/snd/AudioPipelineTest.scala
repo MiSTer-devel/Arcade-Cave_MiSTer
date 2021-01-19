@@ -210,8 +210,8 @@ class AudioPipelineTest extends FlatSpec with ChiselScalatestTester with Matcher
 
       // Valid
       waitForDone(dut)
-      dut.io.out.bits.audio.left.expect(-4.S)
-      dut.io.out.bits.audio.right.expect(-4.S)
+      dut.io.out.bits.audio.left.expect(-2.S)
+      dut.io.out.bits.audio.right.expect(-2.S)
     }
   }
 
@@ -219,18 +219,18 @@ class AudioPipelineTest extends FlatSpec with ChiselScalatestTester with Matcher
     test(mkChannelPipeline) { dut =>
       startPipeline(dut, samples = (16, 0), level = 255)
       waitForDone(dut)
-      dut.io.out.bits.audio.left.expect(16.S)
-      dut.io.out.bits.audio.right.expect(16.S)
-
-      startPipeline(dut, samples = (16, 0), level = 128)
-      waitForDone(dut)
       dut.io.out.bits.audio.left.expect(8.S)
       dut.io.out.bits.audio.right.expect(8.S)
 
-      startPipeline(dut, samples = (16, 0), level = 64)
+      startPipeline(dut, samples = (16, 0), level = 128)
       waitForDone(dut)
       dut.io.out.bits.audio.left.expect(4.S)
       dut.io.out.bits.audio.right.expect(4.S)
+
+      startPipeline(dut, samples = (16, 0), level = 64)
+      waitForDone(dut)
+      dut.io.out.bits.audio.left.expect(2.S)
+      dut.io.out.bits.audio.right.expect(2.S)
 
       startPipeline(dut, samples = (16, 0), level = 0)
       waitForDone(dut)
@@ -243,43 +243,43 @@ class AudioPipelineTest extends FlatSpec with ChiselScalatestTester with Matcher
     test(mkChannelPipeline) { dut =>
       startPipeline(dut, samples = (16, 0), pan = 0)
       waitForDone(dut)
-      dut.io.out.bits.audio.left.expect(16.S)
+      dut.io.out.bits.audio.left.expect(8.S)
       dut.io.out.bits.audio.right.expect(0.S)
 
       startPipeline(dut, samples = (16, 0), pan = 1)
       waitForDone(dut)
-      dut.io.out.bits.audio.left.expect(16.S)
-      dut.io.out.bits.audio.right.expect(2.S)
+      dut.io.out.bits.audio.left.expect(8.S)
+      dut.io.out.bits.audio.right.expect(1.S)
 
       startPipeline(dut, samples = (16, 0), pan = 6)
       waitForDone(dut)
-      dut.io.out.bits.audio.left.expect(16.S)
-      dut.io.out.bits.audio.right.expect(12.S)
+      dut.io.out.bits.audio.left.expect(8.S)
+      dut.io.out.bits.audio.right.expect(6.S)
 
       startPipeline(dut, samples = (16, 0), pan = 7)
       waitForDone(dut)
-      dut.io.out.bits.audio.left.expect(16.S)
-      dut.io.out.bits.audio.right.expect(16.S)
+      dut.io.out.bits.audio.left.expect(8.S)
+      dut.io.out.bits.audio.right.expect(8.S)
 
       startPipeline(dut, samples = (16, 0), pan = 8)
       waitForDone(dut)
-      dut.io.out.bits.audio.left.expect(16.S)
-      dut.io.out.bits.audio.right.expect(16.S)
+      dut.io.out.bits.audio.left.expect(8.S)
+      dut.io.out.bits.audio.right.expect(8.S)
 
       startPipeline(dut, samples = (16, 0), pan = 9)
       waitForDone(dut)
-      dut.io.out.bits.audio.left.expect(12.S)
-      dut.io.out.bits.audio.right.expect(16.S)
+      dut.io.out.bits.audio.left.expect(6.S)
+      dut.io.out.bits.audio.right.expect(8.S)
 
       startPipeline(dut, samples = (16, 0), pan = 14)
       waitForDone(dut)
-      dut.io.out.bits.audio.left.expect(2.S)
-      dut.io.out.bits.audio.right.expect(16.S)
+      dut.io.out.bits.audio.left.expect(1.S)
+      dut.io.out.bits.audio.right.expect(8.S)
 
       startPipeline(dut, samples = (16, 0), pan = 15)
       waitForDone(dut)
       dut.io.out.bits.audio.left.expect(0.S)
-      dut.io.out.bits.audio.right.expect(16.S)
+      dut.io.out.bits.audio.right.expect(8.S)
     }
   }
 }

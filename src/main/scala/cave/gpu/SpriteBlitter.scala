@@ -44,6 +44,8 @@ import chisel3.util._
 /** The sprite blitter copies a sprite to the frame buffer. */
 class SpriteBlitter extends Module {
   val io = IO(new Bundle {
+    /** Game config port */
+    val gameConfig = Input(GameConfig())
     /** Sprite info port */
     val spriteInfo = DeqIO(new Sprite)
     /** Pixel data port */
@@ -134,7 +136,7 @@ class SpriteBlitter extends Module {
   io.spriteInfo.ready := updateSpriteInfo
   io.pixelData.ready := readFifo
   io.paletteRam.rd := true.B
-  io.paletteRam.addr := paletteEntryReg.asUInt
+  io.paletteRam.addr := paletteEntryReg.toAddr(io.gameConfig.numColors)
   io.priority.read.rd := false.B
   io.priority.read.addr := 0.U
   io.priority.write.wr := frameBufferWrite
@@ -150,7 +152,7 @@ class SpriteBlitter extends Module {
 
 object SpriteBlitter {
   /**
-   * Decodes a tile from the given pixel data.
+   * Decodes a 8x8 tile from the given pixel data.
    *
    * Sprite tile pixels are encoded as 4-bit words.
    *

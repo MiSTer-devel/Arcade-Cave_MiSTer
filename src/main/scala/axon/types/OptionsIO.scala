@@ -36,6 +36,8 @@ import chisel3._
 
 /** An interface that contains the user options. */
 class OptionsIO private extends Bundle {
+  /** Asserted when SDRAM is enabled */
+  val sdram = Input(Bool())
   /** CRT offset */
   val offset = Input(new SVec2(OptionsIO.SCREEN_OFFSET_WIDTH))
   /** Asserted when screen rotation is enabled */
@@ -51,11 +53,15 @@ class OptionsIO private extends Bundle {
     val layer1 = Bool()
     val layer2 = Bool()
   })
+  /** Game index */
+  val gameIndex = Input(UInt(OptionsIO.GAME_INDEX_WIDTH.W))
 }
 
 object OptionsIO {
   /** The width of the screen offset value */
   val SCREEN_OFFSET_WIDTH = 4
+  /** The width of the game index */
+  val GAME_INDEX_WIDTH = 4
 
   def apply() = new OptionsIO
 }

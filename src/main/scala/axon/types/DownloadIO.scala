@@ -51,12 +51,17 @@ class DownloadIO private extends Bundle {
   /** Data bus */
   val dout = Input(Bits(DownloadIO.DATA_WIDTH.W))
 
-  /** Converts the download interface to an asynchronous read-write memory interface */
-  def asAsyncReadWriteMemIO: AsyncReadWriteMemIO = {
+  /**
+   * Converts the download interface to an asynchronous read-write memory interface.
+   *
+   * @param index The download index to connect the memory interface.
+   */
+  def asAsyncReadWriteMemIO(index: Int): AsyncReadWriteMemIO = {
+    val enable = cs && wr && this.index === index.U
     val wire = Wire(AsyncReadWriteMemIO(DownloadIO.ADDR_WIDTH, DownloadIO.DATA_WIDTH))
     wire.rd := false.B
-    wire.wr := cs && wr
-    waitReq := wr && wire.waitReq
+    wire.wr := enable
+    waitReq := enable && wire.waitReq
     wire.addr := addr
     wire.mask := Fill(wire.maskWidth, 1.U)
     wire.din := dout
@@ -71,6 +76,12 @@ object DownloadIO {
   val ADDR_WIDTH = 27
   /** The width of the data bus */
   val DATA_WIDTH = 16
+  /** ROM data index */
+  val ROM_INDEX = 0
+  /** Game index */
+  val GAME_INDEX = 1
+  /** DIP switch index */
+  val DIP_INDEX = 254
 
   def apply() = new DownloadIO
 }

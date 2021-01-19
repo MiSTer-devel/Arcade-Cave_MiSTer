@@ -137,7 +137,7 @@ assign BUTTONS = 0;
 assign VIDEO_ARX = status[1] ? 8'd16 : status[2] ? 8'd3 : 8'd4;
 assign VIDEO_ARY = status[1] ? 8'd9  : status[2] ? 8'd4 : 8'd3;
 
-// Required for Blister
+// Required for BlisSTer
 assign USER_OUT = '1;
 
 `include "build_id.v"
@@ -160,6 +160,7 @@ localparam CONF_STR = {
   "P2OB,Layer 0,On,Off;",
   "P2OC,Layer 1,On,Off;",
   "P2OD,Layer 2,On,Off;",
+  "P2OGJ,PCB,DoDonPachi,Dangun Feveron,ESP Ra.De.;",
   "-;",
   "R0,Reset;",
   "J1,B0,B1,B2,Start,Coin,Pause;",
@@ -167,24 +168,71 @@ localparam CONF_STR = {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// CLOCKS
+// CLOCK AND RESET
 ////////////////////////////////////////////////////////////////////////////////
 
-wire clk_sys, clk_sdram, clk_video, clk_cpu;
 wire locked;
+wire clk_sys, clk_sdram, clk_video, clk_cpu;
+reg  reset_pll = 0;
+wire reset_sys = RESET | ~locked;
+reg  reset_sys_0 = 1;
+reg  reset_sys_1 = 1;
+wire reset_video = RESET | ~locked;
+reg  reset_video_0 = 1;
+reg  reset_video_1 = 1;
+wire reset_cpu = RESET | status[0] | buttons[1] | ~locked;
+reg  reset_cpu_0 = 1;
+reg  reset_cpu_1 = 1;
+
+// Resets the PLL if it loses lock
+always @(posedge clk_sys or posedge RESET) begin
+  reg old_locked;
+  reg [7:0] rst_cnt;
+
+  if (RESET) begin
+    reset_pll <= 0;
+    rst_cnt <= 8'h00;
+  end else begin
+    old_locked <= locked;
+    if (old_locked && !locked) begin
+      rst_cnt <= 8'hff; // keep reset high for 256 cycles
+      reset_pll <= 1;
+    end else begin
+      if (rst_cnt != 8'h00)
+        rst_cnt <= rst_cnt - 8'h1;
+      else
+        reset_pll <= 0;
+    end
+  end
+end
 
 pll pll (
   .refclk(CLK_50M),
-  .rst(RESET),
+  .rst(reset_pll),
+  .locked(locked),
   .outclk_0(clk_sys),
   .outclk_1(clk_sdram),
   .outclk_2(clk_video),
-  .outclk_3(clk_cpu),
-  .locked(locked)
+  .outclk_3(clk_cpu)
 );
 
 assign DDRAM_CLK = clk_sys;
 assign SDRAM_CLK = clk_sdram;
+
+always @(posedge clk_sys) begin
+  reset_sys_0 <= reset_sys;
+  reset_sys_1 <= reset_sys_0;
+end
+
+always @(posedge ce_pix) begin
+  reset_video_0 <= reset_video;
+  reset_video_1 <= reset_video_0;
+end
+
+always @(posedge clk_cpu) begin
+  reset_cpu_0 <= reset_cpu;
+  reset_cpu_1 <= reset_cpu_0;
+end
 
 ////////////////////////////////////////////////////////////////////////////////
 // HPS IO
@@ -197,7 +245,7 @@ wire [21:0] gamma_bus;
 wire        direct_video;
 wire [15:0] sdram_sz;
 
-wire [24:0] ioctl_addr;
+wire [26:0] ioctl_addr;
 wire [15:0] ioctl_dout;
 wire        ioctl_wr;
 wire        ioctl_wait;
@@ -207,7 +255,7 @@ wire  [7:0] ioctl_index;
 wire [10:0] ps2_key;
 wire [10:0] joystick_0, joystick_1;
 
-wire sdram_available = |sdram_sz[14:0];
+wire sdram_available = |sdram_sz[1:0];
 
 hps_io #(.STRLEN($size(CONF_STR)>>3), .WIDE(1)) hps_io (
   .clk_sys(clk_sys),
@@ -255,35 +303,34 @@ assign VGA_SCALER = 0;
 
 reg ce_pix;
 always @(posedge clk_video) begin
-        reg [1:0] div;
+  reg [1:0] div;
 
-        div <= div + 1'd1;
-        ce_pix <= !div;
+  div <= div + 1'd1;
+  ce_pix <= !div;
 end
 
-video_mixer #(.LINE_LENGTH(320), .HALF_DEPTH(0), .GAMMA(1)) video_mixer
-(
-    .*,
+video_mixer #(.LINE_LENGTH(320), .HALF_DEPTH(0), .GAMMA(1)) video_mixer (
+  .*,
 
-    .clk_vid(clk_video),
-    .ce_pix(ce_pix),
-    .ce_pix_out(CE_PIXEL),
+  .clk_vid(clk_video),
+  .ce_pix(ce_pix),
+  .ce_pix_out(CE_PIXEL),
 
-    .scanlines(0),
-    .scandoubler(scandoubler),
-    .hq2x(scale==1),
+  .scanlines(0),
+  .scandoubler(scandoubler),
+  .hq2x(scale==1),
 
-    .mono(0),
+  .mono(0),
 
-    .R(r),
-    .G(g),
-    .B(b),
+  .R(r),
+  .G(g),
+  .B(b),
 
-    // Positive pulses.
-    .HSync(hsync),
-    .VSync(vsync),
-    .HBlank(hblank),
-    .VBlank(vblank)
+  // Positive pulses.
+  .HSync(hsync),
+  .VSync(vsync),
+  .HBlank(hblank),
+  .VBlank(vblank)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -373,40 +420,6 @@ wire service_2         = key_0;
 // CAVE
 ////////////////////////////////////////////////////////////////////////////////
 
-wire reset_sys = RESET | ~locked;
-wire reset_video = RESET | ~locked;
-wire reset_cpu = RESET | status[0] | buttons[1] | ~locked;
-
-logic reset_sys_0;
-logic reset_sys_1;
-logic reset_sys_2;
-
-always_ff @(posedge clk_sys) begin
-  reset_sys_0 <= reset_sys;
-  reset_sys_1 <= reset_sys_0;
-  reset_sys_2 <= reset_sys_1;
-end
-
-logic reset_video_0;
-logic reset_video_1;
-logic reset_video_2;
-
-always_ff @(posedge ce_pix) begin
-  reset_video_0 <= reset_video;
-  reset_video_1 <= reset_video_0;
-  reset_video_2 <= reset_video_1;
-end
-
-logic reset_cpu_0;
-logic reset_cpu_1;
-logic reset_cpu_2;
-
-always_ff @(posedge clk_cpu) begin
-  reset_cpu_0 <= reset_cpu;
-  reset_cpu_1 <= reset_cpu_0;
-  reset_cpu_2 <= reset_cpu_1;
-end
-
 wire [31:0] ddr_addr;
 wire        sdram_oe;
 wire [15:0] sdram_din;
@@ -419,14 +432,15 @@ assign sdram_dout = SDRAM_DQ;
 Main main (
   // Fast clock domain
   .clock(clk_sys),
-  .reset(reset_sys_2),
+  .reset(reset_sys_1),
   // Video clock domain
   .io_videoClock(ce_pix),
-  .io_videoReset(reset_video_2),
+  .io_videoReset(reset_video_1),
   // CPU clock domain
   .io_cpuClock(clk_cpu),
-  .io_cpuReset(reset_cpu_2),
+  .io_cpuReset(reset_cpu_1),
   // Options
+  .io_options_sdram(sdram_available & ~status[8]),
   .io_options_offset_x(status[27:24]),
   .io_options_offset_y(status[31:28]),
   .io_options_rotate(status[2]),
@@ -436,6 +450,7 @@ Main main (
   .io_options_layer_layer0(status[11]),
   .io_options_layer_layer1(status[12]),
   .io_options_layer_layer2(status[13]),
+  .io_options_gameIndex(status[19:16]),
   // Joystick signals
   .io_joystick_player1_up(player_1_up),
   .io_joystick_player1_down(player_1_down),
@@ -482,7 +497,6 @@ Main main (
   .io_ddr_valid(DDRAM_DOUT_READY),
   .io_ddr_burstLength(DDRAM_BURSTCNT),
   // SDRAM
-  .io_sdramAvailable(sdram_available & ~status[8]),
   .io_sdram_cke(SDRAM_CKE),
   .io_sdram_cs_n(SDRAM_nCS),
   .io_sdram_ras_n(SDRAM_nRAS),
@@ -497,6 +511,7 @@ Main main (
   .io_download_cs(ioctl_download),
   .io_download_wr(ioctl_wr),
   .io_download_waitReq(ioctl_wait),
+  .io_download_index(ioctl_index),
   .io_download_addr(ioctl_addr),
   .io_download_dout(ioctl_dout),
   // RGB output

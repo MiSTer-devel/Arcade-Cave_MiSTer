@@ -38,6 +38,7 @@ import axon.mem._
 import axon.snd._
 import axon.types._
 import cave.dma._
+import cave.types._
 import chisel3._
 import chisel3.stage._
 
@@ -73,13 +74,28 @@ class Main extends Module {
     val ddr = DDRIO(Config.ddrConfig)
     /** SDRAM port */
     val sdram = SDRAMIO(Config.sdramConfig)
-    /** Asserted when SDRAM is available */
-    val sdramAvailable = Input(Bool())
     /** Options port */
     val options = OptionsIO()
     /** LED port */
     val led = mister.LEDIO()
   })
+
+  // The game configuration register is latched when it is written to the download port (i.e. the game index is
+  // set by a MRA file).
+  val gameConfigReg = {
+    val reg = Reg(GameConfig())
+    val latched = RegInit(false.B)
+    when(io.download.cs && io.download.wr && io.download.index === DownloadIO.GAME_INDEX.U) {
+      reg := GameConfig(io.download.dout(OptionsIO.GAME_INDEX_WIDTH - 1, 0))
+      latched := true.B
+    }
+    // Default to the game configuration set in the options
+    when(Util.falling(io.download.cs) && !latched) {
+      reg := GameConfig(io.options.gameIndex)
+      latched := true.B
+    }
+    reg
+  }
 
   // DDR controller
   val ddr = Module(new DDR(Config.ddrConfig))
@@ -91,10 +107,11 @@ class Main extends Module {
 
   // Memory subsystem
   val mem = Module(new MemSys)
+  mem.io.gameConfig <> gameConfigReg
+  mem.io.options <> io.options
   mem.io.download <> io.download
   mem.io.ddr <> ddr.io.mem
   mem.io.sdram <> sdram.io.mem
-  mem.io.sdramAvailable := io.sdramAvailable
 
   // Video subsystem
   val videoSys = Module(new VideoSys)
@@ -129,9 +146,10 @@ class Main extends Module {
   val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
-  cave.io.vBlank <> videoSys.io.video.vBlank
+  cave.io.vBlank := videoSys.io.video.vBlank
   frameBufferDMA.io.start := cave.io.frameReady
   cave.io.dmaReady := frameBufferDMA.io.ready
+  cave.io.gameConfig <> gameConfigReg
   cave.io.options <> io.options
   cave.io.joystick <> io.joystick
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }
@@ -142,7 +160,7 @@ class Main extends Module {
 
   // Set LED outputs
   io.led.power := false.B
-  io.led.disk := false.B
+  io.led.disk := io.download.waitReq
   io.led.user := io.download.cs
 }
 

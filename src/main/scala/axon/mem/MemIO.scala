@@ -54,6 +54,11 @@ class ReadMemIO protected(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidt
   val dout = Input(UInt(dataWidth.W))
 
   override def cloneType: this.type = new ReadMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
+
+  def default() = {
+    rd := false.B
+    addr := DontCare
+  }
 }
 
 object ReadMemIO {
@@ -73,6 +78,27 @@ object ReadMemIO {
     mem.addr := Mux(select, a.addr, b.addr)
     a.dout := mem.dout
     b.dout := mem.dout
+    mem
+  }
+
+  /**
+   * Multiplexes requests from read-only memory interfaces to a single read-only memory
+   * interface.
+   *
+   * @param key     The key to used to select the interface.
+   * @param default The default interface.
+   * @param outs    A list of key-interface pairs.
+   */
+  def muxLookup[K <: UInt](key: K, default: ReadMemIO, mapping: Seq[(K, ReadMemIO)]): ReadMemIO = {
+    val mem = Wire(chiselTypeOf(mapping.head._2))
+    val rdMap = mapping.map(a => a._1 -> a._2.rd)
+    val addrMap = mapping.map(a => a._1 -> a._2.addr)
+    mem.rd := MuxLookup(key, default.rd, rdMap)
+    mem.addr := MuxLookup(key, default.addr, addrMap)
+    default.dout := mem.dout
+    mapping.foreach { case (_, out) =>
+      out.dout := mem.dout
+    }
     mem
   }
 
@@ -125,6 +151,13 @@ class WriteMemIO protected(addrWidth: Int, dataWidth: Int) extends MemIO(addrWid
     mem.mask := this.mask
     mem.din := this.din
     mem
+  }
+
+  def default() = {
+    wr := false.B
+    addr := DontCare
+    mask := DontCare
+    din := DontCare
   }
 }
 
@@ -194,6 +227,14 @@ class ReadWriteMemIO protected(addrWidth: Int, dataWidth: Int) extends MemIO(add
     mask := mem.mask
     din := mem.din
     mem
+  }
+
+  def default() = {
+    rd := false.B
+    wr := false.B
+    addr := DontCare
+    mask := DontCare
+    din := DontCare
   }
 }
 

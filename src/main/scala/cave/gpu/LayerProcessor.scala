@@ -42,6 +42,8 @@ import chisel3.util._
 /** The layer processor is responsible for rendering the tilemap layers. */
 class LayerProcessor extends Module {
   val io = IO(new Bundle {
+    /** Game config port */
+    val gameConfig = Input(GameConfig())
     /** Start flag */
     val start = Input(Bool())
     /** Done flag */
@@ -77,10 +79,10 @@ class LayerProcessor extends Module {
   val stateReg = RegInit(State.idle)
   val layerInfoReg = RegEnable(Layer.decode(io.layerRegs), stateReg === State.regInfo)
   val tileInfoReg = RegEnable(Tile.decode(io.layerRam.dout), updateTileInfo)
-  val tileInfoTakenReg = Reg(Bool())
-  val burstTodoReg = Reg(Bool())
-  val burstReadyReg = Reg(Bool())
-  val lastLayerPriorityReg = Reg(UInt())
+  val tileInfoTakenReg = RegInit(false.B)
+  val burstTodoReg = RegInit(false.B)
+  val burstReadyReg = RegInit(false.B)
+  val lastLayerPriorityReg = RegInit(0.U)
 
   // Tile FIFO
   val tileFifo = Module(new TileFIFO)
@@ -97,6 +99,7 @@ class LayerProcessor extends Module {
 
   // Layer pipeline
   val layerPipeline = withReset(stateReg === State.idle) { Module(new LayerPipeline) }
+  layerPipeline.io.gameConfig <> io.gameConfig
   layerPipeline.io.layerIndex := io.layerIndex
   layerPipeline.io.lastLayerPriority := lastLayerPriorityReg
   layerPipeline.io.layerInfo.bits := layerInfoReg
@@ -223,7 +226,7 @@ class LayerProcessor extends Module {
   io.layerRam.rd := true.B
   io.layerRam.addr := layerRamAddr
   io.tileRom.rd := tileBurstRead
-  io.tileRom.addr := tileRomAddr + Config.TILE_ROM_OFFSET.U
+  io.tileRom.addr := tileRomAddr
   io.tileRom.burstLength := tileRomBurstLength
   io.done := RegNext(tileWrap) // TODO: Does this signal need to be delayed?
 }

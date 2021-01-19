@@ -87,10 +87,12 @@
             <set>
               <option value="read should hold the burst counter when the wait signal is asserted" />
               <option value="read should latch the burst length" />
-              <option value="read should read from DDR memory" />
+              <option value="read should read from DDR memory (burst=1)" />
+              <option value="read should read from DDR memory (burst=2)" />
               <option value="write should hold the burst counter when the wait signal is asserted" />
               <option value="write should latch the burst length" />
-              <option value="write should write to DDR memory" />
+              <option value="write should write to DDR memory (burst=1)" />
+              <option value="write should write to DDR memory (burst=2)" />
             </set>
           </value>
         </entry>

@@ -44,14 +44,16 @@ import chisel3.util._
 /** Graphics processing unit (GPU). */
 class GPU extends Module {
   val io = IO(new Bundle {
+    /** Game config port */
+    val gameConfig = Input(GameConfig())
+    /** Options port */
+    val options = OptionsIO()
     /** Asserted when a frame is requested */
     val frameReq = Input(Bool())
     /** Asserted when a frame is ready */
     val frameReady = Output(Bool())
     /** Asserted when the DMA controller is ready */
     val dmaReady = Input(Bool())
-    /** Options port */
-    val options = OptionsIO()
     /** Video registers port */
     val videoRegs = Input(Bits(Config.VIDEO_REGS_GPU_DATA_WIDTH.W))
     /** Layer 0 registers port */
@@ -78,14 +80,22 @@ class GPU extends Module {
 
   // States
   object State {
-    val idle :: clear :: sprites :: layer0 :: layer1 :: layer2 :: dmaStart :: dmaWait :: Nil = Enum(8)
+    val idle :: background :: clear :: sprites :: layer0 :: layer1 :: layer2 :: dmaStart :: dmaWait :: Nil = Enum(9)
   }
 
   // Wires
   val nextState = Wire(UInt())
 
+  // The fill color used to clear the frame buffer must be read from palette RAM. The read request
+  // is defined using a memory interface, so that it can be multiplexed with the other palette RAM
+  // requests.
+  val backgroundColorMem = Wire(ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH))
+  backgroundColorMem.rd := true.B
+  backgroundColorMem.addr := GPU.backgroundPen.toAddr(io.gameConfig.numColors)
+
   // Registers
   val stateReg = RegNext(nextState, State.idle)
+  val backgroundColorReg = RegEnable(backgroundColorMem.dout, 0.U, stateReg === State.background)
 
   // Counters
   val (x, xWrap) = Counter.static(Config.SCREEN_WIDTH, enable = stateReg === State.clear)
@@ -93,6 +103,7 @@ class GPU extends Module {
 
   // Layer processor
   val layerProcessor = Module(new LayerProcessor)
+  layerProcessor.io.gameConfig <> io.gameConfig
   layerProcessor.io.start := RegNext(
     (stateReg =/= State.layer0 && nextState === State.layer0) ||
     (stateReg =/= State.layer1 && nextState === State.layer1) ||
@@ -104,12 +115,10 @@ class GPU extends Module {
 
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
+  spriteProcessor.io.gameConfig <> io.gameConfig
   spriteProcessor.io.start := RegNext(stateReg =/= State.sprites && nextState === State.sprites)
   spriteProcessor.io.spriteBank := io.videoRegs(64)
   spriteProcessor.io.spriteRam <> io.spriteRam
-
-  // The clear memory interface is used for writing blank pixels
-  val clearMem = GPU.clearMem(x ## y)
 
   // The priority RAM is used by the layers for buffering pixel priority data during rendering
   val priorityRam = Module(new DualPortRam(
@@ -120,7 +129,7 @@ class GPU extends Module {
     maskEnable = false
   ))
   priorityRam.io.portA <> WriteMemIO.mux(stateReg, Seq(
-    State.clear -> clearMem,
+    State.clear -> GPU.clearMem(x ## y),
     State.sprites -> spriteProcessor.io.priority.write,
     State.layer0 -> layerProcessor.io.priority.write,
     State.layer1 -> layerProcessor.io.priority.write,
@@ -143,7 +152,7 @@ class GPU extends Module {
     maskEnable = false
   ))
   frameBuffer.io.portA <> RegNext(WriteMemIO.mux(stateReg, Seq(
-    State.clear -> clearMem,
+    State.clear -> GPU.clearMem(x ## y, backgroundColorReg),
     State.sprites -> spriteProcessor.io.frameBuffer,
     State.layer0 -> layerProcessor.io.frameBuffer,
     State.layer1 -> layerProcessor.io.frameBuffer,
@@ -163,8 +172,11 @@ class GPU extends Module {
   switch(stateReg) {
     // Wait for a new frame
     is(State.idle) {
-      when(io.frameReq) { nextState := State.clear }
+      when(io.frameReq) { nextState := State.background }
     }
+
+    // Latch the background color
+    is(State.background) { nextState := State.clear }
 
     // Clears the frame buffer
     is(State.clear) {
@@ -173,7 +185,9 @@ class GPU extends Module {
 
     // Renders the sprites
     is(State.sprites) {
-      when(spriteProcessor.io.done) { nextState := State.layer0 }
+      when(spriteProcessor.io.done) {
+        nextState := Mux(io.gameConfig.numLayers === 0.U, State.dmaStart, State.layer0)
+      }
       when(io.options.layer.sprites) {
         priorityRam.io.portA.wr := false.B
         frameBuffer.io.portA.wr := false.B
@@ -182,7 +196,9 @@ class GPU extends Module {
 
     // Renders layer 0
     is(State.layer0) {
-      when(layerProcessor.io.done) { nextState := State.layer1 }
+      when(layerProcessor.io.done) {
+        nextState := Mux(io.gameConfig.numLayers === 1.U, State.dmaStart, State.layer1)
+      }
       when(io.options.layer.layer0) {
         priorityRam.io.portA.wr := false.B
         frameBuffer.io.portA.wr := false.B
@@ -191,7 +207,9 @@ class GPU extends Module {
 
     // Renders layer 1
     is(State.layer1) {
-      when(layerProcessor.io.done) { nextState := State.layer2 }
+      when(layerProcessor.io.done) {
+        nextState := Mux(io.gameConfig.numLayers === 2.U, State.dmaStart, State.layer2)
+      }
       when(io.options.layer.layer1) {
         priorityRam.io.portA.wr := false.B
         frameBuffer.io.portA.wr := false.B
@@ -220,20 +238,28 @@ class GPU extends Module {
 
   // Outputs
   io.frameReady := stateReg === State.dmaStart
-  io.paletteRam <> ReadMemIO.mux(stateReg === State.sprites, spriteProcessor.io.paletteRam, layerProcessor.io.paletteRam)
+  io.paletteRam <> ReadMemIO.muxLookup(stateReg, backgroundColorMem, Seq(
+    State.sprites -> spriteProcessor.io.paletteRam,
+    State.layer0 -> layerProcessor.io.paletteRam,
+    State.layer1 -> layerProcessor.io.paletteRam,
+    State.layer2 -> layerProcessor.io.paletteRam
+  ))
   io.tileRom <> BurstReadMemIO.mux(Seq(
     (stateReg === State.sprites) -> spriteProcessor.io.tileRom,
     (stateReg === State.layer0 || stateReg === State.layer1 || stateReg === State.layer2) -> layerProcessor.io.tileRom
   ))
   io.tileRom.addr := MuxLookup(stateReg, DontCare, Seq(
-    State.sprites -> (spriteProcessor.io.tileRom.addr + Config.SPRITE_ROM_OFFSET.U),
-    State.layer0 -> (layerProcessor.io.tileRom.addr + Config.LAYER_0_ROM_OFFSET.U),
-    State.layer1 -> (layerProcessor.io.tileRom.addr + Config.LAYER_1_ROM_OFFSET.U),
-    State.layer2 -> (layerProcessor.io.tileRom.addr + Config.LAYER_2_ROM_OFFSET.U)
+    State.sprites -> (spriteProcessor.io.tileRom.addr + io.gameConfig.spriteRomOffset),
+    State.layer0 -> (layerProcessor.io.tileRom.addr + io.gameConfig.layer0RomOffset),
+    State.layer1 -> (layerProcessor.io.tileRom.addr + io.gameConfig.layer1RomOffset),
+    State.layer2 -> (layerProcessor.io.tileRom.addr + io.gameConfig.layer2RomOffset)
   ))
 }
 
 object GPU {
+  /** Returns the palette entry used to clear the frame buffer. */
+  def backgroundPen = PaletteEntry(0x7f.U, 0.U)
+
   /**
    * Converts an X/Y address to a linear address.
    *
@@ -292,7 +318,7 @@ object GPU {
    * @param pos The pixel position.
    * @return A boolean value indicating whether the pixel is visible.
    */
-  def isVisible(pos: Vec2): Bool =
+  def isVisible(pos: UVec2): Bool =
     Util.between(pos.x, 0 until Config.SCREEN_WIDTH) &&
     Util.between(pos.y, 0 until Config.SCREEN_HEIGHT)
 

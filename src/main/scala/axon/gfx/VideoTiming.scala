@@ -41,7 +41,7 @@ class VideoIO private extends Bundle {
   /** Asserted when the beam is in the display region. */
   val enable = Output(Bool())
   /** Beam position */
-  val pos = Output(new Vec2(9))
+  val pos = Output(new UVec2(9))
   /** Horizontal sync */
   val hSync = Output(Bool())
   /** Vertical sync */
@@ -124,7 +124,7 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
   val vEndSync = config.height.U
 
   // Offset the position vector so the display region begins at the origin (i.e. (0, 0))
-  val pos = Vec2(x - hBeginDisplay, y - vBeginDisplay)
+  val pos = UVec2(x - hBeginDisplay, y - vBeginDisplay)
 
   // Sync signals
   val hSync = x >= hBeginSync && x < hEndSync

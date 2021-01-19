@@ -32,15 +32,15 @@
 
 package cave.types
 
-import cave.Config
 import chisel3._
+import chisel3.util._
 
 /** Represent an entry in a color palette. */
 class PaletteEntry extends Bundle {
   /** Palette index */
-  val palette = UInt(Config.PALETTE_ENTRY_PALETTE_WIDTH.W)
+  val palette = UInt(PaletteEntry.PALETTE_WIDTH.W)
   /** Color index */
-  val color = UInt(Config.PALETTE_ENTRY_COLOR_WIDTH.W)
+  val color = UInt(PaletteEntry.COLOR_WIDTH.W)
 
   /**
    * Asserted when the palette entry is transparent.
@@ -59,9 +59,26 @@ class PaletteEntry extends Bundle {
    * One wonders why they didn't do this on first-generation hardware.
    */
   def isTransparent: Bool = color === 0.U
+
+  /**
+   * Converts the palette entry to an address.
+   *
+   * @param numColors The number of colors per palette.
+   */
+  def toAddr(numColors: UInt): UInt =
+    MuxLookup(numColors, 0.U, Seq(
+      16.U -> palette ## color(3, 0),
+      64.U -> palette ## color(5, 0),
+      256.U -> palette ## color(7, 0)
+    ))
 }
 
 object PaletteEntry {
+  /** The width of a palette index (max. 128 palettes) */
+  val PALETTE_WIDTH = 7
+  /** The width of a color index (max. 256 colors) */
+  val COLOR_WIDTH = 8
+
   /**
    * Constructs a new palette entry.
    *

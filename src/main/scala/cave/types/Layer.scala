@@ -33,7 +33,7 @@
 package cave.types
 
 import axon.Util
-import axon.types.Vec2
+import axon.types.UVec2
 import cave.Config
 import chisel3._
 import chisel3.util._
@@ -55,7 +55,7 @@ class Layer extends Bundle {
   /** Row select enable */
   val rowSelectEnable = Bool()
   /** Scroll position */
-  val scroll = new Vec2(Config.LAYER_SCROLL_WIDTH)
+  val scroll = new UVec2(Config.LAYER_SCROLL_WIDTH)
 }
 
 object Layer {
@@ -88,7 +88,7 @@ object Layer {
     layer.flipY := !words(1)(15)
     layer.rowScrollEnable := words(0)(14)
     layer.rowSelectEnable := words(1)(14)
-    layer.scroll := Vec2(words(0)(8, 0), words(1)(8, 0))
+    layer.scroll := UVec2(words(0)(8, 0), words(1)(8, 0))
     layer
   }
 
@@ -104,9 +104,9 @@ object Layer {
    *
    * @param index The layer index.
    */
-  def magicOffset(index: UInt): Vec2 = {
+  def magicOffset(index: UInt): UVec2 = {
     val x = MuxLookup(index, 0.U, Seq(0.U -> 0x6b.U, 1.U -> 0x6c.U, 2.U -> 0x75.U))
     val y = 17.U
-    Vec2(x, y)
+    UVec2(x, y)
   }
 }
