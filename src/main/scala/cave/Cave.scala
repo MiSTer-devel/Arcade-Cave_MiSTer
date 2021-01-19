@@ -142,28 +142,28 @@ class Cave extends Module {
 
     // Layer 0 RAM
     val layer0Ram = Module(new TrueDualPortRam(
-      addrWidthA = Config.LAYER_0_RAM_ADDR_WIDTH,
-      dataWidthA = Config.LAYER_0_RAM_DATA_WIDTH,
-      addrWidthB = Config.LAYER_0_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LAYER_0_RAM_GPU_DATA_WIDTH
+      addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
+      dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
+      addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
+      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH
     ))
     layer0Ram.io.clockB := clock
 
     // Layer 1 RAM
     val layer1Ram = Module(new TrueDualPortRam(
-      addrWidthA = Config.LAYER_1_RAM_ADDR_WIDTH,
-      dataWidthA = Config.LAYER_1_RAM_DATA_WIDTH,
-      addrWidthB = Config.LAYER_1_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LAYER_1_RAM_GPU_DATA_WIDTH
+      addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
+      dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
+      addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
+      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH
     ))
     layer1Ram.io.clockB := clock
 
     // Layer 2 RAM
     val layer2Ram = Module(new TrueDualPortRam(
-      addrWidthA = Config.LAYER_2_RAM_ADDR_WIDTH,
-      dataWidthA = Config.LAYER_2_RAM_DATA_WIDTH,
-      addrWidthB = Config.LAYER_2_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LAYER_2_RAM_GPU_DATA_WIDTH
+      addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
+      dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
+      addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
+      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH
     ))
     layer2Ram.io.clockB := clock
 
