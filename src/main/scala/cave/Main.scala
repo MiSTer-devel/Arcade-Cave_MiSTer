@@ -38,9 +38,9 @@ import axon.mem._
 import axon.snd._
 import axon.types._
 import cave.dma._
+import cave.types._
 import chisel3._
 import chisel3.stage._
-import chisel3.util._
 
 /**
  * The top-level module.
@@ -80,13 +80,21 @@ class Main extends Module {
     val led = mister.LEDIO()
   })
 
-  // Latch the game index when data is written to the download port (i.e. the game index is set by a
-  // MRA file). Otherwise the game index will default to the value set in the options.
-  val gameIndex = {
-    val enable = io.download.cs && io.download.wr && io.download.index === DownloadIO.GAME_INDEX.U
-    val reg = RegEnable(io.download.dout(OptionsIO.GAME_INDEX_WIDTH - 1, 0), 0.U, enable)
-    val latched = Util.latchSync(enable)
-    Mux(latched, reg, io.options.gameIndex)
+  // The game configuration register is latched when it is written to the download port (i.e. the game index is
+  // set by a MRA file).
+  val gameConfigReg = {
+    val reg = Reg(GameConfig())
+    val latched = RegInit(false.B)
+    when(io.download.cs && io.download.wr && io.download.index === DownloadIO.GAME_INDEX.U) {
+      reg := GameConfig(io.download.dout(OptionsIO.GAME_INDEX_WIDTH - 1, 0))
+      latched := true.B
+    }
+    // Default to the game configuration set in the options
+    when(Util.falling(io.download.cs) && !latched) {
+      reg := GameConfig(io.options.gameIndex)
+      latched := true.B
+    }
+    reg
   }
 
   // DDR controller
@@ -99,6 +107,7 @@ class Main extends Module {
 
   // Memory subsystem
   val mem = Module(new MemSys)
+  mem.io.gameConfig <> gameConfigReg
   mem.io.options <> io.options
   mem.io.download <> io.download
   mem.io.ddr <> ddr.io.mem
@@ -140,8 +149,8 @@ class Main extends Module {
   cave.io.vBlank := videoSys.io.video.vBlank
   frameBufferDMA.io.start := cave.io.frameReady
   cave.io.dmaReady := frameBufferDMA.io.ready
+  cave.io.gameConfig <> gameConfigReg
   cave.io.options <> io.options
-  cave.io.options.gameIndex := gameIndex // override game index
   cave.io.joystick <> io.joystick
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock) { mem.io.progRom }
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock) { mem.io.soundRom }

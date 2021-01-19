@@ -93,9 +93,6 @@ object Config {
     vRetrace = 2,
   )
 
-  /** Game indexes (as defined in MRA files) */
-  val DODONPACHI = 0
-
   /** The width of the pulse generated when a player presses the coin button */
   val PLAYER_COIN_PULSE_WIDTH = (100000000 / CPU_CLOCK_PERIOD).ceil.toInt // 100ms
 
@@ -104,10 +101,7 @@ object Config {
   val SPRITE_TILE_SIZE_WIDTH = 8
   val SPRITE_ZOOM_WIDTH = 16
 
-  val PROG_ROM_OFFSET = 0x00000000
-  val TILE_ROM_OFFSET = 0x00100000
-  val SOUND_ROM_OFFSET = 0x00f00000
-  val FRAME_BUFFER_OFFSET = 0x2400000
+  val FRAME_BUFFER_OFFSET = 0x02400000
   val DDR_DOWNLOAD_OFFSET = 0x30000000
 
   // Layer offsets
@@ -127,6 +121,9 @@ object Config {
 
   val MAIN_RAM_ADDR_WIDTH = 15
   val MAIN_RAM_DATA_WIDTH = 16
+
+  val SECONDARY_RAM_ADDR_WIDTH = 10
+  val SECONDARY_RAM_DATA_WIDTH = 16
 
   val SPRITE_RAM_ADDR_WIDTH = 15
   val SPRITE_RAM_DATA_WIDTH = 16
@@ -158,14 +155,6 @@ object Config {
 
   /** The number of bits per color channel */
   val BITS_PER_CHANNEL = 5
-  /** The number of palettes */
-  val NUM_PALETTES = 128
-  /** The number of colors per palette */
-  val NUM_COLORS = 256
-  /** The width of a palette entry palette index */
-  val PALETTE_ENTRY_PALETTE_WIDTH = log2Ceil(NUM_PALETTES)
-  /** The width of a palette entry color index */
-  val PALETTE_ENTRY_COLOR_WIDTH = log2Ceil(NUM_COLORS)
 
   val LAYER_REGS_COUNT = 3
   val LAYER_REGS_GPU_DATA_WIDTH = 48

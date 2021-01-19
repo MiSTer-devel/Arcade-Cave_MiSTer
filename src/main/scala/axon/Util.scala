@@ -32,7 +32,6 @@
 
 package axon
 
-import axon.types.URange
 import axon.util.Counter
 import chisel3._
 import chisel3.util._

@@ -44,14 +44,16 @@ import chisel3.util._
 /** Graphics processing unit (GPU). */
 class GPU extends Module {
   val io = IO(new Bundle {
+    /** Game config port */
+    val gameConfig = Input(GameConfig())
+    /** Options port */
+    val options = OptionsIO()
     /** Asserted when a frame is requested */
     val frameReq = Input(Bool())
     /** Asserted when a frame is ready */
     val frameReady = Output(Bool())
     /** Asserted when the DMA controller is ready */
     val dmaReady = Input(Bool())
-    /** Options port */
-    val options = OptionsIO()
     /** Video registers port */
     val videoRegs = Input(Bits(Config.VIDEO_REGS_GPU_DATA_WIDTH.W))
     /** Layer 0 registers port */
@@ -89,7 +91,7 @@ class GPU extends Module {
   // requests.
   val backgroundColorMem = Wire(ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH))
   backgroundColorMem.rd := true.B
-  backgroundColorMem.addr := GPU.backgroundPen.asUInt
+  backgroundColorMem.addr := GPU.backgroundPen.toAddr(io.gameConfig.numColors)
 
   // Registers
   val stateReg = RegNext(nextState, State.idle)
@@ -101,6 +103,7 @@ class GPU extends Module {
 
   // Layer processor
   val layerProcessor = Module(new LayerProcessor)
+  layerProcessor.io.gameConfig <> io.gameConfig
   layerProcessor.io.start := RegNext(
     (stateReg =/= State.layer0 && nextState === State.layer0) ||
     (stateReg =/= State.layer1 && nextState === State.layer1) ||
@@ -112,6 +115,7 @@ class GPU extends Module {
 
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
+  spriteProcessor.io.gameConfig <> io.gameConfig
   spriteProcessor.io.start := RegNext(stateReg =/= State.sprites && nextState === State.sprites)
   spriteProcessor.io.spriteBank := io.videoRegs(64)
   spriteProcessor.io.spriteRam <> io.spriteRam
@@ -181,7 +185,9 @@ class GPU extends Module {
 
     // Renders the sprites
     is(State.sprites) {
-      when(spriteProcessor.io.done) { nextState := State.layer0 }
+      when(spriteProcessor.io.done) {
+        nextState := Mux(io.gameConfig.numLayers === 0.U, State.dmaStart, State.layer0)
+      }
       when(io.options.layer.sprites) {
         priorityRam.io.portA.wr := false.B
         frameBuffer.io.portA.wr := false.B
@@ -190,7 +196,9 @@ class GPU extends Module {
 
     // Renders layer 0
     is(State.layer0) {
-      when(layerProcessor.io.done) { nextState := State.layer1 }
+      when(layerProcessor.io.done) {
+        nextState := Mux(io.gameConfig.numLayers === 1.U, State.dmaStart, State.layer1)
+      }
       when(io.options.layer.layer0) {
         priorityRam.io.portA.wr := false.B
         frameBuffer.io.portA.wr := false.B
@@ -199,7 +207,9 @@ class GPU extends Module {
 
     // Renders layer 1
     is(State.layer1) {
-      when(layerProcessor.io.done) { nextState := State.layer2 }
+      when(layerProcessor.io.done) {
+        nextState := Mux(io.gameConfig.numLayers === 2.U, State.dmaStart, State.layer2)
+      }
       when(io.options.layer.layer1) {
         priorityRam.io.portA.wr := false.B
         frameBuffer.io.portA.wr := false.B
@@ -239,10 +249,10 @@ class GPU extends Module {
     (stateReg === State.layer0 || stateReg === State.layer1 || stateReg === State.layer2) -> layerProcessor.io.tileRom
   ))
   io.tileRom.addr := MuxLookup(stateReg, DontCare, Seq(
-    State.sprites -> (spriteProcessor.io.tileRom.addr + Config.SPRITE_ROM_OFFSET.U),
-    State.layer0 -> (layerProcessor.io.tileRom.addr + Config.LAYER_0_ROM_OFFSET.U),
-    State.layer1 -> (layerProcessor.io.tileRom.addr + Config.LAYER_1_ROM_OFFSET.U),
-    State.layer2 -> (layerProcessor.io.tileRom.addr + Config.LAYER_2_ROM_OFFSET.U)
+    State.sprites -> (spriteProcessor.io.tileRom.addr + io.gameConfig.tileRomOffset + Config.SPRITE_ROM_OFFSET.U),
+    State.layer0 -> (layerProcessor.io.tileRom.addr + io.gameConfig.tileRomOffset + Config.LAYER_0_ROM_OFFSET.U),
+    State.layer1 -> (layerProcessor.io.tileRom.addr + io.gameConfig.tileRomOffset + Config.LAYER_1_ROM_OFFSET.U),
+    State.layer2 -> (layerProcessor.io.tileRom.addr + io.gameConfig.tileRomOffset + Config.LAYER_2_ROM_OFFSET.U)
   ))
 }
 

@@ -44,6 +44,8 @@ import chisel3.util._
 /** The layer pipeline renders a tilemap layer. */
 class LayerPipeline extends Module {
   val io = IO(new Bundle {
+    /** Game config port */
+    val gameConfig = Input(GameConfig())
     /** Layer index */
     val layerIndex = Input(UInt(2.W))
     /** Previous layer priority value */
@@ -188,7 +190,7 @@ class LayerPipeline extends Module {
   io.tileInfo.ready := updateTileInfo
   io.pixelData.ready := readFifo
   io.paletteRam.rd := true.B
-  io.paletteRam.addr := paletteEntryReg.asUInt
+  io.paletteRam.addr := paletteEntryReg.toAddr(io.gameConfig.numColors)
   io.priority.read.rd := true.B
   io.priority.read.addr := priorityReadAddr
   io.priority.write.wr := frameBufferWrite
@@ -204,7 +206,7 @@ class LayerPipeline extends Module {
 
 object LayerPipeline {
   /**
-   * Decodes a small tile from the given pixel data.
+   * Decodes a 8x8 tile from the given pixel data.
    *
    * Small tile pixels are encoded as 8-bit words.
    *
@@ -218,7 +220,7 @@ object LayerPipeline {
       .toSeq
 
   /**
-   * Decodes a small tile from the given pixel data.
+   * Decodes a 16x16 tile from the given pixel data.
    *
    * Large tile pixels are encoded as 4-bit words.
    *
