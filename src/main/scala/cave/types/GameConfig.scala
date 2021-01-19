@@ -37,17 +37,23 @@ import chisel3.util._
 
 /** Represents a game configuration. */
 class GameConfig extends Bundle {
-  /** The game index */
+  /** Game index */
   val index = UInt(4.W)
-  /** The program ROM offset */
+  /** Program ROM offset */
   val progRomOffset = UInt(32.W)
-  /** The tile ROM offset */
-  val tileRomOffset = UInt(32.W)
-  /** The sound ROM offset */
+  /** Sprite ROM offset */
+  val spriteRomOffset = UInt(32.W)
+  /** Layer 0 ROM offset */
+  val layer0RomOffset = UInt(32.W)
+  /** Layer 1 ROM offset */
+  val layer1RomOffset = UInt(32.W)
+  /** Layer 2 ROM offset */
+  val layer2RomOffset = UInt(32.W)
+  /** Sound ROM offset */
   val soundRomOffset = UInt(32.W)
-  /** The number of colors per palette */
+  /** Number of colors per palette */
   val numColors = UInt(9.W)
-  /** The number of tilemap layers */
+  /** Number of tilemap layers */
   val numLayers = UInt(2.W)
   /** Asserted when zoomed sprites are enabled */
   val spriteZoom = Bool()
@@ -76,7 +82,10 @@ object GameConfig {
     val wire = Wire(new GameConfig)
     wire.index := DODONPACHI.U
     wire.progRomOffset := 0x00000000.U
-    wire.tileRomOffset := 0x00100000.U
+    wire.spriteRomOffset := 0x00100000.U
+    wire.layer0RomOffset := 0x00900000.U
+    wire.layer1RomOffset := 0x00b00000.U
+    wire.layer2RomOffset := 0x00d00000.U
     wire.soundRomOffset := 0x00f00000.U
     wire.numColors := 256.U
     wire.numLayers := 3.U
@@ -88,7 +97,10 @@ object GameConfig {
     val wire = Wire(new GameConfig)
     wire.index := DANGUN_FEVERON.U
     wire.progRomOffset := 0x00000000.U
-    wire.tileRomOffset := 0x00100000.U
+    wire.spriteRomOffset := 0x00100000.U
+    wire.layer0RomOffset := 0x00900000.U
+    wire.layer1RomOffset := 0x00b00000.U
+    wire.layer2RomOffset := 0.U
     wire.soundRomOffset := 0x00d00000.U
     wire.numColors := 16.U
     wire.numLayers := 2.U
