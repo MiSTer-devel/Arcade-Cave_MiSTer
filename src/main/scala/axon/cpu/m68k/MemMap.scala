@@ -34,7 +34,6 @@ package axon.cpu.m68k
 
 import axon.Util
 import axon.mem._
-import axon.types.URange
 import chisel3._
 
 /**
@@ -72,7 +71,7 @@ class MemMap(cpu: CPUIO) {
    *
    * @param r The address range.
    */
-  def apply(r: URange) = new Mapping(cpu, r)
+  def apply(r: Range) = new Mapping(cpu, r)
 
   /**
    * Represents a memory mapped address range.
@@ -80,14 +79,14 @@ class MemMap(cpu: CPUIO) {
    * @param cpu The CPU IO port.
    * @param r   The address range.
    */
-  class Mapping(cpu: CPUIO, r: URange) {
+  class Mapping(cpu: CPUIO, r: Range) {
     // The CPU address bus is only 23 bits, because the LSB is inferred from the UDS and LDS
     // signals. However, we still need to use a 24-bit value when comparing the address to a byte
     // range.
     val addr = cpu.addr ## 0.U
 
     // Address offset
-    val offset = addr - r.from
+    val offset = addr - r.start.U
 
     // Chip select
     val cs = Util.between(addr, r)
