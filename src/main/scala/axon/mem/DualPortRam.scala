@@ -81,7 +81,7 @@ class DualPortRam(addrWidthA: Int,
       val din_a = Input(Bits(dataWidthA.W))
 
       // port B
-      val rd_B = Input(Bool())
+      val rd_b = Input(Bool())
       val addr_b = Input(UInt(addrWidthB.W))
       val dout_b = Output(Bits(dataWidthB.W))
     })
@@ -95,7 +95,7 @@ class DualPortRam(addrWidthA: Int,
   ram.io.addr_a := io.portA.addr
   ram.io.mask_a := io.portA.mask
   ram.io.din_a := io.portA.din
-  ram.io.rd_B := io.portB.rd
+  ram.io.rd_b := io.portB.rd
   ram.io.addr_b := io.portB.addr
   io.portB.dout := ram.io.dout_b
 }
