@@ -228,6 +228,27 @@ class Cave extends Module {
     map(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
 
+    // Dangun Feveron
+    when(io.gameConfig.index === GameConfig.DFEVERON.U) {
+      // Secondary RAM
+      val secondaryRam = Module(new SinglePortRam(
+        addrWidth = Config.SECONDARY_RAM_ADDR_WIDTH,
+        dataWidth = Config.SECONDARY_RAM_DATA_WIDTH
+      ))
+      map(0x110000 to 0x2fffff).ignore()
+      map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
+      map(0x710000 to 0x710bff).ignore()
+      map(0x710c00 to 0x710fff).readWriteMem(secondaryRam.io)
+      map(0x800000 to 0x800007).r { (_, offset) =>
+        when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
+        Cat(0.U, 1.U, !vBlankIRQ)
+      }
+      map(0xb00000).r { (_, _) => "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1) }
+      // FIXME: The EEPROM output data shouldn't need to be inverted.
+      map(0xb00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b11".U ## ~encodePlayer(io.joystick.player2) }
+      map(0xc00000).writeMem(eeprom.io.mem)
+    }
+
     // DoDonPachi
     when(io.gameConfig.index === GameConfig.DDONPACH.U) {
       // Access to 0x5fxxxx appears in DoDonPachi on attract loop when showing the air stage on frame
@@ -249,27 +270,6 @@ class Cave extends Module {
       map(0xd00000).r { (_, _) => "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1) }
       map(0xd00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b11".U ## ~encodePlayer(io.joystick.player2) }
       map(0xe00000).writeMem(eeprom.io.mem)
-    }
-
-    // Dangun Feveron
-    when(io.gameConfig.index === GameConfig.DFEVERON.U) {
-      // Secondary RAM
-      val secondaryRam = Module(new SinglePortRam(
-        addrWidth = Config.SECONDARY_RAM_ADDR_WIDTH,
-        dataWidth = Config.SECONDARY_RAM_DATA_WIDTH
-      ))
-      map(0x110000 to 0x2fffff).ignore()
-      map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
-      map(0x710000 to 0x710bff).ignore()
-      map(0x710c00 to 0x710fff).readWriteMem(secondaryRam.io)
-      map(0x800000 to 0x800007).r { (_, offset) =>
-        when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
-        Cat(0.U, 1.U, !vBlankIRQ)
-      }
-      map(0xb00000).r { (_, _) => "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1) }
-      // FIXME: The EEPROM output data shouldn't need to be inverted.
-      map(0xb00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b11".U ## ~encodePlayer(io.joystick.player2) }
-      map(0xc00000).writeMem(eeprom.io.mem)
     }
 
     // ESP Ra.De.
