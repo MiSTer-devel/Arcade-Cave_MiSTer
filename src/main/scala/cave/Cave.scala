@@ -245,7 +245,7 @@ class Cave extends Module {
       // The reason these accesses appear is probably because it made the layer update routine simpler
       // to write (no need to handle edge cases). These accesses are simply ignored by the hardware.
       map(0x5f0000 to 0x5fffff).ignore()
-      map(0x700000 to 0x70ffff).readWriteMem(layer2Ram.io.portA)
+      map(0x700000 to 0x70ffff).readWriteMemT(layer2Ram.io.portA)(a => a(12, 0))
       map(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
       map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
       map(0xd00000).r { (_, _) => "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1) }
