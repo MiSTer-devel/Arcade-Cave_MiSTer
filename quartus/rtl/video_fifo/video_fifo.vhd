@@ -111,10 +111,10 @@ BEGIN
 		lpm_width_r => 32,
 		overflow_checking => "ON",
 		rdsync_delaypipe => 6,
-		read_aclr_synch => "OFF",
+		read_aclr_synch => "ON",
 		underflow_checking => "ON",
 		use_eab => "ON",
-		write_aclr_synch => "ON",
+		write_aclr_synch => "OFF",
 		wrsync_delaypipe => 6
 	)
 	PORT MAP (
