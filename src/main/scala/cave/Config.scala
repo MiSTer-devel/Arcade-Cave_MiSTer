@@ -45,7 +45,7 @@ object Config {
   /** CPU clock period (ns) */
   val CPU_CLOCK_PERIOD = 1 / CPU_CLOCK_FREQ * 1000000000
   /** Video clock frequency (Hz) */
-  val VIDEO_CLOCK_FREQ = 26400000D
+  val VIDEO_CLOCK_FREQ = 27428571D
   /** Video clock divider */
   val VIDEO_CLOCK_DIV = 4
 
@@ -77,8 +77,8 @@ object Config {
     vFreq = 57.5,
     hDisplay = SCREEN_WIDTH,
     vDisplay = SCREEN_HEIGHT,
-    hFrontPorch = 22,
-    vFrontPorch = 12,
+    hFrontPorch = 30,
+    vFrontPorch = 14,
     hRetrace = 20,
     vRetrace = 2,
   )
