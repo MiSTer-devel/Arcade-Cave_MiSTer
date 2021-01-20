@@ -110,7 +110,6 @@ class Cave extends Module {
     // Registers
     val vBlank = ShiftRegister(io.vBlank, 2)
     val vBlankIRQ = RegInit(false.B)
-    val unknownIRQ = RegInit(false.B)
     val iplReg = RegInit(0.U)
     val pauseReg = Util.toggle(Util.rising(io.joystick.player1.pause || io.joystick.player2.pause))
 
@@ -205,7 +204,7 @@ class Cave extends Module {
     intAck := cpu.io.as && cpu.io.fc === 7.U
 
     // Set and clear interrupt priority level register
-    when(vBlankIRQ || soundIRQ || unknownIRQ) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
+    when(vBlankIRQ || soundIRQ) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
 
     // Set vertical blank IRQ
     when(Util.rising(vBlank)) { vBlankIRQ := true.B }
@@ -224,12 +223,6 @@ class Cave extends Module {
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     map(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
     map(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
-    // IRQ cause
-    map(0x800000 to 0x800007).r { (_, offset) =>
-      when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
-      when(offset === 6.U) { unknownIRQ := false.B } // clear unknown IRQ
-      Cat(0.U, !unknownIRQ, !vBlankIRQ)
-    }
     map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
     map(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
@@ -246,6 +239,11 @@ class Cave extends Module {
       // to write (no need to handle edge cases). These accesses are simply ignored by the hardware.
       map(0x5f0000 to 0x5fffff).ignore()
       map(0x700000 to 0x70ffff).readWriteMemT(layer2Ram.io.portA)(a => a(12, 0))
+      // IRQ cause
+      map(0x800000 to 0x800007).r { (_, offset) =>
+        when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
+        Cat(1.U, 1.U, !vBlankIRQ)
+      }
       map(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
       map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
       map(0xd00000).r { (_, _) => "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1) }
@@ -264,6 +262,10 @@ class Cave extends Module {
       map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
       map(0x710000 to 0x710bff).ignore()
       map(0x710c00 to 0x710fff).readWriteMem(secondaryRam.io)
+      map(0x800000 to 0x800007).r { (_, offset) =>
+        when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
+        Cat(0.U, 1.U, !vBlankIRQ)
+      }
       map(0xb00000).r { (_, _) => "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1) }
       // FIXME: The EEPROM output data shouldn't need to be inverted.
       map(0xb00002).r { (_, _) => "b1111".U ## ~eeprom.io.dout ## "b11".U ## ~encodePlayer(io.joystick.player2) }
@@ -273,6 +275,10 @@ class Cave extends Module {
     // ESP Ra.De.
     when(io.gameConfig.index === GameConfig.ESPRADE.U) {
       map(0x700000 to 0x707fff).readWriteMem(layer2Ram.io.portA)
+      map(0x800000 to 0x800007).r { (_, offset) =>
+        when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
+        Cat(0.U, 1.U, !vBlankIRQ)
+      }
       map(0x800008 to 0x800fff).ignore()
       map(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
       map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
