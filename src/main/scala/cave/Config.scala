@@ -45,7 +45,9 @@ object Config {
   /** CPU clock period (ns) */
   val CPU_CLOCK_PERIOD = 1 / CPU_CLOCK_FREQ * 1000000000
   /** Video clock frequency (Hz) */
-  val VIDEO_CLOCK_FREQ = 6600000D
+  val VIDEO_CLOCK_FREQ = 26400000D
+  /** Video clock divider */
+  val VIDEO_CLOCK_DIV = 4
 
   /** The screen width in pixels */
   val SCREEN_WIDTH = 320
@@ -70,6 +72,7 @@ object Config {
   /** Original (57.5Hz) video timing configuration */
   val originalVideoTimingConfig = VideoTimingConfig(
     clockFreq = VIDEO_CLOCK_FREQ,
+    clockDiv = VIDEO_CLOCK_DIV,
     hFreq = 15720,
     vFreq = 57.5,
     hDisplay = SCREEN_WIDTH,
@@ -83,6 +86,7 @@ object Config {
   /** Compatibility (60Hz) video timing configuration */
   val compatibilityVideoTimingConfig = VideoTimingConfig(
     clockFreq = VIDEO_CLOCK_FREQ,
+    clockDiv = VIDEO_CLOCK_DIV,
     hFreq = 15720,
     vFreq = 60,
     hDisplay = SCREEN_WIDTH,

@@ -294,18 +294,36 @@ wire hblank, vblank;
 wire video_enable;
 wire [2:0] fx = status[6:4];
 wire [2:0] sl = fx ? fx - 1'd1 : 3'd0;
+wire       scandoubler = fx || forced_scandoubler;
 
 assign CLK_VIDEO = clk_video;
-assign CE_PIXEL = 1;
-assign VGA_DE = video_enable;
-assign VGA_HS = hsync;
-assign VGA_VS = vsync;
-assign VGA_R  = r;
-assign VGA_G  = g;
-assign VGA_B  = b;
 assign VGA_F1 = 0;
 assign VGA_SL = sl[1:0];
 assign VGA_SCALER = 0;
+
+video_mixer #(.LINE_LENGTH(320), .HALF_DEPTH(0), .GAMMA(1)) video_mixer (
+  .*,
+
+  .clk_vid(clk_video),
+  .ce_pix(ce_pix),
+  .ce_pix_out(CE_PIXEL),
+
+  .scanlines(0),
+  .scandoubler(scandoubler),
+  .hq2x(scale==1),
+
+  .mono(0),
+
+  .R(r),
+  .G(g),
+  .B(b),
+
+  // Positive pulses.
+  .HSync(hsync),
+  .VSync(vsync),
+  .HBlank(hblank),
+  .VBlank(vblank)
+);
 
 ////////////////////////////////////////////////////////////////////////////////
 // CONTROLS
@@ -445,6 +463,7 @@ Main main (
   .io_joystick_service1(service_1),
   .io_joystick_service2(service_2),
   // Video signals
+  .io_video_pixelClockEnable(ce_pix),
   .io_video_hSync(hsync),
   .io_video_vSync(vsync),
   .io_video_hBlank(hblank),
