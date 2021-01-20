@@ -230,15 +230,9 @@ class Cave extends Module {
 
     // Dangun Feveron
     when(io.gameConfig.index === GameConfig.DFEVERON.U) {
-      // Secondary RAM
-      val secondaryRam = Module(new SinglePortRam(
-        addrWidth = Config.SECONDARY_RAM_ADDR_WIDTH,
-        dataWidth = Config.SECONDARY_RAM_DATA_WIDTH
-      ))
       map(0x110000 to 0x2fffff).ignore()
       map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
-      map(0x710000 to 0x710bff).ignore()
-      map(0x710c00 to 0x710fff).readWriteMem(secondaryRam.io)
+      map(0x710000 to 0x717fff).readWriteMem(layer2Ram.io.portA)
       map(0x800000 to 0x800007).r { (_, offset) =>
         when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
         Cat(0.U, 1.U, !vBlankIRQ)
