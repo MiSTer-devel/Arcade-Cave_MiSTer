@@ -69,12 +69,12 @@ object Config {
     burstLength = 4
   )
 
-  /** Original (57.5Hz) video timing configuration */
+  /** Original (57Hz) video timing configuration */
   val originalVideoTimingConfig = VideoTimingConfig(
     clockFreq = VIDEO_CLOCK_FREQ,
     clockDiv = VIDEO_CLOCK_DIV,
-    hFreq = 15720,
-    vFreq = 57.5,
+    hFreq = 15625,
+    vFreq = 57.44,
     hDisplay = SCREEN_WIDTH,
     vDisplay = SCREEN_HEIGHT,
     hFrontPorch = 30,
@@ -87,11 +87,11 @@ object Config {
   val compatibilityVideoTimingConfig = VideoTimingConfig(
     clockFreq = VIDEO_CLOCK_FREQ,
     clockDiv = VIDEO_CLOCK_DIV,
-    hFreq = 15720,
+    hFreq = 15625,
     vFreq = 60,
     hDisplay = SCREEN_WIDTH,
     vDisplay = SCREEN_HEIGHT,
-    hFrontPorch = 22,
+    hFrontPorch = 30,
     vFrontPorch = 12,
     hRetrace = 20,
     vRetrace = 2,
