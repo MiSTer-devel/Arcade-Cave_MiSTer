@@ -149,8 +149,6 @@ object Config {
   /** The bit depth of a DDR frame buffer pixel */
   val DDR_FRAME_BUFFER_BPP = 32
 
-  /** The bit depth of a raw frame buffer pixel */
-  val FRAME_BUFFER_BPP = 15
   /** The depth of the frame buffer in words */
   val FRAME_BUFFER_DEPTH = SCREEN_WIDTH * SCREEN_HEIGHT
   /** The width of the frame buffer X address */
@@ -160,7 +158,7 @@ object Config {
   /** The width of the frame buffer address bus */
   val FRAME_BUFFER_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DEPTH)
   /** The width of the frame buffer data bus */
-  val FRAME_BUFFER_DATA_WIDTH = FRAME_BUFFER_BPP
+  val FRAME_BUFFER_DATA_WIDTH = 15
 
   /** The bit depth of a frame buffer DMA pixel */
   val FRAME_BUFFER_DMA_BPP = 24
