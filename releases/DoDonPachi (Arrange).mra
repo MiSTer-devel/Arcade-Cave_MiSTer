@@ -5,7 +5,7 @@
   <mratimestamp>20210102</mratimestamp>
   <year>2012</year>
   <manufacturer>hack (trap15)</manufacturer>
-  <categoryShooter</category>
+  <category>Shooter</category>
   <rbf>cave</rbf>
   <mameinfo parent="ddonpach" cpp="cave" input="cave" />
   <display type="raster" rotate="270" />
