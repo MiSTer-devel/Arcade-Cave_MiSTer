@@ -124,8 +124,10 @@ class GPU extends Module {
   val priorityRam = Module(new DualPortRam(
     addrWidthA = Config.PRIO_BUFFER_ADDR_WIDTH,
     dataWidthA = Config.PRIO_BUFFER_DATA_WIDTH,
+    depthA = Some(Config.FRAME_BUFFER_DEPTH),
     addrWidthB = Config.PRIO_BUFFER_ADDR_WIDTH,
     dataWidthB = Config.PRIO_BUFFER_DATA_WIDTH,
+    depthB = Some(Config.FRAME_BUFFER_DEPTH),
     maskEnable = false
   ))
   priorityRam.io.portA <> WriteMemIO.mux(stateReg, Seq(
