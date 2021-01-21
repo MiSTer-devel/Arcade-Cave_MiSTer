@@ -152,7 +152,7 @@ localparam CONF_STR = {
   "-;",
   "P1,Advanced;",
   "P1-;",
-  "P1O7,Refresh Rate,57.5Hz,60Hz;",
+  "P1O7,Refresh Rate,57Hz,60Hz;",
   "d1P1O8,ROM Storage,SDRAM,DDR3;",
   "P2,Debug;",
   "P2-;",
