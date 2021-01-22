@@ -168,8 +168,7 @@ class LayerPipeline extends Module {
   val done = ShiftRegister(tileDone, 2, false.B, true.B)
 
   // Set priority data
-  val priorityReadAddr = stage1Pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0) ##
-                         stage1Pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
+  val priorityReadAddr = GPU.transformAddr(stage1Pos, io.options.flip, io.options.rotate)
   val priorityReadData = io.priority.read.dout
   val priorityWriteData = ShiftRegister(tileInfoReg.priority, 2)
 
@@ -178,14 +177,13 @@ class LayerPipeline extends Module {
   val hasPriority = (priorityWriteData > priorityReadData) ||
                     (priorityWriteData === priorityReadData && layerInfoReg.priority >= io.lastLayerPriority)
 
-  // Set frame buffer data. The transparency flag must be delayed by one cycle, as for the colors
-  // (since the colors come from the palette RAM they arrive one cycle later).
-  val frameBufferWrite = valid &&
-                         hasPriority &&
-                         GPU.isVisible(stage2Pos) &&
-                         !RegNext(paletteEntryReg.isTransparent)
-  val frameBufferAddr = stage2Pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0) ##
-                        stage2Pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
+  // The transparency flag must be delayed by one cycle, since the colors come from the palette RAM
+  // they arrive one cycle later.
+  val visible = hasPriority && GPU.isVisible(stage2Pos) && !RegNext(paletteEntryReg.isTransparent)
+
+  // Set frame buffer signals
+  val frameBufferWrite = valid && visible
+  val frameBufferAddr = GPU.transformAddr(stage2Pos, io.options.flip, io.options.rotate)
 
   // Outputs
   io.layerInfo.ready := true.B
