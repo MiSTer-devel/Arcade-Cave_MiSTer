@@ -170,20 +170,20 @@ class LayerPipeline extends Module {
   // Set priority data
   val priorityReadAddr = GPU.transformAddr(stage1Pos, io.options.flip, io.options.rotate)
   val priorityReadData = io.priority.read.dout
-  val priorityWriteData = ShiftRegister(tileInfoReg.priority, 2)
+  val priorityWriteData = ShiftRegister(tileInfoReg.priority, 3)
 
   // The current pixel has priority if it has more priority than the previous pixel. Otherwise, if
   // the pixel priorities are the same then it depends on the layer priorities.
-  val hasPriority = (priorityWriteData > priorityReadData) ||
-                    (priorityWriteData === priorityReadData && layerInfoReg.priority >= io.lastLayerPriority)
+  val hasPriority = (tileInfoReg.priority > priorityReadData) ||
+                    (tileInfoReg.priority === priorityReadData && layerInfoReg.priority >= io.lastLayerPriority)
 
   // The transparency flag must be delayed by one cycle, since the colors come from the palette RAM
   // they arrive one cycle later.
   val visible = hasPriority && GPU.isVisible(stage2Pos) && !RegNext(paletteEntryReg.isTransparent)
 
   // Set frame buffer signals
-  val frameBufferWrite = valid && visible
-  val frameBufferAddr = GPU.transformAddr(stage2Pos, io.options.flip, io.options.rotate)
+  val frameBufferWrite = RegNext(valid && visible)
+  val frameBufferAddr = RegNext(GPU.transformAddr(stage2Pos, io.options.flip, io.options.rotate))
 
   // Outputs
   io.layerInfo.ready := true.B
@@ -200,7 +200,7 @@ class LayerPipeline extends Module {
   io.frameBuffer.wr := frameBufferWrite
   io.frameBuffer.addr := frameBufferAddr
   io.frameBuffer.mask := 0.U
-  io.frameBuffer.din := io.paletteRam.dout
+  io.frameBuffer.din := RegNext(io.paletteRam.dout)
   io.done := done
 }
 
