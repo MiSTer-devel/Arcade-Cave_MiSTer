@@ -136,8 +136,11 @@ class GPU extends Module {
     State.layer0 -> layerProcessor.io.priority.write,
     State.layer1 -> layerProcessor.io.priority.write,
     State.layer2 -> layerProcessor.io.priority.write
-  ))
-  priorityRam.io.portB <> ReadMemIO.mux(stateReg === State.sprites, spriteProcessor.io.priority.read, layerProcessor.io.priority.read)
+  )).mapAddr(GPU.linearizeAddr(false.B, false.B))
+  priorityRam.io.portB <> ReadMemIO.mux(stateReg === State.sprites,
+    spriteProcessor.io.priority.read,
+    layerProcessor.io.priority.read
+  ).mapAddr(GPU.linearizeAddr(false.B, false.B))
 
   // The frame buffer is used by the sprite and tilemap layers for writing pixel data during
   // rendering.
@@ -153,13 +156,13 @@ class GPU extends Module {
     depthB = Some(Config.FRAME_BUFFER_DMA_DEPTH),
     maskEnable = false
   ))
-  frameBuffer.io.portA <> RegNext(WriteMemIO.mux(stateReg, Seq(
+  frameBuffer.io.portA <> WriteMemIO.mux(stateReg, Seq(
     State.clear -> GPU.clearMem(x ## y, backgroundColorReg),
     State.sprites -> spriteProcessor.io.frameBuffer,
     State.layer0 -> layerProcessor.io.frameBuffer,
     State.layer1 -> layerProcessor.io.frameBuffer,
     State.layer2 -> layerProcessor.io.frameBuffer
-  )).mapAddr(GPU.linearizeAddr(io.options.rotate, io.options.flip)))
+  )).mapAddr(GPU.linearizeAddr(io.options.rotate, io.options.flip))
   frameBuffer.io.portB <> io.frameBufferDMA
 
   // Decode raw pixel data from the frame buffer
