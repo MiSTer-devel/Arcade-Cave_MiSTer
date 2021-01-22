@@ -136,11 +136,11 @@ class GPU extends Module {
     State.layer0 -> layerProcessor.io.priority.write,
     State.layer1 -> layerProcessor.io.priority.write,
     State.layer2 -> layerProcessor.io.priority.write
-  )).mapAddr(GPU.linearizeAddr(false.B, false.B))
+  )).mapAddr(GPU.transformAddr(false.B, false.B))
   priorityRam.io.portB <> ReadMemIO.mux(stateReg === State.sprites,
     spriteProcessor.io.priority.read,
     layerProcessor.io.priority.read
-  ).mapAddr(GPU.linearizeAddr(false.B, false.B))
+  ).mapAddr(GPU.transformAddr(false.B, false.B))
 
   // The frame buffer is used by the sprite and tilemap layers for writing pixel data during
   // rendering.
@@ -162,7 +162,7 @@ class GPU extends Module {
     State.layer0 -> layerProcessor.io.frameBuffer,
     State.layer1 -> layerProcessor.io.frameBuffer,
     State.layer2 -> layerProcessor.io.frameBuffer
-  )).mapAddr(GPU.linearizeAddr(io.options.rotate, io.options.flip))
+  )).mapAddr(GPU.transformAddr(io.options.rotate, io.options.flip))
   frameBuffer.io.portB <> io.frameBufferDMA
 
   // Decode raw pixel data from the frame buffer
@@ -266,11 +266,13 @@ object GPU {
   def backgroundPen = PaletteEntry(0x7f.U, 0.U)
 
   /**
-   * Converts an X/Y address to a linear address.
+   * Transforms an X/Y address to a linear address, applying optional rotate and flip transforms.
    *
+   * @param rotate Rotates the image 90 degrees.
+   * @param flip Flips the image.
    * @param addr The address value.
    */
-  def linearizeAddr(rotate: Bool, flip: Bool)(addr: UInt): UInt = {
+  def transformAddr(rotate: Bool, flip: Bool)(addr: UInt): UInt = {
     val x = addr.head(log2Up(Config.SCREEN_WIDTH))
     val y = addr.tail(log2Up(Config.SCREEN_WIDTH))
     val x_ = (Config.SCREEN_WIDTH - 1).U - x
