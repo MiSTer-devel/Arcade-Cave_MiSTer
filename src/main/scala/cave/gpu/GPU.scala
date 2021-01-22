@@ -130,13 +130,13 @@ class GPU extends Module {
     depthB = Some(Config.FRAME_BUFFER_DEPTH),
     maskEnable = false
   ))
-  priorityRam.io.portA <> WriteMemIO.mux(stateReg, Seq(
+  priorityRam.io.portA <> RegNext(WriteMemIO.mux(stateReg, Seq(
     State.clear -> GPU.clearMem(x ## y),
     State.sprites -> spriteProcessor.io.priority.write,
     State.layer0 -> layerProcessor.io.priority.write,
     State.layer1 -> layerProcessor.io.priority.write,
     State.layer2 -> layerProcessor.io.priority.write
-  )).mapAddr(GPU.transformAddr(false.B, false.B))
+  )).mapAddr(GPU.transformAddr(false.B, false.B)))
   priorityRam.io.portB <> ReadMemIO.mux(stateReg === State.sprites,
     spriteProcessor.io.priority.read,
     layerProcessor.io.priority.read
@@ -156,13 +156,13 @@ class GPU extends Module {
     depthB = Some(Config.FRAME_BUFFER_DMA_DEPTH),
     maskEnable = false
   ))
-  frameBuffer.io.portA <> WriteMemIO.mux(stateReg, Seq(
+  frameBuffer.io.portA <> RegNext(WriteMemIO.mux(stateReg, Seq(
     State.clear -> GPU.clearMem(x ## y, backgroundColorReg),
     State.sprites -> spriteProcessor.io.frameBuffer,
     State.layer0 -> layerProcessor.io.frameBuffer,
     State.layer1 -> layerProcessor.io.frameBuffer,
     State.layer2 -> layerProcessor.io.frameBuffer
-  )).mapAddr(GPU.transformAddr(io.options.rotate, io.options.flip))
+  )).mapAddr(GPU.transformAddr(io.options.rotate, io.options.flip)))
   frameBuffer.io.portB <> io.frameBufferDMA
 
   // Decode raw pixel data from the frame buffer
