@@ -33,6 +33,7 @@
 package cave.gpu
 
 import axon.mem._
+import axon.types.OptionsIO
 import axon.util.Counter
 import cave.Config
 import cave.types._
@@ -48,6 +49,8 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   val io = IO(new Bundle {
     /** Game config port */
     val gameConfig = Input(GameConfig())
+    /** Options port */
+    val options = OptionsIO()
     /** Start flag */
     val start = Input(Bool())
     /** Done flag */
@@ -113,6 +116,7 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   // Sprite blitter
   val spriteBlitter = Module(new SpriteBlitter)
   spriteBlitter.io.gameConfig <> io.gameConfig
+  spriteBlitter.io.options <> io.options
   spriteBlitter.io.spriteInfo.bits := spriteInfoReg
   pipelineReady := spriteBlitter.io.spriteInfo.ready
   spriteBlitter.io.spriteInfo.valid := updateSpriteInfo

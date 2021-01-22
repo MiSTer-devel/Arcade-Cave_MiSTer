@@ -46,6 +46,8 @@ class SpriteBlitter extends Module {
   val io = IO(new Bundle {
     /** Game config port */
     val gameConfig = Input(GameConfig())
+    /** Options port */
+    val options = OptionsIO()
     /** Sprite info port */
     val spriteInfo = DeqIO(new Sprite)
     /** Pixel data port */

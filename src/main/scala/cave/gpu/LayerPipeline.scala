@@ -46,6 +46,8 @@ class LayerPipeline extends Module {
   val io = IO(new Bundle {
     /** Game config port */
     val gameConfig = Input(GameConfig())
+    /** Options port */
+    val options = OptionsIO()
     /** Layer index */
     val layerIndex = Input(UInt(2.W))
     /** Previous layer priority value */

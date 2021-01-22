@@ -104,6 +104,7 @@ class GPU extends Module {
   // Layer processor
   val layerProcessor = Module(new LayerProcessor)
   layerProcessor.io.gameConfig <> io.gameConfig
+  layerProcessor.io.options <> io.options
   layerProcessor.io.start := RegNext(
     (stateReg =/= State.layer0 && nextState === State.layer0) ||
     (stateReg =/= State.layer1 && nextState === State.layer1) ||
@@ -116,6 +117,7 @@ class GPU extends Module {
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
   spriteProcessor.io.gameConfig <> io.gameConfig
+  spriteProcessor.io.options <> io.options
   spriteProcessor.io.start := RegNext(stateReg =/= State.sprites && nextState === State.sprites)
   spriteProcessor.io.spriteBank := io.videoRegs(64)
   spriteProcessor.io.spriteRam <> io.spriteRam
