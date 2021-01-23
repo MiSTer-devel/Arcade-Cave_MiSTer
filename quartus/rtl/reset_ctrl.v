@@ -14,7 +14,7 @@
  *  https://twitter.com/nullobject
  *  https://github.com/nullobject
  *
- *  Copyright (c) 2020 Josh Bassett
+ *  Copyright (c) 2021 Josh Bassett
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
