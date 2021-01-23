@@ -173,13 +173,8 @@ localparam CONF_STR = {
 
 wire locked;
 wire clk_sys, clk_sdram, clk_video, clk_cpu;
-wire reset_sys = ~(RESET | ~locked);
-wire reset_video = ~(RESET | ~locked);
-wire reset_cpu = ~(RESET | status[0] | buttons[1] | ~locked);
-reg  reset_pll = 0;
-reg  reset_sys_n;
-reg  reset_video_n;
-reg  reset_cpu_n;
+wire rst_sys, rst_video, rst_cpu;
+reg  rst_pll;
 
 // Resets the PLL if it loses lock
 always @(posedge clk_sys or posedge RESET) begin
@@ -187,25 +182,25 @@ always @(posedge clk_sys or posedge RESET) begin
   reg [7:0] rst_cnt;
 
   if (RESET) begin
-    reset_pll <= 0;
+    rst_pll <= 0;
     rst_cnt <= 8'h00;
   end else begin
     old_locked <= locked;
     if (old_locked && !locked) begin
       rst_cnt <= 8'hff; // keep reset high for 256 cycles
-      reset_pll <= 1;
+      rst_pll <= 1;
     end else begin
       if (rst_cnt != 8'h00)
         rst_cnt <= rst_cnt - 8'h1;
       else
-        reset_pll <= 0;
+        rst_pll <= 0;
     end
   end
 end
 
 pll pll (
   .refclk(CLK_50M),
-  .rst(reset_pll),
+  .rst(rst_pll),
   .locked(locked),
   .outclk_0(clk_sys),
   .outclk_1(clk_sdram),
@@ -216,38 +211,23 @@ pll pll (
 assign DDRAM_CLK = clk_sys;
 assign SDRAM_CLK = clk_sdram;
 
-always @(posedge clk_sys or negedge reset_sys) begin
-  reg r1;
-  if (!reset_sys) begin
-    r1 <= 0;
-    reset_sys_n <= 0;
-  end else begin
-    r1 <= 1;
-    reset_sys_n <= r1;
-  end
-end
+reset_ctrl reset_sys_ctrl (
+  .clk(clk_sys),
+  .rst_i(RESET | ~locked),
+  .rst_o(rst_sys)
+);
 
-always @(posedge clk_video or negedge reset_video) begin
-  reg r1;
-  if (!reset_video) begin
-    r1 <= 0;
-    reset_video_n <= 0;
-  end else begin
-    r1 <= 1;
-    reset_video_n <= r1;
-  end
-end
+reset_ctrl reset_video_ctrl (
+  .clk(clk_video),
+  .rst_i(RESET | ~locked),
+  .rst_o(rst_video)
+);
 
-always @(posedge clk_cpu or negedge reset_cpu) begin
-  reg r1;
-  if (!reset_cpu) begin
-    r1 <= 0;
-    reset_cpu_n <= 0;
-  end else begin
-    r1 <= 1;
-    reset_cpu_n <= r1;
-  end
-end
+reset_ctrl reset_cpu_ctrl (
+  .clk(clk_cpu),
+  .rst_i(RESET | status[0] | buttons[1] | ~locked),
+  .rst_o(rst_cpu)
+);
 
 ////////////////////////////////////////////////////////////////////////////////
 // HPS IO
@@ -439,13 +419,13 @@ assign sdram_dout = SDRAM_DQ;
 Main main (
   // Fast clock domain
   .clock(clk_sys),
-  .reset(~reset_sys_n),
+  .reset(rst_sys),
   // Video clock domain
   .io_videoClock(clk_video),
-  .io_videoReset(~reset_video_n),
+  .io_videoReset(rst_video),
   // CPU clock domain
   .io_cpuClock(clk_cpu),
-  .io_cpuReset(~reset_cpu_n),
+  .io_cpuReset(rst_cpu),
   // Options
   .io_options_sdram(sdram_available & ~status[8]),
   .io_options_offset_x(status[27:24]),
