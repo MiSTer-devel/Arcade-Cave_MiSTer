@@ -173,16 +173,13 @@ localparam CONF_STR = {
 
 wire locked;
 wire clk_sys, clk_sdram, clk_video, clk_cpu;
+wire reset_sys = ~(RESET | ~locked);
+wire reset_video = ~(RESET | ~locked);
+wire reset_cpu = ~(RESET | status[0] | buttons[1] | ~locked);
 reg  reset_pll = 0;
-wire reset_sys = RESET | ~locked;
-reg  reset_sys_0 = 1;
-reg  reset_sys_1 = 1;
-wire reset_video = RESET | ~locked;
-reg  reset_video_0 = 1;
-reg  reset_video_1 = 1;
-wire reset_cpu = RESET | status[0] | buttons[1] | ~locked;
-reg  reset_cpu_0 = 1;
-reg  reset_cpu_1 = 1;
+reg  reset_sys_n;
+reg  reset_video_n;
+reg  reset_cpu_n;
 
 // Resets the PLL if it loses lock
 always @(posedge clk_sys or posedge RESET) begin
@@ -219,19 +216,37 @@ pll pll (
 assign DDRAM_CLK = clk_sys;
 assign SDRAM_CLK = clk_sdram;
 
-always @(posedge clk_sys) begin
-  reset_sys_0 <= reset_sys;
-  reset_sys_1 <= reset_sys_0;
+always @(posedge clk_sys or negedge reset_sys) begin
+  reg r1;
+  if (!reset_sys) begin
+    r1 <= 0;
+    reset_sys_n <= 0;
+  end else begin
+    r1 <= 1;
+    reset_sys_n <= r1;
+  end
 end
 
-always @(posedge clk_video) begin
-  reset_video_0 <= reset_video;
-  reset_video_1 <= reset_video_0;
+always @(posedge clk_video or negedge reset_video) begin
+  reg r1;
+  if (!reset_video) begin
+    r1 <= 0;
+    reset_video_n <= 0;
+  end else begin
+    r1 <= 1;
+    reset_video_n <= r1;
+  end
 end
 
-always @(posedge clk_cpu) begin
-  reset_cpu_0 <= reset_cpu;
-  reset_cpu_1 <= reset_cpu_0;
+always @(posedge clk_cpu or negedge reset_cpu) begin
+  reg r1;
+  if (!reset_cpu) begin
+    r1 <= 0;
+    reset_cpu_n <= 0;
+  end else begin
+    r1 <= 1;
+    reset_cpu_n <= r1;
+  end
 end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -424,13 +439,13 @@ assign sdram_dout = SDRAM_DQ;
 Main main (
   // Fast clock domain
   .clock(clk_sys),
-  .reset(reset_sys_1),
+  .reset(~reset_sys_n),
   // Video clock domain
   .io_videoClock(clk_video),
-  .io_videoReset(reset_video_1),
+  .io_videoReset(~reset_video_n),
   // CPU clock domain
   .io_cpuClock(clk_cpu),
-  .io_cpuReset(reset_cpu_1),
+  .io_cpuReset(~reset_cpu_n),
   // Options
   .io_options_sdram(sdram_available & ~status[8]),
   .io_options_offset_x(status[27:24]),
