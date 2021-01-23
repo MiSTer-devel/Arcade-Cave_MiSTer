@@ -46,6 +46,8 @@ class SpriteBlitter extends Module {
   val io = IO(new Bundle {
     /** Game config port */
     val gameConfig = Input(GameConfig())
+    /** Options port */
+    val options = OptionsIO()
     /** Sprite info port */
     val spriteInfo = DeqIO(new Sprite)
     /** Pixel data port */
@@ -122,15 +124,15 @@ class SpriteBlitter extends Module {
   val done = ShiftRegister(spriteDone, 2, false.B, true.B)
 
   // Set priority data
-  val priorityWriteData = ShiftRegister(spriteInfoReg.priority, 2)
+  val priorityWriteData = ShiftRegister(spriteInfoReg.priority, 3)
 
-  // Set frame buffer data. The transparency flag must be delayed by one cycle, as for the colors
-  // (since the colors come from the palette RAM they arrive one cycle later).
-  val frameBufferWrite = valid &&
-                         GPU.isVisible(stage2Pos) &&
-                         !RegNext(paletteEntryReg.isTransparent)
-  val frameBufferAddr = stage2Pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0) ##
-                        stage2Pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
+  // The transparency flag must be delayed by one cycle, since the colors come from the palette RAM
+  // they arrive one cycle later.
+  val visible = GPU.isVisible(stage2Pos) && !RegNext(paletteEntryReg.isTransparent)
+
+  // Set frame buffer signals
+  val frameBufferWrite = RegNext(valid && visible)
+  val frameBufferAddr = RegNext(GPU.transformAddr(stage2Pos, io.options.flip, io.options.rotate))
 
   // Outputs
   io.spriteInfo.ready := updateSpriteInfo
@@ -146,7 +148,7 @@ class SpriteBlitter extends Module {
   io.frameBuffer.wr := frameBufferWrite
   io.frameBuffer.addr := frameBufferAddr
   io.frameBuffer.mask := 0.U
-  io.frameBuffer.din := io.paletteRam.dout
+  io.frameBuffer.din := RegNext(io.paletteRam.dout)
   io.done := done
 }
 

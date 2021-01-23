@@ -34,6 +34,7 @@ package cave.gpu
 
 import axon.mem._
 import axon.util.Counter
+import axon.types.OptionsIO
 import cave.Config
 import cave.types._
 import chisel3._
@@ -44,6 +45,8 @@ class LayerProcessor extends Module {
   val io = IO(new Bundle {
     /** Game config port */
     val gameConfig = Input(GameConfig())
+    /** Options port */
+    val options = OptionsIO()
     /** Start flag */
     val start = Input(Bool())
     /** Done flag */
@@ -100,6 +103,7 @@ class LayerProcessor extends Module {
   // Layer pipeline
   val layerPipeline = withReset(stateReg === State.idle) { Module(new LayerPipeline) }
   layerPipeline.io.gameConfig <> io.gameConfig
+  layerPipeline.io.options <> io.options
   layerPipeline.io.layerIndex := io.layerIndex
   layerPipeline.io.lastLayerPriority := lastLayerPriorityReg
   layerPipeline.io.layerInfo.bits := layerInfoReg
