@@ -43,6 +43,7 @@ trait VideoDMATestHelpers {
 class VideoDMATest extends FlatSpec with ChiselScalatestTester with Matchers with VideoDMATestHelpers {
   it should "deassert the ready signal during a transfer" in {
     test(mkDMA()) { dut =>
+      dut.io.enable.poke(true.B)
       dut.io.pixelData.ready.poke(true.B)
       dut.io.ready.expect(true.B)
       dut.clock.step()
@@ -55,6 +56,7 @@ class VideoDMATest extends FlatSpec with ChiselScalatestTester with Matchers wit
 
   it should "assert the read enable signal at the start of a transfer" in {
     test(mkDMA()) { dut =>
+      dut.io.enable.poke(true.B)
       dut.io.pixelData.ready.poke(true.B)
       dut.io.ddr.rd.expect(true.B)
       dut.clock.step()
@@ -62,8 +64,18 @@ class VideoDMATest extends FlatSpec with ChiselScalatestTester with Matchers wit
     }
   }
 
-  it should "not start a transfer while the wait signal is asserted" in {
+  it should "not start a transfer when the enable signal is deasserted" in {
     test(mkDMA()) { dut =>
+      dut.io.pixelData.ready.poke(true.B)
+      dut.io.ddr.rd.expect(false.B)
+      dut.io.enable.poke(true.B)
+      dut.io.ddr.rd.expect(true.B)
+    }
+  }
+
+  it should "not start a transfer when the wait signal is asserted" in {
+    test(mkDMA()) { dut =>
+      dut.io.enable.poke(true.B)
       dut.io.pixelData.ready.poke(true.B)
       dut.io.ddr.waitReq.poke(true.B)
       dut.io.ddr.rd.expect(true.B)
@@ -77,6 +89,7 @@ class VideoDMATest extends FlatSpec with ChiselScalatestTester with Matchers wit
 
   it should "apply the frame buffer index to the DDR address offset" in {
     test(mkDMA()) { dut =>
+      dut.io.enable.poke(true.B)
       dut.io.ddr.addr.expect(0x01.U)
       dut.io.frameBufferIndex.poke(1.U)
       dut.io.ddr.addr.expect(0x41.U)
@@ -85,6 +98,7 @@ class VideoDMATest extends FlatSpec with ChiselScalatestTester with Matchers wit
 
   it should "read frame buffer data from DDR memory" in {
     test(mkDMA()) { dut =>
+      dut.io.enable.poke(true.B)
       dut.io.pixelData.ready.poke(true.B)
 
       // Burst 1

@@ -51,6 +51,8 @@ class VideoDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
   private val NUM_BURSTS = numWords / burstLength
 
   val io = IO(new Bundle {
+    /** Asserted when the DMA controller is enabled */
+    val enable = Input(Bool())
     /** Asserted when the DMA controller is ready */
     val ready = Output(Bool())
     /** The index of the frame buffer to read */
@@ -64,11 +66,11 @@ class VideoDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
   // Registers
   val busyReg = RegInit(false.B)
 
+  // Control signals
+  val read = io.enable && io.pixelData.ready && !busyReg
+
   // Counters
   val (burstCounter, burstCounterDone) = Counter.static(NUM_BURSTS, enable = io.ddr.burstDone)
-
-  // Control signals
-  val read = io.pixelData.ready && !busyReg
 
   // Calculate the DDR address
   val ddrAddr = {

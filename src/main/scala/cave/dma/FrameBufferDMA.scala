@@ -53,6 +53,8 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
   private val NUM_BURSTS = numWords / burstLength
 
   val io = IO(new Bundle {
+    /** Asserted when the DMA controller is enabled */
+    val enable = Input(Bool())
     /** Start the transfer */
     val start = Input(Bool())
     /** Asserted when the DMA controller is ready */
@@ -68,15 +70,13 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
   // Registers
   val busyReg = RegInit(false.B)
 
-  // Asserted when the write will succeed
-  val effectiveWrite = busyReg && !io.ddr.waitReq
+  // Control signals
+  val write = io.enable && busyReg
+  val effectiveWrite = write && !io.ddr.waitReq
 
   // Counters
   val (totalCounter, totalCounterDone) = Counter.static(numWords, enable = effectiveWrite)
   val (burstCounter, burstCounterDone) = Counter.static(NUM_BURSTS, enable = io.ddr.burstDone)
-
-  // Control signals
-  val write = !io.ddr.waitReq && busyReg
 
   // Calculate the DDR address
   val ddrAddr = {
@@ -100,7 +100,7 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
   io.ready := !busyReg
   io.frameBufferDMA.rd := true.B
   io.frameBufferDMA.addr := Mux(effectiveWrite, totalCounter +& 1.U, totalCounter)
-  io.ddr.wr := busyReg
+  io.ddr.wr := write
   io.ddr.addr := ddrAddr
   io.ddr.mask := Fill(io.ddr.maskWidth, 1.U)
   io.ddr.burstLength := burstLength.U
