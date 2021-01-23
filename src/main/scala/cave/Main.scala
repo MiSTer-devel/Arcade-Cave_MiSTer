@@ -80,21 +80,24 @@ class Main extends Module {
     val led = mister.LEDIO()
   })
 
-  // The game configuration register is latched when it is written to the download port (i.e. the game index is
-  // set by a MRA file).
+  // The download done register is latched when the ROM download has completed.
+  val downloadDoneReg = Util.latchSync(Util.falling(io.download.cs))
+
+  // The game configuration register is latched when data is written to the download port (i.e. the
+  // game index is set by the MRA file).
   val gameConfigReg = {
-    val reg = Reg(GameConfig())
+    val gameConfig = Reg(GameConfig())
     val latched = RegInit(false.B)
     when(io.download.cs && io.download.wr && io.download.index === DownloadIO.GAME_INDEX.U) {
-      reg := GameConfig(io.download.dout(OptionsIO.GAME_INDEX_WIDTH - 1, 0))
+      gameConfig := GameConfig(io.download.dout(OptionsIO.GAME_INDEX_WIDTH - 1, 0))
       latched := true.B
     }
     // Default to the game configuration set in the options
     when(Util.falling(io.download.cs) && !latched) {
-      reg := GameConfig(io.options.gameIndex)
+      gameConfig := GameConfig(io.options.gameIndex)
       latched := true.B
     }
-    reg
+    gameConfig
   }
 
   // DDR controller
@@ -129,6 +132,7 @@ class Main extends Module {
     numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
+  frameBufferDMA.io.enable := downloadDoneReg
   frameBufferDMA.io.frameBufferIndex := videoSys.io.frameBufferDMAIndex
   frameBufferDMA.io.ddr <> mem.io.frameBufferDMA
 
@@ -138,6 +142,7 @@ class Main extends Module {
     numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
+  videoDMA.io.enable := downloadDoneReg
   videoDMA.io.frameBufferIndex := videoSys.io.videoDMAIndex
   videoDMA.io.pixelData <> videoSys.io.pixelData
   videoDMA.io.ddr <> mem.io.videoDMA

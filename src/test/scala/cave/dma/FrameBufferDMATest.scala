@@ -43,6 +43,7 @@ trait FrameBufferDMATestHelpers {
 class FrameBufferDMATest extends FlatSpec with ChiselScalatestTester with Matchers with FrameBufferDMATestHelpers {
   it should "deassert the ready signal during a transfer" in {
     test(mkDMA()) { dut =>
+      dut.io.enable.poke(true.B)
       dut.io.start.poke(true.B)
       dut.io.ready.expect(true.B)
       dut.clock.step()
@@ -56,6 +57,7 @@ class FrameBufferDMATest extends FlatSpec with ChiselScalatestTester with Matche
 
   it should "assert the write enable signal during a transfer" in {
     test(mkDMA()) { dut =>
+      dut.io.enable.poke(true.B)
       dut.io.start.poke(true.B)
       dut.clock.step()
       dut.io.start.poke(false.B)
@@ -66,8 +68,20 @@ class FrameBufferDMATest extends FlatSpec with ChiselScalatestTester with Matche
     }
   }
 
-  it should "not increment the address while the wait signal is asserted" in {
+  it should "not start a transfer when the enable signal is deasserted" in {
     test(mkDMA()) { dut =>
+      dut.io.start.poke(true.B)
+      dut.clock.step()
+      dut.io.ddr.wr.expect(false.B)
+      dut.io.enable.poke(true.B)
+      dut.clock.step()
+      dut.io.ddr.wr.expect(true.B)
+    }
+  }
+
+  it should "not increment the address when the wait signal is asserted" in {
+    test(mkDMA()) { dut =>
+      dut.io.enable.poke(true.B)
       dut.io.start.poke(true.B)
       dut.io.ddr.waitReq.poke(true.B)
       dut.io.frameBufferDMA.rd.expect(true.B)
@@ -84,6 +98,7 @@ class FrameBufferDMATest extends FlatSpec with ChiselScalatestTester with Matche
 
   it should "pack the pixel data" in {
     test(mkDMA()) { dut =>
+      dut.io.enable.poke(true.B)
       dut.io.start.poke(true.B)
       dut.clock.step()
       dut.io.frameBufferDMA.dout.poke(0x112233445566L.U)
@@ -93,6 +108,7 @@ class FrameBufferDMATest extends FlatSpec with ChiselScalatestTester with Matche
 
   it should "apply the frame buffer index to the DDR address offset" in {
     test(mkDMA()) { dut =>
+      dut.io.enable.poke(true.B)
       dut.io.ddr.addr.expect(0x01.U)
       dut.io.frameBufferIndex.poke(1.U)
       dut.io.ddr.addr.expect(0x41.U)
@@ -101,6 +117,7 @@ class FrameBufferDMATest extends FlatSpec with ChiselScalatestTester with Matche
 
   it should "write frame buffer data to DDR memory" in {
     test(mkDMA()) { dut =>
+      dut.io.enable.poke(true.B)
       dut.io.start.poke(true.B)
       dut.io.frameBufferDMA.rd.expect(true.B)
       dut.io.frameBufferDMA.addr.expect(0.U)
