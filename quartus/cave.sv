@@ -229,6 +229,32 @@ reset_ctrl reset_cpu_ctrl (
   .rst_o(rst_cpu)
 );
 
+f2sdram_safe_terminator f2sdram_safe_terminator (
+  .clk(clk_sys),
+  .rst_req_sync(rst_sys),
+
+  .waitrequest_master(DDRAM_BUSY),
+  .burstcount_master(DDRAM_BURSTCNT),
+  .address_master(DDRAM_ADDR),
+  .readdata_master(DDRAM_DOUT),
+  .readdatavalid_master(DDRAM_DOUT_READY),
+  .read_master(DDRAM_RD),
+  .writedata_master(DDRAM_DIN),
+  .byteenable_master(DDRAM_BE),
+  .write_master(DDRAM_WE),
+
+  .waitrequest_slave(CORE_DDRAM_BUSY),
+  .burstcount_slave(CORE_DDRAM_BURSTCNT),
+  .address_slave(CORE_DDRAM_ADDR),
+  .readdata_slave(CORE_DDRAM_DOUT),
+  .readdatavalid_slave(CORE_DDRAM_DOUT_READY),
+  .read_slave(CORE_DDRAM_RD),
+  .writedata_slave(CORE_DDRAM_DIN),
+  .byteenable_slave(CORE_DDRAM_BE),
+  .write_slave(CORE_DDRAM_WE)
+);
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // HPS IO
 ////////////////////////////////////////////////////////////////////////////////
@@ -412,9 +438,19 @@ wire        sdram_oe;
 wire [15:0] sdram_din;
 wire [15:0] sdram_dout;
 
-assign DDRAM_ADDR = ddr_addr[31:3];
+wire DDRAM_ADDR_CORE = ddr_addr[31:3];
 assign SDRAM_DQ = sdram_oe ? sdram_din : 16'bZ;
 assign sdram_dout = SDRAM_DQ;
+
+wire         CORE_DDRAM_BUSY;
+wire   [7:0] CORE_DDRAM_BURSTCNT;
+wire  [28:0] CORE_DDRAM_ADDR = ddr_addr[31:3];
+wire  [63:0] CORE_DDRAM_DOUT;
+wire         CORE_DDRAM_DOUT_READY;
+wire         CORE_DDRAM_RD;
+wire  [63:0] CORE_DDRAM_DIN;
+wire   [7:0] CORE_DDRAM_BE;
+wire         CORE_DDRAM_WE;
 
 Main main (
   // Fast clock domain
@@ -475,15 +511,15 @@ Main main (
   .io_frameBuffer_lowLat(FB_LL),
   .io_frameBuffer_forceBlank(FB_FORCE_BLANK),
   // DDR
-  .io_ddr_rd(DDRAM_RD),
-  .io_ddr_wr(DDRAM_WE),
+  .io_ddr_rd(CORE_DDRAM_RD),
+  .io_ddr_wr(CORE_DDRAM_WE),
   .io_ddr_addr(ddr_addr),
-  .io_ddr_mask(DDRAM_BE),
-  .io_ddr_din(DDRAM_DIN),
-  .io_ddr_dout(DDRAM_DOUT),
-  .io_ddr_waitReq(DDRAM_BUSY),
-  .io_ddr_valid(DDRAM_DOUT_READY),
-  .io_ddr_burstLength(DDRAM_BURSTCNT),
+  .io_ddr_mask(CORE_DDRAM_BE),
+  .io_ddr_din(CORE_DDRAM_DIN),
+  .io_ddr_dout(CORE_DDRAM_DOUT),
+  .io_ddr_waitReq(CORE_DDRAM_BUSY),
+  .io_ddr_valid(CORE_DDRAM_DOUT_READY),
+  .io_ddr_burstLength(CORE_DDRAM_BURSTCNT),
   // SDRAM
   .io_sdram_cke(SDRAM_CKE),
   .io_sdram_cs_n(SDRAM_nCS),

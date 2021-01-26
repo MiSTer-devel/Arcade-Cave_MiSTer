@@ -10,6 +10,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE cave.sv
 set_global_assignment -name VERILOG_FILE rtl/ChiselTop.v
 set_global_assignment -name VERILOG_FILE rtl/jteeprom/hdl/jt9346.v
 set_global_assignment -name VERILOG_FILE rtl/reset_ctrl.v
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/f2sdram_safe_terminator.sv
 set_global_assignment -name VHDL_FILE rtl/mem/dual_port_ram.vhd
 set_global_assignment -name VHDL_FILE rtl/mem/single_port_ram.vhd
 set_global_assignment -name VHDL_FILE rtl/mem/true_dual_port_ram.vhd
