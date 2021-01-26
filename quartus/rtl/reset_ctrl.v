@@ -35,23 +35,21 @@
  *  SOFTWARE.
  */
 
-// Asynchronously asserts and synchronously deasserts a reset signal.
+// Synchronize async reset signal.
 module reset_ctrl (
   input      clk,
   input      rst_i,
-  output reg rst_o
+  output     rst_o
 );
 
-reg r1;
+(* altera_attribute = {"-name SYNCHRONIZER_IDENTIFICATION FORCED_IF_ASYNCHRONOUS"} *) reg r1 = 1'b1;
+(* altera_attribute = {"-name SYNCHRONIZER_IDENTIFICATION FORCED_IF_ASYNCHRONOUS"} *) reg r2 = 1'b1;
 
-always @(posedge clk or posedge rst_i) begin
-  if (rst_i) begin
-    r1 <= 1;
-    rst_o <= 1;
-  end else begin
-    r1 <= 0;
-    rst_o <= r1;
-  end
+always @(posedge clk) begin
+  r1 <= rst_i;
+  r2 <= r1;
 end
+
+assign rst_o = r2;
 
 endmodule
