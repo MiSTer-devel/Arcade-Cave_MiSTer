@@ -150,6 +150,8 @@ class SpriteBlitter extends Module {
   io.frameBuffer.mask := 0.U
   io.frameBuffer.din := RegNext(io.paletteRam.dout)
   io.done := done
+
+  printf(p"SpriteBlitter(paletteEntry: $paletteEntryReg, valid: $valid, visible: $visible, pos: $stage2Pos)\n")
 }
 
 object SpriteBlitter {

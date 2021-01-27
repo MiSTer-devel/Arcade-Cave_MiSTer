@@ -66,10 +66,9 @@ class PaletteEntry extends Bundle {
    * @param numColors The number of colors per palette.
    */
   def toAddr(numColors: UInt): UInt =
-    MuxLookup(numColors, 0.U, Seq(
+    MuxLookup(numColors, palette ## color, Seq(
       16.U -> palette ## color(3, 0),
-      64.U -> palette ## color(5, 0),
-      256.U -> palette ## color(7, 0)
+      64.U -> palette ## color(5, 0)
     ))
 }
 
