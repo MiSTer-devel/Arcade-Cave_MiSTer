@@ -35,11 +35,11 @@
  *  SOFTWARE.
  */
 
-// Synchronize async reset signal.
+// Synchronizes an asynchronous reset signal to a target clock domain.
 module reset_ctrl (
-  input      clk,
-  input      rst_i,
-  output     rst_o
+  input  clk,
+  input  rst_i,
+  output rst_o
 );
 
 (* altera_attribute = {"-name SYNCHRONIZER_IDENTIFICATION FORCED_IF_ASYNCHRONOUS"} *) reg r1 = 1'b1;
