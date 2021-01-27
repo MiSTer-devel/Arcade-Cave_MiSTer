@@ -156,7 +156,7 @@ class SpriteBlitter extends Module {
 
 object SpriteBlitter {
   /**
-   * Decodes a 8x8 tile from the given pixel data.
+   * Decodes a 16x16 tile from the given pixel data.
    *
    * Sprite tile pixels are encoded as 4-bit words.
    *
@@ -164,5 +164,5 @@ object SpriteBlitter {
    */
   def decodeTile(data: Bits): Seq[Bits] =
     Seq(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12)
-      .map(Util.decode(data, 16, 4).apply)
+      .map(Util.decode(data, Sprite.TILE_SIZE, 4).apply)
 }

@@ -90,7 +90,7 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   val spriteInfoTaken = RegInit(false.B)
   val burstTodo = RegInit(false.B)
   val burstReady = RegInit(false.B)
-  val burstCounterMax = RegEnable(spriteInfo.tileSize.x * spriteInfo.tileSize.y, updateSpriteInfo)
+  val burstCounterMax = RegEnable(spriteInfo.cols * spriteInfo.rows, updateSpriteInfo)
 
   // Tile FIFO
   val tileFifo = Module(new TileFIFO)

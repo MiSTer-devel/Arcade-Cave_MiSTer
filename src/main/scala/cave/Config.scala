@@ -100,11 +100,6 @@ object Config {
   /** The width of the pulse generated when a player presses the coin button */
   val PLAYER_COIN_PULSE_WIDTH = (100000000 / CPU_CLOCK_PERIOD).ceil.toInt // 100ms
 
-  val SPRITE_CODE_WIDTH = 18
-  val SPRITE_POS_WIDTH = 10
-  val SPRITE_TILE_SIZE_WIDTH = 8
-  val SPRITE_ZOOM_WIDTH = 16
-
   val FRAME_BUFFER_OFFSET = 0x02400000
   val DDR_DOWNLOAD_OFFSET = 0x30000000
 

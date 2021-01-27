@@ -45,26 +45,41 @@ class Sprite extends Bundle {
   /** Color code */
   val colorCode = UInt(Config.COLOR_CODE_WIDTH.W)
   /** Tile code */
-  val code = UInt(Config.SPRITE_CODE_WIDTH.W)
+  val code = UInt(Sprite.CODE_WIDTH.W)
   /** Horizontal flip */
   val flipX = Bool()
   /** Vertical flip */
   val flipY = Bool()
   /** Position */
-  val pos = new SVec2(Config.SPRITE_POS_WIDTH)
-  /** Tile size */
-  val tileSize = new UVec2(Config.SPRITE_TILE_SIZE_WIDTH)
+  val pos = new SVec2(Sprite.POS_WIDTH)
+  /** The number of sprite tile columns */
+  val cols = UInt(Sprite.COLS_WIDTH.W)
+  /** The number of sprite tile rows */
+  val rows = UInt(Sprite.ROWS_WIDTH.W)
   /** Zoom */
-  val zoom = new UVec2(Config.SPRITE_ZOOM_WIDTH)
+  val zoom = new UVec2(Sprite.ZOOM_WIDTH)
 
   /** Sprite size in pixels */
-  def size: UVec2 = tileSize << log2Ceil(Config.LARGE_TILE_SIZE).U
+  def size: UVec2 = UVec2(cols, rows) << log2Ceil(Sprite.TILE_SIZE).U
 
   /** Asserted when the sprite is enabled */
-  def isEnabled: Bool = tileSize.x =/= 0.U && tileSize.y =/= 0.U
+  def isEnabled: Bool = cols =/= 0.U && rows =/= 0.U
 }
 
 object Sprite {
+  /** The size of a sprite tile in pixels */
+  val TILE_SIZE = 16
+  /** The width of the sprite code */
+  val CODE_WIDTH = 18
+  /** The width of the sprite position */
+  val POS_WIDTH = 10
+  /** The width of the sprite tile columns value */
+  val COLS_WIDTH = 8
+  /** The width of the sprite tile rows value */
+  val ROWS_WIDTH = 8
+  /** The width of the sprite zoom */
+  val ZOOM_WIDTH = 16
+
   /**
    * Decodes a sprite from the given data.
    *
@@ -91,8 +106,8 @@ object Sprite {
    *    1 | xxxx xxxx xxxx xxxx | code lo
    *    2 | ---- --xx xxxx xxxx | x position
    *    3 | ---- --xx xxxx xxxx | y position
-   *    4 | xxxx xxxx ---- ---- | tile size x
-   *      | ---- ---- xxxx xxxx | tile size y
+   *    4 | xxxx xxxx ---- ---- | tile columns
+   *      | ---- ---- xxxx xxxx | tile rows
    * }}}
    */
   private def decodeSprite(words: Seq[Bits]): Sprite = {
@@ -103,7 +118,8 @@ object Sprite {
     sprite.flipX := words(0)(3)
     sprite.flipY := words(0)(2)
     sprite.pos := SVec2(words(2)(9, 0).asSInt, words(3)(9, 0).asSInt)
-    sprite.tileSize := UVec2(words(4)(15, 8), words(4)(7, 0))
+    sprite.cols := words(4)(15, 8)
+    sprite.rows := words(4)(7, 0)
     sprite.zoom := UVec2.zero
     sprite
   }
@@ -124,8 +140,8 @@ object Sprite {
    *    3 | xxxx xxxx xxxx xxxx | code lo
    *    4 | xxxx xxxx xxxx xxxx | zoom x
    *    5 | xxxx xxxx xxxx xxxx | zoom y
-   *    6 | xxxx xxxx ---- ---- | tile size x
-   *      | ---- ---- xxxx xxxx | tile size y
+   *    6 | xxxx xxxx ---- ---- | tile columns
+   *      | ---- ---- xxxx xxxx | tile rows
    * }}}
    */
   private def decodeZoomedSprite(words: Seq[Bits]): Sprite = {
@@ -136,7 +152,8 @@ object Sprite {
     sprite.flipX := words(2)(3)
     sprite.flipY := words(2)(2)
     sprite.pos := SVec2(words(0)(9, 0).asSInt, words(1)(9, 0).asSInt)
-    sprite.tileSize := UVec2(words(6)(15, 8), words(6)(7, 0))
+    sprite.cols := words(6)(15, 8)
+    sprite.rows := words(6)(7, 0)
     sprite.zoom := UVec2(words(4)(15, 0), words(5)(15, 0))
     sprite
   }

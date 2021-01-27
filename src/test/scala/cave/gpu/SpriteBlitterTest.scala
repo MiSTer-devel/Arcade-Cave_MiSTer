@@ -68,8 +68,8 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
   it should "copy pixel data to the frame buffer" in {
     test(new SpriteBlitter) { dut =>
       dut.io.spriteInfo.valid.poke(true.B)
-      dut.io.spriteInfo.bits.tileSize.x.poke(1.U)
-      dut.io.spriteInfo.bits.tileSize.y.poke(1.U)
+      dut.io.spriteInfo.bits.cols.poke(1.U)
+      dut.io.spriteInfo.bits.rows.poke(1.U)
       dut.io.pixelData.valid.poke(true.B)
       dut.io.pixelData.bits.poke("h1111111111111111".U)
       dut.io.paletteRam.dout.poke(1.U)
@@ -101,8 +101,8 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
   it should "allow horizontal flipping" in {
     test(new SpriteBlitter) { dut =>
       dut.io.spriteInfo.valid.poke(true.B)
-      dut.io.spriteInfo.bits.tileSize.x.poke(1.U)
-      dut.io.spriteInfo.bits.tileSize.y.poke(1.U)
+      dut.io.spriteInfo.bits.cols.poke(1.U)
+      dut.io.spriteInfo.bits.rows.poke(1.U)
       dut.io.spriteInfo.bits.flipX.poke(true.B)
       dut.io.pixelData.valid.poke(true.B)
       dut.io.pixelData.bits.poke("h1111111111111111".U)
@@ -135,8 +135,8 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
   it should "allow vertical flipping" in {
     test(new SpriteBlitter) { dut =>
       dut.io.spriteInfo.valid.poke(true.B)
-      dut.io.spriteInfo.bits.tileSize.x.poke(1.U)
-      dut.io.spriteInfo.bits.tileSize.y.poke(1.U)
+      dut.io.spriteInfo.bits.cols.poke(1.U)
+      dut.io.spriteInfo.bits.rows.poke(1.U)
       dut.io.spriteInfo.bits.flipY.poke(true.B)
       dut.io.pixelData.valid.poke(true.B)
       dut.io.pixelData.bits.poke("h1111111111111111".U)
