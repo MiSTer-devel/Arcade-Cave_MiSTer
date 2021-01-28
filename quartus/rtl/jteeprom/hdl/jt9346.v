@@ -45,6 +45,74 @@ wire [ 7:0] full_op = { op, addr };
 reg  [ 5:0] st;
 reg  [ 5:0] cnt;
 
+initial
+begin
+  mem[ 0] = 16'h000c;
+  mem[ 1] = 16'h1111;
+  mem[ 2] = 16'hffff;
+  mem[ 3] = 16'hffff;
+  mem[ 4] = 16'h0004;
+  mem[ 5] = 16'h1111;
+  mem[ 6] = 16'hffff;
+  mem[ 7] = 16'hffff;
+  mem[ 8] = 16'hffff;
+  mem[ 9] = 16'hffff;
+  mem[10] = 16'hffff;
+  mem[11] = 16'hffff;
+  mem[12] = 16'hffff;
+  mem[13] = 16'hffff;
+  mem[14] = 16'hffff;
+  mem[15] = 16'hffff;
+  mem[16] = 16'hffff;
+  mem[17] = 16'hffff;
+  mem[18] = 16'hffff;
+  mem[19] = 16'hffff;
+  mem[20] = 16'hffff;
+  mem[21] = 16'hffff;
+  mem[22] = 16'hffff;
+  mem[23] = 16'hffff;
+  mem[24] = 16'hffff;
+  mem[25] = 16'hffff;
+  mem[26] = 16'hffff;
+  mem[27] = 16'hffff;
+  mem[28] = 16'hffff;
+  mem[29] = 16'hffff;
+  mem[30] = 16'hffff;
+  mem[31] = 16'hffff;
+  mem[32] = 16'hffff;
+  mem[33] = 16'hffff;
+  mem[34] = 16'hffff;
+  mem[35] = 16'hffff;
+  mem[36] = 16'hffff;
+  mem[37] = 16'hffff;
+  mem[38] = 16'hffff;
+  mem[39] = 16'hffff;
+  mem[40] = 16'hffff;
+  mem[41] = 16'hffff;
+  mem[42] = 16'hffff;
+  mem[43] = 16'hffff;
+  mem[44] = 16'hffff;
+  mem[45] = 16'hffff;
+  mem[46] = 16'hffff;
+  mem[47] = 16'hffff;
+  mem[48] = 16'hffff;
+  mem[49] = 16'hffff;
+  mem[50] = 16'hffff;
+  mem[51] = 16'hffff;
+  mem[52] = 16'hffff;
+  mem[53] = 16'hffff;
+  mem[54] = 16'hffff;
+  mem[55] = 16'hffff;
+  mem[56] = 16'hffff;
+  mem[57] = 16'hffff;
+  mem[58] = 16'hffff;
+  mem[59] = 16'hffff;
+  mem[60] = 16'hffff;
+  mem[61] = 16'hffff;
+  mem[62] = 16'hffff;
+  mem[63] = 16'hffff;
+end
+
 localparam IDLE=6'd1, RX=6'd2, READ=6'd4, WRITE=6'd8, WRITE_ALL=6'h10, PRE_READ=6'h20;
 
 always @(posedge clk) last_sclk <= sclk;
@@ -72,7 +140,7 @@ always @(posedge clk, posedge rst) begin
         erase_en <= 1'b0;
         cnt      <= 0;
         newdata  <= 16'hffff;
-        st       <= WRITE_ALL;
+        st       <= IDLE;
         sdo      <= 1'b0;
     end else begin
         case( st )
