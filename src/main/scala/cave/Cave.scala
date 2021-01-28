@@ -209,17 +209,16 @@ class Cave extends Module {
     // Set vertical blank IRQ
     when(Util.rising(vBlank)) { vBlankIRQ := true.B }
 
-    // Set memory interface defaults
+    // Set memory interface defaults. The actual values are assigned by the memory map for different
+    // games.
     layer2Regs.io.mem.default()
     layer2Ram.io.portA.default()
     paletteRam.io.portA.default()
     eeprom.io.mem.default()
 
     // Set input ports
-    //
-    // FIXME: The EEPROM output data shouldn't need to be inverted.
     val input0 = "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1)
-    val input1 = "b1111".U ## ~eeprom.io.dout ## "b11".U ## ~encodePlayer(io.joystick.player2)
+    val input1 = "b1111".U ## eeprom.io.dout ## "b11".U ## ~encodePlayer(io.joystick.player2)
 
     // Memory map
     val map = new MemMap(cpu.io)
