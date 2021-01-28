@@ -73,7 +73,7 @@ class SpriteBlitter extends Module {
   // Tile PISO
   val tilePiso = Module(new PISO(Bits(Config.LARGE_TILE_BPP.W), Config.LARGE_TILE_SIZE))
   tilePiso.io.wr := readFifo
-  tilePiso.io.din := VecInit(SpriteBlitter.decodeTile(io.pixelData.bits))
+  tilePiso.io.din := SpriteBlitter.decodeTile(io.gameConfig.spriteFormat, io.pixelData.bits)
 
   // Set PISO flags
   val pisoEmpty = tilePiso.io.isEmpty
@@ -156,13 +156,22 @@ class SpriteBlitter extends Module {
 
 object SpriteBlitter {
   /**
-   * Decodes a 16x16 tile from the given pixel data.
-   *
-   * Sprite tile pixels are encoded as 4-bit words.
+   * Decodes a sprite tile from the given pixel data.
    *
    * @param data The pixel data.
+   * @param format The tile format.
+   * @return A vector containing the decoded tile pixels.
    */
-  def decodeTile(data: Bits): Seq[Bits] =
+  def decodeTile(format: UInt, data: Bits): Vec[Bits] =
+    MuxLookup(format, VecInit(decodeSpriteTile(data)), Seq(
+      GameConfig.TILE_FORMAT_SPRITE_MSB.U -> VecInit(decodeSpriteMSBTile(data))
+    ))
+
+  private def decodeSpriteTile(data: Bits): Seq[Bits] =
+    Seq(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+      .map(Util.decode(data, 16, 4).apply)
+
+  private def decodeSpriteMSBTile(data: Bits): Seq[Bits] =
     Seq(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12)
-      .map(Util.decode(data, Sprite.TILE_SIZE, 4).apply)
+      .map(Util.decode(data, 16, 4).apply)
 }
