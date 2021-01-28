@@ -130,8 +130,8 @@ object Sprite {
    * {{{
    * word   bits                  description
    * -----+-fedc-ba98-7654-3210-+----------------
-   *    0 | ---- --xx xxxx xxxx | x position
-   *    1 | ---- --xx xxxx xxxx | y position
+   *    0 | xxxx xxxx xxxx xxxx | x position
+   *    1 | xxxx xxxx xxxx xxxx | y position
    *    2 | --xx xxxx ---- ---- | color
    *      | ---- ---- --xx ---- | priority
    *      | ---- ---- ---- x--- | flip x
@@ -151,7 +151,7 @@ object Sprite {
     sprite.code := words(2)(1, 0) ## words(3)(15, 0)
     sprite.flipX := words(2)(3)
     sprite.flipY := words(2)(2)
-    sprite.pos := SVec2(words(0)(9, 0).asSInt, words(1)(9, 0).asSInt)
+    sprite.pos := SVec2(words(0)(15, 6).asSInt, words(1)(15, 6).asSInt)
     sprite.cols := words(6)(15, 8)
     sprite.rows := words(6)(7, 0)
     sprite.zoom := UVec2(words(4)(15, 0), words(5)(15, 0))
