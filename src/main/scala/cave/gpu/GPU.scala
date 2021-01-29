@@ -91,7 +91,7 @@ class GPU extends Module {
   // requests.
   val backgroundColorMem = Wire(ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH))
   backgroundColorMem.rd := true.B
-  backgroundColorMem.addr := GPU.backgroundPen.toAddr(io.gameConfig.numColors)
+  backgroundColorMem.addr := GPU.backgroundPen(io.gameConfig.index).toAddr(io.gameConfig.numColors)
 
   // Registers
   val stateReg = RegNext(nextState, State.idle)
@@ -259,8 +259,16 @@ class GPU extends Module {
 }
 
 object GPU {
-  /** Returns the palette entry used to clear the frame buffer. */
-  def backgroundPen = PaletteEntry(0x7f.U, 0.U)
+  /**
+   * Returns the palette entry used to clear the frame buffer for the given game index.
+   *
+   * @param index The game index.
+   * @return A palette entry.
+   */
+  def backgroundPen(index: UInt): PaletteEntry =
+    MuxLookup(index, PaletteEntry(0x7f.U, 0.U), Seq(
+      GameConfig.DFEVERON.U -> PaletteEntry(0x3f.U, 0.U)
+    ))
 
   /**
    * Transforms a frame buffer pixel position to a memory address, applying the optional flip and
