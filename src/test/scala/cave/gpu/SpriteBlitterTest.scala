@@ -56,7 +56,7 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
       dut.io.pixelData.valid.poke(true.B)
       dut.io.pixelData.bits.poke("hfedcba9876543210".U)
       dut.clock.step()
-      for (n <- Seq(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12)) {
+      for (n <- Seq(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)) {
         dut.clock.step()
         dut.io.paletteRam.addr.expect((0x100 + n).U)
       }
