@@ -16,7 +16,7 @@
   </rom>
 
   <!-- ROM data -->
-  <rom index="0" zip="dfeveron.zip" md5="3be07bd9ba00d68ba34f5925517e0968">
+  <rom index="0" zip="dfeveron.zip|feversos.zip" md5="3be07bd9ba00d68ba34f5925517e0968">
     <!-- main CPU -->
     <interleave output="16">
       <part name="cv01-u34.bin" crc="be87f19d" map="10" />
