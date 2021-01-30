@@ -76,6 +76,8 @@ object GameConfig {
   val DONPACHI = 2
   /** ESP Ra.De. */
   val ESPRADE = 3
+  /** Puzzle Uo Poko */
+  val UOPOKO = 4
 
   /** 8x8x4 tile format */
   val TILE_FORMAT_8x8x4 = 0
@@ -96,7 +98,8 @@ object GameConfig {
   def apply(index: UInt): GameConfig = {
     MuxLookup(index, ddonpach, Seq(
       DFEVERON.U -> dfeveron,
-      ESPRADE.U -> esprade
+      ESPRADE.U -> esprade,
+      UOPOKO.U -> uopoko
     ))
   }
 
@@ -115,7 +118,7 @@ object GameConfig {
     wire.spriteFormat := TILE_FORMAT_SPRITE.U
     wire.layer0Format := TILE_FORMAT_8x8x4.U
     wire.layer1Format := TILE_FORMAT_8x8x4.U
-    wire.layer2Format := TILE_FORMAT_8x8x4.U
+    wire.layer2Format := TILE_FORMAT_8x8x4.U // unused
     wire
   }
 
@@ -154,6 +157,25 @@ object GameConfig {
     wire.layer0Format := TILE_FORMAT_8x8x8.U
     wire.layer1Format := TILE_FORMAT_8x8x8.U
     wire.layer2Format := TILE_FORMAT_8x8x8.U
+    wire
+  }
+
+  private def uopoko = {
+    val wire = Wire(new GameConfig)
+    wire.index := UOPOKO.U
+    wire.progRomOffset := 0x00000000.U
+    wire.spriteRomOffset := 0x00100000.U
+    wire.layer0RomOffset := 0x00500000.U
+    wire.layer1RomOffset := 0x00500000.U
+    wire.layer2RomOffset := 0x00500000.U
+    wire.soundRomOffset := 0x00900000.U
+    wire.numColors := 256.U
+    wire.numLayers := 1.U
+    wire.spriteZoom := true.B
+    wire.spriteFormat := TILE_FORMAT_SPRITE.U
+    wire.layer0Format := TILE_FORMAT_8x8x8.U
+    wire.layer1Format := TILE_FORMAT_8x8x8.U // unused
+    wire.layer2Format := TILE_FORMAT_8x8x8.U // unused
     wire
   }
 }

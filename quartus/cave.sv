@@ -160,7 +160,7 @@ localparam CONF_STR = {
   "P2OB,Layer 0,On,Off;",
   "P2OC,Layer 1,On,Off;",
   "P2OD,Layer 2,On,Off;",
-  "P2OGJ,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.;",
+  "P2OGJ,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.,Puzzle Uo Poko,Guwange;",
   "-;",
   "R0,Reset;",
   "J1,B0,B1,B2,Start,Coin,Pause,Service;",

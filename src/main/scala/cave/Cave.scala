@@ -209,9 +209,13 @@ class Cave extends Module {
     // Set vertical blank IRQ
     when(Util.rising(vBlank)) { vBlankIRQ := true.B }
 
-    // Set memory interface defaults. The actual values are assigned by the memory map for different
-    // games.
+    // Set memory interface defaults, the actual values are assigned in the memory map
+    videoRegs.io.mem.default()
+    layer0Regs.io.mem.default()
+    layer1Regs.io.mem.default()
     layer2Regs.io.mem.default()
+    layer0Ram.io.portA.default()
+    layer1Ram.io.portA.default()
     layer2Ram.io.portA.default()
     paletteRam.io.portA.default()
     eeprom.io.mem.default()
@@ -229,21 +233,21 @@ class Cave extends Module {
     map(0x110000 to 0x2fffff).ignore()
     map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-    map(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
-    map(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
-    map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
-    map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
-    map(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
-    map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
 
     // Dangun Feveron
     when(io.gameConfig.index === GameConfig.DFEVERON.U) {
+      map(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
+      map(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
       map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
       map(0x710000 to 0x717fff).readWriteMem(layer2Ram.io.portA)
+      map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+      map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
       map(0x800000 to 0x800007).r { (_, offset) =>
         when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
         Cat(0.U, 1.U, !vBlankIRQ)
       }
+      map(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
+      map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
       map(0xb00000).r { (_, _) => input0 }
       map(0xb00002).r { (_, _) => input1 }
       map(0xc00000).writeMem(eeprom.io.mem)
@@ -251,6 +255,8 @@ class Cave extends Module {
 
     // DoDonPachi
     when(io.gameConfig.index === GameConfig.DDONPACH.U) {
+      map(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
+      map(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
       // Access to 0x5fxxxx appears in DoDonPachi on attract loop when showing the air stage on
       // frame 9355 (i.e. after roughly 2 min 30 sec). The game is accessing data relative to a
       // Layer 1 address and underflows. These accesses do nothing, but should be acknowledged in
@@ -261,11 +267,14 @@ class Cave extends Module {
       // hardware.
       map(0x5f0000 to 0x5fffff).ignore()
       map(0x700000 to 0x70ffff).readWriteMemT(layer2Ram.io.portA)(a => a(12, 0))
-      // IRQ cause
+      map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+      map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
       map(0x800000 to 0x800007).r { (_, offset) =>
         when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
         Cat(1.U, 1.U, !vBlankIRQ)
       }
+      map(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
+      map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
       map(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
       map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
       map(0xd00000).r { (_, _) => input0 }
@@ -275,17 +284,39 @@ class Cave extends Module {
 
     // ESP Ra.De.
     when(io.gameConfig.index === GameConfig.ESPRADE.U) {
+      map(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
+      map(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
       map(0x700000 to 0x707fff).readWriteMem(layer2Ram.io.portA)
+      map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+      map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
       map(0x800000 to 0x800007).r { (_, offset) =>
         when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
         Cat(0.U, 1.U, !vBlankIRQ)
       }
       map(0x800008 to 0x800fff).ignore()
+      map(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
+      map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
       map(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
       map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
       map(0xd00000).r { (_, _) => input0 }
       map(0xd00002).r { (_, _) => input1 }
       map(0xe00000).writeMem(eeprom.io.mem)
+    }
+
+    // Puzzle Uo Poko
+    when(io.gameConfig.index === GameConfig.UOPOKO.U) {
+      map(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
+      map(0x600000 to 0x60007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+      map(0x600004).w { (_, _, data) => frameStart := data === 0x01f0.U }
+      map(0x600000 to 0x600007).r { (_, offset) =>
+        when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
+        Cat(0.U, 1.U, !vBlankIRQ)
+      }
+      map(0x700000 to 0x700005).readWriteMem(layer0Regs.io.mem)
+      map(0x800000 to 0x80ffff).readWriteMem(paletteRam.io.portA)
+      map(0x900000).r { (_, _) => input0 }
+      map(0x900002).r { (_, _) => input1 }
+      map(0xa00000).writeMem(eeprom.io.mem)
     }
 
     // When the game is paused, request frames at the start of every vertical blank
