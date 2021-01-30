@@ -8,7 +8,7 @@
   <category>Shooter</category>
   <rbf>cave</rbf>
 
-  <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,X,R,L,Start" />
+  <buttons names="B1,B2,B3,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />
 
   <!-- select game -->
   <rom index="1">

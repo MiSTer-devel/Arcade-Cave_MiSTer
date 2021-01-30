@@ -8,7 +8,7 @@
   <category>Shooter</category>
   <rbf>cave</rbf>
 
-  <buttons names="Shots/Laser,Spread/Laser Bomber,Full-Auto,Start,Coin,Pause" default="A,B,X,R,L,Start" />
+  <buttons names="Shots/Laser,Spread/Laser Bomber,Full-Auto,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />
 
   <!-- select game -->
   <rom index="1">

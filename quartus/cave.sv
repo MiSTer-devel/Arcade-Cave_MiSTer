@@ -163,7 +163,7 @@ localparam CONF_STR = {
   "P2OGJ,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.;",
   "-;",
   "R0,Reset;",
-  "J1,B0,B1,B2,Start,Coin,Pause;",
+  "J1,B0,B1,B2,Start,Coin,Pause,Service;",
   "V,v",`BUILD_DATE," - Made with love by nullobject.;"
 };
 
@@ -400,8 +400,8 @@ wire player_2_button_3 = key_q     | joystick_1[6];
 wire player_2_start    = key_2     | joystick_1[7];
 wire player_2_coin     = key_6     | joystick_1[8];
 wire player_2_pause    =             joystick_1[9];
-wire service_1         = key_9;
-wire service_2         = key_0;
+wire service_1         = key_9     | joystick_0[10];
+wire service_2         = key_0     | joystick_1[10];
 
 ////////////////////////////////////////////////////////////////////////////////
 // CAVE
