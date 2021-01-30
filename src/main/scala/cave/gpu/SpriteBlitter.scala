@@ -118,6 +118,7 @@ class SpriteBlitter extends Module {
 
   // The sprites use the first 64 palettes, and use 16 colors (out of 256 possible in a palette)
   paletteEntryReg := PaletteEntry(spriteInfoReg.colorCode, tilePiso.io.dout)
+  val paletteRamAddr = paletteEntryReg.toAddr(io.gameConfig.numColors)
 
   // Set valid/done flags
   val valid = ShiftRegister(!pisoEmpty, 2, false.B, true.B)
@@ -133,12 +134,13 @@ class SpriteBlitter extends Module {
   // Set frame buffer signals
   val frameBufferWrite = RegNext(valid && visible)
   val frameBufferAddr = RegNext(GPU.transformAddr(stage2Pos, io.options.flip, io.options.rotate))
+  val frameBufferData = RegNext(io.paletteRam.dout)
 
   // Outputs
   io.spriteInfo.ready := updateSpriteInfo
   io.pixelData.ready := readFifo
   io.paletteRam.rd := true.B
-  io.paletteRam.addr := paletteEntryReg.toAddr(io.gameConfig.numColors)
+  io.paletteRam.addr := paletteRamAddr
   io.priority.read.rd := false.B
   io.priority.read.addr := 0.U
   io.priority.write.wr := frameBufferWrite
@@ -148,7 +150,7 @@ class SpriteBlitter extends Module {
   io.frameBuffer.wr := frameBufferWrite
   io.frameBuffer.addr := frameBufferAddr
   io.frameBuffer.mask := 0.U
-  io.frameBuffer.din := RegNext(io.paletteRam.dout)
+  io.frameBuffer.din := frameBufferData
   io.done := done
 
   printf(p"SpriteBlitter(paletteEntry: $paletteEntryReg, valid: $valid, visible: $visible, pos: $stage2Pos)\n")

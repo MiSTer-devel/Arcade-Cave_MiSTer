@@ -162,6 +162,7 @@ class LayerPipeline extends Module {
     1.U ## tileInfoReg.colorCode,
     Mux(layerInfoReg.smallTile, smallTilePiso.io.dout, largeTilePiso.io.dout)
   )
+  val paletteRamAddr = paletteEntryReg.toAddr(io.gameConfig.numColors)
 
   // Set valid/done flags
   val valid = ShiftRegister(!pisoEmpty, 2, false.B, true.B)
@@ -184,13 +185,14 @@ class LayerPipeline extends Module {
   // Set frame buffer signals
   val frameBufferWrite = RegNext(valid && visible)
   val frameBufferAddr = RegNext(GPU.transformAddr(stage2Pos, io.options.flip, io.options.rotate))
+  val frameBufferData = RegNext(io.paletteRam.dout)
 
   // Outputs
   io.layerInfo.ready := true.B
   io.tileInfo.ready := updateTileInfo
   io.pixelData.ready := readFifo
   io.paletteRam.rd := true.B
-  io.paletteRam.addr := paletteEntryReg.toAddr(io.gameConfig.numColors)
+  io.paletteRam.addr := paletteRamAddr
   io.priority.read.rd := true.B
   io.priority.read.addr := priorityReadAddr
   io.priority.write.wr := frameBufferWrite
@@ -200,7 +202,7 @@ class LayerPipeline extends Module {
   io.frameBuffer.wr := frameBufferWrite
   io.frameBuffer.addr := frameBufferAddr
   io.frameBuffer.mask := 0.U
-  io.frameBuffer.din := RegNext(io.paletteRam.dout)
+  io.frameBuffer.din := frameBufferData
   io.done := done
 }
 
