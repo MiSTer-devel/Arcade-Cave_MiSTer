@@ -312,6 +312,7 @@ class Cave extends Module {
         when(offset === 0.U) { vBlankIRQ := false.B } // clear vertical blank IRQ
         Cat(0.U, 1.U, !vBlankIRQ)
       }
+      map(0x600008 to 0x600fff).ignore()
       map(0x700000 to 0x700005).readWriteMem(layer0Regs.io.mem)
       map(0x800000 to 0x80ffff).readWriteMem(paletteRam.io.portA)
       map(0x900000).r { (_, _) => input0 }
