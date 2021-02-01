@@ -51,8 +51,8 @@ class MemSys extends Module {
     val gameConfig = Input(GameConfig())
     /** Options port */
     val options = OptionsIO()
-    /** Download port */
-    val download = DownloadIO()
+    /** IOCTL port */
+    val ioctl = IOCTL()
     /** Program ROM port */
     val progRom = Flipped(new ProgRomIO)
     /** Sound ROM port */
@@ -72,21 +72,21 @@ class MemSys extends Module {
   // The DDR download cache is used to buffer download data, so that a complete word can be written
   // to memory.
   val ddrDownloadCache = Module(new Cache(CacheConfig(
-    inAddrWidth = DownloadIO.ADDR_WIDTH,
-    inDataWidth = DownloadIO.DATA_WIDTH,
+    inAddrWidth = IOCTL.ADDR_WIDTH,
+    inDataWidth = IOCTL.DATA_WIDTH,
     outAddrWidth = Config.ddrConfig.addrWidth,
     outDataWidth = Config.ddrConfig.dataWidth,
     lineWidth = 1,
     depth = 1
   )))
   ddrDownloadCache.io.offset := Config.DDR_DOWNLOAD_OFFSET.U
-  ddrDownloadCache.io.in <> io.download.asAsyncReadWriteMemIO(DownloadIO.ROM_INDEX)
+  ddrDownloadCache.io.in <> io.ioctl.asAsyncReadWriteMemIO(IOCTL.ROM_INDEX)
 
   // The SDRAM download cache is used to buffer download data, so that a complete word can be
   // written to memory.
   val sdramDownloadCache = Module(new Cache(CacheConfig(
-    inAddrWidth = DownloadIO.ADDR_WIDTH,
-    inDataWidth = DownloadIO.DATA_WIDTH,
+    inAddrWidth = IOCTL.ADDR_WIDTH,
+    inDataWidth = IOCTL.DATA_WIDTH,
     outAddrWidth = Config.sdramConfig.addrWidth,
     outDataWidth = Config.sdramConfig.dataWidth,
     lineWidth = Config.sdramConfig.burstLength,
@@ -94,7 +94,7 @@ class MemSys extends Module {
     wrapping = true
   )))
   sdramDownloadCache.io.offset := 0.U
-  sdramDownloadCache.io.in <> io.download.asAsyncReadWriteMemIO(DownloadIO.ROM_INDEX)
+  sdramDownloadCache.io.in <> io.ioctl.asAsyncReadWriteMemIO(IOCTL.ROM_INDEX)
 
   // Program ROM cache
   val progRomCache1 = Module(new Cache(CacheConfig(
@@ -168,5 +168,5 @@ class MemSys extends Module {
   )).asAsyncReadMemIO
 
   // Wait until both DDR and SDRAM are ready
-  io.download.waitReq := ddrDownloadCache.io.in.waitReq || (io.options.sdram && sdramDownloadCache.io.in.waitReq)
+  io.ioctl.waitReq := ddrDownloadCache.io.in.waitReq || (io.options.sdram && sdramDownloadCache.io.in.waitReq)
 }

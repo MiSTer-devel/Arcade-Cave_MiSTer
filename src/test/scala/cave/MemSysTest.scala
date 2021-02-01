@@ -38,21 +38,21 @@ import org.scalatest._
 
 trait MemSysTestHelpers {
   protected def waitForDownloadReady(dut: MemSys) =
-    while (dut.io.download.waitReq.peek().litToBoolean) { dut.clock.step() }
+    while (dut.io.ioctl.waitReq.peek().litToBoolean) { dut.clock.step() }
 }
 
 class MemSysTest extends FlatSpec with ChiselScalatestTester with Matchers with MemSysTestHelpers {
   it should "write download data to memory" in {
     test(new MemSys) { dut =>
       waitForDownloadReady(dut)
-      dut.io.download.cs.poke(true.B)
+      dut.io.ioctl.download.poke(true.B)
 
       // Download & fill
-      dut.io.download.wr.poke(true.B)
-      dut.io.download.addr.poke(0.U)
-      dut.io.download.dout.poke(0x1234.U)
+      dut.io.ioctl.wr.poke(true.B)
+      dut.io.ioctl.addr.poke(0.U)
+      dut.io.ioctl.dout.poke(0x1234.U)
       dut.clock.step()
-      dut.io.download.wr.poke(false.B)
+      dut.io.ioctl.wr.poke(false.B)
       dut.clock.step(2)
       dut.io.ddr.rd.expect(true.B)
       dut.io.ddr.burstLength.expect(1.U)
@@ -77,11 +77,11 @@ class MemSysTest extends FlatSpec with ChiselScalatestTester with Matchers with 
       dut.io.sdram.burstDone.poke(false.B)
 
       // Download & evict
-      dut.io.download.wr.poke(true.B)
-      dut.io.download.addr.poke(8.U)
-      dut.io.download.dout.poke(0x5678.U)
+      dut.io.ioctl.wr.poke(true.B)
+      dut.io.ioctl.addr.poke(8.U)
+      dut.io.ioctl.dout.poke(0x5678.U)
       dut.clock.step()
-      dut.io.download.wr.poke(false.B)
+      dut.io.ioctl.wr.poke(false.B)
       dut.clock.step(2)
       dut.io.ddr.wr.expect(true.B)
       dut.io.ddr.burstLength.expect(1.U)

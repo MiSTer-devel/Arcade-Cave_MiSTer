@@ -66,8 +66,8 @@ class Main extends Module {
     val frameBuffer = mister.FrameBufferIO()
     /** Joystick port */
     val joystick = JoystickIO()
-    /** Download port */
-    val download = DownloadIO()
+    /** IOCTL port */
+    val ioctl = IOCTL()
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** DDR port */
@@ -81,19 +81,19 @@ class Main extends Module {
   })
 
   // The download done register is latched when the ROM download has completed.
-  val downloadDoneReg = Util.latchSync(Util.falling(io.download.cs))
+  val downloadDoneReg = Util.latchSync(Util.falling(io.ioctl.download))
 
   // The game configuration register is latched when data is written to the download port (i.e. the
   // game index is set by the MRA file).
   val gameConfigReg = {
     val gameConfig = Reg(GameConfig())
     val latched = RegInit(false.B)
-    when(io.download.cs && io.download.wr && io.download.index === DownloadIO.GAME_INDEX.U) {
-      gameConfig := GameConfig(io.download.dout(OptionsIO.GAME_INDEX_WIDTH - 1, 0))
+    when(io.ioctl.download && io.ioctl.wr && io.ioctl.index === IOCTL.GAME_INDEX.U) {
+      gameConfig := GameConfig(io.ioctl.dout(OptionsIO.GAME_INDEX_WIDTH - 1, 0))
       latched := true.B
     }
     // Default to the game configuration set in the options
-    when(Util.falling(io.download.cs) && !latched) {
+    when(Util.falling(io.ioctl.download) && !latched) {
       gameConfig := GameConfig(io.options.gameIndex)
       latched := true.B
     }
@@ -112,7 +112,7 @@ class Main extends Module {
   val mem = Module(new MemSys)
   mem.io.gameConfig <> gameConfigReg
   mem.io.options <> io.options
-  mem.io.download <> io.download
+  mem.io.ioctl <> io.ioctl
   mem.io.ddr <> ddr.io.mem
   mem.io.sdram <> sdram.io.mem
 
@@ -165,8 +165,8 @@ class Main extends Module {
 
   // Set LED outputs
   io.led.power := false.B
-  io.led.disk := io.download.waitReq
-  io.led.user := io.download.cs
+  io.led.disk := io.ioctl.waitReq
+  io.led.user := io.ioctl.download
 }
 
 object Main extends App {

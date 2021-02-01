@@ -37,19 +37,25 @@ import chisel3._
 import chisel3.util._
 
 /** A flow control interface used to download data into the core. */
-class DownloadIO private extends Bundle {
-  /** Chip select */
-  val cs = Input(Bool())
+class IOCTL private extends Bundle {
+  /** Download enable */
+  val download = Input(Bool())
+  /** Upload enable */
+  val upload = Input(Bool())
+  /** Read enable */
+  val rd = Input(Bool())
   /** Write enable */
   val wr = Input(Bool())
   /** Asserted when the core isn't ready to proceed with the request */
   val waitReq = Output(Bool())
   /** Index */
-  val index = Input(UInt(DownloadIO.INDEX_WIDTH.W))
+  val index = Input(UInt(IOCTL.INDEX_WIDTH.W))
   /** Address bus */
-  val addr = Input(UInt(DownloadIO.ADDR_WIDTH.W))
-  /** Data bus */
-  val dout = Input(Bits(DownloadIO.DATA_WIDTH.W))
+  val addr = Input(UInt(IOCTL.ADDR_WIDTH.W))
+  /** Input data bus */
+  val din = Output(Bits(IOCTL.DATA_WIDTH.W))
+  /** Output data bus */
+  val dout = Input(Bits(IOCTL.DATA_WIDTH.W))
 
   /**
    * Converts the download interface to an asynchronous read-write memory interface.
@@ -57,19 +63,20 @@ class DownloadIO private extends Bundle {
    * @param index The download index to connect the memory interface.
    */
   def asAsyncReadWriteMemIO(index: Int): AsyncReadWriteMemIO = {
-    val enable = cs && wr && this.index === index.U
-    val wire = Wire(AsyncReadWriteMemIO(DownloadIO.ADDR_WIDTH, DownloadIO.DATA_WIDTH))
+    val enable = download && wr && this.index === index.U
+    val wire = Wire(AsyncReadWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
     wire.rd := false.B
     wire.wr := enable
     waitReq := enable && wire.waitReq
     wire.addr := addr
     wire.mask := Fill(wire.maskWidth, 1.U)
     wire.din := dout
+    din := 0.U
     wire
   }
 }
 
-object DownloadIO {
+object IOCTL {
   /** The width of the index */
   val INDEX_WIDTH = 8
   /** The width of the address bus */
@@ -83,5 +90,5 @@ object DownloadIO {
   /** DIP switch index */
   val DIP_INDEX = 254
 
-  def apply() = new DownloadIO
+  def apply() = new IOCTL
 }

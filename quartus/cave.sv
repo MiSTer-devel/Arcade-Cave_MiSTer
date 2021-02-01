@@ -240,12 +240,15 @@ wire [21:0] gamma_bus;
 wire        direct_video;
 wire [15:0] sdram_sz;
 
-wire [26:0] ioctl_addr;
-wire [15:0] ioctl_dout;
+wire        ioctl_upload;
+wire        ioctl_download;
+wire        ioctl_rd;
 wire        ioctl_wr;
 wire        ioctl_wait;
-wire        ioctl_download;
 wire  [7:0] ioctl_index;
+wire [26:0] ioctl_addr;
+wire [15:0] ioctl_din;
+wire [15:0] ioctl_dout;
 
 wire [10:0] ps2_key;
 wire [10:0] joystick_0, joystick_1;
@@ -266,12 +269,15 @@ hps_io #(.STRLEN($size(CONF_STR)>>3), .WIDE(1)) hps_io (
   .direct_video(direct_video),
   .sdram_sz(sdram_sz),
 
-  .ioctl_addr(ioctl_addr),
-  .ioctl_dout(ioctl_dout),
+  .ioctl_upload(ioctl_upload),
+  .ioctl_download(ioctl_download),
+  .ioctl_rd(ioctl_rd),
   .ioctl_wr(ioctl_wr),
   .ioctl_wait(ioctl_wait),
-  .ioctl_download(ioctl_download),
   .ioctl_index(ioctl_index),
+  .ioctl_addr(ioctl_addr),
+  .ioctl_din(ioctl_din),
+  .ioctl_dout(ioctl_dout),
 
   .joystick_0(joystick_0),
   .joystick_1(joystick_1),
@@ -496,12 +502,15 @@ Main main (
   .io_sdram_din(sdram_din),
   .io_sdram_dout(sdram_dout),
   // Download
-  .io_download_cs(ioctl_download),
-  .io_download_wr(ioctl_wr),
-  .io_download_waitReq(ioctl_wait),
-  .io_download_index(ioctl_index),
-  .io_download_addr(ioctl_addr),
-  .io_download_dout(ioctl_dout),
+  .io_ioctl_upload(ioctl_upload),
+  .io_ioctl_download(ioctl_download),
+  .io_ioctl_rd(ioctl_rd),
+  .io_ioctl_wr(ioctl_wr),
+  .io_ioctl_waitReq(ioctl_wait),
+  .io_ioctl_index(ioctl_index),
+  .io_ioctl_addr(ioctl_addr),
+  .io_ioctl_din(ioctl_din),
+  .io_ioctl_dout(ioctl_dout),
   // RGB output
   .io_rgb_r(r),
   .io_rgb_g(g),
