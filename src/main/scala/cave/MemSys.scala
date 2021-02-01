@@ -33,6 +33,7 @@
 package cave
 
 import axon.mem._
+import axon.mister._
 import axon.types._
 import cave.types._
 import chisel3._
