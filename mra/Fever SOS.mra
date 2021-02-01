@@ -16,7 +16,7 @@
   </rom>
 
   <!-- ROM data -->
-  <rom index="0" zip="feversos.zip" md5="cf9d6c8ee7c67b5651110a256d407cc3">
+  <rom index="0" zip="feversos.zip" md5="257723ba085381b8314493d7bf96973e">
     <!-- main CPU -->
     <interleave output="16">
       <part name="cv01-u34.sos" crc="24ef3ce6" map="10" />
@@ -35,5 +35,8 @@
 
     <!-- samples -->
     <part name="cv01-u19.bin" crc="5f5514da" />
+
+    <!-- eeprom -->
+    <part name="eeprom-feversos.bin" crc="d80303aa" />
   </rom>
 </misterromdescription>

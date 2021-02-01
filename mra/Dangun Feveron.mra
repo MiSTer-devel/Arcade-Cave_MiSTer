@@ -16,7 +16,7 @@
   </rom>
 
   <!-- ROM data -->
-  <rom index="0" zip="dfeveron.zip|feversos.zip" md5="3be07bd9ba00d68ba34f5925517e0968">
+  <rom index="0" zip="dfeveron.zip|feversos.zip" md5="05207eaccdccda68fdc13fb1d78bbef4">
     <!-- main CPU -->
     <interleave output="16">
       <part name="cv01-u34.bin" crc="be87f19d" map="10" />
@@ -35,5 +35,8 @@
 
     <!-- samples -->
     <part name="cv01-u19.bin" crc="5f5514da" />
+
+    <!-- eeprom -->
+    <part name="eeprom-dfeveron.bin" crc="c3174959" />
   </rom>
 </misterromdescription>

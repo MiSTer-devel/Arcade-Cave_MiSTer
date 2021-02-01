@@ -16,7 +16,7 @@
   </rom>
 
   <!-- ROM data -->
-  <rom index="0" zip="ddonpach.zip" md5="f85911efc7f275e2d4ef55b1c6007412">
+  <rom index="0" zip="ddonpach.zip" md5="b62613aa8998b4b5f8d8fa395930a969">
     <!-- main CPU -->
     <interleave output="16">
       <part name="b1.u27" crc="b5cdc8d3" map="10" />
@@ -41,6 +41,9 @@
     <!-- samples -->
     <part name="u6.bin" crc="9dfdafaf" />
     <part name="u7.bin" crc="795b17d5" />
+
+    <!-- eeprom -->
+    <part name="eeprom-ddonpach.bin" crc="315fb546" />
 
     <!-- skip CRC -->
     <patch offset="0x005404">00 60 0C 00</patch>

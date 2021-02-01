@@ -16,7 +16,7 @@
   </rom>
 
   <!-- ROM data -->
-  <rom index="0" zip="uopoko.zip" md5="38f388f2df69c752de496df981e155de">
+  <rom index="0" zip="uopoko.zip" md5="ac21c311154da0d2640bb011b0b8a6a7">
     <!-- main CPU -->
     <interleave output="16">
       <part name="u26.int" crc="b445c9ac" map="10" />
@@ -31,5 +31,8 @@
 
     <!-- samples -->
     <part name="cave_cv-02_u4.u4" crc="a2d0d755" />
+
+    <!-- eeprom -->
+    <part name="eeprom-uopoko.bin" crc="f4a24b95" />
   </rom>
 </misterromdescription>

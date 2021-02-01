@@ -16,7 +16,7 @@
   </rom>
 
   <!-- ROM data -->
-  <rom index="0" zip="esprade.zip" md5="9913dfec2a189d5641fc25b1caeddc5d">
+  <rom index="0" zip="esprade.zip" md5="352954c032a9a5b454a4ab6e9719f3eb">
     <!-- main CPU -->
     <interleave output="16">
       <part name="u42.int" crc="3b510a73" map="10" />
@@ -42,5 +42,8 @@
 
     <!-- samples -->
     <part name="esp_u19.u19" crc="f54b1cab" />
+
+    <!-- eeprom -->
+    <part name="eeprom-esprade.bin" crc="315fb546" />
   </rom>
 </misterromdescription>
