@@ -87,6 +87,8 @@ object IOCTL {
   val ROM_INDEX = 0
   /** Game index */
   val GAME_INDEX = 1
+  /** NVRAM index */
+  val NVRAM_INDEX = 2
   /** DIP switch index */
   val DIP_INDEX = 254
 
