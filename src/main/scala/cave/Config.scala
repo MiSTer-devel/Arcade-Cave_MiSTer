@@ -38,13 +38,30 @@ import axon.snd.YMZ280BConfig
 import chisel3.util.log2Ceil
 
 object Config {
-  /** System clock frequency (Hz) */
+  /**
+   * System clock frequency (Hz)
+   *
+   * This is the clock domain used by the memory, GPU, etc.
+   */
   val CLOCK_FREQ = 96000000D
-  /** CPU clock frequency (Hz) */
+
+  /**
+   * CPU clock frequency (Hz)
+   *
+   * The CPU clock as measured on the PCB is 16MHz, but the M68k CPU module requires a clock that is
+   * twice the desired clock speed.
+   */
   val CPU_CLOCK_FREQ = 32000000D
   /** CPU clock period (ns) */
   val CPU_CLOCK_PERIOD = 1 / CPU_CLOCK_FREQ * 1000000000
-  /** Video clock frequency (Hz) */
+
+  /**
+   * Video clock frequency (Hz)
+   *
+   * The video clock as measured on the PCB is 28MHz, but using a integer-mode PLL to generate the
+   * clocks means that we can't generate exactly 28MHz. This is the closest we can get without using
+   * a fractional-mode PLL.
+   */
   val VIDEO_CLOCK_FREQ = 27428571D
   /** Video clock divider */
   val VIDEO_CLOCK_DIV = 4

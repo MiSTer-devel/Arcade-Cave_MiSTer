@@ -65,7 +65,7 @@ set_global_assignment -entity "pll_0002" -library "pll" -name IP_COMPONENT_PARAM
 set_global_assignment -entity "pll_0002" -library "pll" -name IP_COMPONENT_PARAMETER "Z3VpX2FjdHVhbF9waGFzZV9zaGlmdDE=::MA==::QWN0dWFsIFBoYXNlIFNoaWZ0"
 set_global_assignment -entity "pll_0002" -library "pll" -name IP_COMPONENT_PARAMETER "Z3VpX2R1dHlfY3ljbGUx::NTA=::RHV0eSBDeWNsZQ=="
 set_global_assignment -entity "pll_0002" -library "pll" -name IP_COMPONENT_PARAMETER "Z3VpX2Nhc2NhZGVfY291bnRlcjI=::ZmFsc2U=::TWFrZSB0aGlzIGEgY2FzY2FkZSBjb3VudGVy"
-set_global_assignment -entity "pll_0002" -library "pll" -name IP_COMPONENT_PARAMETER "Z3VpX291dHB1dF9jbG9ja19mcmVxdWVuY3ky::MjcuNDI4NTcx::RGVzaXJlZCBGcmVxdWVuY3k="
+set_global_assignment -entity "pll_0002" -library "pll" -name IP_COMPONENT_PARAMETER "Z3VpX291dHB1dF9jbG9ja19mcmVxdWVuY3ky::MjguMA==::RGVzaXJlZCBGcmVxdWVuY3k="
 set_global_assignment -entity "pll_0002" -library "pll" -name IP_COMPONENT_PARAMETER "Z3VpX2RpdmlkZV9mYWN0b3JfYzI=::MQ==::RGl2aWRlIEZhY3RvciAoQy1Db3VudGVyKQ=="
 set_global_assignment -entity "pll_0002" -library "pll" -name IP_COMPONENT_PARAMETER "Z3VpX2FjdHVhbF9tdWx0aXBseV9mYWN0b3Iy::OTY=::QWN0dWFsIE11bHRpcGx5IEZhY3Rvcg=="
 set_global_assignment -entity "pll_0002" -library "pll" -name IP_COMPONENT_PARAMETER "Z3VpX2FjdHVhbF9mcmFjX211bHRpcGx5X2ZhY3RvcjI=::MQ==::QWN0dWFsIEZyYWN0aW9uYWwgTXVsdGlwbHkgRmFjdG9yIChLKQ=="
