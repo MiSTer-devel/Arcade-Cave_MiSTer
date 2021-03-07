@@ -249,7 +249,8 @@
               <option value="should apply the frame buffer index to the DDR address offset" />
               <option value="should assert the write enable signal during a transfer" />
               <option value="should deassert the ready signal during a transfer" />
-              <option value="should not increment the address while the wait signal is asserted" />
+              <option value="should not increment the address when the wait signal is asserted" />
+              <option value="should not start a transfer when the enable signal is deasserted" />
               <option value="should pack the pixel data" />
               <option value="should write frame buffer data to DDR memory" />
             </set>
@@ -261,7 +262,8 @@
               <option value="should apply the frame buffer index to the DDR address offset" />
               <option value="should assert the read enable signal at the start of a transfer" />
               <option value="should deassert the ready signal during a transfer" />
-              <option value="should not start a transfer while the wait signal is asserted" />
+              <option value="should not start a transfer when the enable signal is deasserted" />
+              <option value="should not start a transfer when the wait signal is asserted" />
               <option value="should read frame buffer data from DDR memory" />
             </set>
           </value>
@@ -271,6 +273,18 @@
             <set>
               <option value="should allow writing masked bytes" />
               <option value="should output the registers" />
+            </set>
+          </value>
+        </entry>
+        <entry key="cave.gpu.SpriteBlitterTest">
+          <value>
+            <set>
+              <option value="blitting should allow horizontal flipping" />
+              <option value="blitting should allow vertical flipping" />
+              <option value="blitting should copy pixel data to the frame buffer" />
+              <option value="should decode tile data" />
+              <option value="should not read priority data" />
+              <option value="should read palette data" />
             </set>
           </value>
         </entry>

@@ -2,9 +2,18 @@
 <project version="4">
   <component name="ScalaCompilerConfiguration">
     <profile name="sbt 1" modules="z80-chisel_5749" />
-    <profile name="sbt 2" modules="cave-chisel,z80-chisel">
+    <profile name="sbt 2" modules="z80-chisel">
       <option name="reflectiveCalls" value="true" />
       <option name="implicitConversions" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-Xsource:2.11" />
+      </parameters>
+    </profile>
+    <profile name="sbt 3" modules="cave-chisel">
+      <option name="reflectiveCalls" value="true" />
       <option name="deprecationWarnings" value="true" />
       <option name="uncheckedWarnings" value="true" />
       <option name="featureWarnings" value="true" />
