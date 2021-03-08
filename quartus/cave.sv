@@ -50,6 +50,9 @@ module emu (
   output [1:0]  VGA_SL,
   output        VGA_SCALER, // Force VGA scaler
 
+  input  [11:0] HDMI_WIDTH,
+  input  [11:0] HDMI_HEIGHT,
+
   // Use framebuffer from DDRAM (USE_FB=1 in qsf)
   // FB_FORMAT:
   //    [2:0] : 011=8bpp(palette) 100=16bpp 101=24bpp 110=32bpp
@@ -305,15 +308,12 @@ assign VGA_SCALER = 0;
 video_mixer #(.LINE_LENGTH(320), .HALF_DEPTH(0), .GAMMA(1)) video_mixer (
   .*,
 
-  .clk_vid(clk_video),
+  .CLK_VIDEO(clk_video),
+  .CE_PIXEL(CE_PIXEL),
   .ce_pix(ce_pix),
-  .ce_pix_out(CE_PIXEL),
 
-  .scanlines(0),
   .scandoubler(scandoubler),
   .hq2x(scale==1),
-
-  .mono(0),
 
   .R(r),
   .G(g),
