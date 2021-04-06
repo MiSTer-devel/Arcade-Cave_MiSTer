@@ -15,11 +15,16 @@
     <profile name="sbt 3" modules="cave-chisel">
       <option name="reflectiveCalls" value="true" />
       <option name="deprecationWarnings" value="true" />
-      <option name="uncheckedWarnings" value="true" />
       <option name="featureWarnings" value="true" />
       <parameters>
         <parameter value="-Xsource:2.11" />
+        <parameter value="-Xcheckinit" />
+        <parameter value="-P:chiselplugin:useBundlePlugin" />
       </parameters>
+      <plugins>
+        <plugin path="$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/edu/berkeley/cs/chisel3-plugin_2.12.13/3.4.3/chisel3-plugin_2.12.13-3.4.3.jar" />
+        <plugin path="$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/scalamacros/paradise_2.12.13/2.1.1/paradise_2.12.13-2.1.1.jar" />
+      </plugins>
     </profile>
   </component>
 </project>

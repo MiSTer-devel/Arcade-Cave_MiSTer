@@ -1,3 +1,4 @@
+.bsp
 project/target
 quartus/*.qws
 quartus/*.qdf
