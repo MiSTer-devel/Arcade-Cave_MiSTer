@@ -2,7 +2,7 @@
   <name>DoDonPachi</name>
   <mameversion>0226</mameversion>
   <setname>ddonpach</setname>
-  <mratimestamp>20210102</mratimestamp>
+  <mratimestamp>20210406</mratimestamp>
   <year>1997</year>
   <manufacturer>CAVE</manufacturer>
   <category>Shooter</category>
@@ -46,7 +46,5 @@
     <patch offset="0x005404">00 60 0C 00</patch>
     <!-- skip warning -->
     <patch offset="0x0054E0">00 60 50 00</patch>
-    <!-- enable C-button -->
-    <patch offset="0x006796">71 4E</patch>
   </rom>
 </misterromdescription>
