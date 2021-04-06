@@ -10,6 +10,7 @@
       <sourceFolder url="file://$MODULE_DIR$/../../src/main/resources" type="java-resource" />
       <excludeFolder url="file://$MODULE_DIR$/../../target" />
       <excludeFolder url="file://$MODULE_DIR$/../../test_run_dir" />
+      <excludeFolder url="file://$MODULE_DIR$/../../.bsp" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
