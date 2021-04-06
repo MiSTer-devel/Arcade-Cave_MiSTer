@@ -19,7 +19,6 @@
       <parameters>
         <parameter value="-Xsource:2.11" />
         <parameter value="-Xcheckinit" />
-        <parameter value="-P:chiselplugin:useBundlePlugin" />
       </parameters>
       <plugins>
         <plugin path="$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/edu/berkeley/cs/chisel3-plugin_2.12.13/3.4.3/chisel3-plugin_2.12.13-3.4.3.jar" />
