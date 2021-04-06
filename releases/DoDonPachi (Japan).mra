@@ -41,6 +41,9 @@
     <part name="u6.bin" crc="9dfdafaf" />
     <part name="u7.bin" crc="795b17d5" />
 
+    <!-- eeprom -->
+    <part name="eeprom-ddonpach.bin" crc="315fb546" />
+
     <!-- skip CRC -->
     <patch offset="0x005410">00 60 0C 00</patch>
     <!-- skip warning -->
