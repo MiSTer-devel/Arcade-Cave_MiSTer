@@ -65,3 +65,81 @@ source sys/sys_analog.tcl
 source files.qip
 
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+
+#
+# Minimize output delay to SDRAM_A, SDRAM_BA, SDRAM_CKE.
+#
+# Note: This is temporary tweaks.
+#
+# The problem is that there are combinational logics between registers and SDRAM_A, SDRAM_BA, SDRAM_CKE,
+# thus these registers cannot be assigned to fast output registers.
+# Ideally, SDRAM controller should be fixed to have registers on output of SDRAM_A, SDRAM_BA, SDRAM_CKE.
+#
+set_location_assignment LAB_X8_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_col[0]"
+set_location_assignment LAB_X8_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_row[0]"
+set_location_assignment LAB_X8_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|io_sdram_addr[0]~0"
+
+set_location_assignment LAB_X88_Y23_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_col[1]"
+set_location_assignment LAB_X88_Y23_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_row[1]"
+set_location_assignment LAB_X88_Y23_N0 -to "emu:emu|Main:main|SDRAM:sdram|io_sdram_addr[1]~1"
+
+set_location_assignment LAB_X56_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_col[2]"
+set_location_assignment LAB_X56_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_row[2]"
+set_location_assignment LAB_X56_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|io_sdram_addr[2]~2"
+
+set_location_assignment LAB_X56_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_col[3]"
+set_location_assignment LAB_X56_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_row[3]"
+set_location_assignment LAB_X56_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|io_sdram_addr[3]~3"
+
+set_location_assignment LAB_X31_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_col[4]"
+set_location_assignment LAB_X31_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_row[4]"
+set_location_assignment LAB_X31_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|io_sdram_addr[4]~4"
+
+set_location_assignment LAB_X88_Y4_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_col[5]"
+set_location_assignment LAB_X88_Y4_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_row[5]"
+set_location_assignment LAB_X88_Y4_N0 -to "emu:emu|Main:main|SDRAM:sdram|io_sdram_addr[5]~5"
+
+set_location_assignment LAB_X88_Y8_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_col[6]"
+set_location_assignment LAB_X88_Y8_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_row[6]"
+set_location_assignment LAB_X88_Y8_N0 -to "emu:emu|Main:main|SDRAM:sdram|io_sdram_addr[6]~6"
+
+set_location_assignment LAB_X84_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_col[7]"
+set_location_assignment LAB_X84_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_row[7]"
+set_location_assignment LAB_X84_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|io_sdram_addr[7]~7"
+
+set_location_assignment LAB_X84_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_col[8]"
+set_location_assignment LAB_X84_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_row[8]"
+set_location_assignment LAB_X84_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|io_sdram_addr[8]~8"
+
+set_location_assignment LAB_X40_Y80_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_row[9]"
+set_location_assignment LAB_X40_Y80_N0 -to "emu:emu|Main:main|SDRAM:sdram|io_sdram_addr[9]~9"
+
+set_location_assignment LAB_X88_Y23_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_row[10]"
+set_location_assignment LAB_X88_Y23_N0 -to "emu:emu|Main:main|SDRAM:sdram|io_sdram_addr[10]~10"
+
+set_location_assignment LAB_X62_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_row[11]"
+set_location_assignment LAB_X62_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|io_sdram_addr[11]~11"
+
+set_location_assignment LAB_X40_Y80_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_row[12]"
+set_location_assignment LAB_X40_Y80_N0 -to "emu:emu|Main:main|SDRAM:sdram|io_sdram_addr[12]~12"
+
+set_location_assignment LAB_X88_Y6_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_bank[0]"
+set_location_assignment LAB_X88_Y6_N0 -to "emu:emu|Main:main|SDRAM:sdram|io_sdram_bank[0]~0"
+
+set_location_assignment LAB_X88_Y25_N0 -to "emu:emu|Main:main|SDRAM:sdram|requestReg_addr_bank[1]"
+set_location_assignment LAB_X88_Y25_N0 -to "emu:emu|Main:main|SDRAM:sdram|io_sdram_bank[1]~1"
+
+set_location_assignment LAB_X53_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|waitCounter*"
+set_location_assignment LAB_X53_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|io_sdram_cke~0"
+set_location_assignment LAB_X53_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|Equal0*"
+set_location_assignment LAB_X53_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|Equal3*"
+set_location_assignment LAB_X53_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|Equal4*"
+set_location_assignment LAB_X53_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|Equal6*"
+set_location_assignment LAB_X53_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|_GEN_18[1]~0"
+set_location_assignment LAB_X53_Y1_N0 -to "emu:emu|Main:main|SDRAM:sdram|nextState.011~0"
+
+set_location_assignment LAB_X45_Y19_N0 -to "emu:emu|Main:main|SDRAM:sdram|stateReg.011"
+set_location_assignment LAB_X45_Y19_N0 -to "emu:emu|Main:main|SDRAM:sdram|stateReg.100"
+set_location_assignment LAB_X45_Y19_N0 -to "emu:emu|Main:main|SDRAM:sdram|stateReg.101~_Duplicate_16"
+
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
