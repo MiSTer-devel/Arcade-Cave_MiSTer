@@ -217,6 +217,22 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   val request = MemRequest(io.mem.rd, io.mem.wr, SDRAMAddress.fromByteAddress(io.mem.addr)(config), io.mem.din)
   val requestReg = RegEnable(request, latchRequest)
 
+  // Bank register
+  val bankReg = RegNext(MuxLookup(nextState, 0.U, Seq(
+    State.active -> request.addr.bank,
+    State.read -> requestReg.addr.bank,
+    State.write -> requestReg.addr.bank
+  )))
+
+  // Address register
+  val addrReg = RegNext(MuxLookup(nextState, 0.U, Seq(
+    State.init -> "b0010000000000".U,
+    State.mode -> config.mode,
+    State.active -> request.addr.row,
+    State.read -> "b0010".U ## requestReg.addr.col,
+    State.write -> "b0010".U ## requestReg.addr.col
+  )))
+
   // Data I/O registers
   //
   // Using simple registers for data I/O allows better timings to be achieved, because they can be
@@ -258,21 +274,6 @@ class SDRAM(val config: SDRAMConfig) extends Module {
     val writeBurstDone = stateReg === State.write && burstDone
     RegNext(readBurstDone, false.B) || writeBurstDone
   }
-
-  // Set SDRAM bank
-  val bank = Mux(stateReg === State.active || stateReg === State.read || stateReg === State.write, requestReg.addr.bank, 0.U)
-
-  // Set SDRAM address
-  val addr = MuxLookup(stateReg, 0.U, Seq(
-    State.init -> "b0010000000000".U,
-    State.mode -> config.mode,
-    State.active -> requestReg.addr.row,
-    State.read -> "b0010".U ## requestReg.addr.col,
-    State.write -> "b0010".U ## requestReg.addr.col
-  ))
-
-  // Assert clock enable after the device has initialized
-  val clockEnable = !(stateReg === State.init && waitCounter === 0.U)
 
   // Default to the previous state
   nextState := stateReg
@@ -375,14 +376,14 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   io.mem.valid := valid
   io.mem.burstDone := memBurstDone
   io.mem.dout := doutReg
-  io.sdram.cke := clockEnable
+  io.sdram.cke := true.B
   io.sdram.cs_n := commandReg(3)
   io.sdram.ras_n := commandReg(2)
   io.sdram.cas_n := commandReg(1)
   io.sdram.we_n := commandReg(0)
   io.sdram.oe := stateReg === State.write
-  io.sdram.bank := bank
-  io.sdram.addr := addr
+  io.sdram.bank := bankReg
+  io.sdram.addr := addrReg
   io.sdram.din := dinReg
   io.debug.init := stateReg === State.init
   io.debug.mode := stateReg === State.mode
