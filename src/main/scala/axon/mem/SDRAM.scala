@@ -217,21 +217,9 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   val request = MemRequest(io.mem.rd, io.mem.wr, SDRAMAddress.fromByteAddress(io.mem.addr)(config))
   val requestReg = RegEnable(request, latch)
 
-  // Bank register
-  val bankReg = RegNext(Mux1H(Seq(
-    (nextState === State.active) -> request.addr.bank,
-    (nextState === State.read) -> requestReg.addr.bank,
-    (nextState === State.write) -> requestReg.addr.bank
-  )), 0.U)
-
-  // Address register
-  val addrReg = RegNext(Mux1H(Seq(
-    (nextState === State.init) -> "b0010000000000".U,
-    (nextState === State.mode) -> config.mode,
-    (nextState === State.active) -> request.addr.row,
-    (nextState === State.read) -> "b0010".U ## requestReg.addr.col,
-    (nextState === State.write) -> "b0010".U ## requestReg.addr.col
-  )), 0.U)
+  // Bank and address registers
+  val bankReg = RegInit(0.U)
+  val addrReg = RegInit(0.U)
 
   // Data I/O registers
   //
@@ -253,7 +241,7 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   val readDone = waitCounter === (config.readWait - 1).U
   val writeDone = waitCounter === (config.writeWait - 1).U
   val refreshDone = waitCounter === (config.refreshWait - 1).U
-  val refresh = refreshCounter >= (config.refreshInterval - 1).U
+  val triggerRefresh = refreshCounter >= (config.refreshInterval - 1).U
   val burstBusy = waitCounter < (config.burstLength - 1).U
   val burstDone = waitCounter === (config.burstLength - 1).U
 
@@ -281,10 +269,47 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   // Default to a NOP
   nextCommand := Command.nop
 
+  def mode() = {
+    nextCommand := Command.mode
+    nextState := State.mode
+    addrReg := config.mode
+  }
+
+  def idle() = {
+    nextState := State.idle
+  }
+
+  def active() = {
+    nextCommand := Command.active
+    nextState := State.active
+    bankReg := request.addr.bank
+    addrReg := request.addr.row
+  }
+
+  def read() = {
+    nextCommand := Command.read
+    nextState := State.read
+    bankReg := requestReg.addr.bank
+    addrReg := "b0010".U ## requestReg.addr.col
+  }
+
+  def write() = {
+    nextCommand := Command.write
+    nextState := State.write
+    bankReg := requestReg.addr.bank
+    addrReg := "b0010".U ## requestReg.addr.col
+  }
+
+  def refresh() = {
+    nextCommand := Command.refresh
+    nextState := State.refresh
+  }
+
   // FSM
   switch(stateReg) {
     // Execute initialization sequence
     is(State.init) {
+      addrReg := "b0010000000000".U
       when(waitCounter === 0.U) {
         nextCommand := Command.deselect
       }.elsewhen(waitCounter === (config.deselectWait - 1).U) {
@@ -294,79 +319,45 @@ class SDRAM(val config: SDRAMConfig) extends Module {
       }.elsewhen(waitCounter === (config.deselectWait + config.prechargeWait + config.refreshWait - 1).U) {
         nextCommand := Command.refresh
       }.elsewhen(waitCounter === (config.deselectWait + config.prechargeWait + config.refreshWait + config.refreshWait - 1).U) {
-        nextCommand := Command.mode
-        nextState := State.mode
+        mode()
       }
     }
 
     // Set mode register
     is(State.mode) {
-      when(modeDone) { nextState := State.idle }
+      when(modeDone) { idle() }
     }
 
     // Wait for request
     is(State.idle) {
-      when(refresh) {
-        nextCommand := Command.refresh
-        nextState := State.refresh
-      }.elsewhen(request.valid) {
-        nextCommand := Command.active
-        nextState := State.active
-      }
+      when(triggerRefresh) { refresh() }.elsewhen(request.valid) { active() }
     }
 
     // Activate row
     is(State.active) {
       when(activeDone) {
-        when(requestReg.wr) {
-          nextCommand := Command.write
-          nextState := State.write
-        }.otherwise {
-          nextCommand := Command.read
-          nextState := State.read
-        }
+        when(requestReg.wr) { write() }.otherwise { read() }
       }
     }
 
     // Execute read command
     is(State.read) {
       when(readDone) {
-        when(refresh) {
-          nextCommand := Command.refresh
-          nextState := State.refresh
-        }.elsewhen(request.valid) {
-          nextCommand := Command.active
-          nextState := State.active
-        }.otherwise {
-          nextState := State.idle
-        }
+        when(triggerRefresh) { refresh() }.elsewhen(request.valid) { active() }.otherwise { idle() }
       }
     }
 
     // Execute write command
     is(State.write) {
       when(writeDone) {
-        when(refresh) {
-          nextCommand := Command.refresh
-          nextState := State.refresh
-        }.elsewhen(request.valid) {
-          nextCommand := Command.active
-          nextState := State.active
-        }.otherwise {
-          nextState := State.idle
-        }
+        when(triggerRefresh) { refresh() }.elsewhen(request.valid) { active() }.otherwise { idle() }
       }
     }
 
     // Execute refresh command
     is(State.refresh) {
       when(refreshDone) {
-        when(request.valid) {
-          nextCommand := Command.active
-          nextState := State.active
-        }.otherwise {
-          nextState := State.idle
-        }
+        when(request.valid) { active() }.otherwise { idle() }
       }
     }
   }
@@ -393,5 +384,5 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   io.debug.write := stateReg === State.write
   io.debug.refresh := stateReg === State.refresh
 
-  printf(p"SDRAM(state: $stateReg, nextState: $nextState, command: $commandReg, nextCommand: $nextCommand, waitCounter: $waitCounter, wait: $waitReq, valid: $valid, burstDone: $memBurstDone)\n")
+  printf(p"SDRAM(state: $stateReg, nextState: $nextState, command: $commandReg, nextCommand: $nextCommand, bank: $bankReg, addr: $addrReg, waitCounter: $waitCounter, wait: $waitReq, valid: $valid, burstDone: $memBurstDone)\n")
 }
