@@ -218,20 +218,20 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   val requestReg = RegEnable(request, latch)
 
   // Bank register
-  val bankReg = RegNext(MuxLookup(nextState, 0.U, Seq(
-    State.active -> request.addr.bank,
-    State.read -> requestReg.addr.bank,
-    State.write -> requestReg.addr.bank
-  )))
+  val bankReg = RegNext(Mux1H(Seq(
+    (nextState === State.active) -> request.addr.bank,
+    (nextState === State.read) -> requestReg.addr.bank,
+    (nextState === State.write) -> requestReg.addr.bank
+  )), 0.U)
 
   // Address register
-  val addrReg = RegNext(MuxLookup(nextState, 0.U, Seq(
-    State.init -> "b0010000000000".U,
-    State.mode -> config.mode,
-    State.active -> request.addr.row,
-    State.read -> "b0010".U ## requestReg.addr.col,
-    State.write -> "b0010".U ## requestReg.addr.col
-  )))
+  val addrReg = RegNext(Mux1H(Seq(
+    (nextState === State.init) -> "b0010000000000".U,
+    (nextState === State.mode) -> config.mode,
+    (nextState === State.active) -> request.addr.row,
+    (nextState === State.read) -> "b0010".U ## requestReg.addr.col,
+    (nextState === State.write) -> "b0010".U ## requestReg.addr.col
+  )), 0.U)
 
   // Data I/O registers
   //
