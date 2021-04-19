@@ -216,15 +216,21 @@ class Cache(config: CacheConfig) extends Module {
   val nextState = Wire(UInt())
   val stateReg = RegNext(nextState, State.init)
 
+  // Assert the latch signal when a request should be latched
+  val latch = nextState === State.latch
+
   // Request register
-  val request = MemRequest(io.in.rd, io.in.wr, CacheAddress(io.in.addr)(config), io.in.din)
-  val requestReg = RegEnable(request, nextState === State.latch)
+  val request = MemRequest(io.in.rd, io.in.wr, CacheAddress(io.in.addr)(config))
+  val requestReg = RegEnable(request, latch)
+
+  // Data register
+  val dataReg = RegEnable(io.in.din, latch)
 
   // Offset register
   val offsetReg = {
     val addr = io.in.addr >> log2Ceil(config.inBytes)
     val offset = addr(log2Up(config.inWords) - 1, 0)
-    RegEnable(offset, nextState === State.latch)
+    RegEnable(offset, latch)
   }
 
   // Cache entry memory
@@ -247,11 +253,7 @@ class Cache(config: CacheConfig) extends Module {
   val dirty = cacheEntryReg.dirty && cacheEntryReg.tag =/= requestReg.addr.tag
   val hit = cacheEntryReg.valid && cacheEntryReg.tag === requestReg.addr.tag
   val miss = !hit
-  val waitReq = {
-    val idle = stateReg === State.idle
-    val latch = nextState === State.latch
-    !(idle || latch)
-  }
+  val waitReq = !(stateReg === State.idle || latch)
 
   // For a wrapping burst, the word done signal is asserted as soon as enough output words have
   // been bursted to fill an input word. Otherwise, for a non-wrapping burst we just wait until the
@@ -295,7 +297,7 @@ class Cache(config: CacheConfig) extends Module {
   }
 
   // Merge the input data with the cache line
-  when(stateReg === State.merge) { cacheEntryReg.merge(offsetReg, requestReg.data) }
+  when(stateReg === State.merge) { cacheEntryReg.merge(offsetReg, dataReg) }
 
   // Default to the previous state
   nextState := stateReg

@@ -156,6 +156,12 @@ class SDRAMTest extends FlatSpec with ChiselScalatestTester with Matchers with S
 
   behavior of "initialize"
 
+  it should "assert clock enable" in {
+    test(mkSDRAM()) { dut =>
+      dut.io.sdram.cke.expect(true.B)
+    }
+  }
+
   it should "initialize the SDRAM" in {
     test(mkSDRAM()) { dut =>
       // NOP

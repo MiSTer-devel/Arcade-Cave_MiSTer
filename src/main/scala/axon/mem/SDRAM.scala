@@ -206,16 +206,32 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   val nextState = Wire(UInt())
   val stateReg = RegNext(nextState, State.init)
 
-  // Latch flag
-  val latchRequest = stateReg =/= State.active && nextState === State.active
-
   // Command register
   val nextCommand = Wire(UInt())
   val commandReg = RegNext(nextCommand, Command.nop)
 
+  // Assert the latch signal when a request should be latched
+  val latch = stateReg =/= State.active && nextState === State.active
+
   // Request register
-  val request = MemRequest(io.mem.rd, io.mem.wr, SDRAMAddress.fromByteAddress(io.mem.addr)(config), io.mem.din)
-  val requestReg = RegEnable(request, latchRequest)
+  val request = MemRequest(io.mem.rd, io.mem.wr, SDRAMAddress.fromByteAddress(io.mem.addr)(config))
+  val requestReg = RegEnable(request, latch)
+
+  // Bank register
+  val bankReg = RegNext(MuxLookup(nextState, 0.U, Seq(
+    State.active -> request.addr.bank,
+    State.read -> requestReg.addr.bank,
+    State.write -> requestReg.addr.bank
+  )))
+
+  // Address register
+  val addrReg = RegNext(MuxLookup(nextState, 0.U, Seq(
+    State.init -> "b0010000000000".U,
+    State.mode -> config.mode,
+    State.active -> request.addr.row,
+    State.read -> "b0010".U ## requestReg.addr.col,
+    State.write -> "b0010".U ## requestReg.addr.col
+  )))
 
   // Data I/O registers
   //
@@ -244,7 +260,7 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   // Deassert the wait signal at the start of a read request, or during a write request
   val waitReq = {
     val idle = stateReg === State.idle && !request.valid
-    val read = latchRequest && request.rd
+    val read = latch && request.rd
     val write = (stateReg === State.active && activeDone && requestReg.wr) || (stateReg === State.write && burstBusy)
     !(idle || read || write)
   }
@@ -258,21 +274,6 @@ class SDRAM(val config: SDRAMConfig) extends Module {
     val writeBurstDone = stateReg === State.write && burstDone
     RegNext(readBurstDone, false.B) || writeBurstDone
   }
-
-  // Set SDRAM bank
-  val bank = Mux(stateReg === State.active || stateReg === State.read || stateReg === State.write, requestReg.addr.bank, 0.U)
-
-  // Set SDRAM address
-  val addr = MuxLookup(stateReg, 0.U, Seq(
-    State.init -> "b0010000000000".U,
-    State.mode -> config.mode,
-    State.active -> requestReg.addr.row,
-    State.read -> "b0010".U ## requestReg.addr.col,
-    State.write -> "b0010".U ## requestReg.addr.col
-  ))
-
-  // Assert clock enable after the device has initialized
-  val clockEnable = !(stateReg === State.init && waitCounter === 0.U)
 
   // Default to the previous state
   nextState := stateReg
@@ -375,14 +376,14 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   io.mem.valid := valid
   io.mem.burstDone := memBurstDone
   io.mem.dout := doutReg
-  io.sdram.cke := clockEnable
+  io.sdram.cke := true.B
   io.sdram.cs_n := commandReg(3)
   io.sdram.ras_n := commandReg(2)
   io.sdram.cas_n := commandReg(1)
   io.sdram.we_n := commandReg(0)
   io.sdram.oe := stateReg === State.write
-  io.sdram.bank := bank
-  io.sdram.addr := addr
+  io.sdram.bank := bankReg
+  io.sdram.addr := addrReg
   io.sdram.din := dinReg
   io.debug.init := stateReg === State.init
   io.debug.mode := stateReg === State.mode
