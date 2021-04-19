@@ -206,16 +206,16 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   val nextState = Wire(UInt())
   val stateReg = RegNext(nextState, State.init)
 
-  // Latch flag
-  val latchRequest = stateReg =/= State.active && nextState === State.active
-
   // Command register
   val nextCommand = Wire(UInt())
   val commandReg = RegNext(nextCommand, Command.nop)
 
+  // Assert the latch signal when a request should be latched
+  val latch = stateReg =/= State.active && nextState === State.active
+
   // Request register
-  val request = MemRequest(io.mem.rd, io.mem.wr, SDRAMAddress.fromByteAddress(io.mem.addr)(config), io.mem.din)
-  val requestReg = RegEnable(request, latchRequest)
+  val request = MemRequest(io.mem.rd, io.mem.wr, SDRAMAddress.fromByteAddress(io.mem.addr)(config))
+  val requestReg = RegEnable(request, latch)
 
   // Bank register
   val bankReg = RegNext(MuxLookup(nextState, 0.U, Seq(
@@ -260,7 +260,7 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   // Deassert the wait signal at the start of a read request, or during a write request
   val waitReq = {
     val idle = stateReg === State.idle && !request.valid
-    val read = latchRequest && request.rd
+    val read = latch && request.rd
     val write = (stateReg === State.active && activeDone && requestReg.wr) || (stateReg === State.write && burstBusy)
     !(idle || read || write)
   }

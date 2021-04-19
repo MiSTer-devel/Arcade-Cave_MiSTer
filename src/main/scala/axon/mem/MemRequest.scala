@@ -35,20 +35,18 @@ package axon.mem
 import chisel3._
 
 /** Represents a memory request. */
-class MemRequest[S <: Data, T <: Data](s: S, t: T) extends Bundle {
+class MemRequest[S <: Data](s: S) extends Bundle {
   /** Read enable */
   val rd = Output(Bool())
   /** Write enable */
   val wr = Output(Bool())
   /** Address bus */
   val addr = Output(s)
-  /** Data bus */
-  val data = Output(t)
 
   /** Returns true if the read or write enable flag is asserted */
   def valid: Bool = rd || wr
 
-  override def cloneType: this.type = new MemRequest(s, t).asInstanceOf[this.type]
+  override def cloneType: this.type = new MemRequest(s).asInstanceOf[this.type]
 }
 
 object MemRequest {
@@ -58,14 +56,12 @@ object MemRequest {
    * @param rd   Read enable.
    * @param wr   Write enable.
    * @param addr The address value.
-   * @param data The data value.
    */
-  def apply[S <: Data, T <: Data](rd: Bool, wr: Bool, addr: S, data: T): MemRequest[S, T] = {
-    val req = Wire(new MemRequest(chiselTypeOf(addr), chiselTypeOf(data)))
+  def apply[S <: Data, T <: Data](rd: Bool, wr: Bool, addr: S): MemRequest[S] = {
+    val req = Wire(new MemRequest(chiselTypeOf(addr)))
     req.rd := rd
     req.wr := wr
     req.addr := addr
-    req.data := data
     req
   }
 }
