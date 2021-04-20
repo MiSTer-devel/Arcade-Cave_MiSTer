@@ -1,7 +1,7 @@
-set sys_clk "emu|pll|pll_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk"
-set sdram_clk "emu|pll|pll_inst|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk"
-set video_clk "emu|pll|pll_inst|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk"
-set cpu_clk "emu|pll|pll_inst|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk"
+set sys_clk "emu|pll_sys|pll_sys_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk"
+set sdram_clk "emu|pll_sys|pll_sys_inst|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk"
+set cpu_clk "emu|pll_sys|pll_sys_inst|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk"
+set video_clk "emu|pll_video|pll_video_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk"
 
 # Decouple clock groups
 set_false_path -from [get_clocks $sys_clk] -to [get_clocks $video_clk]

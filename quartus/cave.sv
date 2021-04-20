@@ -187,7 +187,7 @@ localparam CONF_STR = {
 // CLOCK AND RESET
 ////////////////////////////////////////////////////////////////////////////////
 
-wire locked;
+wire pll_sys_locked, pll_video_locked;
 wire clk_sys, clk_sdram, clk_video, clk_cpu;
 wire rst_sys, rst_video, rst_cpu;
 reg  rst_pll;
@@ -201,8 +201,8 @@ always @(posedge clk_sys or posedge RESET) begin
     rst_pll <= 0;
     rst_cnt <= 8'h00;
   end else begin
-    old_locked <= locked;
-    if (old_locked && !locked) begin
+    old_locked <= pll_sys_locked;
+    if (old_locked && !pll_sys_locked) begin
       rst_cnt <= 8'hff; // keep reset high for 256 cycles
       rst_pll <= 1;
     end else begin
@@ -214,14 +214,20 @@ always @(posedge clk_sys or posedge RESET) begin
   end
 end
 
-pll pll (
+pll_sys pll_sys (
   .refclk(CLK_50M),
   .rst(rst_pll),
-  .locked(locked),
+  .locked(pll_sys_locked),
   .outclk_0(clk_sys),
   .outclk_1(clk_sdram),
-  .outclk_2(clk_video),
-  .outclk_3(clk_cpu)
+  .outclk_2(clk_cpu)
+);
+
+pll_video pll_video (
+  .refclk(CLK_50M),
+  .rst(rst_pll),
+  .locked(pll_video_locked),
+  .outclk_0(clk_video),
 );
 
 assign DDRAM_CLK = clk_sys;
@@ -229,20 +235,20 @@ assign SDRAM_CLK = clk_sdram;
 
 reset_ctrl reset_sys_ctrl (
   .clk(clk_sys),
-  .rst_i(RESET | ~locked),
+  .rst_i(RESET | ~pll_sys_locked),
   .rst_o(rst_sys)
-);
-
-reset_ctrl reset_video_ctrl (
-  .clk(clk_video),
-  .rst_i(RESET | ~locked),
-  .rst_o(rst_video)
 );
 
 reset_ctrl reset_cpu_ctrl (
   .clk(clk_cpu),
-  .rst_i(RESET | status[0] | buttons[1] | ~locked),
+  .rst_i(RESET | status[0] | buttons[1] | ~pll_sys_locked),
   .rst_o(rst_cpu)
+);
+
+reset_ctrl reset_video_ctrl (
+  .clk(clk_video),
+  .rst_i(RESET | ~pll_video_locked),
+  .rst_o(rst_video)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
