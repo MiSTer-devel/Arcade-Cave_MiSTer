@@ -8,7 +8,7 @@
     <players>2</players>
     <joystick>8-way</joystick>
     <rotation>horizontal</rotation>
-    <region/>
+    <region>China</region>
     <rom index="0" zip="theroes.zip" type="merged" md5="None">
         <!-- maincpu - starts at 0x0 -->
         <interleave output="16">
