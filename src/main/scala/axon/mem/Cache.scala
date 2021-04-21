@@ -72,17 +72,19 @@ case class CacheConfig(inAddrWidth: Int,
 }
 
 /**
- * A cache line is stored internally as a vector of words that have the same width as the output
- * data bus.
+ * A cache line is stored internally as a vector of words that has the same width as the output data
+ * bus.
  *
  * A cache line can also be represented a vector of input words, by rearranging the byte grouping.
  */
 class CacheLine(private val config: CacheConfig) extends Bundle {
-  /** The output words in the cache line */
-  val outWords: Vec[Bits] = Vec(config.lineWidth, Bits(config.outDataWidth.W))
+  val words: Vec[Bits] = Vec(config.lineWidth, Bits(config.outDataWidth.W))
 
   /** Returns the cache line represented as a vector input words */
-  def inWords: Vec[Bits] = outWords.asTypeOf(Vec(config.inWords, Bits(config.inDataWidth.W)))
+  def inWords: Vec[Bits] = words.asTypeOf(Vec(config.inWords, Bits(config.inDataWidth.W)))
+
+  /** The output words in the cache line */
+  def outWords = words
 }
 
 /** Represents the location of a word stored in the cache. */
@@ -134,10 +136,10 @@ class CacheEntry(private val config: CacheConfig) extends Bundle {
   val dirty = Bool()
 
   /** Returns the input word at the given offset. */
-  def inWord(offset: UInt): Bits = line.inWords(offset)
+  def inWord(offset: UInt): Bits = line.inWords((~offset).asUInt)
 
   /** Returns the output word at the given offset. */
-  def outWord(offset: UInt): Bits = line.outWords(offset)
+  def outWord(offset: UInt): Bits = line.outWords((~offset).asUInt)
 
   /**
    * Fills the cache line with the given data, and marks the line as valid.
@@ -147,7 +149,7 @@ class CacheEntry(private val config: CacheConfig) extends Bundle {
    * @param data   The data.
    */
   def fill(tag: UInt, offset: UInt, data: Bits) = {
-    line.outWords(offset) := data
+    line.words((~offset).asUInt) := data
     this.tag := tag
     valid := true.B
   }
@@ -160,8 +162,8 @@ class CacheEntry(private val config: CacheConfig) extends Bundle {
    */
   def merge(offset: UInt, data: Bits) = {
     val words = WireInit(line.inWords)
-    words(offset) := data
-    line.outWords := words.asTypeOf(chiselTypeOf(line.outWords))
+    words((~offset).asUInt) := data
+    line.words := words.asTypeOf(chiselTypeOf(line.words))
     dirty := true.B
   }
 }

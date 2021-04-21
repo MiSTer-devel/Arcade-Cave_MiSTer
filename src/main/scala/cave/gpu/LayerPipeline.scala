@@ -215,7 +215,8 @@ object LayerPipeline {
    * @param data The pixel data.
    */
   def decodeSmallTile(data: Bits): Seq[Bits] =
-    Seq(3, 1, 2, 0, 7, 5, 6, 4, 11, 9, 10, 8, 15, 13, 14, 12)
+    Seq(2, 0, 3, 1, 6, 4, 7, 5, 10, 8, 11, 9, 14, 12, 15, 13)
+      .reverse
       .map(Util.decode(data, 16, 4).apply)
       .grouped(2)
       .map(Cat(_))
@@ -229,6 +230,7 @@ object LayerPipeline {
    * @param data The pixel data.
    */
   def decodeLargeTile(data: Bits): Seq[Bits] =
-    Seq(1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14)
+    Seq(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+      .reverse
       .map(Util.decode(data, 16, 4).apply)
 }

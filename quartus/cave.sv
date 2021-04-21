@@ -529,7 +529,7 @@ Main main (
   .io_ioctl_index(ioctl_index),
   .io_ioctl_addr(ioctl_addr),
   .io_ioctl_din(ioctl_din),
-  .io_ioctl_dout(ioctl_dout),
+  .io_ioctl_dout({ioctl_dout[7:0], ioctl_dout[15:8]}), // swap endianness
   // RGB output
   .io_rgb_r(r),
   .io_rgb_g(g),

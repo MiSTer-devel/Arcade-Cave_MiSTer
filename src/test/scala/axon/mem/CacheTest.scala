@@ -70,7 +70,7 @@ trait CacheMemTestHelpers {
     waitForIdle(dut)
   }
 
-  protected def fillCacheLine(dut: Cache, addr: Int, data: Seq[Int]) = {
+  protected def fillCacheLine(dut: Cache, addr: Int, data: Seq[Long]) = {
     dut.io.in.rd.poke(true.B)
     dut.io.in.wr.poke(false.B)
     dut.io.in.addr.poke(addr.U)
@@ -292,7 +292,7 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
       dut.io.out.wr.expect(false.B)
       dut.clock.step()
       dut.io.in.valid.expect(true.B)
-      dut.io.in.dout.expect(0x34.U)
+      dut.io.in.dout.expect(0x12.U)
 
       // Read
       dut.io.in.addr.poke(3.U)
@@ -301,7 +301,7 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
       dut.io.out.wr.expect(false.B)
       dut.clock.step()
       dut.io.in.valid.expect(true.B)
-      dut.io.in.dout.expect(0x56.U)
+      dut.io.in.dout.expect(0x78.U)
     }
   }
 
@@ -334,7 +334,7 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
       dut.clock.step()
       dut.io.out.valid.poke(false.B)
       dut.io.in.valid.expect(true.B)
-      dut.io.in.dout.expect(0x56.U)
+      dut.io.in.dout.expect(0x78.U)
     }
   }
 
@@ -362,7 +362,7 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
       dut.clock.step()
       dut.io.out.dout.poke(0x5678.U)
       dut.io.in.valid.expect(true.B)
-      dut.io.in.dout.expect(0x12.U)
+      dut.io.in.dout.expect(0x34.U)
       dut.io.out.rd.expect(false.B)
       dut.io.out.wr.expect(false.B)
       dut.clock.step()
@@ -372,6 +372,52 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
   }
 
   it should "evict a dirty cache entry before a line fill" in {
+    test(mkCacheMem(cacheConfig)) { dut =>
+      waitForIdle(dut)
+      fillCacheLine(dut, 0, Seq(0x1234, 0x5678))
+      writeCache(dut, 2, 0xab)
+
+      // Read
+      dut.io.offset.poke(0x1000.U)
+      dut.io.in.rd.poke(true.B)
+      dut.io.in.addr.poke(0x23.U)
+      dut.clock.step()
+      dut.io.in.rd.poke(false.B)
+      dut.clock.step(2)
+
+      // Evict
+      dut.io.out.rd.expect(false.B)
+      dut.io.out.wr.expect(true.B)
+      dut.io.out.burstLength.expect(2.U)
+      dut.io.out.addr.expect(0x1000.U)
+      dut.io.out.din.expect(0x1234.U)
+      dut.clock.step()
+      dut.io.out.rd.expect(false.B)
+      dut.io.out.wr.expect(true.B)
+      dut.io.out.din.expect(0xab78.U)
+      dut.clock.step()
+
+      // Line fill
+      dut.io.out.rd.expect(true.B)
+      dut.io.out.wr.expect(false.B)
+      dut.io.out.burstLength.expect(2.U)
+      dut.io.out.addr.expect(0x1020.U)
+      dut.clock.step()
+      dut.io.out.valid.poke(true.B)
+      dut.io.out.dout.poke(0x1234.U)
+      dut.io.in.valid.expect(false.B)
+      dut.clock.step()
+      dut.io.out.dout.poke(0x5678.U)
+      dut.io.out.rd.expect(false.B)
+      dut.io.out.wr.expect(false.B)
+      dut.clock.step()
+      dut.io.out.valid.poke(false.B)
+      dut.io.in.valid.expect(true.B)
+      dut.io.in.dout.expect(0x78.U)
+    }
+  }
+
+  it should "evict a dirty cache entry before a line fill (wrapping)" in {
     test(mkCacheMem(cacheConfig.copy(wrapping = true))) { dut =>
       waitForIdle(dut)
       fillCacheLine(dut, 0, Seq(0x1234, 0x5678))
@@ -394,7 +440,7 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
       dut.clock.step()
       dut.io.out.rd.expect(false.B)
       dut.io.out.wr.expect(true.B)
-      dut.io.out.din.expect(0x56ab.U)
+      dut.io.out.din.expect(0xab78.U)
       dut.clock.step()
 
       // Line fill
@@ -409,7 +455,7 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
       dut.clock.step()
       dut.io.out.dout.poke(0x5678.U)
       dut.io.in.valid.expect(true.B)
-      dut.io.in.dout.expect(0x12.U)
+      dut.io.in.dout.expect(0x34.U)
       dut.io.out.rd.expect(false.B)
       dut.io.out.wr.expect(false.B)
       dut.clock.step()
@@ -454,8 +500,8 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
       dut.clock.step(3)
 
       readCache(dut, 0) shouldBe 0xab
-      readCache(dut, 1) shouldBe 0x12
-      readCache(dut, 2) shouldBe 0x78
+      readCache(dut, 1) shouldBe 0x34
+      readCache(dut, 2) shouldBe 0x56
       readCache(dut, 3) shouldBe 0xcd
     }
   }
@@ -491,10 +537,10 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
       dut.io.out.valid.poke(false.B)
       dut.clock.step()
 
-      readCache(dut, 0) shouldBe 0x34
+      readCache(dut, 0) shouldBe 0x12
       readCache(dut, 1) shouldBe 0xab
-      readCache(dut, 2) shouldBe 0x78
-      readCache(dut, 3) shouldBe 0x56
+      readCache(dut, 2) shouldBe 0x56
+      readCache(dut, 3) shouldBe 0x78
     }
   }
 
@@ -522,7 +568,7 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
       dut.clock.step()
       dut.io.out.rd.expect(false.B)
       dut.io.out.wr.expect(true.B)
-      dut.io.out.din.expect(0x56ab.U)
+      dut.io.out.din.expect(0xab78.U)
       dut.clock.step()
 
       // Line fill & merge
@@ -545,9 +591,9 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
       dut.clock.step()
 
       readCache(dut, 0x20) shouldBe 0xcd
-      readCache(dut, 0x21) shouldBe 0x12
-      readCache(dut, 0x22) shouldBe 0x78
-      readCache(dut, 0x23) shouldBe 0x56
+      readCache(dut, 0x21) shouldBe 0x34
+      readCache(dut, 0x22) shouldBe 0x56
+      readCache(dut, 0x23) shouldBe 0x78
     }
   }
 
@@ -577,10 +623,25 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
     test(mkCacheMem(cacheConfig.copy(inDataWidth = 8, outDataWidth = 16))) { dut =>
       waitForIdle(dut)
       fillCacheLine(dut, 0, Seq(0x1234, 0x5678))
-      readCache(dut, 0) shouldBe 0x34
-      readCache(dut, 1) shouldBe 0x12
-      readCache(dut, 2) shouldBe 0x78
-      readCache(dut, 3) shouldBe 0x56
+      readCache(dut, 0) shouldBe 0x12
+      readCache(dut, 1) shouldBe 0x34
+      readCache(dut, 2) shouldBe 0x56
+      readCache(dut, 3) shouldBe 0x78
+    }
+  }
+
+  it should "read a word (8:32)" in {
+    test(mkCacheMem(cacheConfig.copy(inDataWidth = 8, outDataWidth = 32))) { dut =>
+      waitForIdle(dut)
+      fillCacheLine(dut, 0, Seq(0x12345678L, 0x90abcdefL))
+      readCache(dut, 0) shouldBe 0x12
+      readCache(dut, 1) shouldBe 0x34
+      readCache(dut, 2) shouldBe 0x56
+      readCache(dut, 3) shouldBe 0x78
+      readCache(dut, 4) shouldBe 0x90
+      readCache(dut, 5) shouldBe 0xab
+      readCache(dut, 6) shouldBe 0xcd
+      readCache(dut, 7) shouldBe 0xef
     }
   }
 
@@ -588,7 +649,7 @@ class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with C
     test(mkCacheMem(cacheConfig.copy(inDataWidth = 16, outDataWidth = 8))) { dut =>
       waitForIdle(dut)
       fillCacheLine(dut, 0, Seq(0x12, 0x34))
-      readCache(dut, 0) shouldBe 0x3412
+      readCache(dut, 0) shouldBe 0x1234
     }
   }
 
