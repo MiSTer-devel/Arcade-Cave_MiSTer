@@ -160,7 +160,7 @@ object SpriteBlitter {
   /**
    * Decodes a sprite tile from the given pixel data.
    *
-   * @param data The pixel data.
+   * @param data   The pixel data.
    * @param format The tile format.
    * @return A vector containing the decoded tile pixels.
    */
@@ -170,10 +170,12 @@ object SpriteBlitter {
     ))
 
   private def decodeSpriteTile(data: Bits): Seq[Bits] =
-    Seq(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+    Seq(1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14)
+      .reverse
       .map(Util.decode(data, 16, 4).apply)
 
   private def decodeSpriteMSBTile(data: Bits): Seq[Bits] =
-    Seq(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12)
+    Seq(2, 3, 0, 1, 6, 7, 4, 5, 10, 11, 8, 9, 14, 15, 12, 13)
+      .reverse
       .map(Util.decode(data, 16, 4).apply)
 }
