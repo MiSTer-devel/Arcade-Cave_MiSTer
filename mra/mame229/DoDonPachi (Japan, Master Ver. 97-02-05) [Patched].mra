@@ -12,7 +12,7 @@
     <rom index="0" zip="ddonpachj.zip|ddonpach.zip" type="merged" md5="None">
         <!-- maincpu - starts at 0x0 -->
         <interleave output="16">
-            <part name="u27.bin" crc="2432ff9b map="10" />
+            <part name="u27.bin" crc="2432ff9b" map="10" />
             <part name="u26.bin" crc="4f3a914a" map="01" />
         </interleave>
         <!-- sprites0 - starts at 0x100000 -->
