@@ -1,0 +1,45 @@
+<misterromdescription>
+    <name>DoDonPachi (International, Master Ver. 97/02/05)</name>
+    <setname>ddonpach</setname>
+    <rbf>cave</rbf>
+    <mameversion>0229</mameversion>
+    <year>1997</year>
+    <manufacturer>Cave (Atlus license)</manufacturer>
+    <players>2</players>
+    <joystick>8-way</joystick>
+    <rotation>vertical</rotation>
+    <region>World</region>
+    <rom index="0" zip="ddonpach.zip" type="merged" md5="None">
+        <!-- maincpu - starts at 0x0 -->
+        <interleave output="16">
+            <part name="b1.u27" crc="b5cdc8d3" map="10" />
+            <part name="b2.u26" crc="6bbb063a" map="01" />
+        </interleave>
+        <!-- sprites0 - starts at 0x100000 -->
+        <part name="u50.bin" crc="14b260ec"/>
+        <part name="u51.bin" crc="e7ba8cce"/>
+        <part name="u52.bin" crc="02492ee0"/>
+        <part name="u53.bin" crc="cb4c10f0"/>
+        <!-- layer0 - starts at 0x900000 -->
+        <part name="u60.bin" crc="903096a7"/>
+        <!-- layer1 - starts at 0xB00000 -->
+        <part name="u61.bin" crc="d89b7631"/>
+        <!-- layer2 - starts at 0xD00000 -->
+        <part name="u62.bin" crc="292bfb6b"/>
+        <!-- ymz - starts at 0xF00000 -->
+        <part name="u6.bin" crc="9dfdafaf"/>
+        <part name="u7.bin" crc="795b17d5"/>
+        <!-- eeprom - starts at 0x1300000 -->
+        <part name="eeprom-ddonpach.bin" crc="315fb546"/>
+        <!-- Total 0x1300080 bytes - 19456 kBytes -->
+        <!-- skip crc -->
+        <patch offset="0x005404">00 60 0C 00</patch>
+        <!-- skip warning -->
+        <patch offset="0x0054E0">00 60 50 00</patch>
+    </rom>
+    <!-- select game -->
+    <rom index="1">
+        <part>1</part>
+    </rom>
+    <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,X,R,L,Start" />
+</misterromdescription>

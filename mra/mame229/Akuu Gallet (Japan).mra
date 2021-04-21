@@ -1,0 +1,42 @@
+<misterromdescription>
+    <name>Akuu Gallet (Japan)</name>
+    <setname>agalletj</setname>
+    <rbf>cave</rbf>
+    <mameversion>0229</mameversion>
+    <year>1996</year>
+    <manufacturer>Gazelle (Banpresto license)</manufacturer>
+    <players>2</players>
+    <joystick>8-way</joystick>
+    <rotation>vertical</rotation>
+    <region>Japan</region>
+    <rom index="0" zip="agalletj.zip|agallet.zip" type="merged" md5="None">
+        <!-- maincpu - starts at 0x0 -->
+        <interleave output="16">
+            <part name="bp962a.u45" crc="24815046" map="10" />
+        </interleave>
+        <!-- audiocpu - starts at 0x80000 -->
+        <part name="bp962a.u9" crc="06caddbe"/>
+        <!-- sprites0 - starts at 0x100000 -->
+        <part name="bp962a.u76" crc="858da439"/>
+        <part name="bp962a.u77" crc="ea2ba35e"/>
+        <!-- layer0 - starts at 0x500000 -->
+        <part name="bp962a.u53" crc="fcd9a107"/>
+        <!-- layer1 - starts at 0x700000 -->
+        <part name="bp962a.u54" crc="0cfa3409"/>
+        <!-- layer2 - starts at 0x900000 -->
+        <part name="bp962a.u57" crc="6d608957"/>
+        <part name="bp962a.u65" crc="135fcf9a"/>
+        <!-- oki1 - starts at 0xD00000 -->
+        <part name="bp962a.u48" crc="ae00a1ce"/>
+        <!-- oki2 - starts at 0xF00000 -->
+        <part name="bp962a.u47" crc="6d4e9737"/>
+        <!-- eeprom - starts at 0x1100000 -->
+        <part name="agallet_japan.nv" crc="0753f547"/>
+        <!-- Total 0x1100080 bytes - 17408 kBytes -->
+    </rom>
+    <!-- select game -->
+    <rom index="1">
+        <part>00</part>
+    </rom>
+    <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,X,R,L,Start" />
+</misterromdescription>

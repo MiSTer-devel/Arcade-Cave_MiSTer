@@ -1,0 +1,39 @@
+<misterromdescription>
+    <name>Mazinger Z (World)</name>
+    <setname>mazinger</setname>
+    <rbf>cave</rbf>
+    <mameversion>0229</mameversion>
+    <year>1994</year>
+    <manufacturer>Banpresto / Dynamic Pl. Toei Animation</manufacturer>
+    <players>2</players>
+    <joystick>8-way</joystick>
+    <rotation>vertical</rotation>
+    <region>World</region>
+    <rom index="0" zip="mazinger.zip" type="merged" md5="None">
+        <!-- maincpu - starts at 0x0 -->
+        <interleave output="16">
+            <part name="mzp-0.u24" crc="43a4279f" map="10" />
+        </interleave>
+        <!-- user1 - starts at 0x80000 -->
+        <part name="mzp-1.924" crc="db40acba"/>
+        <!-- audiocpu - starts at 0x100000 -->
+        <part name="mzs.u21" crc="c5b4f7ed"/>
+        <!-- sprites0 - starts at 0x120000 -->
+        <part name="bp943a-2.u56" crc="97e13959"/>
+        <part name="bp943a-3.u55" crc="9c4957dd"/>
+        <!-- layer0 - starts at 0x3A0000 -->
+        <part name="bp943a-1.u60" crc="46327415"/>
+        <!-- layer1 - starts at 0x5A0000 -->
+        <part name="bp943a-0.u63" crc="c1fed98a"/>
+        <!-- oki1 - starts at 0x7A0000 -->
+        <part name="bp943a-4.u64" crc="3fc7f29a"/>
+        <!-- eeprom - starts at 0x820000 -->
+        <part name="mazinger_world.nv" crc="4f6225c6"/>
+        <!-- Total 0x820080 bytes - 8320 kBytes -->
+    </rom>
+    <!-- select game -->
+    <rom index="1">
+        <part>00</part>
+    </rom>
+    <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,X,R,L,Start" />
+</misterromdescription>

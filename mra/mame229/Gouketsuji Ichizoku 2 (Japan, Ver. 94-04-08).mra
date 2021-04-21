@@ -1,0 +1,53 @@
+<misterromdescription>
+    <name>Gouketsuji Ichizoku 2 (Japan, Ver. 94/04/08)</name>
+    <setname>pwrinst2j</setname>
+    <rbf>cave</rbf>
+    <mameversion>0229</mameversion>
+    <year>1994</year>
+    <manufacturer>Atlus</manufacturer>
+    <players>2</players>
+    <joystick>8-way</joystick>
+    <rotation>horizontal</rotation>
+    <region>Japan</region>
+    <rom index="0" zip="pwrinst2j.zip|pwrinst2.zip" type="merged" md5="None">
+        <!-- maincpu - starts at 0x0 -->
+        <interleave output="16">
+            <part name="g02j.u45" crc="42d0abd7" map="10" />
+            <part name="g02j.u44" crc="362b7af3" map="01" />
+        </interleave>
+        <interleave output="16">
+            <part name="g02j.u43" crc="c94c596b" map="10" />
+            <part name="g02j.u42" crc="4f4c8270" map="01" />
+        </interleave>
+        <!-- audiocpu - starts at 0x200000 -->
+        <part name="g02j.u3a" crc="eead01f1"/>
+        <!-- sprites0 - starts at 0x220000 -->
+        <part name="g02.u61" crc="91e30398"/>
+        <part name="g02.u62" crc="d9455dd7"/>
+        <part name="g02.u63" crc="4d20560b"/>
+        <part name="g02.u64" crc="b17b9b6e"/>
+        <part name="g02.u65" crc="08541878"/>
+        <part name="g02.u66" crc="becf2a36"/>
+        <part name="g02.u67" crc="52fe2b8b"/>
+        <!-- layer0 - starts at 0x1020000 -->
+        <part name="g02.u78" crc="1eca63d2"/>
+        <!-- layer1 - starts at 0x1220000 -->
+        <part name="g02.u81" crc="8a3ff685"/>
+        <!-- layer2 - starts at 0x1320000 -->
+        <part name="g02.u89" crc="373e1f73"/>
+        <!-- layer3 - starts at 0x1420000 -->
+        <part name="g02j.82a" crc="3be86fe1"/>
+        <!-- oki1 - starts at 0x14A0000 -->
+        <part name="g02.u53" crc="c4bdd9e0"/>
+        <part name="g02.u54" crc="1357d50e"/>
+        <!-- oki2 - starts at 0x18A0000 -->
+        <part name="g02.u55" crc="2d102898"/>
+        <part name="g02.u56" crc="9ff50dda"/>
+        <!-- Total 0x1CA0000 bytes - 29312 kBytes -->
+    </rom>
+    <!-- select game -->
+    <rom index="1">
+        <part>00</part>
+    </rom>
+    <buttons names="B1,B2,B3,B4,Start,Coin,Pause" default="A,B,X,Y,R,L,Start" />
+</misterromdescription>

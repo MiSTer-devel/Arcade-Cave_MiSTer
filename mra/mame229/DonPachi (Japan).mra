@@ -1,0 +1,42 @@
+<misterromdescription>
+    <name>DonPachi (Japan)</name>
+    <setname>donpachij</setname>
+    <rbf>cave</rbf>
+    <mameversion>0229</mameversion>
+    <year>1995</year>
+    <manufacturer>Cave (Atlus license)</manufacturer>
+    <players>2</players>
+    <joystick>8-way</joystick>
+    <rotation>vertical</rotation>
+    <region>Japan</region>
+    <rom index="0" zip="donpachij.zip|donpachi.zip" type="merged" md5="None">
+        <!-- maincpu - starts at 0x0 -->
+        <interleave output="16">
+            <part name="prg.u29" crc="6be14af6" map="10" />
+        </interleave>
+        <!-- sprites0 - starts at 0x80000 -->
+        <part name="atdp.u44" crc="7189e953"/>
+        <part name="atdp.u45" crc="6984173f"/>
+        <!-- layer0 - starts at 0x480000 -->
+        <part name="atdp.u54" crc="6bda6b66"/>
+        <!-- layer1 - starts at 0x580000 -->
+        <part name="atdp.u57" crc="0a0e72b9"/>
+        <!-- layer2 - starts at 0x680000 -->
+        <part name="u58.bin" crc="285379ff"/>
+        <!-- oki1 - starts at 0x6C0000 -->
+        <part name="atdp.u33" crc="d749de00"/>
+        <!-- oki2 - starts at 0x8C0000 -->
+        <part name="atdp.u32" crc="0d89fcca"/>
+        <part name="atdp.u33" crc="d749de00"/>
+        <!-- eeprom - starts at 0xBC0000 -->
+        <part name="eeprom-donpachi.bin" crc="315fb546"/>
+        <!-- pal - starts at 0xBC0080 -->
+        <part name="peel18cv8p-15.u18" crc="3f4787e9"/>
+        <!-- Total 0xBC01D5 bytes - 12032 kBytes -->
+    </rom>
+    <!-- select game -->
+    <rom index="1">
+        <part>2</part>
+    </rom>
+    <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,X,R,L,Start" />
+</misterromdescription>

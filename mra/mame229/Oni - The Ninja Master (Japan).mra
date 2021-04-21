@@ -1,0 +1,45 @@
+<misterromdescription>
+    <name>Oni - The Ninja Master (Japan)</name>
+    <setname>nmaster</setname>
+    <rbf>cave</rbf>
+    <mameversion>0229</mameversion>
+    <year>1995</year>
+    <manufacturer>Banpresto / Pandorabox</manufacturer>
+    <players>2</players>
+    <joystick>8-way</joystick>
+    <rotation>horizontal</rotation>
+    <region>Japan</region>
+    <rom index="0" zip="nmaster.zip|metmqstr.zip" type="merged" md5="None">
+        <!-- maincpu - starts at 0x0 -->
+        <interleave output="16">
+            <part name="bp947a_n.u25" crc="748cc514" map="10" />
+            <part name="bp947a.u28" crc="8c55decf" map="01" />
+        </interleave>
+        <interleave output="16">
+            <part name="bp947a.u29" crc="cf0f3f3b" map="10" />
+        </interleave>
+        <!-- audiocpu - starts at 0x180000 -->
+        <part name="bp947a.u20" crc="a4a36170"/>
+        <!-- sprites0 - starts at 0x1C0000 -->
+        <part name="bp947a.u49" crc="09749531"/>
+        <part name="bp947a.u50" crc="19cea8b2"/>
+        <part name="bp947a.u51" crc="c19bed67"/>
+        <part name="bp947a.u52" crc="70c64875"/>
+        <!-- layer0 - starts at 0x9C0000 -->
+        <part name="bp947a.u48" crc="04ff6a3d"/>
+        <!-- layer1 - starts at 0xBC0000 -->
+        <part name="bp947a.u47" crc="0de42827"/>
+        <!-- layer2 - starts at 0xDC0000 -->
+        <part name="bp947a.u46" crc="0f9c906e"/>
+        <!-- oki1 - starts at 0xFC0000 -->
+        <part name="bp947a.u42" crc="2ce8ff2a"/>
+        <!-- oki2 - starts at 0x11C0000 -->
+        <part name="bp947a.u37" crc="c3077c8f"/>
+        <!-- Total 0x13C0000 bytes - 20224 kBytes -->
+    </rom>
+    <!-- select game -->
+    <rom index="1">
+        <part>00</part>
+    </rom>
+    <buttons names="B1,B2,B3,B4,Start,Coin,Pause" default="A,B,X,Y,R,L,Start" />
+</misterromdescription>

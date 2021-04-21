@@ -1,0 +1,35 @@
+<misterromdescription>
+    <name>Koro Koro Quest (Japan)</name>
+    <setname>korokoro</setname>
+    <rbf>cave</rbf>
+    <mameversion>0229</mameversion>
+    <year>1999</year>
+    <manufacturer>Takumi</manufacturer>
+    <players>1</players>
+    <joystick>4-way</joystick>
+    <rotation>horizontal</rotation>
+    <region>Japan</region>
+    <rom index="0" zip="korokoro.zip" type="merged" md5="None">
+        <!-- maincpu - starts at 0x0 -->
+        <interleave output="16">
+            <part name="mp-001_ver07.u0130" crc="86c7241f" map="10" />
+        </interleave>
+        <!-- sprites0 - starts at 0x80000 -->
+        <part name="mp-001_ver01.u1066" crc="c5c6af7e"/>
+        <part name="mp-001_ver01.u1051" crc="fe5e28e8"/>
+        <!-- layer0 - starts at 0x200000 -->
+        <part name="mp-001_ver01.u1060" crc="ec9cf9d8"/>
+        <!-- ymz - starts at 0x300000 -->
+        <part name="mp-001_ver01.u1186" crc="d16e7c5d"/>
+        <!-- Total 0x400000 bytes - 4096 kBytes -->
+    </rom>
+    <!-- select game -->
+    <rom index="1">
+        <part>00</part>
+    </rom>
+    <switches base="16" default="FF,FF">
+        <!-- IN0 -->
+        <dip name="Service Mode" bits="13" ids="On,Off"/>
+    </switches>
+    <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,X,R,L,Start" />
+</misterromdescription>

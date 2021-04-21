@@ -1,0 +1,57 @@
+<misterromdescription>
+    <name>Gouketsuji Gaiden - Saikyou Densetsu (Japan, Ver. 95/06/20)</name>
+    <setname>plegendsj</setname>
+    <rbf>cave</rbf>
+    <mameversion>0229</mameversion>
+    <year>1995</year>
+    <manufacturer>Atlus</manufacturer>
+    <players>2</players>
+    <joystick>8-way</joystick>
+    <rotation>horizontal</rotation>
+    <region>Japan</region>
+    <rom index="0" zip="plegendsj.zip|plegends.zip" type="merged" md5="None">
+        <!-- maincpu - starts at 0x0 -->
+        <interleave output="16">
+            <part name="prog.u45" crc="94f53db2" map="10" />
+            <part name="prog.u44" crc="db0ad756" map="01" />
+        </interleave>
+        <interleave output="16">
+            <part name="pr12.u2" crc="0e202559" map="10" />
+            <part name="pr12.u3" crc="54742f21" map="01" />
+        </interleave>
+        <!-- user1 - starts at 0x200000 -->
+        <part name="d15.u4" crc="6352cec0"/>
+        <part name="d17.u5" crc="7af810d8"/>
+        <!-- audiocpu - starts at 0x300000 -->
+        <part name="sound.u3" crc="36f71520"/>
+        <!-- sprites0 - starts at 0x320000 -->
+        <part name="g02.u61" crc="91e30398"/>
+        <part name="g02.u62" crc="d9455dd7"/>
+        <part name="g02.u63" crc="4d20560b"/>
+        <part name="g02.u64" crc="b17b9b6e"/>
+        <part name="g02.u65" crc="08541878"/>
+        <part name="g02.u66" crc="becf2a36"/>
+        <part name="atgs.u1" crc="aa6f34a9"/>
+        <part name="atgs.u2" crc="553eda27"/>
+        <!-- layer0 - starts at 0x1320000 -->
+        <part name="atgs.u78" crc="16710ecb"/>
+        <!-- layer1 - starts at 0x1520000 -->
+        <part name="atgs.u81" crc="cb2aca91"/>
+        <!-- layer2 - starts at 0x1720000 -->
+        <part name="atgs.u89" crc="65f45a0f"/>
+        <!-- layer3 - starts at 0x1920000 -->
+        <part name="text.u82" crc="f57333ea"/>
+        <!-- oki1 - starts at 0x19A0000 -->
+        <part name="g02.u53" crc="c4bdd9e0"/>
+        <part name="g02.u54" crc="1357d50e"/>
+        <!-- oki2 - starts at 0x1DA0000 -->
+        <part name="g02.u55" crc="2d102898"/>
+        <part name="g02.u56" crc="9ff50dda"/>
+        <!-- Total 0x21A0000 bytes - 34432 kBytes -->
+    </rom>
+    <!-- select game -->
+    <rom index="1">
+        <part>00</part>
+    </rom>
+    <buttons names="B1,B2,B3,B4,Start,Coin,Pause" default="A,B,X,Y,R,L,Start" />
+</misterromdescription>

@@ -1,0 +1,57 @@
+<misterromdescription>
+    <name>Gogetsuji Legends (US, Ver. 95/06/20)</name>
+    <setname>plegends</setname>
+    <rbf>cave</rbf>
+    <mameversion>0229</mameversion>
+    <year>1995</year>
+    <manufacturer>Atlus</manufacturer>
+    <players>2</players>
+    <joystick>8-way</joystick>
+    <rotation>horizontal</rotation>
+    <region>World</region>
+    <rom index="0" zip="plegends.zip" type="merged" md5="None">
+        <!-- maincpu - starts at 0x0 -->
+        <interleave output="16">
+            <part name="d12.u45" crc="ed8a2e3d" map="10" />
+            <part name="d13.u44" crc="25821731" map="01" />
+        </interleave>
+        <interleave output="16">
+            <part name="d14.u2" crc="c2cb1402" map="10" />
+            <part name="d16.u3" crc="50a1c63e" map="01" />
+        </interleave>
+        <!-- user1 - starts at 0x200000 -->
+        <part name="d15.u4" crc="6352cec0"/>
+        <part name="d17.u5" crc="7af810d8"/>
+        <!-- audiocpu - starts at 0x300000 -->
+        <part name="d19.u3" crc="47598459"/>
+        <!-- sprites0 - starts at 0x340000 -->
+        <part name="g02.u61" crc="91e30398"/>
+        <part name="g02.u62" crc="d9455dd7"/>
+        <part name="g02.u63" crc="4d20560b"/>
+        <part name="g02.u64" crc="b17b9b6e"/>
+        <part name="g02.u65" crc="08541878"/>
+        <part name="g02.u66" crc="becf2a36"/>
+        <part name="atgs.u1" crc="aa6f34a9"/>
+        <part name="atgs.u2" crc="553eda27"/>
+        <!-- layer0 - starts at 0x1340000 -->
+        <part name="atgs.u78" crc="16710ecb"/>
+        <!-- layer1 - starts at 0x1540000 -->
+        <part name="atgs.u81" crc="cb2aca91"/>
+        <!-- layer2 - starts at 0x1740000 -->
+        <part name="atgs.u89" crc="65f45a0f"/>
+        <!-- layer3 - starts at 0x1940000 -->
+        <part name="text.u82" crc="f57333ea"/>
+        <!-- oki1 - starts at 0x19C0000 -->
+        <part name="g02.u53" crc="c4bdd9e0"/>
+        <part name="g02.u54" crc="1357d50e"/>
+        <!-- oki2 - starts at 0x1DC0000 -->
+        <part name="g02.u55" crc="2d102898"/>
+        <part name="g02.u56" crc="9ff50dda"/>
+        <!-- Total 0x21C0000 bytes - 34560 kBytes -->
+    </rom>
+    <!-- select game -->
+    <rom index="1">
+        <part>00</part>
+    </rom>
+    <buttons names="B1,B2,B3,B4,Start,Coin,Pause" default="A,B,X,Y,R,L,Start" />
+</misterromdescription>

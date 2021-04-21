@@ -1,0 +1,40 @@
+<misterromdescription>
+    <name>Hotdog Storm (Korea)</name>
+    <setname>hotdogst</setname>
+    <rbf>cave</rbf>
+    <mameversion>0229</mameversion>
+    <year>1996</year>
+    <manufacturer>Marble (Ace International license)</manufacturer>
+    <players>2</players>
+    <joystick>8-way</joystick>
+    <rotation>vertical</rotation>
+    <region>Korea</region>
+    <rom index="0" zip="hotdogst.zip" type="merged" md5="None">
+        <!-- maincpu - starts at 0x0 -->
+        <interleave output="16">
+            <part name="mp3.u29" crc="1f4e5479" map="10" />
+            <part name="mp4.u28" crc="6f1c3c4b" map="01" />
+        </interleave>
+        <!-- audiocpu - starts at 0x100000 -->
+        <part name="mp2.u19" crc="ff979ebe"/>
+        <!-- sprites0 - starts at 0x140000 -->
+        <part name="mp9.u55" crc="258d49ec"/>
+        <part name="mp8.u54" crc="bdb4d7b8"/>
+        <!-- layer0 - starts at 0x540000 -->
+        <part name="mp7.u56" crc="87c21c50"/>
+        <!-- layer1 - starts at 0x5C0000 -->
+        <part name="mp6.u61" crc="4dafb288"/>
+        <!-- layer2 - starts at 0x640000 -->
+        <part name="mp5.u64" crc="9b26458c"/>
+        <!-- oki1 - starts at 0x6C0000 -->
+        <part name="mp1.u65" crc="4868be1b"/>
+        <!-- eeprom - starts at 0x740000 -->
+        <part name="eeprom-hotdogst.u14" crc="12b4f934"/>
+        <!-- Total 0x740080 bytes - 7424 kBytes -->
+    </rom>
+    <!-- select game -->
+    <rom index="1">
+        <part>00</part>
+    </rom>
+    <buttons names="B1,B2,Start,Coin,Pause" default="A,B,R,L,Start" />
+</misterromdescription>

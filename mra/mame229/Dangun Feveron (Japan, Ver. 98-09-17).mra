@@ -1,0 +1,36 @@
+<misterromdescription>
+    <name>Dangun Feveron (Japan, Ver. 98/09/17)</name>
+    <setname>dfeveron</setname>
+    <rbf>cave</rbf>
+    <mameversion>0229</mameversion>
+    <year>1998</year>
+    <manufacturer>Cave (Nihon System license)</manufacturer>
+    <players>2</players>
+    <joystick>8-way</joystick>
+    <rotation>vertical</rotation>
+    <region>Japan</region>
+    <rom index="0" zip="dfeveron.zip|feversos.zip" type="merged" md5="None">
+        <!-- maincpu - starts at 0x0 -->
+        <interleave output="16">
+            <part name="cv01-u34.bin" crc="be87f19d" map="10" />
+            <part name="cv01-u33.bin" crc="e53a7db3" map="01" />
+        </interleave>
+        <!-- sprites0 - starts at 0x100000 -->
+        <part name="cv01-u25.bin" crc="a6f6a95d"/>
+        <part name="cv01-u26.bin" crc="32edb62a"/>
+        <!-- layer0 - starts at 0x900000 -->
+        <part name="cv01-u50.bin" crc="7a344417"/>
+        <!-- layer1 - starts at 0xB00000 -->
+        <part name="cv01-u49.bin" crc="d21cdda7"/>
+        <!-- ymz - starts at 0xD00000 -->
+        <part name="cv01-u19.bin" crc="5f5514da"/>
+        <!-- eeprom - starts at 0x1100000 -->
+        <part name="eeprom-dfeveron.bin" crc="c3174959"/>
+        <!-- Total 0x1100080 bytes - 17408 kBytes -->
+    </rom>
+    <!-- select game -->
+    <rom index="1">
+        <part>0</part>
+    </rom>
+    <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,X,R,L,Start" />
+</misterromdescription>

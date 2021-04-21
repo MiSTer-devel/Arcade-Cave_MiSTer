@@ -1,0 +1,33 @@
+<misterromdescription>
+    <name>Puzzle Uo Poko (International)</name>
+    <setname>uopoko</setname>
+    <rbf>cave</rbf>
+    <mameversion>0229</mameversion>
+    <year>1998</year>
+    <manufacturer>Cave (Jaleco license)</manufacturer>
+    <players>2</players>
+    <joystick>8-way</joystick>
+    <rotation>horizontal</rotation>
+    <region>World</region>
+    <rom index="0" zip="uopoko.zip" type="merged" md5="None">
+        <!-- maincpu - starts at 0x0 -->
+        <interleave output="16">
+            <part name="u26.int" crc="b445c9ac" map="10" />
+            <part name="u25.int" crc="a1258482" map="01" />
+        </interleave>
+        <!-- sprites0 - starts at 0x100000 -->
+        <part name="cave_cv-02_u33.u33" crc="5d142ad2"/>
+        <!-- layer0 - starts at 0x500000 -->
+        <part name="cave_cv-02_u49.u49" crc="12fb11bb"/>
+        <!-- ymz - starts at 0x900000 -->
+        <part name="cave_cv-02_u4.u4" crc="a2d0d755"/>
+        <!-- eeprom - starts at 0xB00000 -->
+        <part name="eeprom-uopoko.bin" crc="f4a24b95"/>
+        <!-- Total 0xB00080 bytes - 11264 kBytes -->
+    </rom>
+    <!-- select game -->
+    <rom index="1">
+        <part>4</part>
+    </rom>
+    <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,X,R,L,Start" />
+</misterromdescription>

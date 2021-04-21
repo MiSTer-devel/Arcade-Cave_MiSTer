@@ -1,0 +1,45 @@
+<misterromdescription>
+    <name>Guwange (Japan, Special Ver. 00/07/07)</name>
+    <setname>guwanges</setname>
+    <rbf>cave</rbf>
+    <mameversion>0229</mameversion>
+    <year>1999</year>
+    <manufacturer>Cave (Atlus license)</manufacturer>
+    <players>2</players>
+    <joystick>8-way</joystick>
+    <rotation>vertical</rotation>
+    <region>Japan</region>
+    <rom index="0" zip="guwanges.zip|guwange.zip" type="merged" md5="None">
+        <!-- maincpu - starts at 0x0 -->
+        <interleave output="16">
+            <part name="gu-u0127b.bin" crc="64667d2e" map="10" />
+            <part name="gu-u0129b.bin" crc="a99c6b6c" map="01" />
+        </interleave>
+        <!-- sprites0 - starts at 0x100000 -->
+        <part name="u083.bin" crc="adc4b9c4"/>
+        <part name="u082.bin" crc="3d75876c"/>
+        <part name="u086.bin" crc="188e4f81"/>
+        <part name="u085.bin" crc="a7d5659e"/>
+        <!-- layer0 - starts at 0x1900000 -->
+        <part name="u101.bin" crc="0369491f"/>
+        <!-- layer1 - starts at 0x2100000 -->
+        <part name="u10102.bin" crc="e28d6855"/>
+        <!-- layer2 - starts at 0x2500000 -->
+        <part name="u10103.bin" crc="0fe91b8e"/>
+        <!-- ymz - starts at 0x2900000 -->
+        <part name="u0462.bin" crc="b3d75691"/>
+        <!-- plds - starts at 0x2D00000 -->
+        <part name="atc05-1.bin" crc=""/>
+        <part name="u0259.bin" crc=""/>
+        <part name="u108.bin" crc=""/>
+        <part name="u084.bin" crc=""/>
+        <!-- eeprom - starts at 0x2D00004 -->
+        <part name="eeprom-guwange.bin" crc="c3174959"/>
+        <!-- Total 0x2D00084 bytes - 46080 kBytes -->
+    </rom>
+    <!-- select game -->
+    <rom index="1">
+        <part>5</part>
+    </rom>
+    <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,X,R,L,Start" />
+</misterromdescription>

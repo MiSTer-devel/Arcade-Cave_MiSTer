@@ -1,0 +1,49 @@
+<misterromdescription>
+    <name>Pretty Soldier Sailor Moon (Ver. 95/03/22, Taiwan)</name>
+    <setname>sailormnnt</setname>
+    <rbf>cave</rbf>
+    <mameversion>0229</mameversion>
+    <year>1995</year>
+    <manufacturer>Gazelle (Banpresto license)</manufacturer>
+    <players>2</players>
+    <joystick>8-way</joystick>
+    <rotation>horizontal</rotation>
+    <region>Taiwan</region>
+    <rom index="0" zip="sailormnnt.zip|sailormn.zip" type="merged" md5="None">
+        <!-- maincpu - starts at 0x0 -->
+        <interleave output="16">
+            <part name="smprg.u45" crc="234f1152" map="10" />
+            <part name="bpsm.u46" crc="32084e80" map="01" />
+        </interleave>
+        <!-- audiocpu - starts at 0x280000 -->
+        <part name="bpsm945a.u9" crc="438de548"/>
+        <!-- sprites0 - starts at 0x300000 -->
+        <part name="bpsm.u76" crc="a243a5ba"/>
+        <part name="bpsm.u77" crc="5179a4ac"/>
+        <!-- layer0 - starts at 0x700000 -->
+        <part name="bpsm.u53" crc="b9b15f83"/>
+        <!-- layer1 - starts at 0x900000 -->
+        <part name="bpsm.u54" crc="8f00679d"/>
+        <!-- layer2 - starts at 0xB00000 -->
+        <part name="bpsm.u57" crc="86be7b63"/>
+        <part name="bpsm.u58" crc="e0bba83b"/>
+        <part name="bpsm.u62" crc="a1e3bfac"/>
+        <part name="bpsm.u61" crc="6a014b52"/>
+        <part name="bpsm.u60" crc="992468c0"/>
+        <part name="bpsm.u65" crc="f60fb7b5"/>
+        <part name="bpsm.u64" crc="6559d31c"/>
+        <part name="bpsm.u63" crc="d57a56b4"/>
+        <!-- oki1 - starts at 0x1B00000 -->
+        <part name="bpsm.u48" crc="498e4ed1"/>
+        <!-- oki2 - starts at 0x1D00000 -->
+        <part name="bpsm.u47" crc="0f2901b9"/>
+        <!-- eeprom - starts at 0x1D80000 -->
+        <part name="sailormn_taiwan.nv" crc="6c7e8c2a"/>
+        <!-- Total 0x1D80080 bytes - 30208 kBytes -->
+    </rom>
+    <!-- select game -->
+    <rom index="1">
+        <part>00</part>
+    </rom>
+    <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,X,R,L,Start" />
+</misterromdescription>
