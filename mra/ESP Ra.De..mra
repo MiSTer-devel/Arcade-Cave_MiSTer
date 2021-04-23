@@ -2,25 +2,17 @@
   <name>ESP Ra. De.</name>
   <mameversion>0226</mameversion>
   <setname>esprade</setname>
-  <mratimestamp>20210130</mratimestamp>
   <year>1998</year>
   <manufacturer>CAVE</manufacturer>
   <category>Shooter</category>
   <rbf>cave</rbf>
 
-  <buttons names="B1,B2,B3,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />
-
-  <!-- select game -->
-  <rom index="1">
-    <part>3</part>
-  </rom>
-
   <!-- ROM data -->
-  <rom index="0" zip="esprade.zip" md5="352954c032a9a5b454a4ab6e9719f3eb">
+  <rom index="0" zip="esprade.zip" md5="none">
     <!-- main CPU -->
     <interleave output="16">
-      <part name="u42.int" crc="3b510a73" map="10" />
-      <part name="u41.int" crc="97c1b649" map="01" />
+      <part name="u41.int" crc="97c1b649" map="10" />
+      <part name="u42.int" crc="3b510a73" map="01" />
     </interleave>
 
     <!-- sprites -->
@@ -46,4 +38,11 @@
     <!-- eeprom -->
     <part name="eeprom-esprade.bin" crc="315fb546" />
   </rom>
+
+  <!-- select game -->
+  <rom index="1">
+    <part>00 03</part>
+  </rom>
+
+  <buttons names="B1,B2,B3,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />
 </misterromdescription>

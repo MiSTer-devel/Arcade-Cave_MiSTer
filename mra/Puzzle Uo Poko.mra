@@ -2,25 +2,17 @@
   <name>Puzzle Uo Poko</name>
   <mameversion>0226</mameversion>
   <setname>uopoko</setname>
-  <mratimestamp>20210130</mratimestamp>
   <year>1998</year>
   <manufacturer>CAVE</manufacturer>
   <category>Puzzle</category>
   <rbf>cave</rbf>
 
-  <buttons names="B1,B2,B3,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />
-
-  <!-- select game -->
-  <rom index="1">
-    <part>4</part>
-  </rom>
-
   <!-- ROM data -->
-  <rom index="0" zip="uopoko.zip" md5="ac21c311154da0d2640bb011b0b8a6a7">
+  <rom index="0" zip="uopoko.zip" md5="none">
     <!-- main CPU -->
     <interleave output="16">
-      <part name="u26.int" crc="b445c9ac" map="10" />
-      <part name="u25.int" crc="a1258482" map="01" />
+      <part name="u25.int" crc="a1258482" map="10" />
+      <part name="u26.int" crc="b445c9ac" map="01" />
     </interleave>
 
     <!-- sprites -->
@@ -35,4 +27,11 @@
     <!-- eeprom -->
     <part name="eeprom-uopoko.bin" crc="f4a24b95" />
   </rom>
+
+  <!-- select game -->
+  <rom index="1">
+    <part>00 04</part>
+  </rom>
+
+  <buttons names="B1,B2,B3,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />
 </misterromdescription>

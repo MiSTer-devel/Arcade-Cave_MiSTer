@@ -2,25 +2,17 @@
   <name>Fever SOS</name>
   <mameversion>0226</mameversion>
   <setname>dfeveron</setname>
-  <mratimestamp>20210130</mratimestamp>
   <year>1998</year>
   <manufacturer>CAVE</manufacturer>
   <category>Shooter</category>
   <rbf>cave</rbf>
 
-  <buttons names="B1,B2,B3,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />
-
-  <!-- select game -->
-  <rom index="1">
-    <part>0</part>
-  </rom>
-
   <!-- ROM data -->
-  <rom index="0" zip="feversos.zip" md5="257723ba085381b8314493d7bf96973e">
+  <rom index="0" zip="feversos.zip" md5="none">
     <!-- main CPU -->
     <interleave output="16">
-      <part name="cv01-u34.sos" crc="24ef3ce6" map="10" />
-      <part name="cv01-u33.sos" crc="64ff73fd" map="01" />
+      <part name="cv01-u33.sos" crc="64ff73fd" map="10" />
+      <part name="cv01-u34.sos" crc="24ef3ce6" map="01" />
     </interleave>
 
     <!-- sprites -->
@@ -39,4 +31,11 @@
     <!-- eeprom -->
     <part name="eeprom-feversos.bin" crc="d80303aa" />
   </rom>
+
+  <!-- select game -->
+  <rom index="1">
+    <part>00 00</part>
+  </rom>
+
+  <buttons names="B1,B2,B3,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />
 </misterromdescription>
