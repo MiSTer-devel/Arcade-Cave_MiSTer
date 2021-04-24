@@ -46,7 +46,7 @@ import chisel3.util._
  */
 class VideoFIFO extends Module {
   /** The depth at which the FIFO should fetch pixel data */
-  val FETCH_THRESHOLD = 120
+  val THRESHOLD = 120
 
   val io = IO(new Bundle {
     /** Video clock domain */
@@ -82,27 +82,27 @@ class VideoFIFO extends Module {
   val drainReg = withClockAndReset(io.videoClock, io.videoReset) { RegInit(false.B) }
   val fillReg = withClockAndReset(io.videoClock, io.videoReset) { RegInit(false.B) }
 
-  // Video FIFO
-  val videoFifo = Module(new VideoFIFOBlackBox)
-  videoFifo.io.aclr := io.videoReset
-  videoFifo.io.rdclk := io.videoClock
-  videoFifo.io.rdreq := io.video.pixelClockEnable && io.video.enable && fillReg
-  videoFifo.io.wrclk := clock
-  videoFifo.io.wrreq := io.pixelData.valid
-  videoFifo.io.data := io.pixelData.bits
+  // External FIFO module
+  val fifo = Module(new VideoFIFOBlackBox)
+  fifo.io.aclr := io.videoReset
+  fifo.io.rdclk := io.videoClock
+  fifo.io.rdreq := io.video.pixelClockEnable && io.video.enable && fillReg
+  fifo.io.wrclk := clock
+  fifo.io.wrreq := io.pixelData.valid
+  fifo.io.data := io.pixelData.bits
 
   // Toggle drain/fill registers
   withClockAndReset(io.videoClock, io.videoReset) {
-    when(Util.falling(io.video.vBlank) && videoFifo.io.rdempty) { drainReg := true.B }
-    when(Util.rising(io.video.vBlank) && !videoFifo.io.rdempty && drainReg) { fillReg := true.B }
+    when(Util.falling(io.video.vBlank) && fifo.io.rdempty) { drainReg := true.B }
+    when(Util.rising(io.video.vBlank) && !fifo.io.rdempty && drainReg) { fillReg := true.B }
   }
 
   // Fetch pixel data when the FIFO is almost empty
-  io.pixelData.ready := ShiftRegister(drainReg, 2) && videoFifo.io.wrusedw < FETCH_THRESHOLD.U
+  io.pixelData.ready := ShiftRegister(drainReg, 2) && fifo.io.wrusedw < THRESHOLD.U
 
   // Decode a 32-bit pixel (ignoring the first 8 bits)
   io.rgb := {
-    val bits = videoFifo.io.q(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL * 3 - 1, 0)
+    val bits = fifo.io.q(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL * 3 - 1, 0)
     val channels = Util.decode(bits, 3, Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL)
     RGB(channels)
   }
