@@ -88,7 +88,7 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   val stateReg = RegInit(State.idle)
   val spriteInfoReg = RegEnable(spriteInfo, updateSpriteInfo)
   val spriteInfoTaken = RegInit(false.B)
-  val burstTodo = RegInit(false.B)
+  val burstPendingReg = RegInit(false.B)
   val burstReady = RegInit(false.B)
   val burstCounterMax = RegEnable(spriteInfo.cols * spriteInfo.rows, updateSpriteInfo)
 
@@ -136,19 +136,19 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
                       !spriteCounter(10) &&
                       spriteInfo.isEnabled &&
                       spriteInfoTaken &&
-                      !burstTodo
+                      !burstPendingReg
 
   // Set done flag
   val workDone = spriteCounter(10) && spriteSentCounter === spriteDoneCounter
 
   // Set burst done flag
-  val doneBursting = burstTodo && burstCounterWrap
+  val doneBursting = burstPendingReg && burstCounterWrap
 
-  // Set sprite burst read flag
-  val spriteBurstRead = burstTodo && burstReady && tileFifo.io.enq.ready
+  // Set tile ROM read flag
+  val tileRomRead = burstPendingReg && burstReady && tileFifo.io.enq.ready
 
   // Set effective read flag
-  effectiveRead := spriteBurstRead && !io.tileRom.waitReq
+  effectiveRead := tileRomRead && !io.tileRom.waitReq
 
   // Set sprite RAM address
   val spriteRamAddr = io.spriteBank ## spriteCounter(9, 0)
@@ -172,13 +172,13 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
     spriteInfoTaken := false.B
   }
 
-  // Toggle burst todo register
+  // Toggle burst pending register
   when(stateReg === State.idle) {
-    burstTodo := false.B
+    burstPendingReg := false.B
   }.elsewhen(updateSpriteInfo) {
-    burstTodo := true.B
+    burstPendingReg := true.B
   }.elsewhen(doneBursting) {
-    burstTodo := false.B
+    burstPendingReg := false.B
   }
 
   // Toggle burst ready register
@@ -210,7 +210,7 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   io.done := workDone
   io.spriteRam.rd := true.B
   io.spriteRam.addr := spriteRamAddr
-  io.tileRom.rd := spriteBurstRead
+  io.tileRom.rd := tileRomRead
   io.tileRom.addr := tileRomAddr
   io.tileRom.burstLength := 16.U
 }
