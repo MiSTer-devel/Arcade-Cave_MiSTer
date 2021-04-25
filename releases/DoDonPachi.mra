@@ -15,7 +15,7 @@
   </rom>
 
   <!-- ROM data -->
-  <rom index="0" zip="ddonpach.zip" md5="f85911efc7f275e2d4ef55b1c6007412">
+  <rom index="0" zip="ddonpach.zip" md5="none">
     <!-- main CPU -->
     <interleave output="16">
       <part name="b1.u27" crc="b5cdc8d3" map="10" />
