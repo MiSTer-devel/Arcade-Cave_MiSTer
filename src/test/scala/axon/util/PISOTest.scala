@@ -45,7 +45,7 @@ class PISOTest extends FlatSpec with ChiselScalatestTester with Matchers {
       val din = Input(Vec(3, UInt(8.W)))
       val dout = Output(UInt(8.W))
     })
-    val piso = Module(new PISO(UInt(8.W), 3))
+    val piso = Module(new PISO(3, UInt(8.W)))
     piso.io.wr := io.wr
     io.isEmpty := piso.io.isEmpty
     io.isAlmostEmpty := piso.io.isAlmostEmpty

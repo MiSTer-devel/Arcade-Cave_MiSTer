@@ -79,10 +79,10 @@ class LayerPipeline extends Module {
   val paletteEntryReg = Reg(new PaletteEntry)
 
   // Tile PISOs
-  val smallTilePiso = Module(new PISO(Bits(Config.SMALL_TILE_BPP.W), Config.SMALL_TILE_SIZE))
+  val smallTilePiso = Module(new PISO(Config.SMALL_TILE_SIZE, Bits(Config.SMALL_TILE_BPP.W)))
   smallTilePiso.io.wr := readFifo
   smallTilePiso.io.din := VecInit(LayerPipeline.decodeSmallTile(io.pixelData.bits))
-  val largeTilePiso = Module(new PISO(Bits(Config.LARGE_TILE_BPP.W), Config.LARGE_TILE_SIZE))
+  val largeTilePiso = Module(new PISO(Config.LARGE_TILE_SIZE, Bits(Config.LARGE_TILE_BPP.W)))
   largeTilePiso.io.wr := readFifo
   largeTilePiso.io.din := VecInit(LayerPipeline.decodeLargeTile(io.pixelData.bits))
 
