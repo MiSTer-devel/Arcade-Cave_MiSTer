@@ -5,6 +5,7 @@ quartus/*.qdf
 quartus/build_id.v
 quartus/c5_pin_model_dump.txt
 quartus/db
+quartus/greybox_tmp
 quartus/incremental_db
 quartus/jtag.cdf
 quartus/output_files
