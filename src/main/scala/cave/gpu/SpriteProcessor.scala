@@ -43,9 +43,9 @@ import chisel3.util._
 /**
  * The sprite processor handles rendering sprites.
  *
- * @param numSprites The maximum number of sprites to render.
+ * @param maxSprites The maximum number of sprites to render.
  */
-class SpriteProcessor(numSprites: Int = 1024) extends Module {
+class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val io = IO(new Bundle {
     /** Game config port */
     val gameConfig = Input(GameConfig())
@@ -96,15 +96,15 @@ class SpriteProcessor(numSprites: Int = 1024) extends Module {
   val tileFifo = Module(new TileFIFO)
 
   // Counters
-  val (spriteCounter, _) = Counter.static(numSprites * 2, // FIXME
+  val (spriteCounter, _) = Counter.static(maxSprites * 2, // FIXME
     enable = spriteCounterEnable,
     reset = stateReg === State.idle
   )
-  val (spriteSentCounter, _) = Counter.static(numSprites,
+  val (spriteSentCounter, _) = Counter.static(maxSprites,
     enable = updateSpriteInfo,
     reset = stateReg === State.idle
   )
-  val (spriteDoneCounter, _) = Counter.static(numSprites,
+  val (spriteDoneCounter, _) = Counter.static(maxSprites,
     enable = pipelineDone,
     reset = stateReg === State.idle
   )
