@@ -48,8 +48,8 @@ class SpriteBlitter extends Module {
     val gameConfig = Input(GameConfig())
     /** Options port */
     val options = OptionsIO()
-    /** Sprite info port */
-    val spriteInfo = DeqIO(new Sprite)
+    /** Sprite port */
+    val sprite = DeqIO(new Sprite)
     /** Pixel data port */
     val pixelData = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
     /** Palette RAM port */
@@ -58,86 +58,77 @@ class SpriteBlitter extends Module {
     val priority = new PriorityIO
     /** Frame buffer port */
     val frameBuffer = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH)
-    /** Done flag */
-    val done = Output(Bool())
+    /** Busy flag */
+    val busy = Output(Bool())
   })
 
-  // Wires
-  val updateSpriteInfo = Wire(Bool())
-  val readFifo = Wire(Bool())
-
   // Registers
-  val spriteInfoReg = RegEnable(io.spriteInfo.bits, updateSpriteInfo)
+  val busyReg = RegInit(false.B)
+  val spriteReg = RegEnable(io.sprite.bits, io.sprite.fire())
   val paletteEntryReg = Reg(new PaletteEntry)
 
-  val tilePiso = Module(new PISO(Config.LARGE_TILE_SIZE, Bits(Config.LARGE_TILE_BPP.W)))
-  tilePiso.io.wr := readFifo
-  tilePiso.io.din := SpriteBlitter.decodeTile(io.gameConfig.spriteFormat, io.pixelData.bits)
+  // The PISO buffers pixels to be blitted to the frame buffer
+  val piso = Module(new PISO(Config.LARGE_TILE_SIZE, Bits(Config.LARGE_TILE_BPP.W)))
+  piso.io.wr := io.pixelData.fire()
+  piso.io.din := SpriteBlitter.decodeTile(io.gameConfig.spriteFormat, io.pixelData.bits)
 
   // Set PISO flags
-  val pisoEmpty = tilePiso.io.isEmpty
-  val pisoAlmostEmpty = tilePiso.io.isAlmostEmpty
+  val pisoEmpty = piso.io.isEmpty
+  val pisoAlmostEmpty = piso.io.isAlmostEmpty
 
   // Counters
-  val (x, xWrap) = Counter.dynamic(spriteInfoReg.size.x, enable = !pisoEmpty)
-  val (y, yWrap) = Counter.dynamic(spriteInfoReg.size.y, enable = xWrap)
-
-  // Set sprite done flag
-  val spriteDone = xWrap && yWrap && !pisoEmpty
+  val (x, xWrap) = Counter.dynamic(spriteReg.size.x, enable = !pisoEmpty)
+  val (y, yWrap) = Counter.dynamic(spriteReg.size.y, enable = xWrap)
 
   // Pixel position
   val pixelPos = {
-    val xPos = Mux(spriteInfoReg.flipX, spriteInfoReg.size.x - x - 1.U, x)
-    val yPos = Mux(spriteInfoReg.flipY, spriteInfoReg.size.y - y - 1.U, y)
+    val xPos = Mux(spriteReg.flipX, spriteReg.size.x - x - 1.U, x)
+    val yPos = Mux(spriteReg.flipY, spriteReg.size.y - y - 1.U, y)
     SVec2(xPos.asSInt, yPos.asSInt)
   }
 
   // Pixel position pipeline
-  val stage0Pos = spriteInfoReg.pos + pixelPos
+  val stage0Pos = spriteReg.pos + pixelPos
   val stage1Pos = RegNext(stage0Pos)
   val stage2Pos = RegNext(stage1Pos)
 
-  // The FIFO can only be read when it is not empty and should be read if the PISO is empty or will
-  // be empty next clock cycle. Since the pipeline after the FIFO has no backpressure, and can
-  // accommodate data every clock cycle, this will be the case if the PISO counter is one.
-  readFifo := io.pixelData.valid && (pisoEmpty || pisoAlmostEmpty)
+  // The done flag is asserted when the sprite has finished blitting
+  val blitDone = xWrap && yWrap
 
-  // The sprite info should be updated when we read a new sprite from the FIFO, this can be in
-  // either of two cases. First, when the counters are at 0 (no data yet) and the first pixels
-  // arrive, second, when a sprite finishes and the data for the second sprite is already there.
-  //
-  // This is to achieve maximum efficiency of the pipeline. While there are sprites to draw we burst
-  // them from memory into the pipeline. Max one 16x16 tile in advance, so there are at most 2 16x16
-  // tiles in the pipeline at any given time.
-  //
-  // When there is space in the pipeline for a 16x16 tile and there are sprites to draw, a tile will
-  // be bursted from memory into the pipeline. A 16x16 tile is 16 bytes since a byte encodes two
-  // pixel colors on nibbles, these are 16 color sprites.
-  updateSpriteInfo := readFifo && ((x === 0.U && y === 0.U) || (xWrap && yWrap))
+  // The busy register is set when a sprite is latched, and cleared when a blit has finished
+  when(io.sprite.fire()) { busyReg := true.B }.elsewhen(blitDone) { busyReg := false.B }
 
-  // The sprites use the first 64 palettes, and use 16 colors (out of 256 possible in a palette)
-  paletteEntryReg := PaletteEntry(spriteInfoReg.colorCode, tilePiso.io.dout)
+  // The pixel data ready flag is asserted when the PISO is empty, or will be empty in the next
+  // clock cycle
+  val pixelDataReady = io.pixelData.valid && (pisoEmpty || pisoAlmostEmpty)
+
+  // The sprite ready flag is asserted when the blitter is ready to latch a sprite (i.e. there is
+  // no sprite latched, or a blit has finished)
+  val spriteReady = io.sprite.valid && (!busyReg || blitDone)
+
+  // Decode the palette entry for the current pixel
+  paletteEntryReg := PaletteEntry(spriteReg.colorCode, piso.io.dout)
   val paletteRamAddr = paletteEntryReg.toAddr(io.gameConfig.numColors)
 
-  // Set valid/done flags
-  val valid = ShiftRegister(!pisoEmpty, 2, false.B, true.B)
-  val done = ShiftRegister(spriteDone, 2, false.B, true.B)
+  // Set delayed valid/busy shift registers
+  val validReg = ShiftRegister(!pisoEmpty, 2, false.B, true.B)
+  val delayedBusyReg = ShiftRegister(busyReg, 2, false.B, true.B)
 
-  // Set priority data
-  val priorityWriteData = ShiftRegister(spriteInfoReg.priority, 3)
+  // Set priority register
+  val priorityWriteData = ShiftRegister(spriteReg.priority, 3)
 
   // The transparency flag must be delayed by one cycle, since the colors come from the palette RAM
-  // they arrive one cycle later.
+  // they arrive one cycle later
   val visible = GPU.isVisible(stage2Pos) && !RegNext(paletteEntryReg.isTransparent)
 
   // Set frame buffer signals
-  val frameBufferWrite = RegNext(valid && visible)
+  val frameBufferWrite = RegNext(validReg && visible)
   val frameBufferAddr = RegNext(GPU.transformAddr(stage2Pos, io.options.flip, io.options.rotate))
   val frameBufferData = RegNext(io.paletteRam.dout)
 
   // Outputs
-  io.spriteInfo.ready := updateSpriteInfo
-  io.pixelData.ready := readFifo
+  io.sprite.ready := spriteReady
+  io.pixelData.ready := pixelDataReady
   io.paletteRam.rd := true.B
   io.paletteRam.addr := paletteRamAddr
   io.priority.read.rd := false.B
@@ -150,9 +141,9 @@ class SpriteBlitter extends Module {
   io.frameBuffer.addr := frameBufferAddr
   io.frameBuffer.mask := 0.U
   io.frameBuffer.din := frameBufferData
-  io.done := done
+  io.busy := delayedBusyReg
 
-  printf(p"SpriteBlitter(paletteEntry: $paletteEntryReg, valid: $valid, visible: $visible, pos: $stage2Pos)\n")
+  printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), busy: $busyReg, spriteReady: ${ io.sprite.ready }, pixelDataReady: ${ io.pixelData.ready }, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
 }
 
 object SpriteBlitter {

@@ -67,150 +67,144 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
     val priority = new PriorityIO
     /** Frame buffer port */
     val frameBuffer = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH)
+    /** Debug port */
+    val debug = Output(new Bundle {
+      val idle = Bool()
+      val latch = Bool()
+      val check = Bool()
+      val ready = Bool()
+      val pending = Bool()
+      val next = Bool()
+      val done = Bool()
+    })
   })
 
   // States
   object State {
-    val idle :: check :: working :: Nil = Enum(3)
+    val idle :: latch :: check :: ready :: pending :: next :: done :: Nil = Enum(7)
   }
 
-  // Decode sprite info
-  val spriteInfo = Sprite.decode(io.spriteRam.dout, io.gameConfig.spriteZoom)
+  // Set the tile 8BPP flag
+  val tile8BPP = io.gameConfig.spriteFormat === GameConfig.TILE_FORMAT_SPRITE_8BPP.U
+
+  // Decode the sprite
+  val sprite = Sprite.decode(io.spriteRam.dout, io.gameConfig.spriteZoom)
 
   // Wires
   val effectiveRead = Wire(Bool())
-  val spriteCounterEnable = Wire(Bool())
-  val updateSpriteInfo = Wire(Bool())
-  val pipelineReady = Wire(Bool())
-  val pipelineDone = Wire(Bool())
 
   // Registers
   val stateReg = RegInit(State.idle)
-  val spriteInfoReg = RegEnable(spriteInfo, updateSpriteInfo)
-  val spriteInfoTaken = RegInit(false.B)
+  val spriteReg = RegEnable(sprite, stateReg === State.latch)
+  val numTilesReg = RegEnable(spriteReg.cols * spriteReg.rows, stateReg === State.check)
   val burstPendingReg = RegInit(false.B)
-  val burstReady = RegInit(false.B)
-  val burstCounterMax = RegEnable(spriteInfo.cols * spriteInfo.rows, updateSpriteInfo)
 
-  // Tile FIFO
-  val tileFifo = Module(new TileFIFO)
+  // The FIFO buffers pixel data for up to two 16x16x8BPP tiles, or four 16x16x4BPP tiles. It is
+  // configured in show-ahead mode, which means there is valid output as soon as an element has been
+  // written to the queue. A read request will move to the next element in the queue.
+  val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), 64, flow = true))
 
   // Counters
-  val (spriteCounter, _) = Counter.static(maxSprites * 2, // FIXME
-    enable = spriteCounterEnable,
-    reset = stateReg === State.idle
-  )
-  val (spriteSentCounter, _) = Counter.static(maxSprites,
-    enable = updateSpriteInfo,
-    reset = stateReg === State.idle
-  )
-  val (spriteDoneCounter, _) = Counter.static(maxSprites,
-    enable = pipelineDone,
-    reset = stateReg === State.idle
-  )
-  val (burstCounter, burstCounterWrap) = Counter.dynamic(burstCounterMax,
-    enable = effectiveRead,
-    reset = updateSpriteInfo
-  )
+  val (spriteCounter, spriteCounterWrap) = Counter.static(maxSprites, stateReg === State.next)
+  val (tileCounter, tileCounterWrap) = Counter.dynamic(numTilesReg, effectiveRead)
 
   // Sprite blitter
   val spriteBlitter = Module(new SpriteBlitter)
   spriteBlitter.io.gameConfig <> io.gameConfig
   spriteBlitter.io.options <> io.options
-  spriteBlitter.io.spriteInfo.bits := spriteInfoReg
-  pipelineReady := spriteBlitter.io.spriteInfo.ready
-  spriteBlitter.io.spriteInfo.valid := updateSpriteInfo
-  spriteBlitter.io.pixelData <> tileFifo.io.deq
+  spriteBlitter.io.pixelData <> fifo.io.deq
   spriteBlitter.io.paletteRam <> io.paletteRam
   spriteBlitter.io.priority <> io.priority
   spriteBlitter.io.frameBuffer <> io.frameBuffer
-  pipelineDone := spriteBlitter.io.done
-
-  // Set next sprite info flag
-  spriteCounterEnable := stateReg === State.working &&
-                         !spriteCounter(10) &&
-                         (!spriteInfo.isEnabled || updateSpriteInfo)
-
-  // Set update sprite info flag
-  updateSpriteInfo := stateReg === State.working &&
-                      !spriteCounter(10) &&
-                      spriteInfo.isEnabled &&
-                      spriteInfoTaken &&
-                      !burstPendingReg
 
   // Set done flag
-  val workDone = spriteCounter(10) && spriteSentCounter === spriteDoneCounter
-
-  // Set burst done flag
-  val doneBursting = burstPendingReg && burstCounterWrap
+  val done = stateReg === State.done && !spriteBlitter.io.busy
 
   // Set tile ROM read flag
-  val tileRomRead = burstPendingReg && burstReady && tileFifo.io.enq.ready
+  val tileRomRead = stateReg === State.pending && !burstPendingReg && fifo.io.count <= 32.U
 
   // Set effective read flag
   effectiveRead := tileRomRead && !io.tileRom.waitReq
 
   // Set sprite RAM address
-  val spriteRamAddr = io.spriteBank ## spriteCounter(9, 0)
+  val spriteRamAddr = io.spriteBank ## spriteCounter
 
   // Set tile ROM address
-  val tileRomAddr = (spriteInfoReg.code + burstCounter) * Config.LARGE_TILE_BYTE_SIZE.U
-
-  // Enqueue valid tile ROM data into the tile FIFO
-  when(io.tileRom.valid) {
-    tileFifo.io.enq.enq(io.tileRom.dout)
-  } otherwise {
-    tileFifo.io.enq.noenq()
-  }
-
-  // Toggle sprite info taken register
-  when(stateReg === State.idle) {
-    spriteInfoTaken := true.B
-  }.elsewhen(pipelineReady) {
-    spriteInfoTaken := true.B
-  }.elsewhen(updateSpriteInfo) {
-    spriteInfoTaken := false.B
-  }
+  val tileRomAddr = (spriteReg.code + tileCounter) << Mux(tile8BPP, 8.U, 7.U)
 
   // Toggle burst pending register
   when(stateReg === State.idle) {
     burstPendingReg := false.B
-  }.elsewhen(updateSpriteInfo) {
+  }.elsewhen(effectiveRead) {
     burstPendingReg := true.B
-  }.elsewhen(doneBursting) {
+  }.elsewhen(io.tileRom.burstDone) {
     burstPendingReg := false.B
   }
 
-  // Toggle burst ready register
-  when(stateReg === State.idle) {
-    burstReady := true.B
-  }.elsewhen(effectiveRead) {
-    burstReady := false.B
-  }.elsewhen(io.tileRom.burstDone) {
-    burstReady := true.B
+  // Enqueue a sprite in the blitter when the processor is ready
+  when(stateReg === State.ready) {
+    spriteBlitter.io.sprite.enq(spriteReg)
+  } otherwise {
+    spriteBlitter.io.sprite.noenq()
+  }
+
+  // Enqueue tile ROM data in the FIFO when it is available
+  when(io.tileRom.valid) {
+    fifo.io.enq.enq(io.tileRom.dout)
+  } otherwise {
+    fifo.io.enq.noenq()
   }
 
   // FSM
   switch(stateReg) {
     // Wait for the start signal
     is(State.idle) {
-      when(io.start) { stateReg := State.check }
+      when(io.start) { stateReg := State.latch }
     }
 
-    // Check whether the sprite is enabled
-    is(State.check) { stateReg := State.working }
+    // Latch the sprite
+    is(State.latch) { stateReg := State.check }
 
-    // Blit the sprite
-    is(State.working) {
-      when(workDone) { stateReg := State.idle }
+    // Check whether the sprite is enabled
+    is(State.check) {
+      stateReg := Mux(spriteReg.isEnabled, State.ready, State.next)
+    }
+
+    // Wait for the blitter to be ready
+    is(State.ready) {
+      when(spriteBlitter.io.sprite.ready) { stateReg := State.pending }
+    }
+
+    // Wait for all sprite tiles to load
+    is(State.pending) {
+      when(tileCounterWrap) { stateReg := State.next }
+    }
+
+    // Increment the sprite counter
+    is(State.next) {
+      stateReg := Mux(spriteCounterWrap, State.done, State.latch)
+    }
+
+    // Wait for the blitter to finish
+    is(State.done) {
+      when(!spriteBlitter.io.busy) { stateReg := State.idle }
     }
   }
 
   // Outputs
-  io.done := workDone
+  io.done := done
   io.spriteRam.rd := true.B
   io.spriteRam.addr := spriteRamAddr
   io.tileRom.rd := tileRomRead
   io.tileRom.addr := tileRomAddr
   io.tileRom.burstLength := 16.U
+  io.debug.idle := stateReg === State.idle
+  io.debug.latch := stateReg === State.latch
+  io.debug.check := stateReg === State.check
+  io.debug.ready := stateReg === State.ready
+  io.debug.pending := stateReg === State.ready
+  io.debug.next := stateReg === State.next
+  io.debug.done := stateReg === State.done
+
+  printf(p"SpriteProcessor(state: $stateReg, spriteCounter: $spriteCounter ($spriteCounterWrap), done: $done)\n")
 }
