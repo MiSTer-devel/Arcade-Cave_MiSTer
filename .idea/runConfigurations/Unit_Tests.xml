@@ -2,6 +2,7 @@
   <configuration default="false" name="Unit Tests" type="ScalaTestRunConfiguration" factoryName="ScalaTest" show_console_on_std_err="false" show_console_on_std_out="false">
     <module name="cave-chisel" />
     <option name="allowRunningInParallel" value="false" />
+    <option name="projectPathOnTarget" />
     <option name="selectedOptions">
       <list />
     </option>
@@ -69,10 +70,12 @@
               <option value="data width ratios should read a word (16:16)" />
               <option value="data width ratios should read a word (16:8)" />
               <option value="data width ratios should read a word (8:16)" />
+              <option value="data width ratios should read a word (8:32)" />
               <option value="data width ratios should read a word (8:8)" />
               <option value="idle should deassert the wait signal" />
               <option value="read should assert the wait signal" />
               <option value="read should evict a dirty cache entry before a line fill" />
+              <option value="read should evict a dirty cache entry before a line fill (wrapping)" />
               <option value="read should fill a cache line during a miss" />
               <option value="read should fill a cache line during a miss (wrapping)" />
               <option value="read should read from the cache during a hit" />
@@ -101,23 +104,23 @@
           <value>
             <set>
               <option value="FSM should move to the command state after receiving a start bit" />
-              <option value="FSM should move to the erase state when writing is enabled" />
-              <option value="FSM should move to the idle state after sending serial data" />
-              <option value="FSM should move to the idle state after the write wait state" />
+              <option value="FSM should move to the dummy bit state after receiving valid data" />
+              <option value="FSM should move to the idle state after shifting serial data" />
+              <option value="FSM should move to the idle state after writing data to memory" />
               <option value="FSM should move to the idle state when chip select is deasserted" />
               <option value="FSM should move to the read state after receiving a read command" />
-              <option value="FSM should move to the read wait state after a memory read request" />
-              <option value="FSM should move to the shift state after the read wait state" />
-              <option value="FSM should move to the shift state after the write state" />
-              <option value="FSM should move to the write state when writing is enabled" />
-              <option value="FSM should move to the write wait state after receiving serial data" />
-              <option value="FSM should move to the write wait state after the erase state" />
-              <option value="erase should erase a word in memory" />
-              <option value="erase should erase all words in memory" />
+              <option value="FSM should move to the read wait state after starting a memory read request" />
+              <option value="FSM should move to the shift in state after receiving a write all command" />
+              <option value="FSM should move to the shift in state after receiving a write command" />
+              <option value="FSM should move to the write state after receiving an erase all command" />
+              <option value="FSM should move to the write state after receiving an erase command" />
+              <option value="FSM should move to the write state after shifting serial data" />
+              <option value="erase should erase a memory location" />
+              <option value="erase should erase all memory locations" />
               <option value="idle should assert the serial data output" />
               <option value="read should read a word from memory" />
-              <option value="write should write a word to memory" />
-              <option value="write should write all words to memory" />
+              <option value="write should write a memory location" />
+              <option value="write should write all memory locations" />
             </set>
           </value>
         </entry>
@@ -146,6 +149,7 @@
               <option value="addressing should select a bank" />
               <option value="idle should deassert the wait signal" />
               <option value="idle should perform a NOP" />
+              <option value="initialize should assert clock enable" />
               <option value="initialize should initialize the SDRAM" />
               <option value="read should assert the burst done signal" />
               <option value="read should assert the valid signal" />
@@ -310,6 +314,33 @@
               <option value="should decode tile data" />
               <option value="should not read priority data" />
               <option value="should read palette data" />
+            </set>
+          </value>
+        </entry>
+        <entry key="cave.gpu.SpriteProcessorTest">
+          <value>
+            <set>
+              <option value="FSM should move to the check state after latching a sprite" />
+              <option value="FSM should move to the done state after blitting all sprites" />
+              <option value="FSM should move to the idle state after the blit is done" />
+              <option value="FSM should move to the latch state when the start signal is asserted" />
+              <option value="FSM should move to the next state after checking an invisible sprite" />
+              <option value="FSM should move to the ready state after checking a visible sprite" />
+              <option value="done flag should assert the done flag after all sprites are processed" />
+              <option value="done flag should wait until the blitter is finished before asserting the done flag" />
+              <option value="pixel data should fetch pixel data from the tile ROM" />
+              <option value="sprite data should fetch sprite data from the sprite RAM" />
+            </set>
+          </value>
+        </entry>
+        <entry key="cave.gpu.TileDecoderTest">
+          <value>
+            <set>
+              <option value="4BPP should assert the ready/valid signals" />
+              <option value="4BPP should decode a 4BPP MSB sprite tile" />
+              <option value="4BPP should decode a 4BPP sprite tile" />
+              <option value="8BPP should assert the ready/valid signals" />
+              <option value="8BPP should decode a 8BPP sprite tile" />
             </set>
           </value>
         </entry>
