@@ -60,13 +60,13 @@ class GameConfig extends Bundle {
   /** Asserted when zoomed sprites are enabled */
   val spriteZoom = Bool()
   /** Sprite tile format */
-  val spriteFormat = UInt(2.W)
+  val spriteFormat = UInt(3.W)
   /** Layer 0 tile format */
-  val layer0Format = UInt(2.W)
+  val layer0Format = UInt(3.W)
   /** Layer 1 tile format */
-  val layer1Format = UInt(2.W)
+  val layer1Format = UInt(3.W)
   /** Layer 2 tile format */
-  val layer2Format = UInt(2.W)
+  val layer2Format = UInt(3.W)
 }
 
 object GameConfig {
@@ -87,8 +87,10 @@ object GameConfig {
   val TILE_FORMAT_8x8x8 = 1
   /** Sprite tile format */
   val TILE_FORMAT_SPRITE = 2
-  /** Sprite tile format */
+  /** Sprite MSB tile format */
   val TILE_FORMAT_SPRITE_MSB = 3
+  /** Sprite 8BPP tile format */
+  val TILE_FORMAT_SPRITE_8BPP = 4
 
   def apply() = new GameConfig
 
@@ -158,7 +160,7 @@ object GameConfig {
     wire.numColors := 256.U
     wire.numLayers := 3.U
     wire.spriteZoom := true.B
-    wire.spriteFormat := TILE_FORMAT_SPRITE.U
+    wire.spriteFormat := TILE_FORMAT_SPRITE_8BPP.U
     wire.layer0Format := TILE_FORMAT_8x8x8.U
     wire.layer1Format := TILE_FORMAT_8x8x8.U
     wire.layer2Format := TILE_FORMAT_8x8x8.U

@@ -16,10 +16,14 @@
     </interleave>
 
     <!-- sprites -->
-    <part name="esp_u63.u63" crc="2f2fe92c" />
-    <part name="esp_u64.u64" crc="491a3da4" />
-    <part name="esp_u65.u65" crc="06563efe" />
-    <part name="esp_u66.u66" crc="7bbe4cfc" />
+    <interleave output="16">
+      <part name="esp_u63.u63" crc="2f2fe92c" map="01" />
+      <part name="esp_u64.u64" crc="491a3da4" map="10" />
+    </interleave>
+    <interleave output="16">
+      <part name="esp_u65.u65" crc="06563efe" map="01" />
+      <part name="esp_u66.u66" crc="7bbe4cfc" map="10" />
+    </interleave>
 
     <!-- layer 0 -->
     <part name="esp_u54.u54" crc="e7ca6936" />
@@ -37,6 +41,10 @@
 
     <!-- eeprom -->
     <part name="eeprom-esprade.bin" crc="315fb546" />
+
+    <!-- enable C button in EEPROM -->
+    <patch offset="0x2900002">ff ff</patch>
+    <patch offset="0x2900008">00 04</patch>
   </rom>
 
   <!-- select game -->

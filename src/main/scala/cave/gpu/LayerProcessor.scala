@@ -83,7 +83,7 @@ class LayerProcessor extends Module {
   val layerInfoReg = RegEnable(Layer.decode(io.layerRegs), stateReg === State.regInfo)
   val tileInfoReg = RegEnable(Tile.decode(io.layerRam.dout), updateTileInfo)
   val tileInfoTakenReg = RegInit(false.B)
-  val burstTodoReg = RegInit(false.B)
+  val burstPendingReg = RegInit(false.B)
   val burstReadyReg = RegInit(false.B)
   val lastLayerPriorityReg = RegInit(0.U)
 
@@ -118,9 +118,9 @@ class LayerProcessor extends Module {
   pipelineDone := layerPipeline.io.done
 
   // Control signals
-  val tileBurstRead = burstTodoReg && burstReadyReg && tileFifo.io.enq.ready
+  val tileRomRead = burstPendingReg && burstReadyReg && tileFifo.io.enq.ready
   val lastBurst = effectiveRead && colWrap && rowWrap
-  effectiveRead := tileBurstRead && !io.tileRom.waitReq
+  effectiveRead := tileRomRead && !io.tileRom.waitReq
   updateTileInfo := stateReg === State.working && tileInfoTakenReg
 
   // Set first tile index
@@ -176,11 +176,11 @@ class LayerProcessor extends Module {
 
   // Toggle burst pending register
   when(stateReg === State.idle) {
-    burstTodoReg := false.B
+    burstPendingReg := false.B
   }.elsewhen(updateTileInfo) {
-    burstTodoReg := true.B
+    burstPendingReg := true.B
   }.elsewhen(effectiveRead) {
-    burstTodoReg := false.B
+    burstPendingReg := false.B
   }
 
   // Toggle burst ready register
@@ -229,7 +229,7 @@ class LayerProcessor extends Module {
   // Outputs
   io.layerRam.rd := true.B
   io.layerRam.addr := layerRamAddr
-  io.tileRom.rd := tileBurstRead
+  io.tileRom.rd := tileRomRead
   io.tileRom.addr := tileRomAddr
   io.tileRom.burstLength := tileRomBurstLength
   io.done := RegNext(tileWrap) // TODO: Does this signal need to be delayed?

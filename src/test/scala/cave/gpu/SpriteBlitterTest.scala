@@ -37,41 +37,59 @@ import chiseltest._
 import org.scalatest._
 
 class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matchers {
-  it should "read palette data" in {
+  behavior of "sprite data"
+
+  it should "request sprite data when the PISO is empty" in {
     test(new SpriteBlitter) { dut =>
-      dut.io.paletteRam.rd.expect(true.B)
+      dut.io.sprite.valid.poke(true.B)
+      dut.io.sprite.ready.expect(true.B)
     }
   }
 
-  it should "not read priority data" in {
+  it should "request sprite data when blitting the last pixel" in {
     test(new SpriteBlitter) { dut =>
-      dut.io.priority.read.rd.expect(false.B)
-    }
-  }
-
-  it should "decode tile data" in {
-    test(new SpriteBlitter) { dut =>
-      dut.io.spriteInfo.valid.poke(true.B)
-      dut.io.spriteInfo.bits.colorCode.poke(1.U)
+      dut.io.sprite.valid.poke(true.B)
+      dut.io.sprite.bits.cols.poke(1.U)
+      dut.io.sprite.bits.rows.poke(1.U)
       dut.io.pixelData.valid.poke(true.B)
-      dut.io.pixelData.bits.poke("hfedcba9876543210".U)
       dut.clock.step()
-      for (n <- Seq(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)) {
-        dut.clock.step()
-        dut.io.paletteRam.addr.expect((0x100 + n).U)
-      }
+      dut.io.sprite.ready.expect(false.B)
+      dut.clock.step(255)
+      dut.io.sprite.ready.expect(true.B)
+    }
+  }
+
+  behavior of "pixel data"
+
+  it should "request pixel data when the PISO is empty" in {
+    test(new SpriteBlitter) { dut =>
+      dut.io.pixelData.valid.poke(true.B)
+      dut.io.pixelData.ready.expect(true.B)
+    }
+  }
+
+  it should "request pixel data when the PISO is almost empty" in {
+    test(new SpriteBlitter) { dut =>
+      dut.io.sprite.valid.poke(true.B)
+      dut.io.sprite.bits.cols.poke(1.U)
+      dut.io.sprite.bits.rows.poke(1.U)
+      dut.io.pixelData.valid.poke(true.B)
+      dut.clock.step()
+      dut.io.pixelData.ready.expect(false.B)
+      dut.clock.step(15)
+      dut.io.pixelData.ready.expect(true.B)
     }
   }
 
   behavior of "blitting"
 
-  it should "copy pixel data to the frame buffer" in {
+  it should "write pixel data to the frame buffer" in {
     test(new SpriteBlitter) { dut =>
-      dut.io.spriteInfo.valid.poke(true.B)
-      dut.io.spriteInfo.bits.cols.poke(1.U)
-      dut.io.spriteInfo.bits.rows.poke(1.U)
+      dut.io.sprite.valid.poke(true.B)
+      dut.io.sprite.bits.cols.poke(2.U)
+      dut.io.sprite.bits.rows.poke(1.U)
       dut.io.pixelData.valid.poke(true.B)
-      dut.io.pixelData.bits.poke("h1111111111111111".U)
+      for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1.U) }
       dut.io.paletteRam.dout.poke(1.U)
       dut.clock.step(4)
 
@@ -82,30 +100,32 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
       dut.clock.step()
 
       // Pixel 1
+      dut.io.frameBuffer.wr.expect(true.B)
       dut.io.frameBuffer.addr.expect(0x0001.U)
       dut.io.frameBuffer.din.expect(1.U)
-      dut.clock.step(13)
+      dut.clock.step(29)
 
-      // Pixel 14
-      dut.io.frameBuffer.addr.expect(0x000e.U)
+      // Pixel 30
+      dut.io.frameBuffer.wr.expect(true.B)
+      dut.io.frameBuffer.addr.expect(0x01e.U)
       dut.io.frameBuffer.din.expect(1.U)
       dut.clock.step()
 
-      // Pixel 15
-      dut.io.frameBuffer.addr.expect(0x000f.U)
+      // Pixel 31
+      dut.io.frameBuffer.wr.expect(true.B)
+      dut.io.frameBuffer.addr.expect(0x01f.U)
       dut.io.frameBuffer.din.expect(1.U)
-      dut.clock.step()
     }
   }
 
   it should "allow horizontal flipping" in {
     test(new SpriteBlitter) { dut =>
-      dut.io.spriteInfo.valid.poke(true.B)
-      dut.io.spriteInfo.bits.cols.poke(1.U)
-      dut.io.spriteInfo.bits.rows.poke(1.U)
-      dut.io.spriteInfo.bits.flipX.poke(true.B)
+      dut.io.sprite.valid.poke(true.B)
+      dut.io.sprite.bits.cols.poke(1.U)
+      dut.io.sprite.bits.rows.poke(1.U)
+      dut.io.sprite.bits.flipX.poke(true.B)
       dut.io.pixelData.valid.poke(true.B)
-      dut.io.pixelData.bits.poke("h1111111111111111".U)
+      for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1.U) }
       dut.io.paletteRam.dout.poke(1.U)
       dut.clock.step(4)
 
@@ -128,18 +148,17 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
       // Pixel 15
       dut.io.frameBuffer.addr.expect(0x0000.U)
       dut.io.frameBuffer.din.expect(1.U)
-      dut.clock.step()
     }
   }
 
   it should "allow vertical flipping" in {
     test(new SpriteBlitter) { dut =>
-      dut.io.spriteInfo.valid.poke(true.B)
-      dut.io.spriteInfo.bits.cols.poke(1.U)
-      dut.io.spriteInfo.bits.rows.poke(1.U)
-      dut.io.spriteInfo.bits.flipY.poke(true.B)
+      dut.io.sprite.valid.poke(true.B)
+      dut.io.sprite.bits.cols.poke(1.U)
+      dut.io.sprite.bits.rows.poke(1.U)
+      dut.io.sprite.bits.flipY.poke(true.B)
       dut.io.pixelData.valid.poke(true.B)
-      dut.io.pixelData.bits.poke("h1111111111111111".U)
+      for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1.U) }
       dut.io.paletteRam.dout.poke(1.U)
       dut.clock.step(4)
 
@@ -162,7 +181,19 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
       // Pixel 15
       dut.io.frameBuffer.addr.expect(0x12cf.U)
       dut.io.frameBuffer.din.expect(1.U)
+    }
+  }
+
+  it should "assert the done signal two clocks after blitting the last pixel" in {
+    test(new SpriteBlitter) { dut =>
+      dut.io.sprite.valid.poke(true.B)
+      dut.io.sprite.bits.cols.poke(1.U)
+      dut.io.sprite.bits.rows.poke(1.U)
+      dut.io.pixelData.valid.poke(true.B)
       dut.clock.step()
+      dut.io.sprite.valid.poke(false.B)
+      dut.clock.step(258)
+      dut.io.busy.expect(false.B)
     }
   }
 }

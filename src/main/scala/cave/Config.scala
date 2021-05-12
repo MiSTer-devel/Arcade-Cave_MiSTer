@@ -223,4 +223,9 @@ object Config {
   val LARGE_TILE_NUM_ROWS = SCREEN_HEIGHT / LARGE_TILE_SIZE + 1
   /** The number of large tiles that fit on the screen */
   val LARGE_TILE_NUM_TILES = LARGE_TILE_NUM_COLS * LARGE_TILE_NUM_ROWS
+
+  /** The size of a sprite tile in pixels */
+  val SPRITE_TILE_SIZE = 16
+  /** The maximum bit depth of a sprite */
+  val SPRITE_MAX_BPP = 8
 }

@@ -30,6 +30,10 @@
 
     <!-- eeprom -->
     <part name="eeprom-dfeveron.bin" crc="c3174959" />
+
+    <!-- enable C button in EEPROM -->
+    <patch offset="0x1100002">11 11</patch>
+    <patch offset="0x1100008">00 04</patch>
   </rom>
 
   <!-- select game -->
