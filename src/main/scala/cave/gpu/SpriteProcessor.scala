@@ -85,7 +85,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   }
 
   // Set 8BPP tile format flag
-  val tileFormat8BPP = io.gameConfig.spriteFormat === GameConfig.TILE_FORMAT_SPRITE_8BPP.U
+  val tileFormat8BPP = io.gameConfig.spriteFormat === GameConfig.GFX_FORMAT_SPRITE_8BPP.U
 
   // Decode the sprite
   val sprite = Sprite.decode(io.spriteRam.dout, io.gameConfig.spriteZoom)

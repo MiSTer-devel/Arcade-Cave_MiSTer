@@ -50,7 +50,7 @@ class TileDecoder extends Module {
   })
 
   // Set 8BPP tile format flag
-  val tileFormat8BPP = io.gameConfig.spriteFormat === GameConfig.TILE_FORMAT_SPRITE_8BPP.U
+  val tileFormat8BPP = io.gameConfig.spriteFormat === GameConfig.GFX_FORMAT_SPRITE_8BPP.U
 
   // Registers
   val validReg = RegInit(false.B)
@@ -73,8 +73,8 @@ class TileDecoder extends Module {
   // Set the data register
   when(io.rom.fire()) {
     dataReg := MuxLookup(io.gameConfig.spriteFormat, VecInit(TileDecoder.decodeSpriteTile(io.rom.bits)), Seq(
-      GameConfig.TILE_FORMAT_SPRITE_MSB.U -> VecInit(TileDecoder.decodeSpriteMSBTile(io.rom.bits)),
-      GameConfig.TILE_FORMAT_SPRITE_8BPP.U -> VecInit(TileDecoder.decodeSprite8BPPTile(RegNext(io.rom.bits) ## io.rom.bits))
+      GameConfig.GFX_FORMAT_SPRITE_MSB.U -> VecInit(TileDecoder.decodeSpriteMSBTile(io.rom.bits)),
+      GameConfig.GFX_FORMAT_SPRITE_8BPP.U -> VecInit(TileDecoder.decodeSprite8BPPTile(RegNext(io.rom.bits) ## io.rom.bits))
     ))
   }
 
