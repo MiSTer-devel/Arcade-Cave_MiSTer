@@ -84,8 +84,8 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
     val idle :: latch :: check :: ready :: pending :: next :: done :: Nil = Enum(7)
   }
 
-  // Set the tile 8BPP flag
-  val tile8BPP = io.gameConfig.spriteFormat === GameConfig.TILE_FORMAT_SPRITE_8BPP.U
+  // Set 8BPP tile format flag
+  val tileFormat8BPP = io.gameConfig.spriteFormat === GameConfig.TILE_FORMAT_SPRITE_8BPP.U
 
   // Decode the sprite
   val sprite = Sprite.decode(io.spriteRam.dout, io.gameConfig.spriteZoom)
@@ -112,10 +112,15 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val spriteBlitter = Module(new SpriteBlitter)
   spriteBlitter.io.gameConfig <> io.gameConfig
   spriteBlitter.io.options <> io.options
-  spriteBlitter.io.pixelData <> fifo.io.deq
   spriteBlitter.io.paletteRam <> io.paletteRam
   spriteBlitter.io.priority <> io.priority
   spriteBlitter.io.frameBuffer <> io.frameBuffer
+
+  // Tile decoder
+  val tileDecoder = Module(new TileDecoder)
+  tileDecoder.io.gameConfig := io.gameConfig
+  tileDecoder.io.pixelData <> spriteBlitter.io.pixelData
+  tileDecoder.io.rom <> fifo.io.deq
 
   // Set done flag
   val done = stateReg === State.done && !spriteBlitter.io.busy
@@ -130,7 +135,10 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val spriteRamAddr = io.spriteBank ## spriteCounter
 
   // Set tile ROM address
-  val tileRomAddr = (spriteReg.code + tileCounter) << Mux(tile8BPP, 8.U, 7.U)
+  val tileRomAddr = (spriteReg.code + tileCounter) << Mux(tileFormat8BPP, 8.U, 7.U)
+
+  // Set tile ROM burst length
+  val tileRomBurstLength = Mux(tileFormat8BPP, 32.U, 16.U)
 
   // Toggle burst pending register
   when(stateReg === State.idle) {
@@ -197,7 +205,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   io.spriteRam.addr := spriteRamAddr
   io.tileRom.rd := tileRomRead
   io.tileRom.addr := tileRomAddr
-  io.tileRom.burstLength := 16.U
+  io.tileRom.burstLength := tileRomBurstLength
   io.debug.idle := stateReg === State.idle
   io.debug.latch := stateReg === State.latch
   io.debug.check := stateReg === State.check

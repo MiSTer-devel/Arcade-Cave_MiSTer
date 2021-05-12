@@ -136,7 +136,7 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
       dut.io.tileRom.burstDone.poke(true.B)
       waitForDone(dut)
       dut.io.done.expect(false.B)
-      dut.clock.step(243)
+      dut.clock.step(244)
       dut.io.done.expect(true.B)
     }
   }

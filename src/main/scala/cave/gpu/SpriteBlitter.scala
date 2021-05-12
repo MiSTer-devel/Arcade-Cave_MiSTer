@@ -51,7 +51,7 @@ class SpriteBlitter extends Module {
     /** Sprite port */
     val sprite = DeqIO(new Sprite)
     /** Pixel data port */
-    val pixelData = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
+    val pixelData = DeqIO(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.SPRITE_MAX_BPP.W)))
     /** Palette RAM port */
     val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
     /** Priority port */
@@ -68,9 +68,9 @@ class SpriteBlitter extends Module {
   val paletteEntryReg = Reg(new PaletteEntry)
 
   // The PISO buffers pixels to be blitted to the frame buffer
-  val piso = Module(new PISO(Config.LARGE_TILE_SIZE, Bits(Config.LARGE_TILE_BPP.W)))
+  val piso = Module(new PISO(Config.SPRITE_TILE_SIZE, Bits(Config.SPRITE_MAX_BPP.W)))
   piso.io.wr := io.pixelData.fire()
-  piso.io.din := SpriteBlitter.decodeTile(io.gameConfig.spriteFormat, io.pixelData.bits)
+  piso.io.din := io.pixelData.bits
 
   // Set PISO flags
   val pisoEmpty = piso.io.isEmpty
@@ -144,28 +144,4 @@ class SpriteBlitter extends Module {
   io.busy := delayedBusyReg
 
   printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), busy: $busyReg, spriteReady: ${ io.sprite.ready }, pixelDataReady: ${ io.pixelData.ready }, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
-}
-
-object SpriteBlitter {
-  /**
-   * Decodes a sprite tile from the given pixel data.
-   *
-   * @param data   The pixel data.
-   * @param format The tile format.
-   * @return A vector containing the decoded tile pixels.
-   */
-  def decodeTile(format: UInt, data: Bits): Vec[Bits] =
-    MuxLookup(format, VecInit(decodeSpriteTile(data)), Seq(
-      GameConfig.TILE_FORMAT_SPRITE_MSB.U -> VecInit(decodeSpriteMSBTile(data))
-    ))
-
-  private def decodeSpriteTile(data: Bits): Seq[Bits] =
-    Seq(1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14)
-      .reverse
-      .map(Util.decode(data, 16, 4).apply)
-
-  private def decodeSpriteMSBTile(data: Bits): Seq[Bits] =
-    Seq(2, 3, 0, 1, 6, 7, 4, 5, 10, 11, 8, 9, 14, 15, 12, 13)
-      .reverse
-      .map(Util.decode(data, 16, 4).apply)
 }
