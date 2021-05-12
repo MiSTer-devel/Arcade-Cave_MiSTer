@@ -49,19 +49,19 @@ class TileDecoder extends Module {
     val rom = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
   })
 
-  // Set 8BPP tile format flag
-  val tileFormat8BPP = io.gameConfig.spriteFormat === GameConfig.GFX_FORMAT_SPRITE_8BPP.U
+  // Set 8BPP flag
+  val is8BPP = io.gameConfig.spriteFormat === GameConfig.GFX_FORMAT_SPRITE_8BPP.U
 
   // Registers
   val validReg = RegInit(false.B)
   val dataReg = Reg(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.SPRITE_MAX_BPP.W)))
 
   // The pending flag is asserted when the decoder is waiting for tile ROM data
-  val pending = io.pixelData.ready && (!io.rom.valid || tileFormat8BPP)
+  val pending = io.pixelData.ready && (!io.rom.valid || is8BPP)
 
   // The done flag is asserted when the decoder has finished loading tile ROM data (one word for a
   // 4BPP tile, two words for a 8BPP tile)
-  val done = Mux(tileFormat8BPP, Util.toggle(io.rom.fire()), io.rom.fire())
+  val done = Mux(is8BPP, Util.toggle(io.rom.fire()), io.rom.fire())
 
   // Toggle the valid register
   when(!validReg && done) {
