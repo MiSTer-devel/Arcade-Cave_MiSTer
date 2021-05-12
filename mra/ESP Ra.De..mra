@@ -41,6 +41,10 @@
 
     <!-- eeprom -->
     <part name="eeprom-esprade.bin" crc="315fb546" />
+
+    <!-- enable C button in EEPROM -->
+    <patch offset="0x2900002">ff ff</patch>
+    <patch offset="0x2900008">00 04</patch>
   </rom>
 
   <!-- select game -->
