@@ -56,8 +56,8 @@ class LayerPipeline extends Module {
     val layerInfo = DeqIO(new Layer)
     /** Tile info port */
     val tileInfo = DeqIO(new Tile)
-    /** Pixel data port */
-    val pixelData = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
+    /** Tile ROM port */
+    val tileRom = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
     /** Palette RAM port */
     val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
     /** Priority port */
@@ -71,7 +71,7 @@ class LayerPipeline extends Module {
   // Wires
   val updateTileInfo = Wire(Bool())
   val colCounterEnable = Wire(Bool())
-  val readFifo = Wire(Bool())
+  val pixelDataReady = Wire(Bool())
 
   // Registers
   val layerInfoReg = RegEnable(io.layerInfo.bits, io.layerInfo.valid)
@@ -80,11 +80,11 @@ class LayerPipeline extends Module {
 
   // Tile PISOs
   val smallTilePiso = Module(new PISO(Config.SMALL_TILE_SIZE, Bits(Config.SPRITE_MAX_BPP.W)))
-  smallTilePiso.io.wr := readFifo
-  smallTilePiso.io.din := VecInit(LayerPipeline.decodeTile_8x8x8(io.pixelData.bits))
+  smallTilePiso.io.wr := pixelDataReady
+  smallTilePiso.io.din := VecInit(LayerPipeline.decodeTile_8x8x8(io.tileRom.bits))
   val largeTilePiso = Module(new PISO(Config.LARGE_TILE_SIZE, Bits(Config.SPRITE_MAX_BPP.W)))
-  largeTilePiso.io.wr := readFifo
-  largeTilePiso.io.din := VecInit(LayerPipeline.decodeTile_16x16x4(io.pixelData.bits))
+  largeTilePiso.io.wr := pixelDataReady
+  largeTilePiso.io.din := VecInit(LayerPipeline.decodeTile_16x16x4(io.tileRom.bits))
 
   // Set PISO flags
   val pisoEmpty = Mux(layerInfoReg.smallTile, smallTilePiso.io.isEmpty, largeTilePiso.io.isEmpty)
@@ -133,7 +133,7 @@ class LayerPipeline extends Module {
   // The FIFO can only be read when it is not empty and should be read if the PISO is empty or will
   // be empty next clock cycle. Since the pipeline after the FIFO has no backpressure, and can
   // accommodate data every clock cycle, this will be the case if the PISO counter is one.
-  readFifo := io.pixelData.valid && (pisoEmpty || pisoAlmostEmpty)
+  pixelDataReady := io.tileRom.valid && (pisoEmpty || pisoAlmostEmpty)
 
   // The tile info should be updated when we read a new tile from the FIFO, this can be in
   // either of two cases. First, when the counters are at 0 (no data yet) and the first pixels
@@ -141,8 +141,8 @@ class LayerPipeline extends Module {
   //
   // This is to achieve maximum efficiency of the pipeline. While there are tile to draw we burst
   // them from memory into the pipeline.
-  val updateSmallTileInfo = readFifo && ((x === 0.U && y === 0.U) || (xWrap && yWrap))
-  val updateLargeTileInfo = readFifo && ((x === 0.U && y === 0.U && miniTileX === 0.U && miniTileY === 0.U) || (xWrap && yWrap && miniTileXWrap && miniTileYWrap))
+  val updateSmallTileInfo = pixelDataReady && ((x === 0.U && y === 0.U) || (xWrap && yWrap))
+  val updateLargeTileInfo = pixelDataReady && ((x === 0.U && y === 0.U && miniTileX === 0.U && miniTileY === 0.U) || (xWrap && yWrap && miniTileXWrap && miniTileYWrap))
   updateTileInfo := Mux(layerInfoReg.smallTile, updateSmallTileInfo, updateLargeTileInfo)
 
   // Set column counter enable
@@ -164,9 +164,9 @@ class LayerPipeline extends Module {
   )
   val paletteRamAddr = paletteEntryReg.toAddr(io.gameConfig.numColors)
 
-  // Set valid/done flags
-  val valid = ShiftRegister(!pisoEmpty, 2, false.B, true.B)
-  val done = ShiftRegister(tileDone, 2, false.B, true.B)
+  // Set delayed valid/done shift registers
+  val validReg = ShiftRegister(!pisoEmpty, 2, false.B, true.B)
+  val doneReg = ShiftRegister(tileDone, 2, false.B, true.B)
 
   // Set priority data
   val priorityReadAddr = GPU.transformAddr(stage1Pos, io.options.flip, io.options.rotate)
@@ -183,14 +183,14 @@ class LayerPipeline extends Module {
   val visible = hasPriority && GPU.isVisible(stage2Pos) && !RegNext(paletteEntryReg.isTransparent)
 
   // Set frame buffer signals
-  val frameBufferWrite = RegNext(valid && visible)
+  val frameBufferWrite = RegNext(validReg && visible)
   val frameBufferAddr = RegNext(GPU.transformAddr(stage2Pos, io.options.flip, io.options.rotate))
   val frameBufferData = RegNext(io.paletteRam.dout)
 
   // Outputs
   io.layerInfo.ready := true.B
   io.tileInfo.ready := updateTileInfo
-  io.pixelData.ready := readFifo
+  io.tileRom.ready := pixelDataReady
   io.paletteRam.rd := true.B
   io.paletteRam.addr := paletteRamAddr
   io.priority.read.rd := true.B
@@ -203,7 +203,7 @@ class LayerPipeline extends Module {
   io.frameBuffer.addr := frameBufferAddr
   io.frameBuffer.mask := 0.U
   io.frameBuffer.din := frameBufferData
-  io.done := done
+  io.done := doneReg
 }
 
 object LayerPipeline {

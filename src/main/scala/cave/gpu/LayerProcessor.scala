@@ -115,7 +115,7 @@ class LayerProcessor extends Module {
   layerPipeline.io.tileInfo.bits := tileInfoReg
   pipelineReady := layerPipeline.io.tileInfo.ready
   layerPipeline.io.tileInfo.valid := updateTileInfo
-  layerPipeline.io.pixelData <> fifo.io.deq
+  layerPipeline.io.tileRom <> fifo.io.deq
   layerPipeline.io.paletteRam <> io.paletteRam
   layerPipeline.io.priority <> io.priority
   layerPipeline.io.frameBuffer <> io.frameBuffer
