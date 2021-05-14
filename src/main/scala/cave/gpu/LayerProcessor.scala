@@ -87,8 +87,12 @@ class LayerProcessor extends Module {
   val burstReadyReg = RegInit(false.B)
   val lastLayerPriorityReg = RegInit(0.U)
 
-  // Tile FIFO
-  val tileFifo = Module(new TileFIFO)
+  // The FIFO buffers the raw data read from the tile ROM. It can store up to 64 words, which is
+  // enough room for two 16x16x8BPP tiles.
+  //
+  // The queue is configured in show-ahead mode, which means there will be valid output as soon as
+  // an element has been written to the queue.
+  val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), 64, flow = true))
 
   // Columns/rows/tiles
   val numCols = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_COLS.U, Config.LARGE_TILE_NUM_COLS.U)
@@ -111,14 +115,14 @@ class LayerProcessor extends Module {
   layerPipeline.io.tileInfo.bits := tileInfoReg
   pipelineReady := layerPipeline.io.tileInfo.ready
   layerPipeline.io.tileInfo.valid := updateTileInfo
-  layerPipeline.io.pixelData <> tileFifo.io.deq
+  layerPipeline.io.pixelData <> fifo.io.deq
   layerPipeline.io.paletteRam <> io.paletteRam
   layerPipeline.io.priority <> io.priority
   layerPipeline.io.frameBuffer <> io.frameBuffer
   pipelineDone := layerPipeline.io.done
 
   // Control signals
-  val tileRomRead = burstPendingReg && burstReadyReg && tileFifo.io.enq.ready
+  val tileRomRead = burstPendingReg && burstReadyReg && fifo.io.count <= 32.U
   val lastBurst = effectiveRead && colWrap && rowWrap
   effectiveRead := tileRomRead && !io.tileRom.waitReq
   updateTileInfo := stateReg === State.working && tileInfoTakenReg
@@ -160,9 +164,9 @@ class LayerProcessor extends Module {
 
   // Enqueue valid tile ROM data into the tile FIFO
   when(io.tileRom.valid) {
-    tileFifo.io.enq.enq(io.tileRom.dout)
+    fifo.io.enq.enq(io.tileRom.dout)
   } otherwise {
-    tileFifo.io.enq.noenq()
+    fifo.io.enq.noenq()
   }
 
   // Toggle tile info taken register

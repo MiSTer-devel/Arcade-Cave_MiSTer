@@ -79,12 +79,12 @@ class LayerPipeline extends Module {
   val paletteEntryReg = Reg(new PaletteEntry)
 
   // Tile PISOs
-  val smallTilePiso = Module(new PISO(Config.SMALL_TILE_SIZE, Bits(Config.SMALL_TILE_BPP.W)))
+  val smallTilePiso = Module(new PISO(Config.SMALL_TILE_SIZE, Bits(Config.SPRITE_MAX_BPP.W)))
   smallTilePiso.io.wr := readFifo
-  smallTilePiso.io.din := VecInit(LayerPipeline.decodeSmallTile(io.pixelData.bits))
-  val largeTilePiso = Module(new PISO(Config.LARGE_TILE_SIZE, Bits(Config.LARGE_TILE_BPP.W)))
+  smallTilePiso.io.din := VecInit(LayerPipeline.decodeTile_8x8x8(io.pixelData.bits))
+  val largeTilePiso = Module(new PISO(Config.LARGE_TILE_SIZE, Bits(Config.SPRITE_MAX_BPP.W)))
   largeTilePiso.io.wr := readFifo
-  largeTilePiso.io.din := VecInit(LayerPipeline.decodeLargeTile(io.pixelData.bits))
+  largeTilePiso.io.din := VecInit(LayerPipeline.decodeTile_16x16x4(io.pixelData.bits))
 
   // Set PISO flags
   val pisoEmpty = Mux(layerInfoReg.smallTile, smallTilePiso.io.isEmpty, largeTilePiso.io.isEmpty)
@@ -208,29 +208,32 @@ class LayerPipeline extends Module {
 
 object LayerPipeline {
   /**
-   * Decodes a 8x8 tile from the given pixel data.
+   * Decodes a 8x8x8 tile from the given pixel data.
    *
    * Small tile pixels are encoded as 8-bit words.
    *
    * @param data The pixel data.
    */
-  def decodeSmallTile(data: Bits): Seq[Bits] =
+  def decodeTile_8x8x8(data: Bits): Seq[Bits] =
     Seq(2, 0, 3, 1, 6, 4, 7, 5, 10, 8, 11, 9, 14, 12, 15, 13)
       .reverse
+      // Decode data into nibbles
       .map(Util.decode(data, 16, 4).apply)
-      .grouped(2)
-      .map(Cat(_))
-      .toSeq
+      // Join high/low nibbles into 8-bit pixels
+      .grouped(2).map(Cat(_)).toSeq
 
   /**
-   * Decodes a 16x16 tile from the given pixel data.
+   * Decodes a 16x16x4 tile from the given pixel data.
    *
    * Large tile pixels are encoded as 4-bit words.
    *
    * @param data The pixel data.
    */
-  def decodeLargeTile(data: Bits): Seq[Bits] =
+  def decodeTile_16x16x4(data: Bits): Seq[Bits] =
     Seq(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
       .reverse
+      // Decode data into nibbles
       .map(Util.decode(data, 16, 4).apply)
+      // Pad nibbles into 8-bit pixels
+      .map(_.pad(8))
 }
