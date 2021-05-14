@@ -84,8 +84,8 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
     val idle :: latch :: check :: ready :: pending :: next :: done :: Nil = Enum(7)
   }
 
-  // Set 8BPP tile format flag
-  val tileFormat8BPP = io.gameConfig.spriteFormat === GameConfig.TILE_FORMAT_SPRITE_8BPP.U
+  // Set 8BPP flag
+  val is8BPP = io.gameConfig.spriteFormat === GameConfig.GFX_FORMAT_SPRITE_8BPP.U
 
   // Decode the sprite
   val sprite = Sprite.decode(io.spriteRam.dout, io.gameConfig.spriteZoom)
@@ -135,10 +135,10 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val spriteRamAddr = io.spriteBank ## spriteCounter
 
   // Set tile ROM address
-  val tileRomAddr = (spriteReg.code + tileCounter) << Mux(tileFormat8BPP, 8.U, 7.U)
+  val tileRomAddr = (spriteReg.code + tileCounter) << Mux(is8BPP, 8.U, 7.U)
 
   // Set tile ROM burst length
-  val tileRomBurstLength = Mux(tileFormat8BPP, 32.U, 16.U)
+  val tileRomBurstLength = Mux(is8BPP, 32.U, 16.U)
 
   // Toggle burst pending register
   when(stateReg === State.idle) {

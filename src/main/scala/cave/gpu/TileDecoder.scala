@@ -38,52 +38,73 @@ import cave.types._
 import chisel3._
 import chisel3.util._
 
-/** The tile decoder decodes pixels from the tile ROM. */
+/**
+ * Decodes tiles from tile ROM data.
+ *
+ * Tiles data is accessed using the 64-bit `rom` port. Some tiles require more than one 64-bit word
+ * to be decoded:
+ *
+ *   - 16x16x4: 64-bits (1 word)
+ *   - 16x16x8: 128-bits (2 words)
+ */
 class TileDecoder extends Module {
   val io = IO(new Bundle {
     /** Game config port */
     val gameConfig = Input(GameConfig())
-    /** Pixel data port */
-    val pixelData = Flipped(DeqIO(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.SPRITE_MAX_BPP.W))))
     /** Tile ROM data port */
     val rom = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
+    /** Pixel data port */
+    val pixelData = Flipped(DeqIO(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.SPRITE_MAX_BPP.W))))
   })
 
-  // Set 8BPP tile format flag
-  val tileFormat8BPP = io.gameConfig.spriteFormat === GameConfig.TILE_FORMAT_SPRITE_8BPP.U
+  // Set 8BPP flag
+  val is8BPP = io.gameConfig.spriteFormat === GameConfig.GFX_FORMAT_SPRITE_8BPP.U
 
   // Registers
+  val pendingReg = RegInit(false.B)
+  val toggleReg = RegInit(false.B)
   val validReg = RegInit(false.B)
   val dataReg = Reg(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.SPRITE_MAX_BPP.W)))
 
-  // The pending flag is asserted when the decoder is waiting for tile ROM data
-  val pending = io.pixelData.ready && (!io.rom.valid || tileFormat8BPP)
+  // The ready flag is asserted when a new request for pixel data, or there is no valid pixel data
+  val ready = io.pixelData.ready || !validReg
 
-  // The done flag is asserted when the decoder has finished loading tile ROM data (one word for a
-  // 4BPP tile, two words for a 8BPP tile)
-  val done = Mux(tileFormat8BPP, Util.toggle(io.rom.fire()), io.rom.fire())
+  // The start flag is asserted when the decoder wants to decode a tile
+  val start = ready && !pendingReg
 
-  // Toggle the valid register
-  when(!validReg && done) {
-    validReg := true.B
-  }.elsewhen(validReg && pending) {
+  // The done flag is asserted when the decoder has finished decoding a tile
+  val done = !is8BPP || (pendingReg && toggleReg)
+
+  // Clear the pending/toggle registers
+  when(start) {
+    pendingReg := true.B
+    toggleReg := false.B
     validReg := false.B
+  }
+
+  // Update the state when there is valid tile ROM data
+  when(io.rom.fire() && !done) {
+    toggleReg := true.B
+  }.elsewhen(io.rom.fire() && done) {
+    pendingReg := false.B
+    toggleReg := false.B
+    validReg := true.B
   }
 
   // Set the data register
   when(io.rom.fire()) {
     dataReg := MuxLookup(io.gameConfig.spriteFormat, VecInit(TileDecoder.decodeSpriteTile(io.rom.bits)), Seq(
-      GameConfig.TILE_FORMAT_SPRITE_MSB.U -> VecInit(TileDecoder.decodeSpriteMSBTile(io.rom.bits)),
-      GameConfig.TILE_FORMAT_SPRITE_8BPP.U -> VecInit(TileDecoder.decodeSprite8BPPTile(RegNext(io.rom.bits) ## io.rom.bits))
+      GameConfig.GFX_FORMAT_SPRITE_MSB.U -> VecInit(TileDecoder.decodeSpriteMSBTile(io.rom.bits)),
+      GameConfig.GFX_FORMAT_SPRITE_8BPP.U -> VecInit(TileDecoder.decodeSprite8BPPTile(RegNext(io.rom.bits) ## io.rom.bits))
     ))
   }
 
   // Outputs
+  io.rom.ready := io.rom.valid && ready
   io.pixelData.valid := validReg
   io.pixelData.bits := dataReg
-  io.rom.ready := !validReg || io.pixelData.ready
 
-  printf(p"TileDecoder(pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid }, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid })\n")
+  printf(p"TileDecoder(toggleReg: $toggleReg, validReg: $validReg, start: $start, done: $done, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid })\n")
 }
 
 object TileDecoder {
