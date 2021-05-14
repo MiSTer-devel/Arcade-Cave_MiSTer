@@ -118,9 +118,9 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
 
   // Tile decoder
   val tileDecoder = Module(new TileDecoder)
-  tileDecoder.io.gameConfig := io.gameConfig
-  tileDecoder.io.pixelData <> spriteBlitter.io.pixelData
+  tileDecoder.io.format := io.gameConfig.spriteFormat
   tileDecoder.io.rom <> fifo.io.deq
+  tileDecoder.io.pixelData <> spriteBlitter.io.pixelData
 
   // Set done flag
   val done = stateReg === State.done && !spriteBlitter.io.busy

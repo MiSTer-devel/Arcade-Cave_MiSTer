@@ -49,8 +49,8 @@ import chisel3.util._
  */
 class TileDecoder extends Module {
   val io = IO(new Bundle {
-    /** Game config port */
-    val gameConfig = Input(GameConfig())
+    /** Graphics format port */
+    val format = Input(UInt(3.W))
     /** Tile ROM data port */
     val rom = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
     /** Pixel data port */
@@ -58,7 +58,7 @@ class TileDecoder extends Module {
   })
 
   // Set 8BPP flag
-  val is8BPP = io.gameConfig.spriteFormat === GameConfig.GFX_FORMAT_SPRITE_8BPP.U
+  val is8BPP = io.format === GameConfig.GFX_FORMAT_SPRITE_8BPP.U
 
   // Registers
   val pendingReg = RegInit(false.B)
@@ -93,7 +93,7 @@ class TileDecoder extends Module {
 
   // Set the data register
   when(io.rom.fire()) {
-    dataReg := MuxLookup(io.gameConfig.spriteFormat, VecInit(TileDecoder.decodeSpriteTile(io.rom.bits)), Seq(
+    dataReg := MuxLookup(io.format, VecInit(TileDecoder.decodeSpriteTile(io.rom.bits)), Seq(
       GameConfig.GFX_FORMAT_SPRITE_MSB.U -> VecInit(TileDecoder.decodeSpriteMSBTile(io.rom.bits)),
       GameConfig.GFX_FORMAT_SPRITE_8BPP.U -> VecInit(TileDecoder.decodeSprite8BPPTile(RegNext(io.rom.bits) ## io.rom.bits))
     ))

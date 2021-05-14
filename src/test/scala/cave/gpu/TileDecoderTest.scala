@@ -42,7 +42,7 @@ class TileDecoderTest extends FlatSpec with ChiselScalatestTester with Matchers 
 
   it should "decode a pixel by default" in {
     test(new TileDecoder) { dut =>
-      dut.io.gameConfig.spriteFormat.poke(GameConfig.GFX_FORMAT_SPRITE.U)
+      dut.io.format.poke(GameConfig.GFX_FORMAT_SPRITE.U)
       dut.io.pixelData.valid.expect(false.B)
       dut.io.rom.valid.poke(true.B)
       dut.io.rom.ready.expect(true.B)
@@ -54,7 +54,7 @@ class TileDecoderTest extends FlatSpec with ChiselScalatestTester with Matchers 
 
   it should "decode a pixel when requested" in {
     test(new TileDecoder) { dut =>
-      dut.io.gameConfig.spriteFormat.poke(GameConfig.GFX_FORMAT_SPRITE.U)
+      dut.io.format.poke(GameConfig.GFX_FORMAT_SPRITE.U)
 
       // First request
       dut.io.pixelData.ready.poke(true.B)
@@ -84,7 +84,7 @@ class TileDecoderTest extends FlatSpec with ChiselScalatestTester with Matchers 
 
   it should "decode a 4BPP sprite tile" in {
     test(new TileDecoder) { dut =>
-      dut.io.gameConfig.spriteFormat.poke(GameConfig.GFX_FORMAT_SPRITE.U)
+      dut.io.format.poke(GameConfig.GFX_FORMAT_SPRITE.U)
       dut.io.rom.valid.poke(true.B)
       dut.io.rom.bits.poke("hfedcba9876543210".U)
       dut.clock.step()
@@ -97,7 +97,7 @@ class TileDecoderTest extends FlatSpec with ChiselScalatestTester with Matchers 
 
   it should "decode a 4BPP MSB sprite tile" in {
     test(new TileDecoder) { dut =>
-      dut.io.gameConfig.spriteFormat.poke(GameConfig.GFX_FORMAT_SPRITE_MSB.U)
+      dut.io.format.poke(GameConfig.GFX_FORMAT_SPRITE_MSB.U)
       dut.io.rom.valid.poke(true.B)
       dut.io.rom.bits.poke("hfedcba9876543210".U)
       dut.clock.step()
@@ -112,7 +112,7 @@ class TileDecoderTest extends FlatSpec with ChiselScalatestTester with Matchers 
 
   it should "decode a pixel by default" in {
     test(new TileDecoder) { dut =>
-      dut.io.gameConfig.spriteFormat.poke(GameConfig.GFX_FORMAT_SPRITE_8BPP.U)
+      dut.io.format.poke(GameConfig.GFX_FORMAT_SPRITE_8BPP.U)
       dut.io.pixelData.valid.expect(false.B)
       dut.io.rom.valid.poke(true.B)
       dut.io.rom.ready.expect(true.B)
@@ -127,7 +127,7 @@ class TileDecoderTest extends FlatSpec with ChiselScalatestTester with Matchers 
 
   it should "decode a pixel when requested" in {
     test(new TileDecoder) { dut =>
-      dut.io.gameConfig.spriteFormat.poke(GameConfig.GFX_FORMAT_SPRITE_8BPP.U)
+      dut.io.format.poke(GameConfig.GFX_FORMAT_SPRITE_8BPP.U)
 
       // First request
       dut.io.pixelData.ready.poke(true.B)
@@ -163,7 +163,7 @@ class TileDecoderTest extends FlatSpec with ChiselScalatestTester with Matchers 
 
   it should "decode a 8BPP sprite tile" in {
     test(new TileDecoder) { dut =>
-      dut.io.gameConfig.spriteFormat.poke(GameConfig.GFX_FORMAT_SPRITE_8BPP.U)
+      dut.io.format.poke(GameConfig.GFX_FORMAT_SPRITE_8BPP.U)
       dut.io.rom.valid.poke(true.B)
       dut.io.rom.bits.poke("hfedcba9876543210".U)
       dut.clock.step(2)
