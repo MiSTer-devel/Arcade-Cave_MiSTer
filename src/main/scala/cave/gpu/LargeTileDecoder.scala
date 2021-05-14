@@ -47,7 +47,7 @@ import chisel3.util._
  *   - 16x16x4: 64-bits (1 word)
  *   - 16x16x8: 128-bits (2 words)
  */
-class TileDecoder extends Module {
+class LargeTileDecoder extends Module {
   val io = IO(new Bundle {
     /** Graphics format port */
     val format = Input(UInt(3.W))
@@ -93,9 +93,9 @@ class TileDecoder extends Module {
 
   // Set the data register
   when(io.rom.fire()) {
-    dataReg := MuxLookup(io.format, VecInit(TileDecoder.decodeSpriteTile(io.rom.bits)), Seq(
-      GameConfig.GFX_FORMAT_SPRITE_MSB.U -> VecInit(TileDecoder.decodeSpriteMSBTile(io.rom.bits)),
-      GameConfig.GFX_FORMAT_SPRITE_8BPP.U -> VecInit(TileDecoder.decodeSprite8BPPTile(RegNext(io.rom.bits) ## io.rom.bits))
+    dataReg := MuxLookup(io.format, VecInit(LargeTileDecoder.decodeSpriteTile(io.rom.bits)), Seq(
+      GameConfig.GFX_FORMAT_SPRITE_MSB.U -> VecInit(LargeTileDecoder.decodeSpriteMSBTile(io.rom.bits)),
+      GameConfig.GFX_FORMAT_SPRITE_8BPP.U -> VecInit(LargeTileDecoder.decodeSprite8BPPTile(RegNext(io.rom.bits) ## io.rom.bits))
     ))
   }
 
@@ -107,7 +107,7 @@ class TileDecoder extends Module {
   printf(p"TileDecoder(toggleReg: $toggleReg, validReg: $validReg, start: $start, done: $done, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid })\n")
 }
 
-object TileDecoder {
+object LargeTileDecoder {
   private def decodeSpriteTile(data: Bits): Seq[Bits] =
     Seq(1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14)
       .reverse

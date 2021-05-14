@@ -117,7 +117,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   spriteBlitter.io.frameBuffer <> io.frameBuffer
 
   // Tile decoder
-  val tileDecoder = Module(new TileDecoder)
+  val tileDecoder = Module(new LargeTileDecoder)
   tileDecoder.io.format := io.gameConfig.spriteFormat
   tileDecoder.io.rom <> fifo.io.deq
   tileDecoder.io.pixelData <> spriteBlitter.io.pixelData
