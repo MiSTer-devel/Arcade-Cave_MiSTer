@@ -49,7 +49,7 @@ import chisel3.util._
 class LargeTileDecoder extends Module {
   val io = IO(new Bundle {
     /** Graphics format port */
-    val format = Input(UInt(3.W))
+    val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))
     /** Tile ROM data port */
     val rom = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
     /** Pixel data port */

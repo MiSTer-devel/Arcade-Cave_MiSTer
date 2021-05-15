@@ -198,6 +198,8 @@ object Config {
   /** The width of the layer scroll value */
   val LAYER_SCROLL_WIDTH = 9
 
+  /** The width of the graphics format value */
+  val GFX_FORMAT_WIDTH = 3
   /** 8x8x4 tile format */
   val GFX_FORMAT_8x8x4 = 0
   /** 8x8x8 tile format */

@@ -61,13 +61,13 @@ class GameConfig extends Bundle {
   /** Asserted when zoomed sprites are enabled */
   val spriteZoom = Bool()
   /** Sprite tile format */
-  val spriteFormat = UInt(3.W)
+  val spriteFormat = UInt(Config.GFX_FORMAT_WIDTH.W)
   /** Layer 0 tile format */
-  val layer0Format = UInt(3.W)
+  val layer0Format = UInt(Config.GFX_FORMAT_WIDTH.W)
   /** Layer 1 tile format */
-  val layer1Format = UInt(3.W)
+  val layer1Format = UInt(Config.GFX_FORMAT_WIDTH.W)
   /** Layer 2 tile format */
-  val layer2Format = UInt(3.W)
+  val layer2Format = UInt(Config.GFX_FORMAT_WIDTH.W)
 }
 
 object GameConfig {
