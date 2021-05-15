@@ -297,6 +297,19 @@
             </set>
           </value>
         </entry>
+        <entry key="cave.gpu.LargeTileDecoderTest">
+          <value>
+            <set>
+              <option value="4BPP should decode a 4BPP MSB tile" />
+              <option value="4BPP should decode a 4BPP tile" />
+              <option value="4BPP should initially request tile ROM data" />
+              <option value="4BPP should request a word from the tile ROM for every row" />
+              <option value="8BPP should decode a 8BPP tile" />
+              <option value="8BPP should initially request tile ROM data" />
+              <option value="8BPP should request two words from the tile ROM for every row" />
+            </set>
+          </value>
+        </entry>
         <entry key="cave.gpu.RegisterFileTest">
           <value>
             <set>
@@ -305,15 +318,31 @@
             </set>
           </value>
         </entry>
+        <entry key="cave.gpu.SmallTileDecoderTest">
+          <value>
+            <set>
+              <option value="4BPP should decode a 4BPP tile" />
+              <option value="4BPP should handle a pending request" />
+              <option value="4BPP should initially request tile ROM data" />
+              <option value="4BPP should request a word from the tile ROM for every two rows" />
+              <option value="8BPP should decode a 8BPP tile" />
+              <option value="8BPP should handle a pending request" />
+              <option value="8BPP should initially request tile ROM data" />
+              <option value="8BPP should request a word from the tile ROM for every row" />
+            </set>
+          </value>
+        </entry>
         <entry key="cave.gpu.SpriteBlitterTest">
           <value>
             <set>
               <option value="blitting should allow horizontal flipping" />
               <option value="blitting should allow vertical flipping" />
-              <option value="blitting should copy pixel data to the frame buffer" />
-              <option value="should decode tile data" />
-              <option value="should not read priority data" />
-              <option value="should read palette data" />
+              <option value="blitting should assert the done signal two clocks after blitting the last pixel" />
+              <option value="blitting should write pixel data to the frame buffer" />
+              <option value="pixel data should request pixel data when the PISO is almost empty" />
+              <option value="pixel data should request pixel data when the PISO is empty" />
+              <option value="sprite data should request sprite data when blitting the last pixel" />
+              <option value="sprite data should request sprite data when the PISO is empty" />
             </set>
           </value>
         </entry>
@@ -330,17 +359,6 @@
               <option value="done flag should wait until the blitter is finished before asserting the done flag" />
               <option value="pixel data should fetch pixel data from the tile ROM" />
               <option value="sprite data should fetch sprite data from the sprite RAM" />
-            </set>
-          </value>
-        </entry>
-        <entry key="cave.gpu.TileDecoderTest">
-          <value>
-            <set>
-              <option value="4BPP should assert the ready/valid signals" />
-              <option value="4BPP should decode a 4BPP MSB sprite tile" />
-              <option value="4BPP should decode a 4BPP sprite tile" />
-              <option value="8BPP should assert the ready/valid signals" />
-              <option value="8BPP should decode a 8BPP sprite tile" />
             </set>
           </value>
         </entry>
