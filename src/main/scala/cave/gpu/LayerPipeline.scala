@@ -115,7 +115,7 @@ class LayerPipeline extends Module {
 
   // Tile offset
   val scrollPos = {
-    val offset = layerInfoReg.scroll + Layer.magicOffset(io.layerIndex)
+    val offset = layerInfoReg.scroll + Layer.magicOffset(io.layerIndex, layerInfoReg.smallTile)
     val x = Mux(layerInfoReg.smallTile, offset.x(2, 0), offset.x(3, 0))
     val y = Mux(layerInfoReg.smallTile, offset.y(2, 0), offset.y(3, 0))
     UVec2(x, y)

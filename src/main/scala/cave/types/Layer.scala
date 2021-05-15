@@ -93,7 +93,7 @@ object Layer {
   }
 
   /**
-   * Returns the magic offset value for the given layer index.
+   * Returns the magic offset value for the given layer index and tile size.
    *
    * The X offset in DDP is 0x195 for the first layer 0x195 = 405, 405 + 107 (0x6b) = 512.
    *
@@ -103,9 +103,14 @@ object Layer {
    * The Y offset in DDP is 0x1EF = 495, 495 + 17 = 512.
    *
    * @param index The layer index.
+   * @param smallTile The small tile flag.
    */
-  def magicOffset(index: UInt): UVec2 = {
-    val x = MuxLookup(index, 0.U, Seq(0.U -> 0x6b.U, 1.U -> 0x6c.U, 2.U -> 0x75.U))
+  def magicOffset(index: UInt, smallTile: Bool): UVec2 = {
+    val x = MuxLookup(index, 0.U, Seq(
+      0.U -> 0x6c.U,
+      1.U -> 0x6d.U,
+      2.U -> Mux(smallTile, 0x76.U, 0x6e.U)
+    ))
     val y = 17.U
     UVec2(x, y)
   }
