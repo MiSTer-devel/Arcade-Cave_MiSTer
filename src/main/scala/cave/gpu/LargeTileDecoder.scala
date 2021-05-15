@@ -53,7 +53,7 @@ class LargeTileDecoder extends Module {
     /** Tile ROM data port */
     val rom = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
     /** Pixel data port */
-    val pixelData = Flipped(DeqIO(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W))))
+    val pixelData = Flipped(DeqIO(Vec(Config.LARGE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W))))
   })
 
   // Set 8BPP flag
@@ -63,7 +63,7 @@ class LargeTileDecoder extends Module {
   val pendingReg = RegInit(false.B)
   val toggleReg = RegInit(false.B)
   val validReg = RegInit(false.B)
-  val dataReg = Reg(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
+  val pixelDataReg = Reg(Vec(Config.LARGE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
 
   // The ready flag is asserted when a new request for pixel data, or there is no valid pixel data
   val ready = io.pixelData.ready || !validReg
@@ -92,22 +92,23 @@ class LargeTileDecoder extends Module {
 
   // Set the data register
   when(io.rom.fire()) {
-    dataReg := MuxLookup(io.format, VecInit(LargeTileDecoder.decodeSpriteTile(io.rom.bits)), Seq(
-      Config.GFX_FORMAT_SPRITE_MSB.U -> VecInit(LargeTileDecoder.decodeSpriteMSBTile(io.rom.bits)),
-      Config.GFX_FORMAT_SPRITE_8BPP.U -> VecInit(LargeTileDecoder.decodeSprite8BPPTile(RegNext(io.rom.bits) ## io.rom.bits))
+    pixelDataReg := MuxLookup(io.format, VecInit(LargeTileDecoder.decode4BPP(io.rom.bits)), Seq(
+      Config.GFX_FORMAT_SPRITE_MSB.U -> VecInit(LargeTileDecoder.decode4BPPMSB(io.rom.bits)),
+      Config.GFX_FORMAT_SPRITE_8BPP.U -> VecInit(LargeTileDecoder.decode8BPP(RegNext(io.rom.bits) ## io.rom.bits))
     ))
   }
 
   // Outputs
   io.rom.ready := io.rom.valid && ready
   io.pixelData.valid := validReg
-  io.pixelData.bits := dataReg
+  io.pixelData.bits := pixelDataReg
 
   printf(p"TileDecoder(toggleReg: $toggleReg, pendingReg: $pendingReg, validReg: $validReg, start: $start, done: $done, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid })\n")
 }
 
 object LargeTileDecoder {
-  private def decodeSpriteTile(data: Bits): Seq[Bits] =
+  /** Decode 16x16x4 tiles (i.e. 64 bits per row) */
+  private def decode4BPP(data: Bits): Seq[Bits] =
     Seq(1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14)
       .reverse
       // Decode data into nibbles
@@ -115,7 +116,8 @@ object LargeTileDecoder {
       // Pad nibbles into 8-bit pixels
       .map(_.pad(8))
 
-  private def decodeSpriteMSBTile(data: Bits): Seq[Bits] =
+  /** Decode 16x16x4 MSB tile (i.e. 64 bits per row) */
+  private def decode4BPPMSB(data: Bits): Seq[Bits] =
     Seq(2, 3, 0, 1, 6, 7, 4, 5, 10, 11, 8, 9, 14, 15, 12, 13)
       .reverse
       // Decode data into nibbles
@@ -123,7 +125,8 @@ object LargeTileDecoder {
       // Pad nibbles into 8-bit pixels
       .map(_.pad(8))
 
-  private def decodeSprite8BPPTile(data: Bits): Seq[Bits] =
+  /** Decode 16x16x8 MSB sprite (i.e. 128 bits per row) */
+  private def decode8BPP(data: Bits): Seq[Bits] =
     Seq(1, 3, 0, 2, 5, 7, 4, 6, 9, 11, 8, 10, 13, 15, 12, 14, 17, 19, 16, 18, 21, 23, 20, 22, 25, 27, 24, 26, 29, 31, 28, 30)
       .reverse
       // Decode data into nibbles

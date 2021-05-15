@@ -40,7 +40,7 @@ import org.scalatest._
 class LargeTileDecoderTest extends FlatSpec with ChiselScalatestTester with Matchers {
   behavior of "4BPP"
 
-  it should "decode a pixel by default" in {
+  it should "initially request tile ROM data" in {
     test(new LargeTileDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_SPRITE.U)
       dut.io.pixelData.valid.expect(false.B)
@@ -52,7 +52,7 @@ class LargeTileDecoderTest extends FlatSpec with ChiselScalatestTester with Matc
     }
   }
 
-  it should "decode a pixel when requested" in {
+  it should "request a word from the tile ROM for every row" in {
     test(new LargeTileDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_SPRITE.U)
 
@@ -82,7 +82,7 @@ class LargeTileDecoderTest extends FlatSpec with ChiselScalatestTester with Matc
     }
   }
 
-  it should "decode a 4BPP sprite tile" in {
+  it should "decode a 4BPP tile" in {
     test(new LargeTileDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_SPRITE.U)
       dut.io.rom.valid.poke(true.B)
@@ -95,7 +95,7 @@ class LargeTileDecoderTest extends FlatSpec with ChiselScalatestTester with Matc
     }
   }
 
-  it should "decode a 4BPP MSB sprite tile" in {
+  it should "decode a 4BPP MSB tile" in {
     test(new LargeTileDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_SPRITE_MSB.U)
       dut.io.rom.valid.poke(true.B)
@@ -110,7 +110,7 @@ class LargeTileDecoderTest extends FlatSpec with ChiselScalatestTester with Matc
 
   behavior of "8BPP"
 
-  it should "decode a pixel by default" in {
+  it should "initially request tile ROM data" in {
     test(new LargeTileDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_SPRITE_8BPP.U)
       dut.io.pixelData.valid.expect(false.B)
@@ -125,7 +125,7 @@ class LargeTileDecoderTest extends FlatSpec with ChiselScalatestTester with Matc
     }
   }
 
-  it should "decode a pixel when requested" in {
+  it should "request two words from the tile ROM for every row" in {
     test(new LargeTileDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_SPRITE_8BPP.U)
 
@@ -161,7 +161,7 @@ class LargeTileDecoderTest extends FlatSpec with ChiselScalatestTester with Matc
     }
   }
 
-  it should "decode a 8BPP sprite tile" in {
+  it should "decode a 8BPP tile" in {
     test(new LargeTileDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_SPRITE_8BPP.U)
       dut.io.rom.valid.poke(true.B)

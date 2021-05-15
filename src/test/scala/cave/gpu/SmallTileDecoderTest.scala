@@ -52,7 +52,7 @@ class SmallTileDecoderTest extends FlatSpec with ChiselScalatestTester with Matc
     }
   }
 
-  it should "request tile ROM data every two rows" in {
+  it should "request a word from the tile ROM for every two rows" in {
     test(new SmallTileDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_8x8x4.U)
 
@@ -138,7 +138,7 @@ class SmallTileDecoderTest extends FlatSpec with ChiselScalatestTester with Matc
     }
   }
 
-  it should "request tile ROM for every row" in {
+  it should "request a word from the tile ROM for every row" in {
     test(new SmallTileDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_8x8x8.U)
 

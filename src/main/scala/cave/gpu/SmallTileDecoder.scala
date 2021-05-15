@@ -90,9 +90,8 @@ class SmallTileDecoder extends Module {
 
   // Decode pixel data
   when(io.rom.fire() || (io.pixelData.ready && toggleReg)) {
-    pixelDataReg := MuxLookup(io.format, VecInit(SmallTileDecoder.EMPTY), Seq(
-      Config.GFX_FORMAT_8x8x4.U -> VecInit(SmallTileDecoder.decode_8x8x4(bits)),
-      Config.GFX_FORMAT_8x8x8.U -> VecInit(SmallTileDecoder.decode_8x8x8(io.rom.bits))
+    pixelDataReg := MuxLookup(io.format, VecInit(SmallTileDecoder.decodeTile4BPP(bits)), Seq(
+      Config.GFX_FORMAT_8x8x8.U -> VecInit(SmallTileDecoder.decodeTile8BPP(io.rom.bits))
     ))
   }
 
@@ -105,11 +104,8 @@ class SmallTileDecoder extends Module {
 }
 
 object SmallTileDecoder {
-  /** Empty pixel data vector */
-  val EMPTY = Seq.fill(8) { 0.U(8.W) }
-
   /** Decodes 8x8x4 tiles (i.e. 32 bits per row) */
-  def decode_8x8x4(data: Bits): Seq[Bits] =
+  private def decodeTile4BPP(data: Bits): Seq[Bits] =
     Seq(0, 1, 2, 3, 4, 5, 6, 7)
       .reverse
       // Decode data into nibbles
@@ -118,7 +114,7 @@ object SmallTileDecoder {
       .map(_.pad(8))
 
   /** Decodes 8x8x8 tiles (i.e. 64 bits per row) */
-  def decode_8x8x8(data: Bits): Seq[Bits] =
+  private def decodeTile8BPP(data: Bits): Seq[Bits] =
     Seq(2, 0, 3, 1, 6, 4, 7, 5, 10, 8, 11, 9, 14, 12, 15, 13)
       .reverse
       // Decode data into nibbles
