@@ -56,8 +56,8 @@ class LayerPipeline extends Module {
     val layerInfo = DeqIO(new Layer)
     /** Tile info port */
     val tileInfo = DeqIO(new Tile)
-    /** Tile ROM port */
-    val tileRom = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
+    /** Pixel data port */
+    val pixelData = DeqIO(Vec(Config.SMALL_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
     /** Palette RAM port */
     val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
     /** Priority port */
@@ -78,17 +78,14 @@ class LayerPipeline extends Module {
   val tileInfoReg = RegEnable(io.tileInfo.bits, updateTileInfo)
   val paletteEntryReg = Reg(new PaletteEntry)
 
-  // Tile PISOs
-  val smallTilePiso = Module(new PISO(Config.SMALL_TILE_SIZE, Bits(Config.SPRITE_MAX_BPP.W)))
-  smallTilePiso.io.wr := pixelDataReady
-  smallTilePiso.io.din := VecInit(LayerPipeline.decodeTile_8x8x8(io.tileRom.bits))
-  val largeTilePiso = Module(new PISO(Config.LARGE_TILE_SIZE, Bits(Config.SPRITE_MAX_BPP.W)))
-  largeTilePiso.io.wr := pixelDataReady
-  largeTilePiso.io.din := VecInit(LayerPipeline.decodeTile_16x16x4(io.tileRom.bits))
+  // The PISO buffers the pixels to be copied to the frame buffer
+  val piso = Module(new PISO(Config.SMALL_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
+  piso.io.wr := io.pixelData.fire()
+  piso.io.din := io.pixelData.bits
 
   // Set PISO flags
-  val pisoEmpty = Mux(layerInfoReg.smallTile, smallTilePiso.io.isEmpty, largeTilePiso.io.isEmpty)
-  val pisoAlmostEmpty = Mux(layerInfoReg.smallTile, smallTilePiso.io.isAlmostEmpty, largeTilePiso.io.isAlmostEmpty)
+  val pisoEmpty = piso.io.isEmpty
+  val pisoAlmostEmpty = piso.io.isAlmostEmpty
 
   // Set number of columns/rows/tiles
   val numCols = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_COLS.U, Config.LARGE_TILE_NUM_COLS.U)
@@ -133,7 +130,7 @@ class LayerPipeline extends Module {
   // The FIFO can only be read when it is not empty and should be read if the PISO is empty or will
   // be empty next clock cycle. Since the pipeline after the FIFO has no backpressure, and can
   // accommodate data every clock cycle, this will be the case if the PISO counter is one.
-  pixelDataReady := io.tileRom.valid && (pisoEmpty || pisoAlmostEmpty)
+  pixelDataReady := io.pixelData.valid && (pisoEmpty || pisoAlmostEmpty)
 
   // The tile info should be updated when we read a new tile from the FIFO, this can be in
   // either of two cases. First, when the counters are at 0 (no data yet) and the first pixels
@@ -158,10 +155,7 @@ class LayerPipeline extends Module {
   }
 
   // The tiles use the second 64 palettes, and use 16 colors (out of 256 possible in a palette)
-  paletteEntryReg := PaletteEntry(
-    1.U ## tileInfoReg.colorCode,
-    Mux(layerInfoReg.smallTile, smallTilePiso.io.dout, largeTilePiso.io.dout)
-  )
+  paletteEntryReg := PaletteEntry(1.U ## tileInfoReg.colorCode, piso.io.dout)
   val paletteRamAddr = paletteEntryReg.toAddr(io.gameConfig.numColors)
 
   // Set delayed valid/done shift registers
@@ -190,7 +184,7 @@ class LayerPipeline extends Module {
   // Outputs
   io.layerInfo.ready := true.B
   io.tileInfo.ready := updateTileInfo
-  io.tileRom.ready := pixelDataReady
+  io.pixelData.ready := pixelDataReady
   io.paletteRam.rd := true.B
   io.paletteRam.addr := paletteRamAddr
   io.priority.read.rd := true.B
@@ -204,36 +198,4 @@ class LayerPipeline extends Module {
   io.frameBuffer.mask := 0.U
   io.frameBuffer.din := frameBufferData
   io.done := doneReg
-}
-
-object LayerPipeline {
-  /**
-   * Decodes a 8x8x8 tile from the given pixel data.
-   *
-   * Small tile pixels are encoded as 8-bit words.
-   *
-   * @param data The pixel data.
-   */
-  def decodeTile_8x8x8(data: Bits): Seq[Bits] =
-    Seq(2, 0, 3, 1, 6, 4, 7, 5, 10, 8, 11, 9, 14, 12, 15, 13)
-      .reverse
-      // Decode data into nibbles
-      .map(Util.decode(data, 16, 4).apply)
-      // Join high/low nibbles into 8-bit pixels
-      .grouped(2).map(Cat(_)).toSeq
-
-  /**
-   * Decodes a 16x16x4 tile from the given pixel data.
-   *
-   * Large tile pixels are encoded as 4-bit words.
-   *
-   * @param data The pixel data.
-   */
-  def decodeTile_16x16x4(data: Bits): Seq[Bits] =
-    Seq(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
-      .reverse
-      // Decode data into nibbles
-      .map(Util.decode(data, 16, 4).apply)
-      // Pad nibbles into 8-bit pixels
-      .map(_.pad(8))
 }

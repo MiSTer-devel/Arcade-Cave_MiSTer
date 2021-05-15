@@ -115,11 +115,22 @@ class LayerProcessor extends Module {
   layerPipeline.io.tileInfo.bits := tileInfoReg
   pipelineReady := layerPipeline.io.tileInfo.ready
   layerPipeline.io.tileInfo.valid := updateTileInfo
-  layerPipeline.io.tileRom <> fifo.io.deq
   layerPipeline.io.paletteRam <> io.paletteRam
   layerPipeline.io.priority <> io.priority
   layerPipeline.io.frameBuffer <> io.frameBuffer
   pipelineDone := layerPipeline.io.done
+
+  // Set layer format
+  val layerFormat = MuxLookup(io.layerIndex, io.gameConfig.layer0Format, Seq(
+    1.U -> io.gameConfig.layer1Format,
+    2.U -> io.gameConfig.layer2Format
+  ))
+
+  // Tile decoder
+  val tileDecoder = Module(new SmallTileDecoder)
+  tileDecoder.io.format := layerFormat
+  tileDecoder.io.rom <> fifo.io.deq
+  tileDecoder.io.pixelData <> layerPipeline.io.pixelData
 
   // Control signals
   val tileRomRead = burstPendingReg && burstReadyReg && fifo.io.count <= 32.U
@@ -150,17 +161,25 @@ class LayerProcessor extends Module {
     Mux(layerInfoReg.smallTile, small, large)
   }
 
-  // Set tile ROM address
-  val tileRomAddr = Mux(layerInfoReg.smallTile,
-    tileInfoReg.code * Config.SMALL_TILE_BYTE_SIZE.U,
-    tileInfoReg.code * Config.LARGE_TILE_BYTE_SIZE.U
-  )
+  // Set tile format flags
+  val tileFormat_8x8x8 = layerInfoReg.smallTile && layerFormat === GameConfig.GFX_FORMAT_8x8x8.U
+  val tileFormat_16x16x4 = !layerInfoReg.smallTile && layerFormat === GameConfig.GFX_FORMAT_8x8x4.U
+  val tileFormat_16x16x8 = !layerInfoReg.smallTile && layerFormat === GameConfig.GFX_FORMAT_8x8x8.U
 
-  // Set tile ROM burst length
-  val tileRomBurstLength = Mux(layerInfoReg.smallTile,
-    Config.SMALL_TILE_SIZE.U,
-    Config.LARGE_TILE_SIZE.U
-  )
+  // Set tile ROM address
+  val tileRomAddr = MuxCase(0.U, Seq(
+    tileFormat_8x8x8 -> (tileInfoReg.code << log2Ceil(Config.TILE_SIZE_8x8x8)),
+    tileFormat_16x16x4 -> (tileInfoReg.code << log2Ceil(Config.TILE_SIZE_16x16x4)),
+    tileFormat_16x16x8 -> (tileInfoReg.code << log2Ceil(Config.TILE_SIZE_16x16x8).U)
+  ))
+
+  // Set tile ROM burst length. The burst length defaults to 8 words, because while the game is
+  // booting the layer registers won't be set properly.
+  val tileRomBurstLength = MuxCase(8.U, Seq(
+    tileFormat_8x8x8 -> (Config.TILE_SIZE_8x8x8 / 8).U,
+    tileFormat_16x16x4 -> (Config.TILE_SIZE_16x16x4 / 8).U,
+    tileFormat_16x16x8 -> (Config.TILE_SIZE_16x16x8 / 8).U
+  ))
 
   // Enqueue valid tile ROM data into the tile FIFO
   when(io.tileRom.valid) {
