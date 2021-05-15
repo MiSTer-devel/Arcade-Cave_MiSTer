@@ -226,6 +226,6 @@ object Config {
 
   /** The size of a sprite tile in pixels */
   val SPRITE_TILE_SIZE = 16
-  /** The maximum bit depth of a sprite */
-  val SPRITE_MAX_BPP = 8
+  /** The maximum bit depth of a tile */
+  val TILE_MAX_BPP = 8
 }

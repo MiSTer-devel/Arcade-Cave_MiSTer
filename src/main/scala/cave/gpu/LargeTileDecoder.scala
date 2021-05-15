@@ -54,7 +54,7 @@ class LargeTileDecoder extends Module {
     /** Tile ROM data port */
     val rom = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
     /** Pixel data port */
-    val pixelData = Flipped(DeqIO(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.SPRITE_MAX_BPP.W))))
+    val pixelData = Flipped(DeqIO(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W))))
   })
 
   // Set 8BPP flag
@@ -64,7 +64,7 @@ class LargeTileDecoder extends Module {
   val pendingReg = RegInit(false.B)
   val toggleReg = RegInit(false.B)
   val validReg = RegInit(false.B)
-  val dataReg = Reg(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.SPRITE_MAX_BPP.W)))
+  val dataReg = Reg(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
 
   // The ready flag is asserted when a new request for pixel data, or there is no valid pixel data
   val ready = io.pixelData.ready || !validReg
@@ -104,7 +104,7 @@ class LargeTileDecoder extends Module {
   io.pixelData.valid := validReg
   io.pixelData.bits := dataReg
 
-  printf(p"TileDecoder(toggleReg: $toggleReg, validReg: $validReg, start: $start, done: $done, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid })\n")
+  printf(p"TileDecoder(toggleReg: $toggleReg, pendingReg: $pendingReg, validReg: $validReg, start: $start, done: $done, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid })\n")
 }
 
 object LargeTileDecoder {
