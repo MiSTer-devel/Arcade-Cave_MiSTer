@@ -33,7 +33,7 @@
 package cave.gpu
 
 import axon.mem._
-import axon.types.OptionsIO
+import axon.types._
 import axon.util.Counter
 import cave.Config
 import cave.types._
@@ -85,7 +85,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   }
 
   // Set 8BPP flag
-  val is8BPP = io.gameConfig.spriteFormat === GameConfig.GFX_FORMAT_SPRITE_8BPP.U
+  val is8BPP = io.gameConfig.spriteFormat === Config.GFX_FORMAT_SPRITE_8BPP.U
 
   // Decode the sprite
   val sprite = Sprite.decode(io.spriteRam.dout, io.gameConfig.spriteZoom)
@@ -99,9 +99,11 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val numTilesReg = RegEnable(spriteReg.cols * spriteReg.rows, stateReg === State.check)
   val burstPendingReg = RegInit(false.B)
 
-  // The FIFO buffers pixel data for up to two 16x16x8BPP tiles, or four 16x16x4BPP tiles. It is
-  // configured in show-ahead mode, which means there is valid output as soon as an element has been
-  // written to the queue. A read request will move to the next element in the queue.
+  // The FIFO buffers the raw data read from the tile ROM. It can store up to 64 words, which is
+  // enough room for two 16x16x8BPP tiles.
+  //
+  // The queue is configured in show-ahead mode, which means there will be valid output as soon as
+  // an element has been written to the queue.
   val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), 64, flow = true))
 
   // Counters
@@ -117,10 +119,10 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   spriteBlitter.io.frameBuffer <> io.frameBuffer
 
   // Tile decoder
-  val tileDecoder = Module(new TileDecoder)
-  tileDecoder.io.gameConfig := io.gameConfig
-  tileDecoder.io.pixelData <> spriteBlitter.io.pixelData
+  val tileDecoder = Module(new LargeTileDecoder)
+  tileDecoder.io.format := io.gameConfig.spriteFormat
   tileDecoder.io.rom <> fifo.io.deq
+  tileDecoder.io.pixelData <> spriteBlitter.io.pixelData
 
   // Set done flag
   val done = stateReg === State.done && !spriteBlitter.io.busy

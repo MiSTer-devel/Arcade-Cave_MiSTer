@@ -33,8 +33,8 @@
 package cave.gpu
 
 import axon.mem._
+import axon.types._
 import axon.util.Counter
-import axon.types.OptionsIO
 import cave.Config
 import cave.types._
 import chisel3._
@@ -87,8 +87,12 @@ class LayerProcessor extends Module {
   val burstReadyReg = RegInit(false.B)
   val lastLayerPriorityReg = RegInit(0.U)
 
-  // Tile FIFO
-  val tileFifo = Module(new TileFIFO)
+  // The FIFO buffers the raw data read from the tile ROM. It can store up to 64 words, which is
+  // enough room for two 16x16x8BPP tiles.
+  //
+  // The queue is configured in show-ahead mode, which means there will be valid output as soon as
+  // an element has been written to the queue.
+  val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), 64, flow = true))
 
   // Columns/rows/tiles
   val numCols = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_COLS.U, Config.LARGE_TILE_NUM_COLS.U)
@@ -111,14 +115,25 @@ class LayerProcessor extends Module {
   layerPipeline.io.tileInfo.bits := tileInfoReg
   pipelineReady := layerPipeline.io.tileInfo.ready
   layerPipeline.io.tileInfo.valid := updateTileInfo
-  layerPipeline.io.pixelData <> tileFifo.io.deq
   layerPipeline.io.paletteRam <> io.paletteRam
   layerPipeline.io.priority <> io.priority
   layerPipeline.io.frameBuffer <> io.frameBuffer
   pipelineDone := layerPipeline.io.done
 
+  // Set layer format
+  val layerFormat = MuxLookup(io.layerIndex, io.gameConfig.layer0Format, Seq(
+    1.U -> io.gameConfig.layer1Format,
+    2.U -> io.gameConfig.layer2Format
+  ))
+
+  // Tile decoder
+  val tileDecoder = Module(new SmallTileDecoder)
+  tileDecoder.io.format := layerFormat
+  tileDecoder.io.rom <> fifo.io.deq
+  tileDecoder.io.pixelData <> layerPipeline.io.pixelData
+
   // Control signals
-  val tileRomRead = burstPendingReg && burstReadyReg && tileFifo.io.enq.ready
+  val tileRomRead = burstPendingReg && burstReadyReg && fifo.io.count <= 32.U
   val lastBurst = effectiveRead && colWrap && rowWrap
   effectiveRead := tileRomRead && !io.tileRom.waitReq
   updateTileInfo := stateReg === State.working && tileInfoTakenReg
@@ -146,23 +161,31 @@ class LayerProcessor extends Module {
     Mux(layerInfoReg.smallTile, small, large)
   }
 
-  // Set tile ROM address
-  val tileRomAddr = Mux(layerInfoReg.smallTile,
-    tileInfoReg.code * Config.SMALL_TILE_BYTE_SIZE.U,
-    tileInfoReg.code * Config.LARGE_TILE_BYTE_SIZE.U
-  )
+  // Set tile format flags
+  val tileFormat_8x8x8 = layerInfoReg.smallTile && layerFormat === Config.GFX_FORMAT_8x8x8.U
+  val tileFormat_16x16x4 = !layerInfoReg.smallTile && layerFormat === Config.GFX_FORMAT_8x8x4.U
+  val tileFormat_16x16x8 = !layerInfoReg.smallTile && layerFormat === Config.GFX_FORMAT_8x8x8.U
 
-  // Set tile ROM burst length
-  val tileRomBurstLength = Mux(layerInfoReg.smallTile,
-    Config.SMALL_TILE_SIZE.U,
-    Config.LARGE_TILE_SIZE.U
-  )
+  // Set tile ROM address
+  val tileRomAddr = MuxCase(0.U, Seq(
+    tileFormat_8x8x8 -> (tileInfoReg.code << log2Ceil(Config.TILE_SIZE_8x8x8)),
+    tileFormat_16x16x4 -> (tileInfoReg.code << log2Ceil(Config.TILE_SIZE_16x16x4)),
+    tileFormat_16x16x8 -> (tileInfoReg.code << log2Ceil(Config.TILE_SIZE_16x16x8).U)
+  ))
+
+  // Set tile ROM burst length. The burst length defaults to 8 words, because while the game is
+  // booting the layer registers won't be set properly.
+  val tileRomBurstLength = MuxCase(8.U, Seq(
+    tileFormat_8x8x8 -> (Config.TILE_SIZE_8x8x8 / 8).U,
+    tileFormat_16x16x4 -> (Config.TILE_SIZE_16x16x4 / 8).U,
+    tileFormat_16x16x8 -> (Config.TILE_SIZE_16x16x8 / 8).U
+  ))
 
   // Enqueue valid tile ROM data into the tile FIFO
   when(io.tileRom.valid) {
-    tileFifo.io.enq.enq(io.tileRom.dout)
+    fifo.io.enq.enq(io.tileRom.dout)
   } otherwise {
-    tileFifo.io.enq.noenq()
+    fifo.io.enq.noenq()
   }
 
   // Toggle tile info taken register

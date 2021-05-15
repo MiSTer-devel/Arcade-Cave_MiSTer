@@ -51,7 +51,7 @@ class SpriteBlitter extends Module {
     /** Sprite port */
     val sprite = DeqIO(new Sprite)
     /** Pixel data port */
-    val pixelData = DeqIO(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.SPRITE_MAX_BPP.W)))
+    val pixelData = DeqIO(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
     /** Palette RAM port */
     val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
     /** Priority port */
@@ -67,8 +67,8 @@ class SpriteBlitter extends Module {
   val spriteReg = RegEnable(io.sprite.bits, io.sprite.fire())
   val paletteEntryReg = Reg(new PaletteEntry)
 
-  // The PISO buffers pixels to be blitted to the frame buffer
-  val piso = Module(new PISO(Config.SPRITE_TILE_SIZE, Bits(Config.SPRITE_MAX_BPP.W)))
+  // The PISO buffers the pixels to be copied to the frame buffer
+  val piso = Module(new PISO(Config.SPRITE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
   piso.io.wr := io.pixelData.fire()
   piso.io.din := io.pixelData.bits
 
