@@ -33,7 +33,7 @@
 package cave.gpu
 
 import axon.mem._
-import axon.types.OptionsIO
+import axon.types._
 import axon.util.Counter
 import cave.Config
 import cave.types._
@@ -85,7 +85,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   }
 
   // Set 8BPP flag
-  val is8BPP = io.gameConfig.spriteFormat === GameConfig.GFX_FORMAT_SPRITE_8BPP.U
+  val is8BPP = io.gameConfig.spriteFormat === Config.GFX_FORMAT_SPRITE_8BPP.U
 
   // Decode the sprite
   val sprite = Sprite.decode(io.spriteRam.dout, io.gameConfig.spriteZoom)

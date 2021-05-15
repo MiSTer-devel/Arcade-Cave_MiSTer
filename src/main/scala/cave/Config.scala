@@ -198,13 +198,24 @@ object Config {
   /** The width of the layer scroll value */
   val LAYER_SCROLL_WIDTH = 9
 
-  /** The maximum bit depth of a tile */
-  val TILE_MAX_BPP = 8
+  /** 8x8x4 tile format */
+  val GFX_FORMAT_8x8x4 = 0
+  /** 8x8x8 tile format */
+  val GFX_FORMAT_8x8x8 = 1
+  /** Sprite format */
+  val GFX_FORMAT_SPRITE = 2
+  /** Sprite MSB format */
+  val GFX_FORMAT_SPRITE_MSB = 3
+  /** Sprite 8BPP format */
+  val GFX_FORMAT_SPRITE_8BPP = 4
 
   /** Tile sizes (in bytes) */
   val TILE_SIZE_8x8x8 = 64
   val TILE_SIZE_16x16x4 = 128
   val TILE_SIZE_16x16x8 = 256
+
+  /** The maximum bit depth of a tile */
+  val TILE_MAX_BPP = 8
 
   /** The size of a small tile in pixels */
   val SMALL_TILE_SIZE = 8

@@ -32,6 +32,7 @@
 
 package cave.types
 
+import cave.Config
 import chisel3._
 import chisel3.util._
 
@@ -81,17 +82,6 @@ object GameConfig {
   /** Puzzle Uo Poko */
   val UOPOKO = 4
 
-  /** 8x8x4 tile format */
-  val GFX_FORMAT_8x8x4 = 0
-  /** 8x8x8 tile format */
-  val GFX_FORMAT_8x8x8 = 1
-  /** Sprite tile format */
-  val GFX_FORMAT_SPRITE = 2
-  /** Sprite MSB tile format */
-  val GFX_FORMAT_SPRITE_MSB = 3
-  /** Sprite 8BPP tile format */
-  val GFX_FORMAT_SPRITE_8BPP = 4
-
   def apply() = new GameConfig
 
   /**
@@ -120,10 +110,10 @@ object GameConfig {
     wire.numColors := 16.U
     wire.numLayers := 2.U
     wire.spriteZoom := true.B
-    wire.spriteFormat := GFX_FORMAT_SPRITE.U
-    wire.layer0Format := GFX_FORMAT_8x8x4.U
-    wire.layer1Format := GFX_FORMAT_8x8x4.U
-    wire.layer2Format := GFX_FORMAT_8x8x4.U // unused
+    wire.spriteFormat := Config.GFX_FORMAT_SPRITE.U
+    wire.layer0Format := Config.GFX_FORMAT_8x8x4.U
+    wire.layer1Format := Config.GFX_FORMAT_8x8x4.U
+    wire.layer2Format := Config.GFX_FORMAT_8x8x4.U // unused
     wire
   }
 
@@ -140,10 +130,10 @@ object GameConfig {
     wire.numColors := 256.U
     wire.numLayers := 3.U
     wire.spriteZoom := false.B
-    wire.spriteFormat := GFX_FORMAT_SPRITE_MSB.U
-    wire.layer0Format := GFX_FORMAT_8x8x4.U
-    wire.layer1Format := GFX_FORMAT_8x8x4.U
-    wire.layer2Format := GFX_FORMAT_8x8x8.U
+    wire.spriteFormat := Config.GFX_FORMAT_SPRITE_MSB.U
+    wire.layer0Format := Config.GFX_FORMAT_8x8x4.U
+    wire.layer1Format := Config.GFX_FORMAT_8x8x4.U
+    wire.layer2Format := Config.GFX_FORMAT_8x8x8.U
     wire
   }
 
@@ -160,10 +150,10 @@ object GameConfig {
     wire.numColors := 256.U
     wire.numLayers := 3.U
     wire.spriteZoom := true.B
-    wire.spriteFormat := GFX_FORMAT_SPRITE_8BPP.U
-    wire.layer0Format := GFX_FORMAT_8x8x8.U
-    wire.layer1Format := GFX_FORMAT_8x8x8.U
-    wire.layer2Format := GFX_FORMAT_8x8x8.U
+    wire.spriteFormat := Config.GFX_FORMAT_SPRITE_8BPP.U
+    wire.layer0Format := Config.GFX_FORMAT_8x8x8.U
+    wire.layer1Format := Config.GFX_FORMAT_8x8x8.U
+    wire.layer2Format := Config.GFX_FORMAT_8x8x8.U
     wire
   }
 
@@ -180,10 +170,10 @@ object GameConfig {
     wire.numColors := 256.U
     wire.numLayers := 1.U
     wire.spriteZoom := true.B
-    wire.spriteFormat := GFX_FORMAT_SPRITE.U
-    wire.layer0Format := GFX_FORMAT_8x8x8.U
-    wire.layer1Format := GFX_FORMAT_8x8x8.U // unused
-    wire.layer2Format := GFX_FORMAT_8x8x8.U // unused
+    wire.spriteFormat := Config.GFX_FORMAT_SPRITE.U
+    wire.layer0Format := Config.GFX_FORMAT_8x8x8.U
+    wire.layer1Format := Config.GFX_FORMAT_8x8x8.U // unused
+    wire.layer2Format := Config.GFX_FORMAT_8x8x8.U // unused
     wire
   }
 }

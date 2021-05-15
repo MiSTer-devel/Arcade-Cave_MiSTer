@@ -33,8 +33,8 @@
 package cave.gpu
 
 import axon.mem._
+import axon.types._
 import axon.util.Counter
-import axon.types.OptionsIO
 import cave.Config
 import cave.types._
 import chisel3._
@@ -162,9 +162,9 @@ class LayerProcessor extends Module {
   }
 
   // Set tile format flags
-  val tileFormat_8x8x8 = layerInfoReg.smallTile && layerFormat === GameConfig.GFX_FORMAT_8x8x8.U
-  val tileFormat_16x16x4 = !layerInfoReg.smallTile && layerFormat === GameConfig.GFX_FORMAT_8x8x4.U
-  val tileFormat_16x16x8 = !layerInfoReg.smallTile && layerFormat === GameConfig.GFX_FORMAT_8x8x8.U
+  val tileFormat_8x8x8 = layerInfoReg.smallTile && layerFormat === Config.GFX_FORMAT_8x8x8.U
+  val tileFormat_16x16x4 = !layerInfoReg.smallTile && layerFormat === Config.GFX_FORMAT_8x8x4.U
+  val tileFormat_16x16x8 = !layerInfoReg.smallTile && layerFormat === Config.GFX_FORMAT_8x8x8.U
 
   // Set tile ROM address
   val tileRomAddr = MuxCase(0.U, Seq(

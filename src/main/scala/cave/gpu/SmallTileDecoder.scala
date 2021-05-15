@@ -34,7 +34,6 @@ package cave.gpu
 
 import axon.Util
 import cave.Config
-import cave.types._
 import chisel3._
 import chisel3.util._
 
@@ -50,7 +49,7 @@ class SmallTileDecoder extends Module {
   })
 
   // Set 8BPP flag
-  val is8BPP = io.format === GameConfig.GFX_FORMAT_8x8x8.U
+  val is8BPP = io.format === Config.GFX_FORMAT_8x8x8.U
 
   // Registers
   val pendingReg = RegInit(false.B)
@@ -92,8 +91,8 @@ class SmallTileDecoder extends Module {
   // Decode pixel data
   when(io.rom.fire() || (io.pixelData.ready && toggleReg)) {
     pixelDataReg := MuxLookup(io.format, VecInit(SmallTileDecoder.EMPTY), Seq(
-      GameConfig.GFX_FORMAT_8x8x4.U -> VecInit(SmallTileDecoder.decode_8x8x4(bits)),
-      GameConfig.GFX_FORMAT_8x8x8.U -> VecInit(SmallTileDecoder.decode_8x8x8(io.rom.bits))
+      Config.GFX_FORMAT_8x8x4.U -> VecInit(SmallTileDecoder.decode_8x8x4(bits)),
+      Config.GFX_FORMAT_8x8x8.U -> VecInit(SmallTileDecoder.decode_8x8x8(io.rom.bits))
     ))
   }
 
