@@ -104,11 +104,9 @@ class GPU extends Module {
   val layerProcessor = Module(new LayerProcessor)
   layerProcessor.io.gameConfig <> io.gameConfig
   layerProcessor.io.options <> io.options
-  layerProcessor.io.start := RegNext(
-    (stateReg =/= State.layer0 && nextState === State.layer0) ||
-    (stateReg =/= State.layer1 && nextState === State.layer1) ||
-    (stateReg =/= State.layer2 && nextState === State.layer2)
-  )
+  layerProcessor.io.start := (stateReg =/= State.layer0 && nextState === State.layer0) ||
+                             (stateReg =/= State.layer1 && nextState === State.layer1) ||
+                             (stateReg =/= State.layer2 && nextState === State.layer2)
   layerProcessor.io.layerIndex := MuxLookup(stateReg, 0.U, Seq(State.layer0 -> 0.U, State.layer1 -> 1.U, State.layer2 -> 2.U))
   layerProcessor.io.layerRegs := MuxLookup(stateReg, DontCare, Seq(State.layer0 -> io.layer0Regs, State.layer1 -> io.layer1Regs, State.layer2 -> io.layer2Regs))
   layerProcessor.io.layerRam <> ReadMemIO.demux(stateReg, Seq(State.layer0 -> io.layer0Ram, State.layer1 -> io.layer1Ram, State.layer2 -> io.layer2Ram))
@@ -198,7 +196,7 @@ class GPU extends Module {
 
     // Renders layer 0
     is(State.layer0) {
-      when(layerProcessor.io.done) {
+      when(!layerProcessor.io.busy) {
         nextState := Mux(io.gameConfig.numLayers === 1.U, State.dmaStart, State.layer1)
       }
       when(io.options.layer.layer0) {
@@ -209,7 +207,7 @@ class GPU extends Module {
 
     // Renders layer 1
     is(State.layer1) {
-      when(layerProcessor.io.done) {
+      when(!layerProcessor.io.busy) {
         nextState := Mux(io.gameConfig.numLayers === 2.U, State.dmaStart, State.layer2)
       }
       when(io.options.layer.layer1) {
@@ -220,7 +218,7 @@ class GPU extends Module {
 
     // Renders layer 2
     is(State.layer2) {
-      when(layerProcessor.io.done) { nextState := State.dmaStart }
+      when(!layerProcessor.io.busy) { nextState := State.dmaStart }
       when(io.options.layer.layer2) {
         priorityRam.io.portA.wr := false.B
         frameBuffer.io.portA.wr := false.B

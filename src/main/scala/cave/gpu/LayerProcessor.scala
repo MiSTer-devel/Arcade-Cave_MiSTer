@@ -47,10 +47,10 @@ class LayerProcessor extends Module {
     val gameConfig = Input(GameConfig())
     /** Options port */
     val options = OptionsIO()
-    /** Start flag */
+    /** When the start flag is asserted, the tiles are rendered to the frame buffer */
     val start = Input(Bool())
-    /** Done flag */
-    val done = Output(Bool())
+    /** The busy flag is asserted while the processor is busy */
+    val busy = Output(Bool())
     /** Layer index */
     val layerIndex = Input(UInt(Config.LAYER_INDEX_WIDTH.W))
     /** Layer registers port */
@@ -250,10 +250,10 @@ class LayerProcessor extends Module {
   }
 
   // Outputs
+  io.busy := stateReg =/= State.idle
   io.layerRam.rd := true.B
   io.layerRam.addr := layerRamAddr
   io.tileRom.rd := tileRomRead
   io.tileRom.addr := tileRomAddr
   io.tileRom.burstLength := tileRomBurstLength
-  io.done := RegNext(tileWrap) // TODO: Does this signal need to be delayed?
 }
