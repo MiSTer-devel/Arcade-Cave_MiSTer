@@ -39,6 +39,9 @@ import org.scalatest._
 trait SpriteProcessorTestHelpers {
   def mkSpriteProcessor(maxSprites: Int = 2) = new SpriteProcessor(maxSprites)
 
+  def waitForIdle(dut: SpriteProcessor) =
+    while (!dut.io.debug.idle.peek().litToBoolean) { dut.clock.step() }
+
   def waitForLatch(dut: SpriteProcessor) =
     while (!dut.io.debug.latch.peek().litToBoolean) { dut.clock.step() }
 
@@ -115,17 +118,18 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
     }
   }
 
-  behavior of "done flag"
+  behavior of "busy flag"
 
-  it should "assert the done flag after all sprites are processed" in {
+  it should "assert the busy flag when the processor has started" in {
     test(mkSpriteProcessor()) { dut =>
+      dut.io.busy.expect(false.B)
       dut.io.start.poke(true.B)
-      waitForDone(dut)
-      dut.io.done.expect(true.B)
+      dut.clock.step()
+      dut.io.busy.expect(true.B)
     }
   }
 
-  it should "wait until the blitter is finished before asserting the done flag" in {
+  it should "deassert the busy flag when the processor has finished" in {
     test(mkSpriteProcessor(1)) { dut =>
       dut.io.start.poke(true.B)
       dut.io.spriteRam.dout.poke("h01010000000000010000".U)
@@ -135,9 +139,9 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
       dut.io.tileRom.valid.poke(false.B)
       dut.io.tileRom.burstDone.poke(true.B)
       waitForDone(dut)
-      dut.io.done.expect(false.B)
-      dut.clock.step(244)
-      dut.io.done.expect(true.B)
+      dut.io.busy.expect(true.B)
+      dut.clock.step(245)
+      dut.io.busy.expect(false.B)
     }
   }
 

@@ -32,7 +32,6 @@
 
 package cave.gpu
 
-import axon.Util
 import axon.mem._
 import axon.types._
 import axon.util.{Counter, PISO}

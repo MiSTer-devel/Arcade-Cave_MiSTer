@@ -117,7 +117,7 @@ class GPU extends Module {
   val spriteProcessor = Module(new SpriteProcessor)
   spriteProcessor.io.gameConfig <> io.gameConfig
   spriteProcessor.io.options <> io.options
-  spriteProcessor.io.start := RegNext(stateReg =/= State.sprites && nextState === State.sprites)
+  spriteProcessor.io.start := stateReg =/= State.sprites && nextState === State.sprites
   spriteProcessor.io.spriteBank := io.videoRegs(64)
   spriteProcessor.io.spriteRam <> io.spriteRam
 
@@ -187,7 +187,7 @@ class GPU extends Module {
 
     // Renders the sprites
     is(State.sprites) {
-      when(spriteProcessor.io.done) {
+      when(!spriteProcessor.io.busy) {
         nextState := Mux(io.gameConfig.numLayers === 0.U, State.dmaStart, State.layer0)
       }
       when(io.options.layer.sprites) {

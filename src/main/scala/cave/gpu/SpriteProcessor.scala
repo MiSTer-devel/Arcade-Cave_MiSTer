@@ -51,10 +51,10 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
     val gameConfig = Input(GameConfig())
     /** Options port */
     val options = OptionsIO()
-    /** Start flag */
+    /** When the start flag is asserted, the sprites are rendered to the frame buffer */
     val start = Input(Bool())
-    /** Done flag */
-    val done = Output(Bool())
+    /** The busy flag is asserted while the processor is rendering */
+    val busy = Output(Bool())
     /** Sprite bank */
     val spriteBank = Input(Bool())
     /** Sprite RAM port */
@@ -123,9 +123,6 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   tileDecoder.io.format := io.gameConfig.spriteFormat
   tileDecoder.io.rom <> fifo.io.deq
   tileDecoder.io.pixelData <> spriteBlitter.io.pixelData
-
-  // Set done flag
-  val done = stateReg === State.done && !spriteBlitter.io.busy
 
   // Set tile ROM read flag
   val tileRomRead = stateReg === State.pending && !burstPendingReg && fifo.io.count <= 32.U
@@ -202,7 +199,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   }
 
   // Outputs
-  io.done := done
+  io.busy := stateReg =/= State.idle
   io.spriteRam.rd := true.B
   io.spriteRam.addr := spriteRamAddr
   io.tileRom.rd := tileRomRead
@@ -216,5 +213,5 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   io.debug.next := stateReg === State.next
   io.debug.done := stateReg === State.done
 
-  printf(p"SpriteProcessor(state: $stateReg, spriteCounter: $spriteCounter ($spriteCounterWrap), done: $done)\n")
+  printf(p"SpriteProcessor(state: $stateReg, spriteCounter: $spriteCounter ($spriteCounterWrap))\n")
 }
