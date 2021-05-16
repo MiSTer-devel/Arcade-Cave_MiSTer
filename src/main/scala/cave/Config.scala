@@ -77,6 +77,7 @@ object Config {
   /** SDRAM configuration */
   val sdramConfig = SDRAMConfig(
     clockFreq = CLOCK_FREQ,
+    colWidth = 10,
     burstLength = 4
   )
 

@@ -229,17 +229,25 @@ class SDRAMTest extends FlatSpec with ChiselScalatestTester with Matchers with S
 
   behavior of "addressing"
 
-  it should "select a bank" in {
-    test(mkSDRAM()) { dut =>
+  it should "select a bank/row/col" in {
+    test(mkSDRAM(sdramConfig.copy(colWidth = 10))) { dut =>
       waitForIdle(dut)
 
       dut.io.mem.rd.poke(true.B)
       dut.io.mem.addr.poke(0x1802003.U)
       waitForActive(dut)
-      dut.io.sdram.addr.expect(8.U) // row
+      dut.io.sdram.addr.expect(0x1004.U) // row
       waitForRead(dut)
       dut.io.sdram.addr.expect(0x401.U) // col
-      dut.io.sdram.bank.expect(3.U)
+      dut.io.sdram.bank.expect(1.U)
+
+      dut.io.mem.rd.poke(true.B)
+      dut.io.mem.addr.poke(0x42991744.U)
+      waitForActive(dut)
+      dut.io.sdram.addr.expect(0x1322.U) // row
+      waitForRead(dut)
+      dut.io.sdram.addr.expect(0x7a2.U) // col
+      dut.io.sdram.bank.expect(2.U)
     }
   }
 

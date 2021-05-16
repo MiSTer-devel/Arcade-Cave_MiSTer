@@ -290,14 +290,14 @@ class SDRAM(val config: SDRAMConfig) extends Module {
     nextCommand := Command.read
     nextState := State.read
     bankReg := requestReg.addr.bank
-    addrReg := "b0010".U ## requestReg.addr.col
+    addrReg := "b001".U ## requestReg.addr.col.pad(10)
   }
 
   def write() = {
     nextCommand := Command.write
     nextState := State.write
     bankReg := requestReg.addr.bank
-    addrReg := "b0010".U ## requestReg.addr.col
+    addrReg := "b001".U ## requestReg.addr.col.pad(10)
   }
 
   def refresh() = {
