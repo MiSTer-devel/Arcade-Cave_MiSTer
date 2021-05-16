@@ -219,15 +219,19 @@ class Cave extends Module {
     when(Util.rising(vBlank)) { vBlankIRQ := true.B }
 
     // Set memory interface defaults, the actual values are assigned in the memory map
-    eepromMem.default()
-    videoRegs.io.mem.default()
-    layer0Regs.io.mem.default()
-    layer1Regs.io.mem.default()
-    layer2Regs.io.mem.default()
+    io.progRom.default()
+    mainRam.io.default()
+    paletteRam.io.portA.default()
+    spriteRam.io.portA.default()
     layer0Ram.io.portA.default()
     layer1Ram.io.portA.default()
     layer2Ram.io.portA.default()
-    paletteRam.io.portA.default()
+    layer0Regs.io.mem.default()
+    layer1Regs.io.mem.default()
+    layer2Regs.io.mem.default()
+    videoRegs.io.mem.default()
+    ymz.io.cpu.default()
+    eepromMem.default()
 
     // Set input ports
     val input0 = "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1)
@@ -235,16 +239,17 @@ class Cave extends Module {
 
     // Memory map
     val map = new MemMap(cpu.io)
-    map(0x000000 to 0x0fffff).readMem(io.progRom)
-    map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
+
     // Access to 0x11xxxx appears during the service menu. It must be ignored, otherwise the service
     // menu freezes.
     map(0x110000 to 0x2fffff).ignore()
-    map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
-    map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
 
     // Dangun Feveron
     when(io.gameConfig.index === GameConfig.DFEVERON.U) {
+      map(0x000000 to 0x0fffff).readMem(io.progRom)
+      map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
+      map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
+      map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
       map(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
       map(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
       map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
@@ -264,6 +269,10 @@ class Cave extends Module {
 
     // DoDonPachi
     when(io.gameConfig.index === GameConfig.DDONPACH.U) {
+      map(0x000000 to 0x0fffff).readMem(io.progRom)
+      map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
+      map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
+      map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
       map(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
       map(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
       // Access to address 0x5fxxxx occurs during the attract loop on the air stage at frame 9355
@@ -293,6 +302,10 @@ class Cave extends Module {
 
     // ESP Ra.De.
     when(io.gameConfig.index === GameConfig.ESPRADE.U) {
+      map(0x000000 to 0x0fffff).readMem(io.progRom)
+      map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
+      map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
+      map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
       map(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
       map(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
       map(0x700000 to 0x707fff).readWriteMem(layer2Ram.io.portA)
@@ -314,6 +327,10 @@ class Cave extends Module {
 
     // Puzzle Uo Poko
     when(io.gameConfig.index === GameConfig.UOPOKO.U) {
+      map(0x000000 to 0x0fffff).readMem(io.progRom)
+      map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
+      map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
+      map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
       map(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
       map(0x600000 to 0x60007f).writeMem(videoRegs.io.mem.asWriteMemIO)
       map(0x600000 to 0x600007).r { (_, offset) =>
