@@ -40,8 +40,8 @@ import cave.types._
 import chisel3._
 import chisel3.util._
 
-/** The layer pipeline renders a tilemap layer. */
-class LayerPipeline extends Module {
+/** The tilemap blitter copies a tile to the frame buffer. */
+class TilemapBlitter extends Module {
   val io = IO(new Bundle {
     /** Game config port */
     val gameConfig = Input(GameConfig())

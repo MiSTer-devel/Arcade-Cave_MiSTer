@@ -40,8 +40,8 @@ import cave.types._
 import chisel3._
 import chisel3.util._
 
-/** The layer processor is responsible for rendering the tilemap layers. */
-class LayerProcessor extends Module {
+/** The tilemap processor is responsible for rendering tilemap layers. */
+class TilemapProcessor extends Module {
   val io = IO(new Bundle {
     /** Game config port */
     val gameConfig = Input(GameConfig())
@@ -105,7 +105,7 @@ class LayerProcessor extends Module {
   val (_, tileWrap) = Counter.dynamic(numTiles, enable = pipelineDone, reset = stateReg === State.idle)
 
   // Layer pipeline
-  val layerPipeline = withReset(stateReg === State.idle) { Module(new LayerPipeline) }
+  val layerPipeline = withReset(stateReg === State.idle) { Module(new TilemapBlitter) }
   layerPipeline.io.gameConfig <> io.gameConfig
   layerPipeline.io.options <> io.options
   layerPipeline.io.layerIndex := io.layerIndex
