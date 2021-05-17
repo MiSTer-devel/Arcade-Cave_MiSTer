@@ -1,4 +1,5 @@
 # Default ignored files
+/dataSources.local.xml
 /libraries/
 /modules/
 /modules.xml
