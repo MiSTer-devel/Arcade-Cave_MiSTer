@@ -65,11 +65,20 @@ class TilemapProcessor extends Module {
     val priority = new PriorityIO
     /** Frame buffer port */
     val frameBuffer = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH)
+    /** Debug port */
+    val debug = Output(new Bundle {
+      val idle = Bool()
+      val latch = Bool()
+      val setParams = Bool()
+      val waitRam = Bool()
+      val working = Bool()
+      val done = Bool()
+    })
   })
 
   // States
   object State {
-    val idle :: regInfo :: setParams :: waitRam :: working :: waitPipeline :: Nil = Enum(6)
+    val idle :: latch :: setParams :: waitRam :: working :: done :: Nil = Enum(6)
   }
 
   // Wires
@@ -80,7 +89,7 @@ class TilemapProcessor extends Module {
 
   // Registers
   val stateReg = RegInit(State.idle)
-  val layerInfoReg = RegEnable(Layer.decode(io.layerRegs), stateReg === State.regInfo)
+  val layerInfoReg = RegEnable(Layer.decode(io.layerRegs), stateReg === State.latch)
   val tileInfoReg = RegEnable(Tile.decode(io.layerRam.dout), updateTileInfo)
   val tileInfoTakenReg = RegInit(false.B)
   val burstPendingReg = RegInit(false.B)
@@ -226,11 +235,11 @@ class TilemapProcessor extends Module {
   switch(stateReg) {
     // Wait for the start signal
     is(State.idle) {
-      when(io.start) { stateReg := State.regInfo }
+      when(io.start) { stateReg := State.latch }
     }
 
-    // Latch registers
-    is(State.regInfo) { stateReg := State.setParams }
+    // Latch layer info
+    is(State.latch) { stateReg := State.setParams }
 
     // Set parameters
     is(State.setParams) { stateReg := Mux(layerInfoReg.disable, State.idle, State.waitRam) }
@@ -240,11 +249,11 @@ class TilemapProcessor extends Module {
 
     // Copy the tiles
     is(State.working) {
-      when(lastBurst) { stateReg := State.waitPipeline }
+      when(lastBurst) { stateReg := State.done }
     }
 
-    // Wait for the pipeline
-    is(State.waitPipeline) {
+    // Wait for the blitter to finish
+    is(State.done) {
       when(tileWrap) { stateReg := State.idle }
     }
   }
@@ -256,4 +265,10 @@ class TilemapProcessor extends Module {
   io.tileRom.rd := tileRomRead
   io.tileRom.addr := tileRomAddr
   io.tileRom.burstLength := tileRomBurstLength
+  io.debug.idle := stateReg === State.idle
+  io.debug.latch := stateReg === State.latch
+  io.debug.setParams := stateReg === State.setParams
+  io.debug.waitRam := stateReg === State.waitRam
+  io.debug.working := stateReg === State.working
+  io.debug.done := stateReg === State.done
 }
