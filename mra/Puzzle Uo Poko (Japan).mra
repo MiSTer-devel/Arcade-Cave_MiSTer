@@ -1,5 +1,5 @@
 <misterromdescription>
-  <name>Puzzle Uo Poko</name>
+  <name>Puzzle Uo Poko (Japan)</name>
   <mameversion>0226</mameversion>
   <setname>uopoko</setname>
   <year>1998</year>
@@ -8,11 +8,11 @@
   <rbf>cave</rbf>
 
   <!-- ROM data -->
-  <rom index="0" zip="uopoko.zip" md5="none">
+  <rom index="0" zip="uopokoj.zip|uopoko.zip" md5="none">
     <!-- main CPU -->
     <interleave output="16">
-      <part name="u26.int" crc="b445c9ac" map="01" />
-      <part name="u25.int" crc="a1258482" map="10" />
+      <part name="u26.bin" crc="e7eec050" map="01" />
+      <part name="u25.bin" crc="68cb6211" map="10" />
     </interleave>
 
     <!-- sprites -->
