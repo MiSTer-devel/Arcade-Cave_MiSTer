@@ -11,8 +11,8 @@
   <rom index="0" zip="esprade.zip" md5="none">
     <!-- main CPU -->
     <interleave output="16">
-      <part name="u41.int" crc="97c1b649" map="10" />
       <part name="u42.int" crc="3b510a73" map="01" />
+      <part name="u41.int" crc="97c1b649" map="10" />
     </interleave>
 
     <!-- sprites -->

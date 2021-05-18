@@ -11,8 +11,8 @@
   <rom index="0" zip="ddonpach.zip|ddonpachj.zip" md5="none">
     <!-- main CPU -->
     <interleave output="16">
-      <part name="u26.bin" crc="4f3a914a" map="10" />
       <part name="u27.bin" crc="2432ff9b" map="01" />
+      <part name="u26.bin" crc="4f3a914a" map="10" />
     </interleave>
 
     <!-- sprites -->

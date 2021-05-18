@@ -11,8 +11,8 @@
   <rom index="0" zip="dfeveron.zip|feversos.zip" md5="none">
     <!-- main CPU -->
     <interleave output="16">
-      <part name="cv01-u33.bin" crc="e53a7db3" map="10" />
       <part name="cv01-u34.bin" crc="be87f19d" map="01" />
+      <part name="cv01-u33.bin" crc="e53a7db3" map="10" />
     </interleave>
 
     <!-- sprites -->

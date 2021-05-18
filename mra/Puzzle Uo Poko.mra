@@ -11,8 +11,8 @@
   <rom index="0" zip="uopoko.zip" md5="none">
     <!-- main CPU -->
     <interleave output="16">
-      <part name="u25.int" crc="a1258482" map="10" />
       <part name="u26.int" crc="b445c9ac" map="01" />
+      <part name="u25.int" crc="a1258482" map="10" />
     </interleave>
 
     <!-- sprites -->

@@ -11,8 +11,8 @@
   <rom index="0" zip="feversos.zip" md5="none">
     <!-- main CPU -->
     <interleave output="16">
-      <part name="cv01-u33.sos" crc="64ff73fd" map="10" />
       <part name="cv01-u34.sos" crc="24ef3ce6" map="01" />
+      <part name="cv01-u33.sos" crc="64ff73fd" map="10" />
     </interleave>
 
     <!-- sprites -->
