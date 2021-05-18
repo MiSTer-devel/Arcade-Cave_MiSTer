@@ -131,7 +131,7 @@ class MemMap(cpu: CPUIO) {
      */
     def readMemT(mem: AsyncReadMemIO)(f: UInt => UInt): Unit = {
       mem.rd := cs && readStrobe
-      mem.addr := f(cpu.addr ## 0.U) // FIXME: don't apply byte addressing here!
+      mem.addr := f(cpu.addr)
       when(cs && cpu.rw && mem.valid) {
         dinReg := mem.dout
         dtackReg := true.B
