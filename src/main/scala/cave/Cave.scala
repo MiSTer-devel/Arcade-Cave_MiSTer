@@ -140,9 +140,12 @@ class Cave extends Module {
     // EEPROM
     val eeprom = Module(new EEPROM)
     eeprom.io.mem <> io.eeprom
-    eeprom.io.serial.cs := RegEnable(eepromMem.din(9), false.B, eepromMem.wr)
-    eeprom.io.serial.sck := RegEnable(eepromMem.din(10), false.B, eepromMem.wr)
-    eeprom.io.serial.sdi := RegEnable(eepromMem.din(11), false.B, eepromMem.wr)
+    val cs = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(5), eepromMem.din(9))
+    val sck = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(6), eepromMem.din(10))
+    val sdi = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(7), eepromMem.din(11))
+    eeprom.io.serial.cs := RegEnable(cs, false.B, eepromMem.wr)
+    eeprom.io.serial.sck := RegEnable(sck, false.B, eepromMem.wr)
+    eeprom.io.serial.sdi := RegEnable(sdi, false.B, eepromMem.wr)
 
     // Main RAM
     val mainRam = Module(new SinglePortRam(
@@ -333,6 +336,32 @@ class Cave extends Module {
       map(0xd00000).r { (_, _) => input0 }
       map(0xd00002).r { (_, _) => input1 }
       map(0xe00000).writeMem(eepromMem)
+    }
+
+    // Guwange
+    when(io.gameConfig.index === GameConfig.GUWANGE.U) {
+      map(0x000000 to 0x0fffff).readMemT(io.progRom)(addr => addr ## 0.U)
+      map(0x200000 to 0x20ffff).readWriteMem(mainRam.io)
+      map(0x300000 to 0x30007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+      map(0x300000 to 0x300007).r { (_, offset) =>
+        when(offset === 4.U) { videoIRQ := false.B }
+        "b001".U ## !videoIRQ
+      }
+      map(0x300008).w { (_, _, _) => frameStart := true.B }
+      map(0x300009 to 0x300fff).ignore()
+      map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
+      map(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
+      map(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
+      map(0x700000 to 0x707fff).readWriteMem(layer2Ram.io.portA)
+      map(0x800000 to 0x800003).readWriteMem(ymz.io.cpu)
+      map(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
+      map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
+      map(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
+      map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
+      map(0xd00010 to 0xd00014).ignore()
+      map(0xd00010).writeMem(eepromMem)
+      map(0xd00010).r { (_, _) => input0 }
+      map(0xd00012).r { (_, _) => input1 }
     }
 
     // Puzzle Uo Poko

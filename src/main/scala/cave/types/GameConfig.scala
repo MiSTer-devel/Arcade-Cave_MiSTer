@@ -81,6 +81,8 @@ object GameConfig {
   val ESPRADE = 3
   /** Puzzle Uo Poko */
   val UOPOKO = 4
+  /** Guwange */
+  val GUWANGE = 5
 
   def apply() = new GameConfig
 
@@ -93,6 +95,7 @@ object GameConfig {
     MuxLookup(index, ddonpach, Seq(
       DFEVERON.U -> dfeveron,
       ESPRADE.U -> esprade,
+      GUWANGE.U -> guwange,
       UOPOKO.U -> uopoko
     ))
   }
@@ -147,6 +150,26 @@ object GameConfig {
     wire.layer2RomOffset := 0x02100000.U
     wire.soundRomOffset := 0x02500000.U
     wire.eepromOffset := 0x02900000.U
+    wire.numColors := 256.U
+    wire.numLayers := 3.U
+    wire.spriteZoom := true.B
+    wire.spriteFormat := Config.GFX_FORMAT_8BPP.U
+    wire.layer0Format := Config.GFX_FORMAT_8BPP.U
+    wire.layer1Format := Config.GFX_FORMAT_8BPP.U
+    wire.layer2Format := Config.GFX_FORMAT_8BPP.U
+    wire
+  }
+
+  private def guwange = {
+    val wire = Wire(new GameConfig)
+    wire.index := GUWANGE.U
+    wire.progRomOffset := 0x00000000.U
+    wire.spriteRomOffset := 0x00100000.U
+    wire.layer0RomOffset := 0x02100000.U
+    wire.layer1RomOffset := 0x02900000.U
+    wire.layer2RomOffset := 0x02d00000.U
+    wire.soundRomOffset := 0x03100000.U
+    wire.eepromOffset := 0x03500000.U
     wire.numColors := 256.U
     wire.numLayers := 3.U
     wire.spriteZoom := true.B
