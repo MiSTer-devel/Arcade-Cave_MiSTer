@@ -49,17 +49,28 @@ import chisel3.util._
  */
 class Cave extends Module {
   /**
-   * Encodes the player IO into a bitvector value.
+   * Encodes the joystick IO into bitvector values.
    *
-   * @param player The player interface.
-   * @return A bitvector representing the player inputs.
+   * @param gameIndex The game index.
+   * @param joystick  The joystick interface.
+   * @param eeprom    The eeprom interface.
+   * @return A pair of bitvectors representing the player inputs.
    */
-  private def encodePlayer(player: PlayerIO): Bits = {
-    // If the coin signal is asserted for too long (i.e. the player holds the coin button down),
-    // then it will trigger a "coin error" and the game will reboot. To prevent this from happening,
-    // the coin signal must be converted to a pulse.
-    val coin = Util.pulseSync(Config.PLAYER_COIN_PULSE_WIDTH, player.coin)
-    Cat(coin, player.start, player.buttons, player.right, player.left, player.down, player.up)
+  private def encodePlayers(gameIndex: UInt, joystick: JoystickIO, eeprom: EEPROM): (UInt, UInt) = {
+    val coin1 = Util.pulseSync(Config.PLAYER_COIN_PULSE_WIDTH, joystick.player1.coin)
+    val coin2 = Util.pulseSync(Config.PLAYER_COIN_PULSE_WIDTH, joystick.player2.coin)
+
+    val left = Mux(gameIndex === GameConfig.GUWANGE.U,
+      Cat(~joystick.player2.buttons, ~joystick.player2.right, ~joystick.player2.left, ~joystick.player2.down, ~joystick.player2.up, ~joystick.player2.start, ~joystick.player1.buttons, ~joystick.player1.right, ~joystick.player1.left, ~joystick.player1.down, ~joystick.player1.up, ~joystick.player1.start),
+      Cat("b111111".U, ~io.joystick.service1, ~coin1, ~joystick.player1.start, ~joystick.player1.buttons, ~joystick.player1.right, ~joystick.player1.left, ~joystick.player1.down, ~joystick.player1.up)
+    )
+
+    val right = Mux(gameIndex === GameConfig.GUWANGE.U,
+      Cat("b11111111".U, eeprom.io.serial.sdo, "b1111".U, ~io.joystick.service1, ~coin2, ~coin1),
+      Cat("b1111".U, eeprom.io.serial.sdo, "b11".U, ~coin2, ~joystick.player2.start, ~joystick.player2.buttons, ~joystick.player2.right, ~joystick.player2.left, ~joystick.player2.down, ~joystick.player2.up)
+    )
+
+    (left, right)
   }
 
   val io = IO(new Bundle {
@@ -234,8 +245,7 @@ class Cave extends Module {
     eepromMem.default()
 
     // Set input ports
-    val input0 = "b111111".U ## ~io.joystick.service1 ## ~encodePlayer(io.joystick.player1)
-    val input1 = "b1111".U ## eeprom.io.serial.sdo ## "b11".U ## ~encodePlayer(io.joystick.player2)
+    val (input0, input1) = encodePlayers(io.gameConfig.index, io.joystick, eeprom)
 
     // Memory map
     val map = new MemMap(cpu.io)
