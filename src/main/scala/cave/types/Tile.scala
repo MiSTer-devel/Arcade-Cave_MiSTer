@@ -43,10 +43,13 @@ class Tile extends Bundle {
   /** Color code */
   val colorCode = UInt(Config.COLOR_CODE_WIDTH.W)
   /** Tile code */
-  val code = UInt(24.W)
+  val code = UInt(Tile.CODE_WIDTH.W)
 }
 
 object Tile {
+  /** The width of the tile code */
+  val CODE_WIDTH = 18
+
   /**
    * Decodes a tile from the given data.
    *
@@ -55,19 +58,20 @@ object Tile {
    * -----+-fedc-ba98-7654-3210-+----------------
    *    0 | xx-- ---- ---- ---  | priority
    *      | --xx xxxx ---- ---- | color
-   *      | ---- ---- xxxx xxxx | code hi
+   *      | ---- ---- ---- --xx | code hi
    *    1 | xxxx xxxx xxxx xxxx | code lo
    * }}}
    *
    * @param data The tile data.
+   * @param smallTile The tile size.
    */
-  def decode(data: Bits): Tile = {
+  def decode(data: Bits, smallTile: Bool): Tile = {
     val words = Util.decode(data, 2, 16)
     val tile = Wire(new Tile)
     tile.priority := words(0)(15, 14)
     tile.colorCode := words(0)(13, 8)
-    tile.code := words(0)(7, 0) ## words(1)(15, 0)
+    // Small tiles use the high bits in the tile code
+    tile.code := Mux(smallTile, words(0)(1, 0), 0.U) ## words(1)(15, 0)
     tile
   }
 }
-
