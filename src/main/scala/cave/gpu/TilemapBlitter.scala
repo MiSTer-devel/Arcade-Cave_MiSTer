@@ -87,8 +87,8 @@ class TilemapBlitter extends Module {
   val pisoAlmostEmpty = piso.io.isAlmostEmpty
 
   // Set number of columns/rows/tiles
-  val numCols = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_COLS.U, Config.LARGE_TILE_NUM_COLS.U)
-  val numRows = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_ROWS.U, Config.LARGE_TILE_NUM_ROWS.U)
+  val numCols = Mux(layerInfoReg.tileSize, Config.LARGE_TILE_NUM_COLS.U, Config.SMALL_TILE_NUM_COLS.U)
+  val numRows = Mux(layerInfoReg.tileSize, Config.LARGE_TILE_NUM_ROWS.U, Config.SMALL_TILE_NUM_ROWS.U)
 
   // Counters
   val (x, xWrap) = Counter.static(Config.SMALL_TILE_SIZE, enable = !pisoEmpty)
@@ -101,23 +101,23 @@ class TilemapBlitter extends Module {
   // Set tile done flag
   val smallTileDone = !pisoEmpty && xWrap && yWrap
   val largeTileDone = !pisoEmpty && xWrap && yWrap && miniTileXWrap && miniTileYWrap
-  val tileDone = Mux(layerInfoReg.smallTile, smallTileDone, largeTileDone)
+  val tileDone = Mux(layerInfoReg.tileSize, largeTileDone, smallTileDone)
 
   // Pixel position
   val pixelPos = UVec2(x, y)
 
   // Tile position
   val tilePos = {
-    val x = Mux(layerInfoReg.smallTile, col ## 0.U(3.W), col ## miniTileX ## 0.U(3.W))
-    val y = Mux(layerInfoReg.smallTile, row ## 0.U(3.W), row ## miniTileY ## 0.U(3.W))
+    val x = Mux(layerInfoReg.tileSize, col ## miniTileX ## 0.U(3.W), col ## 0.U(3.W))
+    val y = Mux(layerInfoReg.tileSize, row ## miniTileY ## 0.U(3.W), row ## 0.U(3.W))
     UVec2(x, y)
   }
 
   // Tile offset
   val scrollPos = {
-    val offset = layerInfoReg.scroll + Layer.magicOffset(io.layerIndex, layerInfoReg.smallTile)
-    val x = Mux(layerInfoReg.smallTile, offset.x(2, 0), offset.x(3, 0))
-    val y = Mux(layerInfoReg.smallTile, offset.y(2, 0), offset.y(3, 0))
+    val offset = layerInfoReg.scroll + Layer.magicOffset(io.layerIndex, layerInfoReg.tileSize)
+    val x = Mux(layerInfoReg.tileSize, offset.x(3, 0), offset.x(2, 0))
+    val y = Mux(layerInfoReg.tileSize, offset.y(3, 0), offset.y(2, 0))
     UVec2(x, y)
   }
 
@@ -139,13 +139,13 @@ class TilemapBlitter extends Module {
   // them from memory into the pipeline.
   val updateSmallTileInfo = pixelDataReady && ((x === 0.U && y === 0.U) || (xWrap && yWrap))
   val updateLargeTileInfo = pixelDataReady && ((x === 0.U && y === 0.U && miniTileX === 0.U && miniTileY === 0.U) || (xWrap && yWrap && miniTileXWrap && miniTileYWrap))
-  updateTileInfo := Mux(layerInfoReg.smallTile, updateSmallTileInfo, updateLargeTileInfo)
+  updateTileInfo := Mux(layerInfoReg.tileSize, updateLargeTileInfo, updateSmallTileInfo)
 
   // Set column counter enable
   // FIXME: refactor this logic
   when(!(xWrap && yWrap)) {
     colCounterEnable := false.B
-  }.elsewhen(layerInfoReg.smallTile) {
+  }.elsewhen(!layerInfoReg.tileSize) {
     colCounterEnable := true.B
   }.elsewhen(miniTileXWrap && miniTileYWrap) {
     colCounterEnable := true.B

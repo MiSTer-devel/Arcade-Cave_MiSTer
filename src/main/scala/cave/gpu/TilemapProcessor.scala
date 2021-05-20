@@ -90,7 +90,7 @@ class TilemapProcessor extends Module {
   // Registers
   val stateReg = RegInit(State.idle)
   val layerInfoReg = RegEnable(Layer.decode(io.layerRegs), stateReg === State.latch)
-  val tileInfoReg = RegEnable(Tile.decode(io.layerRam.dout, layerInfoReg.smallTile), updateTileInfo)
+  val tileInfoReg = RegEnable(Tile.decode(io.layerRam.dout, layerInfoReg.tileSize), updateTileInfo)
   val tileInfoTakenReg = RegInit(false.B)
   val burstPendingReg = RegInit(false.B)
   val burstReadyReg = RegInit(false.B)
@@ -104,9 +104,9 @@ class TilemapProcessor extends Module {
   val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), 64, flow = true))
 
   // Columns/rows/tiles
-  val numCols = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_COLS.U, Config.LARGE_TILE_NUM_COLS.U)
-  val numRows = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_ROWS.U, Config.LARGE_TILE_NUM_ROWS.U)
-  val numTiles = Mux(layerInfoReg.smallTile, Config.SMALL_TILE_NUM_TILES.U, Config.LARGE_TILE_NUM_TILES.U)
+  val numCols = Mux(layerInfoReg.tileSize, Config.LARGE_TILE_NUM_COLS.U, Config.SMALL_TILE_NUM_COLS.U)
+  val numRows = Mux(layerInfoReg.tileSize, Config.LARGE_TILE_NUM_ROWS.U, Config.SMALL_TILE_NUM_ROWS.U)
+  val numTiles = Mux(layerInfoReg.tileSize, Config.LARGE_TILE_NUM_TILES.U, Config.SMALL_TILE_NUM_TILES.U)
 
   // Counters
   val (col, colWrap) = Counter.dynamic(numCols, enable = effectiveRead, reset = stateReg === State.idle)
@@ -149,10 +149,10 @@ class TilemapProcessor extends Module {
 
   // Set first tile index
   val firstTileIndex = {
-    val offset = layerInfoReg.scroll + Layer.magicOffset(io.layerIndex, layerInfoReg.smallTile)
-    Mux(layerInfoReg.smallTile,
-      (offset.y(8, 3) ## 0.U(6.W)) + offset.x(8, 3),
-      (offset.y(8, 4) ## 0.U(5.W)) + offset.x(8, 4)
+    val offset = layerInfoReg.scroll + Layer.magicOffset(io.layerIndex, layerInfoReg.tileSize)
+    Mux(layerInfoReg.tileSize,
+      (offset.y(8, 4) ## 0.U(5.W)) + offset.x(8, 4),
+      (offset.y(8, 3) ## 0.U(6.W)) + offset.x(8, 3)
     )
   }
 
@@ -167,13 +167,13 @@ class TilemapProcessor extends Module {
       val y = firstTileIndex(9, 5) + row
       (y(4, 0) ## 0.U(5.W)) + x(4, 0)
     }
-    Mux(layerInfoReg.smallTile, small, large)
+    Mux(layerInfoReg.tileSize, large, small)
   }
 
   // Set tile format flags
-  val tileFormat_8x8x8 = layerInfoReg.smallTile && layerFormat === Config.GFX_FORMAT_8x8x8.U
-  val tileFormat_16x16x4 = !layerInfoReg.smallTile && layerFormat === Config.GFX_FORMAT_8x8x4.U
-  val tileFormat_16x16x8 = !layerInfoReg.smallTile && layerFormat === Config.GFX_FORMAT_8x8x8.U
+  val tileFormat_8x8x8 = !layerInfoReg.tileSize && layerFormat === Config.GFX_FORMAT_8x8x8.U
+  val tileFormat_16x16x4 = layerInfoReg.tileSize && layerFormat === Config.GFX_FORMAT_8x8x4.U
+  val tileFormat_16x16x8 = layerInfoReg.tileSize && layerFormat === Config.GFX_FORMAT_8x8x8.U
 
   // Set tile ROM address
   val tileRomAddr = MuxCase(0.U, Seq(

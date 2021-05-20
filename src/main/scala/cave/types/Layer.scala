@@ -42,8 +42,8 @@ import chisel3.util._
 class Layer extends Bundle {
   /** Priority */
   val priority = UInt(Config.PRIO_WIDTH.W)
-  /** Small tile flag */
-  val smallTile = Bool()
+  /** Tile size (8x8 or 16x16) */
+  val tileSize = Bool()
   /** Disable flag */
   val disable = Bool()
   /** Horizontal flip */
@@ -82,7 +82,7 @@ object Layer {
     val words = Util.decode(data, 3, 16)
     val layer = Wire(new Layer)
     layer.priority := words(2)(1, 0)
-    layer.smallTile := !words(1)(13)
+    layer.tileSize := words(1)(13)
     layer.disable := words(2)(4)
     layer.flipX := !words(0)(15)
     layer.flipY := !words(1)(15)
@@ -103,15 +103,15 @@ object Layer {
    * The Y offset in DDP is 0x1EF = 495, 495 + 17 = 512.
    *
    * @param index The layer index.
-   * @param smallTile The small tile flag.
+   * @param tileSize The tile size (8x8 or 16x16).
    */
-  def magicOffset(index: UInt, smallTile: Bool): UVec2 = {
+  def magicOffset(index: UInt, tileSize: Bool): UVec2 = {
     val x = MuxLookup(index, 0.U, Seq(
       0.U -> 0x6c.U,
       1.U -> 0x6d.U,
-      2.U -> Mux(smallTile, 0x75.U, 0x6e.U)
+      2.U -> Mux(tileSize, 0x6e.U, 0x75.U)
     ))
-    val y = 17.U
+    val y = 0x11.U
     UVec2(x, y)
   }
 }

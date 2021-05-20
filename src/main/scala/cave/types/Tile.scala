@@ -63,15 +63,15 @@ object Tile {
    * }}}
    *
    * @param data The tile data.
-   * @param smallTile The tile size.
+   * @param tileSize The tile size (8x8 or 16x16).
    */
-  def decode(data: Bits, smallTile: Bool): Tile = {
+  def decode(data: Bits, tileSize: Bool): Tile = {
     val words = Util.decode(data, 2, 16)
     val tile = Wire(new Tile)
     tile.priority := words(0)(15, 14)
     tile.colorCode := words(0)(13, 8)
     // Small tiles use the high bits in the tile code
-    tile.code := Mux(smallTile, words(0)(1, 0), 0.U) ## words(1)(15, 0)
+    tile.code := Mux(tileSize, 0.U, words(0)(1, 0)) ## words(1)(15, 0)
     tile
   }
 }
