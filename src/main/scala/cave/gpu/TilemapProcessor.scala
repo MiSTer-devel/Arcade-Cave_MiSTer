@@ -96,12 +96,11 @@ class TilemapProcessor extends Module {
   val burstReadyReg = RegInit(false.B)
   val lastLayerPriorityReg = RegInit(0.U)
 
-  // The FIFO buffers the raw data read from the tile ROM. It can store up to 64 words, which is
-  // enough room for two 16x16x8BPP tiles.
+  // The FIFO buffers the raw data read from the tile ROM.
   //
   // The queue is configured in show-ahead mode, which means there will be valid output as soon as
   // an element has been written to the queue.
-  val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), 64, flow = true))
+  val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), Config.FIFO_DEPTH, flow = true))
 
   // Columns/rows/tiles
   val numCols = Mux(layerInfoReg.tileSize, Config.LARGE_TILE_NUM_COLS.U, Config.SMALL_TILE_NUM_COLS.U)
@@ -142,7 +141,7 @@ class TilemapProcessor extends Module {
   decoder.io.pixelData <> layerPipeline.io.pixelData
 
   // Control signals
-  val tileRomRead = burstPendingReg && burstReadyReg && fifo.io.count <= 32.U
+  val tileRomRead = burstPendingReg && burstReadyReg && fifo.io.count <= (Config.FIFO_DEPTH / 2).U
   val lastBurst = effectiveRead && colWrap && rowWrap
   effectiveRead := tileRomRead && !io.tileRom.waitReq
   updateTileInfo := stateReg === State.working && tileInfoTakenReg
