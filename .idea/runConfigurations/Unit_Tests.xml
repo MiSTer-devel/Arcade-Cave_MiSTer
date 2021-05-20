@@ -146,7 +146,7 @@
               <option value="FSM should return to the idle state from the read state" />
               <option value="FSM should return to the idle state from the refresh state" />
               <option value="FSM should return to the idle state from the write state" />
-              <option value="addressing should select a bank" />
+              <option value="addressing should select a bank/row/col" />
               <option value="idle should deassert the wait signal" />
               <option value="idle should perform a NOP" />
               <option value="initialize should assert clock enable" />
@@ -297,38 +297,11 @@
             </set>
           </value>
         </entry>
-        <entry key="cave.gpu.LargeTileDecoderTest">
-          <value>
-            <set>
-              <option value="4BPP should decode a 4BPP MSB tile" />
-              <option value="4BPP should decode a 4BPP tile" />
-              <option value="4BPP should initially request tile ROM data" />
-              <option value="4BPP should request a word from the tile ROM for every row" />
-              <option value="8BPP should decode a 8BPP tile" />
-              <option value="8BPP should initially request tile ROM data" />
-              <option value="8BPP should request two words from the tile ROM for every row" />
-            </set>
-          </value>
-        </entry>
         <entry key="cave.gpu.RegisterFileTest">
           <value>
             <set>
               <option value="should allow writing masked bytes" />
               <option value="should output the registers" />
-            </set>
-          </value>
-        </entry>
-        <entry key="cave.gpu.SmallTileDecoderTest">
-          <value>
-            <set>
-              <option value="4BPP should decode a 4BPP tile" />
-              <option value="4BPP should handle a pending request" />
-              <option value="4BPP should initially request tile ROM data" />
-              <option value="4BPP should request a word from the tile ROM for every two rows" />
-              <option value="8BPP should decode a 8BPP tile" />
-              <option value="8BPP should handle a pending request" />
-              <option value="8BPP should initially request tile ROM data" />
-              <option value="8BPP should request a word from the tile ROM for every row" />
             </set>
           </value>
         </entry>
@@ -346,6 +319,19 @@
             </set>
           </value>
         </entry>
+        <entry key="cave.gpu.SpriteDecoderTest">
+          <value>
+            <set>
+              <option value="4BPP should decode a 4BPP MSB tile" />
+              <option value="4BPP should decode a 4BPP tile" />
+              <option value="4BPP should initially request tile ROM data" />
+              <option value="4BPP should request a word from the tile ROM for every row" />
+              <option value="8BPP should decode a 8BPP tile" />
+              <option value="8BPP should initially request tile ROM data" />
+              <option value="8BPP should request two words from the tile ROM for every row" />
+            </set>
+          </value>
+        </entry>
         <entry key="cave.gpu.SpriteProcessorTest">
           <value>
             <set>
@@ -355,10 +341,24 @@
               <option value="FSM should move to the latch state when the start signal is asserted" />
               <option value="FSM should move to the next state after checking an invisible sprite" />
               <option value="FSM should move to the ready state after checking a visible sprite" />
-              <option value="done flag should assert the done flag after all sprites are processed" />
-              <option value="done flag should wait until the blitter is finished before asserting the done flag" />
+              <option value="busy flag should assert the busy flag when the processor has started" />
+              <option value="busy flag should deassert the busy flag when the processor has finished" />
               <option value="pixel data should fetch pixel data from the tile ROM" />
               <option value="sprite data should fetch sprite data from the sprite RAM" />
+            </set>
+          </value>
+        </entry>
+        <entry key="cave.gpu.TilemapDecoderTest">
+          <value>
+            <set>
+              <option value="4BPP should decode a 4BPP tile" />
+              <option value="4BPP should handle a pending request" />
+              <option value="4BPP should initially request tile ROM data" />
+              <option value="4BPP should request a word from the tile ROM for every two rows" />
+              <option value="8BPP should decode a 8BPP tile" />
+              <option value="8BPP should handle a pending request" />
+              <option value="8BPP should initially request tile ROM data" />
+              <option value="8BPP should request a word from the tile ROM for every row" />
             </set>
           </value>
         </entry>

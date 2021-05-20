@@ -60,13 +60,13 @@ class GameConfig extends Bundle {
   val numLayers = UInt(2.W)
   /** Asserted when zoomed sprites are enabled */
   val spriteZoom = Bool()
-  /** Sprite tile format */
+  /** Sprite graphics format */
   val spriteFormat = UInt(Config.GFX_FORMAT_WIDTH.W)
-  /** Layer 0 tile format */
+  /** Layer 0 graphics format */
   val layer0Format = UInt(Config.GFX_FORMAT_WIDTH.W)
-  /** Layer 1 tile format */
+  /** Layer 1 graphics format */
   val layer1Format = UInt(Config.GFX_FORMAT_WIDTH.W)
-  /** Layer 2 tile format */
+  /** Layer 2 graphics format */
   val layer2Format = UInt(Config.GFX_FORMAT_WIDTH.W)
 }
 
@@ -110,10 +110,10 @@ object GameConfig {
     wire.numColors := 16.U
     wire.numLayers := 2.U
     wire.spriteZoom := true.B
-    wire.spriteFormat := Config.GFX_FORMAT_SPRITE.U
-    wire.layer0Format := Config.GFX_FORMAT_8x8x4.U
-    wire.layer1Format := Config.GFX_FORMAT_8x8x4.U
-    wire.layer2Format := Config.GFX_FORMAT_8x8x4.U // unused
+    wire.spriteFormat := Config.GFX_FORMAT_4BPP.U
+    wire.layer0Format := Config.GFX_FORMAT_4BPP.U
+    wire.layer1Format := Config.GFX_FORMAT_4BPP.U
+    wire.layer2Format := Config.GFX_FORMAT_UNKNOWN.U
     wire
   }
 
@@ -130,10 +130,10 @@ object GameConfig {
     wire.numColors := 256.U
     wire.numLayers := 3.U
     wire.spriteZoom := false.B
-    wire.spriteFormat := Config.GFX_FORMAT_SPRITE_MSB.U
-    wire.layer0Format := Config.GFX_FORMAT_8x8x4.U
-    wire.layer1Format := Config.GFX_FORMAT_8x8x4.U
-    wire.layer2Format := Config.GFX_FORMAT_8x8x8.U
+    wire.spriteFormat := Config.GFX_FORMAT_4BPP_MSB.U
+    wire.layer0Format := Config.GFX_FORMAT_4BPP.U
+    wire.layer1Format := Config.GFX_FORMAT_4BPP.U
+    wire.layer2Format := Config.GFX_FORMAT_8BPP.U
     wire
   }
 
@@ -150,10 +150,10 @@ object GameConfig {
     wire.numColors := 256.U
     wire.numLayers := 3.U
     wire.spriteZoom := true.B
-    wire.spriteFormat := Config.GFX_FORMAT_SPRITE_8BPP.U
-    wire.layer0Format := Config.GFX_FORMAT_8x8x8.U
-    wire.layer1Format := Config.GFX_FORMAT_8x8x8.U
-    wire.layer2Format := Config.GFX_FORMAT_8x8x8.U
+    wire.spriteFormat := Config.GFX_FORMAT_8BPP.U
+    wire.layer0Format := Config.GFX_FORMAT_8BPP.U
+    wire.layer1Format := Config.GFX_FORMAT_8BPP.U
+    wire.layer2Format := Config.GFX_FORMAT_8BPP.U
     wire
   }
 
@@ -170,10 +170,10 @@ object GameConfig {
     wire.numColors := 256.U
     wire.numLayers := 1.U
     wire.spriteZoom := true.B
-    wire.spriteFormat := Config.GFX_FORMAT_SPRITE.U
-    wire.layer0Format := Config.GFX_FORMAT_8x8x8.U
-    wire.layer1Format := Config.GFX_FORMAT_8x8x8.U // unused
-    wire.layer2Format := Config.GFX_FORMAT_8x8x8.U // unused
+    wire.spriteFormat := Config.GFX_FORMAT_4BPP.U
+    wire.layer0Format := Config.GFX_FORMAT_8BPP.U
+    wire.layer1Format := Config.GFX_FORMAT_UNKNOWN.U
+    wire.layer2Format := Config.GFX_FORMAT_UNKNOWN.U
     wire
   }
 }

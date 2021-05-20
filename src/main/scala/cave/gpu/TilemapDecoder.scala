@@ -49,7 +49,7 @@ class TilemapDecoder extends Module {
   })
 
   // Set 8BPP flag
-  val is8BPP = io.format === Config.GFX_FORMAT_8x8x8.U
+  val is8BPP = io.format === Config.GFX_FORMAT_8BPP.U
 
   // Registers
   val pendingReg = RegInit(false.B)
@@ -90,8 +90,8 @@ class TilemapDecoder extends Module {
 
   // Decode pixel data
   when(io.rom.fire() || (io.pixelData.ready && toggleReg)) {
-    pixelDataReg := MuxLookup(io.format, VecInit(TilemapDecoder.decodeTile4BPP(bits)), Seq(
-      Config.GFX_FORMAT_8x8x8.U -> VecInit(TilemapDecoder.decodeTile8BPP(io.rom.bits))
+    pixelDataReg := MuxLookup(io.format, VecInit(TilemapDecoder.decode4BPP(bits)), Seq(
+      Config.GFX_FORMAT_8BPP.U -> VecInit(TilemapDecoder.decode8BPP(io.rom.bits))
     ))
   }
 
@@ -105,7 +105,7 @@ class TilemapDecoder extends Module {
 
 object TilemapDecoder {
   /** Decodes 8x8x4 tiles (i.e. 32 bits per row) */
-  private def decodeTile4BPP(data: Bits): Seq[Bits] =
+  private def decode4BPP(data: Bits): Seq[Bits] =
     Seq(0, 1, 2, 3, 4, 5, 6, 7)
       .reverse
       // Decode data into nibbles
@@ -114,7 +114,7 @@ object TilemapDecoder {
       .map(_.pad(8))
 
   /** Decodes 8x8x8 tiles (i.e. 64 bits per row) */
-  private def decodeTile8BPP(data: Bits): Seq[Bits] =
+  private def decode8BPP(data: Bits): Seq[Bits] =
     Seq(2, 0, 3, 1, 6, 4, 7, 5, 10, 8, 11, 9, 14, 12, 15, 13)
       .reverse
       // Decode data into nibbles

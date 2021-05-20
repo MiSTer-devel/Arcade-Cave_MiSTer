@@ -171,9 +171,9 @@ class TilemapProcessor extends Module {
   }
 
   // Set tile format flags
-  val tileFormat_8x8x8 = !layerInfoReg.tileSize && layerFormat === Config.GFX_FORMAT_8x8x8.U
-  val tileFormat_16x16x4 = layerInfoReg.tileSize && layerFormat === Config.GFX_FORMAT_8x8x4.U
-  val tileFormat_16x16x8 = layerInfoReg.tileSize && layerFormat === Config.GFX_FORMAT_8x8x8.U
+  val tileFormat_8x8x8 = !layerInfoReg.tileSize && layerFormat === Config.GFX_FORMAT_8BPP.U
+  val tileFormat_16x16x4 = layerInfoReg.tileSize && layerFormat === Config.GFX_FORMAT_4BPP.U
+  val tileFormat_16x16x8 = layerInfoReg.tileSize && layerFormat === Config.GFX_FORMAT_8BPP.U
 
   // Set tile ROM address
   val tileRomAddr = MuxCase(0.U, Seq(

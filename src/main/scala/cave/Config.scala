@@ -200,17 +200,15 @@ object Config {
   val LAYER_SCROLL_WIDTH = 9
 
   /** The width of the graphics format value */
-  val GFX_FORMAT_WIDTH = 3
-  /** 8x8x4 tile format */
-  val GFX_FORMAT_8x8x4 = 0
-  /** 8x8x8 tile format */
-  val GFX_FORMAT_8x8x8 = 1
-  /** Sprite format */
-  val GFX_FORMAT_SPRITE = 2
-  /** Sprite MSB format */
-  val GFX_FORMAT_SPRITE_MSB = 3
-  /** Sprite 8BPP format */
-  val GFX_FORMAT_SPRITE_8BPP = 4
+  val GFX_FORMAT_WIDTH = 2
+  /** Unknown graphics format */
+  val GFX_FORMAT_UNKNOWN = 0
+  /** 4BPP graphics format */
+  val GFX_FORMAT_4BPP = 1
+  /** 4BPP MSB graphics format */
+  val GFX_FORMAT_4BPP_MSB = 2
+  /** 8BPP graphics format */
+  val GFX_FORMAT_8BPP = 3
 
   /** Tile sizes (in bytes) */
   val TILE_SIZE_8x8x8 = 64

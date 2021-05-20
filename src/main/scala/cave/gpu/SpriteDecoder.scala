@@ -57,7 +57,7 @@ class SpriteDecoder extends Module {
   })
 
   // Set 8BPP flag
-  val is8BPP = io.format === Config.GFX_FORMAT_SPRITE_8BPP.U
+  val is8BPP = io.format === Config.GFX_FORMAT_8BPP.U
 
   // Registers
   val pendingReg = RegInit(false.B)
@@ -93,8 +93,8 @@ class SpriteDecoder extends Module {
   // Set the data register
   when(io.rom.fire()) {
     pixelDataReg := MuxLookup(io.format, VecInit(SpriteDecoder.decode4BPP(io.rom.bits)), Seq(
-      Config.GFX_FORMAT_SPRITE_MSB.U -> VecInit(SpriteDecoder.decode4BPPMSB(io.rom.bits)),
-      Config.GFX_FORMAT_SPRITE_8BPP.U -> VecInit(SpriteDecoder.decode8BPP(RegNext(io.rom.bits) ## io.rom.bits))
+      Config.GFX_FORMAT_4BPP_MSB.U -> VecInit(SpriteDecoder.decode4BPPMSB(io.rom.bits)),
+      Config.GFX_FORMAT_8BPP.U -> VecInit(SpriteDecoder.decode8BPP(RegNext(io.rom.bits) ## io.rom.bits))
     ))
   }
 
