@@ -109,7 +109,7 @@ object Layer {
     val x = MuxLookup(index, 0.U, Seq(
       0.U -> 0x6c.U,
       1.U -> 0x6d.U,
-      2.U -> Mux(smallTile, 0x76.U, 0x6e.U)
+      2.U -> Mux(smallTile, 0x75.U, 0x6e.U)
     ))
     val y = 17.U
     UVec2(x, y)
