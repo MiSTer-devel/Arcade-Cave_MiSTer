@@ -37,8 +37,8 @@ import cave.Config
 import chisel3._
 import chisel3.util._
 
-/** Decodes 8x8 tiles from tile ROM data. */
-class SmallTileDecoder extends Module {
+/** Decodes tilemap tiles from tile ROM data. */
+class TilemapDecoder extends Module {
   val io = IO(new Bundle {
     /** Graphics format port */
     val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))
@@ -90,8 +90,8 @@ class SmallTileDecoder extends Module {
 
   // Decode pixel data
   when(io.rom.fire() || (io.pixelData.ready && toggleReg)) {
-    pixelDataReg := MuxLookup(io.format, VecInit(SmallTileDecoder.decodeTile4BPP(bits)), Seq(
-      Config.GFX_FORMAT_8x8x8.U -> VecInit(SmallTileDecoder.decodeTile8BPP(io.rom.bits))
+    pixelDataReg := MuxLookup(io.format, VecInit(TilemapDecoder.decodeTile4BPP(bits)), Seq(
+      Config.GFX_FORMAT_8x8x8.U -> VecInit(TilemapDecoder.decodeTile8BPP(io.rom.bits))
     ))
   }
 
@@ -100,10 +100,10 @@ class SmallTileDecoder extends Module {
   io.pixelData.valid := validReg
   io.pixelData.bits := pixelDataReg
 
-  printf(p"SmallTileDecoder(toggleReg: $toggleReg, pendingReg: $pendingReg, validReg: $validReg, start: $start, done: $done, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid })\n")
+  printf(p"TilemapDecoder(toggleReg: $toggleReg, pendingReg: $pendingReg, validReg: $validReg, start: $start, done: $done, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid })\n")
 }
 
-object SmallTileDecoder {
+object TilemapDecoder {
   /** Decodes 8x8x4 tiles (i.e. 32 bits per row) */
   private def decodeTile4BPP(data: Bits): Seq[Bits] =
     Seq(0, 1, 2, 3, 4, 5, 6, 7)

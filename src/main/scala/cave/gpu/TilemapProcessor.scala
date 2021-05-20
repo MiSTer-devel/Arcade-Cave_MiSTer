@@ -135,11 +135,11 @@ class TilemapProcessor extends Module {
     2.U -> io.gameConfig.layer2Format
   ))
 
-  // Tile decoder
-  val tileDecoder = Module(new SmallTileDecoder)
-  tileDecoder.io.format := layerFormat
-  tileDecoder.io.rom <> fifo.io.deq
-  tileDecoder.io.pixelData <> layerPipeline.io.pixelData
+  // Tilemap decoder
+  val decoder = Module(new TilemapDecoder)
+  decoder.io.format := layerFormat
+  decoder.io.rom <> fifo.io.deq
+  decoder.io.pixelData <> layerPipeline.io.pixelData
 
   // Control signals
   val tileRomRead = burstPendingReg && burstReadyReg && fifo.io.count <= 32.U

@@ -37,11 +37,11 @@ import chisel3._
 import chiseltest._
 import org.scalatest._
 
-class SmallTileDecoderTest extends FlatSpec with ChiselScalatestTester with Matchers {
+class TilemapDecoderTest extends FlatSpec with ChiselScalatestTester with Matchers {
   behavior of "4BPP"
 
   it should "initially request tile ROM data" in {
-    test(new SmallTileDecoder) { dut =>
+    test(new TilemapDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_8x8x4.U)
       dut.io.pixelData.valid.expect(false.B)
       dut.io.rom.valid.poke(true.B)
@@ -53,7 +53,7 @@ class SmallTileDecoderTest extends FlatSpec with ChiselScalatestTester with Matc
   }
 
   it should "request a word from the tile ROM for every two rows" in {
-    test(new SmallTileDecoder) { dut =>
+    test(new TilemapDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_8x8x4.U)
 
       dut.io.rom.valid.poke(true.B)
@@ -90,7 +90,7 @@ class SmallTileDecoderTest extends FlatSpec with ChiselScalatestTester with Matc
   }
 
   it should "handle a pending request" in {
-    test(new SmallTileDecoder) { dut =>
+    test(new TilemapDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_8x8x4.U)
       dut.io.pixelData.ready.poke(true.B)
       dut.io.pixelData.valid.expect(false.B)
@@ -106,7 +106,7 @@ class SmallTileDecoderTest extends FlatSpec with ChiselScalatestTester with Matc
   }
 
   it should "decode a 4BPP tile" in {
-    test(new SmallTileDecoder) { dut =>
+    test(new TilemapDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_8x8x4.U)
       dut.io.pixelData.ready.poke(true.B)
       dut.io.rom.valid.poke(true.B)
@@ -127,7 +127,7 @@ class SmallTileDecoderTest extends FlatSpec with ChiselScalatestTester with Matc
   behavior of "8BPP"
 
   it should "initially request tile ROM data" in {
-    test(new SmallTileDecoder) { dut =>
+    test(new TilemapDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_8x8x8.U)
       dut.io.pixelData.valid.expect(false.B)
       dut.io.rom.valid.poke(true.B)
@@ -139,7 +139,7 @@ class SmallTileDecoderTest extends FlatSpec with ChiselScalatestTester with Matc
   }
 
   it should "request a word from the tile ROM for every row" in {
-    test(new SmallTileDecoder) { dut =>
+    test(new TilemapDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_8x8x8.U)
 
       // First request
@@ -178,7 +178,7 @@ class SmallTileDecoderTest extends FlatSpec with ChiselScalatestTester with Matc
   }
 
   it should "handle a pending request" in {
-    test(new SmallTileDecoder) { dut =>
+    test(new TilemapDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_8x8x8.U)
       dut.io.pixelData.ready.poke(true.B)
       dut.io.pixelData.valid.expect(false.B)
@@ -194,7 +194,7 @@ class SmallTileDecoderTest extends FlatSpec with ChiselScalatestTester with Matc
   }
 
   it should "decode a 8BPP tile" in {
-    test(new SmallTileDecoder) { dut =>
+    test(new TilemapDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_8x8x8.U)
       dut.io.rom.valid.poke(true.B)
       dut.io.rom.bits.poke("hfedcba9876543210".U)
