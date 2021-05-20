@@ -118,11 +118,11 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   spriteBlitter.io.priority <> io.priority
   spriteBlitter.io.frameBuffer <> io.frameBuffer
 
-  // Tile decoder
-  val tileDecoder = Module(new LargeTileDecoder)
-  tileDecoder.io.format := io.gameConfig.spriteFormat
-  tileDecoder.io.rom <> fifo.io.deq
-  tileDecoder.io.pixelData <> spriteBlitter.io.pixelData
+  // Sprite decoder
+  val decoder = Module(new SpriteDecoder)
+  decoder.io.format := io.gameConfig.spriteFormat
+  decoder.io.rom <> fifo.io.deq
+  decoder.io.pixelData <> spriteBlitter.io.pixelData
 
   // Set tile ROM read flag
   val tileRomRead = stateReg === State.pending && !burstPendingReg && fifo.io.count <= 32.U

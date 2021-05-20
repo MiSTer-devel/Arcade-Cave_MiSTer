@@ -38,15 +38,15 @@ import chisel3._
 import chisel3.util._
 
 /**
- * Decodes tiles from tile ROM data.
+ * Decodes sprites tiles from tile ROM data.
  *
- * Tiles data is accessed using the 64-bit `rom` port. Some tiles require more than one 64-bit word
+ * Tile data is accessed using the 64-bit `rom` port. Some tiles require more than one 64-bit word
  * to be decoded:
  *
  *   - 16x16x4: 64-bits (1 word)
  *   - 16x16x8: 128-bits (2 words)
  */
-class LargeTileDecoder extends Module {
+class SpriteDecoder extends Module {
   val io = IO(new Bundle {
     /** Graphics format port */
     val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))
@@ -92,9 +92,9 @@ class LargeTileDecoder extends Module {
 
   // Set the data register
   when(io.rom.fire()) {
-    pixelDataReg := MuxLookup(io.format, VecInit(LargeTileDecoder.decode4BPP(io.rom.bits)), Seq(
-      Config.GFX_FORMAT_SPRITE_MSB.U -> VecInit(LargeTileDecoder.decode4BPPMSB(io.rom.bits)),
-      Config.GFX_FORMAT_SPRITE_8BPP.U -> VecInit(LargeTileDecoder.decode8BPP(RegNext(io.rom.bits) ## io.rom.bits))
+    pixelDataReg := MuxLookup(io.format, VecInit(SpriteDecoder.decode4BPP(io.rom.bits)), Seq(
+      Config.GFX_FORMAT_SPRITE_MSB.U -> VecInit(SpriteDecoder.decode4BPPMSB(io.rom.bits)),
+      Config.GFX_FORMAT_SPRITE_8BPP.U -> VecInit(SpriteDecoder.decode8BPP(RegNext(io.rom.bits) ## io.rom.bits))
     ))
   }
 
@@ -103,10 +103,10 @@ class LargeTileDecoder extends Module {
   io.pixelData.valid := validReg
   io.pixelData.bits := pixelDataReg
 
-  printf(p"TileDecoder(toggleReg: $toggleReg, pendingReg: $pendingReg, validReg: $validReg, start: $start, done: $done, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid })\n")
+  printf(p"SpriteDecoder(toggleReg: $toggleReg, pendingReg: $pendingReg, validReg: $validReg, start: $start, done: $done, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid })\n")
 }
 
-object LargeTileDecoder {
+object SpriteDecoder {
   /** Decode 16x16x4 tiles (i.e. 64 bits per row) */
   private def decode4BPP(data: Bits): Seq[Bits] =
     Seq(1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14)
