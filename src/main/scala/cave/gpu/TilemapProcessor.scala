@@ -149,7 +149,7 @@ class TilemapProcessor extends Module {
 
   // Set first tile index
   val firstTileIndex = {
-    val offset = layerInfoReg.scroll + Layer.magicOffset(io.layerIndex, layerInfoReg.tileSize)
+    val offset = layerInfoReg.scroll + layerInfoReg.magicOffset(io.layerIndex)
     Mux(layerInfoReg.tileSize,
       (offset.y(8, 4) ## 0.U(5.W)) + offset.x(8, 4),
       (offset.y(8, 3) ## 0.U(6.W)) + offset.x(8, 3)

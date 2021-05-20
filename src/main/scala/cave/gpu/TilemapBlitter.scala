@@ -115,7 +115,7 @@ class TilemapBlitter extends Module {
 
   // Tile offset
   val scrollPos = {
-    val offset = layerInfoReg.scroll + Layer.magicOffset(io.layerIndex, layerInfoReg.tileSize)
+    val offset = layerInfoReg.scroll + layerInfoReg.magicOffset(io.layerIndex)
     val x = Mux(layerInfoReg.tileSize, offset.x(3, 0), offset.x(2, 0))
     val y = Mux(layerInfoReg.tileSize, offset.y(3, 0), offset.y(2, 0))
     UVec2(x, y)

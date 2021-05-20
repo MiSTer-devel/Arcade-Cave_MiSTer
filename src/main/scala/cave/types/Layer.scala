@@ -56,6 +56,28 @@ class Layer extends Bundle {
   val rowSelectEnable = Bool()
   /** Scroll position */
   val scroll = new UVec2(Config.LAYER_SCROLL_WIDTH)
+
+  /**
+   * Returns the magic offset value for the given layer index.
+   *
+   * The X offset in DDP is 0x195 for the first layer 0x195 = 405, 405 + 107 (0x6b) = 512.
+   *
+   * Due to pipeline pixel offsets, this must be incremented by 1 for each layer (and 8 once for
+   * small tiles).
+   *
+   * The Y offset in DDP is 0x1EF = 495, 495 + 17 = 512.
+   *
+   * @param index The layer index.
+   */
+  def magicOffset(index: UInt): UVec2 = {
+    val x = MuxLookup(index, 0.U, Seq(
+      0.U -> 0x6c.U,
+      1.U -> 0x6d.U,
+      2.U -> Mux(tileSize, 0x6e.U, 0x75.U)
+    ))
+    val y = 0x11.U
+    UVec2(x, y)
+  }
 }
 
 object Layer {
@@ -90,28 +112,5 @@ object Layer {
     layer.rowSelectEnable := words(1)(14)
     layer.scroll := UVec2(words(0)(8, 0), words(1)(8, 0))
     layer
-  }
-
-  /**
-   * Returns the magic offset value for the given layer index and tile size.
-   *
-   * The X offset in DDP is 0x195 for the first layer 0x195 = 405, 405 + 107 (0x6b) = 512.
-   *
-   * Due to pipeline pixel offsets, this must be incremented by 1 for each layer (and 8 once for
-   * small tiles).
-   *
-   * The Y offset in DDP is 0x1EF = 495, 495 + 17 = 512.
-   *
-   * @param index The layer index.
-   * @param tileSize The tile size (8x8 or 16x16).
-   */
-  def magicOffset(index: UInt, tileSize: Bool): UVec2 = {
-    val x = MuxLookup(index, 0.U, Seq(
-      0.U -> 0x6c.U,
-      1.U -> 0x6d.U,
-      2.U -> Mux(tileSize, 0x6e.U, 0x75.U)
-    ))
-    val y = 0x11.U
-    UVec2(x, y)
   }
 }
