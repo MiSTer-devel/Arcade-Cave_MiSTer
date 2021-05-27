@@ -184,7 +184,7 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
     }
   }
 
-  it should "assert the done signal two clocks after blitting the last pixel" in {
+  it should "assert the busy signal" in {
     test(new SpriteBlitter) { dut =>
       dut.io.sprite.valid.poke(true.B)
       dut.io.sprite.bits.cols.poke(1.U)
@@ -192,7 +192,10 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
       dut.io.pixelData.valid.poke(true.B)
       dut.clock.step()
       dut.io.sprite.valid.poke(false.B)
-      dut.clock.step(258)
+      dut.io.busy.expect(false.B)
+      dut.clock.step(2)
+      dut.io.busy.expect(true.B)
+      dut.clock.step(256)
       dut.io.busy.expect(false.B)
     }
   }
