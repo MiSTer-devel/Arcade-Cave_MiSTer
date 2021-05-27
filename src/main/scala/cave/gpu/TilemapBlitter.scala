@@ -51,10 +51,10 @@ class TilemapBlitter extends Module {
     val layerIndex = Input(UInt(2.W))
     /** Previous layer priority value */
     val lastLayerPriority = Input(UInt(Config.PRIO_WIDTH.W))
-    /** Layer info port */
-    val layerInfo = DeqIO(new Layer)
-    /** Tile info port */
-    val tileInfo = DeqIO(new Tile)
+    /** Layer port */
+    val layer = DeqIO(new Layer)
+    /** Tile port */
+    val tile = DeqIO(new Tile)
     /** Pixel data port */
     val pixelData = DeqIO(Vec(Config.SMALL_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
     /** Palette RAM port */
@@ -73,8 +73,8 @@ class TilemapBlitter extends Module {
   val pixelDataReady = Wire(Bool())
 
   // Registers
-  val layerInfoReg = RegEnable(io.layerInfo.bits, io.layerInfo.valid)
-  val tileInfoReg = RegEnable(io.tileInfo.bits, updateTileInfo)
+  val layerReg = RegEnable(io.layer.bits, io.layer.valid)
+  val tileReg = RegEnable(io.tile.bits, updateTileInfo)
   val paletteEntryReg = Reg(new PaletteEntry)
 
   // The PISO buffers the pixels to be copied to the frame buffer
@@ -87,8 +87,8 @@ class TilemapBlitter extends Module {
   val pisoAlmostEmpty = piso.io.isAlmostEmpty
 
   // Set number of columns/rows/tiles
-  val numCols = Mux(layerInfoReg.tileSize, Config.LARGE_TILE_NUM_COLS.U, Config.SMALL_TILE_NUM_COLS.U)
-  val numRows = Mux(layerInfoReg.tileSize, Config.LARGE_TILE_NUM_ROWS.U, Config.SMALL_TILE_NUM_ROWS.U)
+  val numCols = Mux(layerReg.tileSize, Config.LARGE_TILE_NUM_COLS.U, Config.SMALL_TILE_NUM_COLS.U)
+  val numRows = Mux(layerReg.tileSize, Config.LARGE_TILE_NUM_ROWS.U, Config.SMALL_TILE_NUM_ROWS.U)
 
   // Counters
   val (x, xWrap) = Counter.static(Config.SMALL_TILE_SIZE, enable = !pisoEmpty)
@@ -101,23 +101,23 @@ class TilemapBlitter extends Module {
   // Set tile done flag
   val smallTileDone = !pisoEmpty && xWrap && yWrap
   val largeTileDone = !pisoEmpty && xWrap && yWrap && miniTileXWrap && miniTileYWrap
-  val tileDone = Mux(layerInfoReg.tileSize, largeTileDone, smallTileDone)
+  val tileDone = Mux(layerReg.tileSize, largeTileDone, smallTileDone)
 
   // Pixel position
   val pixelPos = UVec2(x, y)
 
   // Tile position
   val tilePos = {
-    val x = Mux(layerInfoReg.tileSize, col ## miniTileX ## 0.U(3.W), col ## 0.U(3.W))
-    val y = Mux(layerInfoReg.tileSize, row ## miniTileY ## 0.U(3.W), row ## 0.U(3.W))
+    val x = Mux(layerReg.tileSize, col ## miniTileX ## 0.U(3.W), col ## 0.U(3.W))
+    val y = Mux(layerReg.tileSize, row ## miniTileY ## 0.U(3.W), row ## 0.U(3.W))
     UVec2(x, y)
   }
 
   // Tile offset
   val scrollPos = {
-    val offset = layerInfoReg.scroll + layerInfoReg.magicOffset(io.layerIndex)
-    val x = Mux(layerInfoReg.tileSize, offset.x(3, 0), offset.x(2, 0))
-    val y = Mux(layerInfoReg.tileSize, offset.y(3, 0), offset.y(2, 0))
+    val offset = layerReg.scroll + layerReg.magicOffset(io.layerIndex)
+    val x = Mux(layerReg.tileSize, offset.x(3, 0), offset.x(2, 0))
+    val y = Mux(layerReg.tileSize, offset.y(3, 0), offset.y(2, 0))
     UVec2(x, y)
   }
 
@@ -139,13 +139,13 @@ class TilemapBlitter extends Module {
   // them from memory into the pipeline.
   val updateSmallTileInfo = pixelDataReady && ((x === 0.U && y === 0.U) || (xWrap && yWrap))
   val updateLargeTileInfo = pixelDataReady && ((x === 0.U && y === 0.U && miniTileX === 0.U && miniTileY === 0.U) || (xWrap && yWrap && miniTileXWrap && miniTileYWrap))
-  updateTileInfo := Mux(layerInfoReg.tileSize, updateLargeTileInfo, updateSmallTileInfo)
+  updateTileInfo := Mux(layerReg.tileSize, updateLargeTileInfo, updateSmallTileInfo)
 
   // Set column counter enable
   // FIXME: refactor this logic
   when(!(xWrap && yWrap)) {
     colCounterEnable := false.B
-  }.elsewhen(!layerInfoReg.tileSize) {
+  }.elsewhen(!layerReg.tileSize) {
     colCounterEnable := true.B
   }.elsewhen(miniTileXWrap && miniTileYWrap) {
     colCounterEnable := true.B
@@ -154,7 +154,7 @@ class TilemapBlitter extends Module {
   }
 
   // The tiles use the second 64 palettes, and use 16 colors (out of 256 possible in a palette)
-  paletteEntryReg := PaletteEntry(1.U ## tileInfoReg.colorCode, piso.io.dout)
+  paletteEntryReg := PaletteEntry(1.U ## tileReg.colorCode, piso.io.dout)
   val paletteRamAddr = paletteEntryReg.toAddr(io.gameConfig.numColors)
 
   // Set delayed valid/done shift registers
@@ -164,12 +164,12 @@ class TilemapBlitter extends Module {
   // Set priority data
   val priorityReadAddr = GPU.transformAddr(stage1Pos, io.options.flip, io.options.rotate)
   val priorityReadData = io.priority.read.dout
-  val priorityWriteData = ShiftRegister(tileInfoReg.priority, 3)
+  val priorityWriteData = ShiftRegister(tileReg.priority, 3)
 
   // The current pixel has priority if it has more priority than the previous pixel. Otherwise, if
   // the pixel priorities are the same then it depends on the layer priorities.
-  val hasPriority = (tileInfoReg.priority > priorityReadData) ||
-                    (tileInfoReg.priority === priorityReadData && layerInfoReg.priority >= io.lastLayerPriority)
+  val hasPriority = (tileReg.priority > priorityReadData) ||
+                    (tileReg.priority === priorityReadData && layerReg.priority >= io.lastLayerPriority)
 
   // The transparency flag must be delayed by one cycle, since the colors come from the palette RAM
   // they arrive one cycle later.
@@ -181,8 +181,8 @@ class TilemapBlitter extends Module {
   val frameBufferData = RegNext(io.paletteRam.dout)
 
   // Outputs
-  io.layerInfo.ready := true.B
-  io.tileInfo.ready := updateTileInfo
+  io.layer.ready := true.B
+  io.tile.ready := updateTileInfo
   io.pixelData.ready := pixelDataReady
   io.paletteRam.rd := true.B
   io.paletteRam.addr := paletteRamAddr

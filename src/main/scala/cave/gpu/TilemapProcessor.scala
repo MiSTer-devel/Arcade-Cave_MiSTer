@@ -118,11 +118,11 @@ class TilemapProcessor extends Module {
   layerPipeline.io.options <> io.options
   layerPipeline.io.layerIndex := io.layerIndex
   layerPipeline.io.lastLayerPriority := lastLayerPriorityReg
-  layerPipeline.io.layerInfo.bits := layerInfoReg
-  layerPipeline.io.layerInfo.valid := stateReg === State.setParams
-  layerPipeline.io.tileInfo.bits := tileInfoReg
-  pipelineReady := layerPipeline.io.tileInfo.ready
-  layerPipeline.io.tileInfo.valid := updateTileInfo
+  layerPipeline.io.layer.bits := layerInfoReg
+  layerPipeline.io.layer.valid := stateReg === State.setParams
+  layerPipeline.io.tile.bits := tileInfoReg
+  pipelineReady := layerPipeline.io.tile.ready
+  layerPipeline.io.tile.valid := updateTileInfo
   layerPipeline.io.paletteRam <> io.paletteRam
   layerPipeline.io.priority <> io.priority
   layerPipeline.io.frameBuffer <> io.frameBuffer
