@@ -69,16 +69,16 @@ class TilemapProcessor extends Module {
     val debug = Output(new Bundle {
       val idle = Bool()
       val latch = Bool()
-      val setParams = Bool()
-      val waitRam = Bool()
-      val working = Bool()
+      val check = Bool()
+      val ready = Bool()
+      val pending = Bool()
       val done = Bool()
     })
   })
 
   // States
   object State {
-    val idle :: latch :: setParams :: waitRam :: working :: done :: Nil = Enum(6)
+    val idle :: latch :: check :: ready :: pending :: done :: Nil = Enum(6)
   }
 
   // Wires
@@ -119,7 +119,7 @@ class TilemapProcessor extends Module {
   layerPipeline.io.layerIndex := io.layerIndex
   layerPipeline.io.lastLayerPriority := lastLayerPriorityReg
   layerPipeline.io.layer.bits := layerInfoReg
-  layerPipeline.io.layer.valid := stateReg === State.setParams
+  layerPipeline.io.layer.valid := stateReg === State.check
   layerPipeline.io.tile.bits := tileInfoReg
   pipelineReady := layerPipeline.io.tile.ready
   layerPipeline.io.tile.valid := updateTileInfo
@@ -144,7 +144,7 @@ class TilemapProcessor extends Module {
   val tileRomRead = burstPendingReg && burstReadyReg && fifo.io.count <= (Config.FIFO_DEPTH / 2).U
   val lastBurst = effectiveRead && colWrap && rowWrap
   effectiveRead := tileRomRead && !io.tileRom.waitReq
-  updateTileInfo := stateReg === State.working && tileInfoTakenReg
+  updateTileInfo := stateReg === State.pending && tileInfoTakenReg
 
   // Set first tile index
   val firstTileIndex = {
@@ -199,7 +199,7 @@ class TilemapProcessor extends Module {
   // Toggle tile info taken register
   when(stateReg === State.idle) {
     tileInfoTakenReg := false.B
-  }.elsewhen(stateReg === State.waitRam || pipelineReady) {
+  }.elsewhen(stateReg === State.ready || pipelineReady) {
     tileInfoTakenReg := true.B
   }.elsewhen(updateTileInfo) {
     tileInfoTakenReg := false.B
@@ -224,9 +224,9 @@ class TilemapProcessor extends Module {
   }
 
   // Set last layer priority register
-  when(stateReg === State.setParams && io.layerIndex === 0.U) {
+  when(stateReg === State.check && io.layerIndex === 0.U) {
     lastLayerPriorityReg := 0.U
-  }.elsewhen(stateReg === State.working && tileWrap) {
+  }.elsewhen(stateReg === State.pending && tileWrap) {
     lastLayerPriorityReg := layerInfoReg.priority
   }
 
@@ -237,17 +237,17 @@ class TilemapProcessor extends Module {
       when(io.start) { stateReg := State.latch }
     }
 
-    // Latch layer info
-    is(State.latch) { stateReg := State.setParams }
+    // Latch the layer
+    is(State.latch) { stateReg := State.check }
 
-    // Set parameters
-    is(State.setParams) { stateReg := Mux(layerInfoReg.disable, State.idle, State.waitRam) }
+    // Check whether the layer is enabled
+    is(State.check) { stateReg := Mux(layerInfoReg.disable, State.idle, State.ready) }
 
-    // Wait for RAM
-    is(State.waitRam) { stateReg := State.working }
+    // Wait for the blitter to be ready
+    is(State.ready) { stateReg := State.pending }
 
     // Copy the tiles
-    is(State.working) {
+    is(State.pending) {
       when(lastBurst) { stateReg := State.done }
     }
 
@@ -266,8 +266,8 @@ class TilemapProcessor extends Module {
   io.tileRom.burstLength := tileRomBurstLength
   io.debug.idle := stateReg === State.idle
   io.debug.latch := stateReg === State.latch
-  io.debug.setParams := stateReg === State.setParams
-  io.debug.waitRam := stateReg === State.waitRam
-  io.debug.working := stateReg === State.working
+  io.debug.check := stateReg === State.check
+  io.debug.ready := stateReg === State.ready
+  io.debug.pending := stateReg === State.pending
   io.debug.done := stateReg === State.done
 }
