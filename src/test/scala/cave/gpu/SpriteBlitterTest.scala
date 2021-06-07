@@ -41,21 +41,21 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
 
   it should "request sprite data when the PISO is empty" in {
     test(new SpriteBlitter) { dut =>
-      dut.io.sprite.valid.poke(true.B)
-      dut.io.sprite.ready.expect(true.B)
+      dut.io.config.valid.poke(true.B)
+      dut.io.config.ready.expect(true.B)
     }
   }
 
   it should "request sprite data when blitting the last pixel" in {
     test(new SpriteBlitter) { dut =>
-      dut.io.sprite.valid.poke(true.B)
-      dut.io.sprite.bits.cols.poke(1.U)
-      dut.io.sprite.bits.rows.poke(1.U)
+      dut.io.config.valid.poke(true.B)
+      dut.io.config.bits.sprite.cols.poke(1.U)
+      dut.io.config.bits.sprite.rows.poke(1.U)
       dut.io.pixelData.valid.poke(true.B)
       dut.clock.step()
-      dut.io.sprite.ready.expect(false.B)
+      dut.io.config.ready.expect(false.B)
       dut.clock.step(255)
-      dut.io.sprite.ready.expect(true.B)
+      dut.io.config.ready.expect(true.B)
     }
   }
 
@@ -70,9 +70,9 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
 
   it should "request pixel data when the PISO is almost empty" in {
     test(new SpriteBlitter) { dut =>
-      dut.io.sprite.valid.poke(true.B)
-      dut.io.sprite.bits.cols.poke(1.U)
-      dut.io.sprite.bits.rows.poke(1.U)
+      dut.io.config.valid.poke(true.B)
+      dut.io.config.bits.sprite.cols.poke(1.U)
+      dut.io.config.bits.sprite.rows.poke(1.U)
       dut.io.pixelData.valid.poke(true.B)
       dut.clock.step()
       dut.io.pixelData.ready.expect(false.B)
@@ -85,9 +85,9 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
 
   it should "write pixel data to the frame buffer" in {
     test(new SpriteBlitter) { dut =>
-      dut.io.sprite.valid.poke(true.B)
-      dut.io.sprite.bits.cols.poke(2.U)
-      dut.io.sprite.bits.rows.poke(1.U)
+      dut.io.config.valid.poke(true.B)
+      dut.io.config.bits.sprite.cols.poke(2.U)
+      dut.io.config.bits.sprite.rows.poke(1.U)
       dut.io.pixelData.valid.poke(true.B)
       for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1.U) }
       dut.io.paletteRam.dout.poke(1.U)
@@ -120,10 +120,10 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
 
   it should "allow horizontal flipping" in {
     test(new SpriteBlitter) { dut =>
-      dut.io.sprite.valid.poke(true.B)
-      dut.io.sprite.bits.cols.poke(1.U)
-      dut.io.sprite.bits.rows.poke(1.U)
-      dut.io.sprite.bits.flipX.poke(true.B)
+      dut.io.config.valid.poke(true.B)
+      dut.io.config.bits.sprite.cols.poke(1.U)
+      dut.io.config.bits.sprite.rows.poke(1.U)
+      dut.io.config.bits.sprite.flipX.poke(true.B)
       dut.io.pixelData.valid.poke(true.B)
       for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1.U) }
       dut.io.paletteRam.dout.poke(1.U)
@@ -153,10 +153,10 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
 
   it should "allow vertical flipping" in {
     test(new SpriteBlitter) { dut =>
-      dut.io.sprite.valid.poke(true.B)
-      dut.io.sprite.bits.cols.poke(1.U)
-      dut.io.sprite.bits.rows.poke(1.U)
-      dut.io.sprite.bits.flipY.poke(true.B)
+      dut.io.config.valid.poke(true.B)
+      dut.io.config.bits.sprite.cols.poke(1.U)
+      dut.io.config.bits.sprite.rows.poke(1.U)
+      dut.io.config.bits.sprite.flipY.poke(true.B)
       dut.io.pixelData.valid.poke(true.B)
       for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1.U) }
       dut.io.paletteRam.dout.poke(1.U)
@@ -186,12 +186,12 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
 
   it should "assert the busy signal" in {
     test(new SpriteBlitter) { dut =>
-      dut.io.sprite.valid.poke(true.B)
-      dut.io.sprite.bits.cols.poke(1.U)
-      dut.io.sprite.bits.rows.poke(1.U)
+      dut.io.config.valid.poke(true.B)
+      dut.io.config.bits.sprite.cols.poke(1.U)
+      dut.io.config.bits.sprite.rows.poke(1.U)
       dut.io.pixelData.valid.poke(true.B)
       dut.clock.step()
-      dut.io.sprite.valid.poke(false.B)
+      dut.io.config.valid.poke(false.B)
       dut.io.busy.expect(false.B)
       dut.clock.step(2)
       dut.io.busy.expect(true.B)

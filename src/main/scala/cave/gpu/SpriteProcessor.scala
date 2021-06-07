@@ -99,7 +99,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val numTilesReg = RegEnable(spriteReg.cols * spriteReg.rows, stateReg === State.check)
   val burstPendingReg = RegInit(false.B)
 
-  // The FIFO buffers the raw data read from the tile ROM.
+  // The FIFO is used to buffer the raw data read from the tile ROM.
   //
   // The queue is configured in show-ahead mode, which means there will be valid output as soon as
   // an element has been written to the queue.
@@ -110,18 +110,16 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val (tileCounter, tileCounterWrap) = Counter.dynamic(numTilesReg, effectiveRead)
 
   // Sprite blitter
-  val spriteBlitter = Module(new SpriteBlitter)
-  spriteBlitter.io.gameConfig <> io.gameConfig
-  spriteBlitter.io.options <> io.options
-  spriteBlitter.io.paletteRam <> io.paletteRam
-  spriteBlitter.io.priority <> io.priority
-  spriteBlitter.io.frameBuffer <> io.frameBuffer
+  val blitter = Module(new SpriteBlitter)
+  blitter.io.paletteRam <> io.paletteRam
+  blitter.io.priority <> io.priority
+  blitter.io.frameBuffer <> io.frameBuffer
 
   // Sprite decoder
   val decoder = Module(new SpriteDecoder)
   decoder.io.format := io.gameConfig.spriteFormat
   decoder.io.rom <> fifo.io.deq
-  decoder.io.pixelData <> spriteBlitter.io.pixelData
+  decoder.io.pixelData <> blitter.io.pixelData
 
   // Set tile ROM read flag
   val tileRomRead = stateReg === State.pending && !burstPendingReg && fifo.io.count <= (Config.FIFO_DEPTH / 2).U
@@ -138,7 +136,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   // Set tile ROM burst length
   val tileRomBurstLength = Mux(is8BPP, 32.U, 16.U)
 
-  // Toggle burst pending register
+  // The burst pending register is asserted when there is a burst in progress
   when(stateReg === State.idle) {
     burstPendingReg := false.B
   }.elsewhen(effectiveRead) {
@@ -147,11 +145,16 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
     burstPendingReg := false.B
   }
 
-  // Enqueue a sprite in the blitter when the processor is ready
+  // Enqueue the current sprite in the blitter when the processor is ready
   when(stateReg === State.ready) {
-    spriteBlitter.io.sprite.enq(spriteReg)
+    val config = Wire(new SpriteBlitterConfig)
+    config.sprite := spriteReg
+    config.numColors := io.gameConfig.numColors
+    config.rotate := io.options.rotate
+    config.flip := io.options.flip
+    blitter.io.config.enq(config)
   } otherwise {
-    spriteBlitter.io.sprite.noenq()
+    blitter.io.config.noenq()
   }
 
   // Enqueue tile ROM data in the FIFO when it is available
@@ -176,12 +179,12 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
       stateReg := Mux(spriteReg.isEnabled, State.ready, State.next)
     }
 
-    // Wait for the blitter to be ready
+    // Wait until the blitter is ready
     is(State.ready) {
-      when(spriteBlitter.io.sprite.ready) { stateReg := State.pending }
+      when(blitter.io.config.ready) { stateReg := State.pending }
     }
 
-    // Wait for all sprite tiles to load
+    // Wait until the tiles have been loaded into the FIFO
     is(State.pending) {
       when(tileCounterWrap) { stateReg := State.next }
     }
@@ -191,9 +194,9 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
       stateReg := Mux(spriteCounterWrap, State.done, State.latch)
     }
 
-    // Wait for the blitter to finish
+    // Wait until the blitter has finished
     is(State.done) {
-      when(!spriteBlitter.io.busy) { stateReg := State.idle }
+      when(!blitter.io.busy) { stateReg := State.idle }
     }
   }
 

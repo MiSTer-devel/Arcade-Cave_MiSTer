@@ -37,7 +37,7 @@ import chiseltest._
 import org.scalatest._
 
 trait SpriteProcessorTestHelpers {
-  def mkSpriteProcessor(maxSprites: Int = 2) = new SpriteProcessor(maxSprites)
+  def mkProcessor(maxSprites: Int = 2) = new SpriteProcessor(maxSprites)
 
   def waitForIdle(dut: SpriteProcessor) =
     while (!dut.io.debug.idle.peek().litToBoolean) { dut.clock.step() }
@@ -65,7 +65,7 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
   behavior of "FSM"
 
   it should "move to the latch state when the start signal is asserted" in {
-    test(mkSpriteProcessor()) { dut =>
+    test(mkProcessor()) { dut =>
       dut.io.start.poke(true.B)
       dut.clock.step()
       dut.io.debug.latch.expect(true.B)
@@ -73,7 +73,7 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
   }
 
   it should "move to the check state after latching a sprite" in {
-    test(mkSpriteProcessor()) { dut =>
+    test(mkProcessor()) { dut =>
       dut.io.start.poke(true.B)
       waitForLatch(dut)
       dut.clock.step()
@@ -82,7 +82,7 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
   }
 
   it should "move to the next state after checking an invisible sprite" in {
-    test(mkSpriteProcessor()) { dut =>
+    test(mkProcessor()) { dut =>
       dut.io.start.poke(true.B)
       waitForCheck(dut)
       dut.clock.step()
@@ -91,9 +91,9 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
   }
 
   it should "move to the ready state after checking a visible sprite" in {
-    test(mkSpriteProcessor()) { dut =>
+    test(mkProcessor()) { dut =>
       dut.io.start.poke(true.B)
-      dut.io.spriteRam.dout.poke("h01010000000000000000".U)
+      dut.io.spriteRam.dout.poke("h0101_0000_0000_0000_0000".U)
       waitForCheck(dut)
       dut.clock.step()
       dut.io.debug.ready.expect(true.B)
@@ -101,7 +101,7 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
   }
 
   it should "move to the done state after blitting all sprites" in {
-    test(mkSpriteProcessor(1)) { dut =>
+    test(mkProcessor(1)) { dut =>
       dut.io.start.poke(true.B)
       waitForNext(dut)
       dut.clock.step()
@@ -110,7 +110,7 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
   }
 
   it should "move to the idle state after the blit is done" in {
-    test(mkSpriteProcessor()) { dut =>
+    test(mkProcessor()) { dut =>
       dut.io.start.poke(true.B)
       waitForDone(dut)
       dut.clock.step()
@@ -121,7 +121,7 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
   behavior of "busy flag"
 
   it should "assert the busy flag when the processor has started" in {
-    test(mkSpriteProcessor()) { dut =>
+    test(mkProcessor()) { dut =>
       dut.io.busy.expect(false.B)
       dut.io.start.poke(true.B)
       dut.clock.step()
@@ -130,9 +130,9 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
   }
 
   it should "deassert the busy flag when the processor has finished" in {
-    test(mkSpriteProcessor(1)) { dut =>
+    test(mkProcessor(1)) { dut =>
       dut.io.start.poke(true.B)
-      dut.io.spriteRam.dout.poke("h01010000000000010000".U)
+      dut.io.spriteRam.dout.poke("h0101_0000_0000_0001_0000".U)
       waitForPending(dut)
       dut.io.tileRom.valid.poke(true.B)
       dut.clock.step(16)
@@ -148,7 +148,7 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
   behavior of "sprite data"
 
   it should "fetch sprite data from the sprite RAM" in {
-    test(mkSpriteProcessor()) { dut =>
+    test(mkProcessor()) { dut =>
       dut.io.spriteRam.rd.expect(true.B)
     }
   }
@@ -156,9 +156,9 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
   behavior of "pixel data"
 
   it should "fetch pixel data from the tile ROM" in {
-    test(mkSpriteProcessor()) { dut =>
+    test(mkProcessor()) { dut =>
       dut.io.start.poke(true.B)
-      dut.io.spriteRam.dout.poke("h01010000000000010000".U)
+      dut.io.spriteRam.dout.poke("h0101_0000_0000_0001_0000".U)
       waitForReady(dut)
       dut.clock.step()
       dut.io.tileRom.rd.expect(true.B)
@@ -166,7 +166,6 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
       dut.io.tileRom.burstLength.expect(16.U)
       dut.clock.step()
       dut.io.tileRom.rd.expect(false.B)
-      dut.io.tileRom.burstDone.poke(true.B)
     }
   }
 }
