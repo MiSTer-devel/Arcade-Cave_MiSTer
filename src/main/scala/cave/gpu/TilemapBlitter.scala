@@ -93,14 +93,14 @@ class TilemapBlitter extends Module {
   // Counters
   val (x, xWrap) = Counter.static(Config.SMALL_TILE_SIZE, enable = !pisoEmpty)
   val (y, yWrap) = Counter.static(Config.SMALL_TILE_SIZE, enable = xWrap)
-  val (miniTileX, miniTileXWrap) = Counter.static(2, enable = xWrap && yWrap)
-  val (miniTileY, miniTileYWrap) = Counter.static(2, enable = miniTileXWrap)
+  val (subTileX, subTileXWrap) = Counter.static(2, enable = xWrap && yWrap)
+  val (subTileY, subTileYWrap) = Counter.static(2, enable = subTileXWrap)
   val (col, colWrap) = Counter.dynamic(numCols, enable = colCounterEnable)
   val (row, rowWrap) = Counter.dynamic(numRows, enable = colWrap)
 
   // Set tile done flag
   val smallTileDone = !pisoEmpty && xWrap && yWrap
-  val largeTileDone = !pisoEmpty && xWrap && yWrap && miniTileXWrap && miniTileYWrap
+  val largeTileDone = !pisoEmpty && xWrap && yWrap && subTileXWrap && subTileYWrap
   val tileDone = Mux(layerReg.tileSize, largeTileDone, smallTileDone)
 
   // Pixel position
@@ -108,8 +108,8 @@ class TilemapBlitter extends Module {
 
   // Tile position
   val tilePos = {
-    val x = Mux(layerReg.tileSize, col ## miniTileX ## 0.U(3.W), col ## 0.U(3.W))
-    val y = Mux(layerReg.tileSize, row ## miniTileY ## 0.U(3.W), row ## 0.U(3.W))
+    val x = Mux(layerReg.tileSize, col ## subTileX ## 0.U(3.W), col ## 0.U(3.W))
+    val y = Mux(layerReg.tileSize, row ## subTileY ## 0.U(3.W), row ## 0.U(3.W))
     UVec2(x, y)
   }
 
@@ -138,7 +138,7 @@ class TilemapBlitter extends Module {
   // This is to achieve maximum efficiency of the pipeline. While there are tile to draw we burst
   // them from memory into the pipeline.
   val updateSmallTileInfo = pixelDataReady && ((x === 0.U && y === 0.U) || (xWrap && yWrap))
-  val updateLargeTileInfo = pixelDataReady && ((x === 0.U && y === 0.U && miniTileX === 0.U && miniTileY === 0.U) || (xWrap && yWrap && miniTileXWrap && miniTileYWrap))
+  val updateLargeTileInfo = pixelDataReady && ((x === 0.U && y === 0.U && subTileX === 0.U && subTileY === 0.U) || (xWrap && yWrap && subTileXWrap && subTileYWrap))
   updateTileInfo := Mux(layerReg.tileSize, updateLargeTileInfo, updateSmallTileInfo)
 
   // Set column counter enable
@@ -147,7 +147,7 @@ class TilemapBlitter extends Module {
     colCounterEnable := false.B
   }.elsewhen(!layerReg.tileSize) {
     colCounterEnable := true.B
-  }.elsewhen(miniTileXWrap && miniTileYWrap) {
+  }.elsewhen(subTileXWrap && subTileYWrap) {
     colCounterEnable := true.B
   }.otherwise {
     colCounterEnable := false.B
