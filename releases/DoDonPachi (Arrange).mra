@@ -1,52 +1,69 @@
 <misterromdescription>
-  <name>DoDonPachi (20120212 Arrange Ver. 1.1)</name>
-  <mameversion>0226</mameversion>
-  <setname>ddonpach</setname>
-  <year>2012</year>
-  <manufacturer>Hack (trap15)</manufacturer>
-  <category>Shooter</category>
-  <rbf>cave</rbf>
+	<name>DoDonPachi</name>
+	<region>World</region>
+	<homebrew>no</homebrew>
+	<bootleg>no</bootleg>
+	<version>Ver. 120212</version>
+	<alternative></alternative>
+	<platform>CAVE 68000</platform>
+	<series>DonPachi</series>
+	<year>1997</year>
+	<manufacturer>Cave</manufacturer>
+	<category>Shooter - Vertical</category>
+	<about></about>
 
-  <buttons names="Shots/Laser,Spread/Laser Bomber,Full-Auto,Start,Coin,Pause" default="A,B,X,R,L,Start" />
+	<setname>ddonpach</setname>
+	<parent>0226</parent>
+	<mameversion>cave</mameversion>
+	<about author="nullobject" source="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer" twitter="@nullobject" webpage="https://www.patreon.com/nullobject"></about>
 
-  <!-- select game -->
-  <rom index="1">
-    <part>1</part>
-  </rom>
+	<resolution>15kHz</resolution>
+	<rotation>vertical (ccw)</rotation>
+	<flip>yes</flip>
 
-  <!-- ROM data -->
-  <rom index="0" zip="ddonpach.zip|ddonpacha.zip" md5="none">
-	<!-- main CPU -->
-    <interleave output="16">
-      <part name="arrange_u27.bin" crc="44b899ae" map="10" />
-      <part name="arrange_u26.bin" crc="727a09a8" map="01" />
-    </interleave>
+	<players>2 (simultaneous)</players>
+	<joystick>8-way</joystick>
+	<special_controls></special_controls>
+	<buttons>3</buttons>
+	<buttons default="A,B,X,R,L,Start" names="Shots/Laser,Spread/Laser Bomber,Full-Auto,Start,Coin,Pause,Service"></buttons>
 
-    <!-- sprites -->
-    <part name="u50.bin" crc="14b260ec" />
-    <part name="arrange_u51.bin" crc="0f3e5148" />
-    <part name="u52.bin" crc="02492ee0" />
-    <part name="u53.bin" crc="cb4c10f0" />
+	<switches></switches>
 
-    <!-- layer 0 -->
-    <part name="u60.bin" crc="903096a7" />
+	<rom index="1">
+		<part>1</part>
+		</rom>
+	<rom index="0" md5="8cc5453d303b044013fbabd7b589c03f" zip="ddonpach.zip|ddonpacha.zip">
+		<!-- main CPU -->
+		<interleave output="16">
+		<part crc="44b899ae" map="10" name="arrange_u27.bin"></part>
+		<part crc="727a09a8" map="01" name="arrange_u26.bin"></part>
+		</interleave>
+		<!-- sprites -->
+		<part crc="14b260ec" name="u50.bin"></part>
+		<part crc="0f3e5148" name="arrange_u51.bin"></part>
+		<part crc="02492ee0" name="u52.bin"></part>
+		<part crc="cb4c10f0" name="u53.bin"></part>
+		<!-- layer 0 -->
+		<part crc="903096a7" name="u60.bin"></part>
+		<!-- layer 1 -->
+		<part crc="d89b7631" name="u61.bin"></part>
+		<!-- layer 2 -->
+		<part crc="42e4c6c5" name="arrange_u62.bin"></part>
+		<!-- samples -->
+		<part crc="9dfdafaf" name="u6.bin"></part>
+		<part crc="795b17d5" name="u7.bin"></part>
+		<!-- skip CRC -->
+		<patch offset="0x005410">00 60 0C 00</patch>
+		<!-- skip warning -->
+		<patch offset="0x0054EC">00 60 50 00</patch>
+		</rom>
+	<rom_2></rom_2>
+	<rom_3></rom_3>
+	<rom_4></rom_4>
 
-    <!-- layer 1 -->
-    <part name="u61.bin" crc="d89b7631" />
+	<nvram></nvram>
 
-    <!-- layer 2 -->
-    <part name="arrange_u62.bin" crc="42e4c6c5" />
+	<remark></remark>
 
-    <!-- samples -->
-    <part name="u6.bin" crc="9dfdafaf" />
-    <part name="u7.bin" crc="795b17d5" />
-
-    <!-- eeprom -->
-    <part name="eeprom-ddonpach.bin" crc="2df16438" />
-
-    <!-- skip CRC -->
-    <patch offset="0x005410">00 60 0C 00</patch>
-    <!-- skip warning -->
-    <patch offset="0x0054EC">00 60 50 00</patch>
-  </rom>
+	<mratimestamp>20210427073142</mratimestamp>
 </misterromdescription>
