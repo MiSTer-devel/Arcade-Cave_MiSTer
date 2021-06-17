@@ -145,7 +145,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
     burstPendingReg := false.B
   }
 
-  // Enqueue the current sprite in the blitter when the processor is ready
+  // Enqueue the blitter configuration when the blitter is ready
   when(stateReg === State.ready) {
     val config = Wire(new SpriteBlitterConfig)
     config.sprite := spriteReg

@@ -102,15 +102,15 @@ class SpriteBlitter extends Module {
   // The done flag is asserted when the sprite has finished blitting
   val blitDone = xWrap && yWrap
 
-  // The busy register is set when a sprite is latched, and cleared when a blit has finished
+  // The busy register is set when a configuration is latched, and cleared when a blit has finished
   when(io.config.fire()) { busyReg := true.B }.elsewhen(blitDone) { busyReg := false.B }
 
   // The pixel data ready flag is asserted when the PISO is empty, or will be empty in the next
   // clock cycle
   val pixelDataReady = io.pixelData.valid && (pisoEmpty || pisoAlmostEmpty)
 
-  // The ready flag is asserted when the blitter is ready to latch a configuration (i.e. there is no
-  // sprite latched, or a blit has finished)
+  // The ready flag is asserted when the blitter is ready to latch a configuration (i.e. the blitter
+  // is not busy, or a blit has just finished)
   val ready = io.config.valid && (!busyReg || blitDone)
 
   // Decode the palette entry for the current pixel
@@ -150,5 +150,5 @@ class SpriteBlitter extends Module {
   io.frameBuffer.din := frameBufferData
   io.busy := delayedBusyReg
 
-  printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), busy: $busyReg, spriteReady: $ready, pixelDataReady: $pixelDataReady, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
+  printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), ready: $ready, busy: $busyReg, pixelDataReady: $pixelDataReady, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
 }
