@@ -114,18 +114,18 @@ class TilemapProcessor extends Module {
 
   // Layer pipeline
   val layerPipeline = withReset(stateReg === State.idle) { Module(new TilemapBlitter) }
-  layerPipeline.io.gameConfig <> io.gameConfig
-  layerPipeline.io.options <> io.options
   layerPipeline.io.layerIndex := io.layerIndex
   layerPipeline.io.lastLayerPriority := lastLayerPriorityReg
-  layerPipeline.io.layer.bits := layerInfoReg
-  layerPipeline.io.layer.valid := stateReg === State.check
-  layerPipeline.io.tile.bits := tileInfoReg
-  pipelineReady := layerPipeline.io.tile.ready
-  layerPipeline.io.tile.valid := updateTileInfo
+  layerPipeline.io.config.bits.layer := layerInfoReg
+  layerPipeline.io.config.bits.tile := tileInfoReg
+  pipelineReady := layerPipeline.io.config.ready
+  layerPipeline.io.config.valid := updateTileInfo
   layerPipeline.io.paletteRam <> io.paletteRam
   layerPipeline.io.priority <> io.priority
   layerPipeline.io.frameBuffer <> io.frameBuffer
+  layerPipeline.io.config.bits.numColors := io.gameConfig.numColors
+  layerPipeline.io.config.bits.flip := io.options.flip
+  layerPipeline.io.config.bits.rotate := io.options.rotate
   pipelineDone := layerPipeline.io.done
 
   // Set layer format
