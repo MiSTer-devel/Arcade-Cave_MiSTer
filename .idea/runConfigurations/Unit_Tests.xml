@@ -310,7 +310,7 @@
             <set>
               <option value="blitting should allow horizontal flipping" />
               <option value="blitting should allow vertical flipping" />
-              <option value="blitting should assert the done signal two clocks after blitting the last pixel" />
+              <option value="blitting should assert the busy signal" />
               <option value="blitting should write pixel data to the frame buffer" />
               <option value="pixel data should request pixel data when the PISO is almost empty" />
               <option value="pixel data should request pixel data when the PISO is empty" />
