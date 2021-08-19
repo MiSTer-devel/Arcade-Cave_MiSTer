@@ -90,7 +90,7 @@ class TilemapProcessor extends Module {
   // Registers
   val stateReg = RegInit(State.idle)
   val layerReg = RegEnable(Layer.decode(io.layerRegs), stateReg === State.latch)
-  val tileInfoReg = RegEnable(Tile.decode(io.layerRam.dout, layerReg.tileSize), updateTileInfo)
+  val tileReg = RegEnable(Tile.decode(io.layerRam.dout, layerReg.tileSize), updateTileInfo)
   val tileInfoTakenReg = RegInit(false.B)
   val burstPendingReg = RegInit(false.B)
   val burstReadyReg = RegInit(false.B)
@@ -117,7 +117,7 @@ class TilemapProcessor extends Module {
   layerPipeline.io.layerIndex := io.layerIndex
   layerPipeline.io.lastLayerPriority := lastLayerPriorityReg
   layerPipeline.io.config.bits.layer := layerReg
-  layerPipeline.io.config.bits.tile := tileInfoReg
+  layerPipeline.io.config.bits.tile := tileReg
   pipelineReady := layerPipeline.io.config.ready
   layerPipeline.io.config.valid := updateTileInfo
   layerPipeline.io.paletteRam <> io.paletteRam
@@ -176,9 +176,9 @@ class TilemapProcessor extends Module {
 
   // Set tile ROM address
   val tileRomAddr = MuxCase(0.U, Seq(
-    tileFormat_8x8x8 -> (tileInfoReg.code << log2Ceil(Config.TILE_SIZE_8x8x8)),
-    tileFormat_16x16x4 -> (tileInfoReg.code << log2Ceil(Config.TILE_SIZE_16x16x4)),
-    tileFormat_16x16x8 -> (tileInfoReg.code << log2Ceil(Config.TILE_SIZE_16x16x8))
+    tileFormat_8x8x8 -> (tileReg.code << log2Ceil(Config.TILE_SIZE_8x8x8)),
+    tileFormat_16x16x4 -> (tileReg.code << log2Ceil(Config.TILE_SIZE_16x16x4)),
+    tileFormat_16x16x8 -> (tileReg.code << log2Ceil(Config.TILE_SIZE_16x16x8))
   ))
 
   // Set tile ROM burst length. The burst length defaults to 8 words, because while the game is
