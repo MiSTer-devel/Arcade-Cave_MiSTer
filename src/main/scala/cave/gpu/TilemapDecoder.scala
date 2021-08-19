@@ -107,18 +107,16 @@ object TilemapDecoder {
   /** Decodes 8x8x4 tiles (i.e. 32 bits per row) */
   private def decode4BPP(data: Bits): Seq[Bits] =
     Seq(0, 1, 2, 3, 4, 5, 6, 7)
-      .reverse
       // Decode data into nibbles
-      .map(Util.decode(data, 8, 4).apply)
+      .reverseMap(Util.decode(data, 8, 4).apply)
       // Pad nibbles into 8-bit pixels
       .map(_.pad(8))
 
   /** Decodes 8x8x8 tiles (i.e. 64 bits per row) */
   private def decode8BPP(data: Bits): Seq[Bits] =
     Seq(2, 0, 3, 1, 6, 4, 7, 5, 10, 8, 11, 9, 14, 12, 15, 13)
-      .reverse
       // Decode data into nibbles
-      .map(Util.decode(data, 16, 4).apply)
+      .reverseMap(Util.decode(data, 16, 4).apply)
       // Join high/low nibbles into 8-bit pixels
       .grouped(2).map(Cat(_)).toSeq
 }
