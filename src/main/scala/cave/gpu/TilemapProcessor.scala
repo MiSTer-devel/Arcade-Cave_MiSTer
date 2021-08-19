@@ -112,21 +112,21 @@ class TilemapProcessor extends Module {
   val (row, rowWrap) = Counter.dynamic(numRows, enable = colWrap, reset = stateReg === State.idle)
   val (_, tileWrap) = Counter.dynamic(numTiles, enable = pipelineDone, reset = stateReg === State.idle)
 
-  // Layer pipeline
-  val layerPipeline = withReset(stateReg === State.idle) { Module(new TilemapBlitter) }
-  layerPipeline.io.layerIndex := io.layerIndex
-  layerPipeline.io.lastLayerPriority := lastLayerPriorityReg
-  layerPipeline.io.config.bits.layer := layerReg
-  layerPipeline.io.config.bits.tile := tileReg
-  pipelineReady := layerPipeline.io.config.ready
-  layerPipeline.io.config.valid := updateTileInfo
-  layerPipeline.io.paletteRam <> io.paletteRam
-  layerPipeline.io.priority <> io.priority
-  layerPipeline.io.frameBuffer <> io.frameBuffer
-  layerPipeline.io.config.bits.numColors := io.gameConfig.numColors
-  layerPipeline.io.config.bits.flip := io.options.flip
-  layerPipeline.io.config.bits.rotate := io.options.rotate
-  pipelineDone := layerPipeline.io.done
+  // Tilemap blitter
+  val blitter = withReset(stateReg === State.idle) { Module(new TilemapBlitter) }
+  blitter.io.layerIndex := io.layerIndex
+  blitter.io.lastLayerPriority := lastLayerPriorityReg
+  blitter.io.config.bits.layer := layerReg
+  blitter.io.config.bits.tile := tileReg
+  pipelineReady := blitter.io.config.ready
+  blitter.io.config.valid := updateTileInfo
+  blitter.io.paletteRam <> io.paletteRam
+  blitter.io.priority <> io.priority
+  blitter.io.frameBuffer <> io.frameBuffer
+  blitter.io.config.bits.numColors := io.gameConfig.numColors
+  blitter.io.config.bits.flip := io.options.flip
+  blitter.io.config.bits.rotate := io.options.rotate
+  pipelineDone := blitter.io.done
 
   // Set layer format
   val layerFormat = MuxLookup(io.layerIndex, io.gameConfig.layer0Format, Seq(
@@ -138,7 +138,7 @@ class TilemapProcessor extends Module {
   val decoder = Module(new TilemapDecoder)
   decoder.io.format := layerFormat
   decoder.io.rom <> fifo.io.deq
-  decoder.io.pixelData <> layerPipeline.io.pixelData
+  decoder.io.pixelData <> blitter.io.pixelData
 
   // Control signals
   val tileRomRead = burstPendingReg && burstReadyReg && fifo.io.count <= (Config.FIFO_DEPTH / 2).U
