@@ -89,8 +89,8 @@ class TilemapProcessor extends Module {
 
   // Registers
   val stateReg = RegInit(State.idle)
-  val layerInfoReg = RegEnable(Layer.decode(io.layerRegs), stateReg === State.latch)
-  val tileInfoReg = RegEnable(Tile.decode(io.layerRam.dout, layerInfoReg.tileSize), updateTileInfo)
+  val layerReg = RegEnable(Layer.decode(io.layerRegs), stateReg === State.latch)
+  val tileInfoReg = RegEnable(Tile.decode(io.layerRam.dout, layerReg.tileSize), updateTileInfo)
   val tileInfoTakenReg = RegInit(false.B)
   val burstPendingReg = RegInit(false.B)
   val burstReadyReg = RegInit(false.B)
@@ -103,9 +103,9 @@ class TilemapProcessor extends Module {
   val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), Config.FIFO_DEPTH, flow = true))
 
   // Columns/rows/tiles
-  val numCols = Mux(layerInfoReg.tileSize, Config.LARGE_TILE_NUM_COLS.U, Config.SMALL_TILE_NUM_COLS.U)
-  val numRows = Mux(layerInfoReg.tileSize, Config.LARGE_TILE_NUM_ROWS.U, Config.SMALL_TILE_NUM_ROWS.U)
-  val numTiles = Mux(layerInfoReg.tileSize, Config.LARGE_TILE_NUM_TILES.U, Config.SMALL_TILE_NUM_TILES.U)
+  val numCols = Mux(layerReg.tileSize, Config.LARGE_TILE_NUM_COLS.U, Config.SMALL_TILE_NUM_COLS.U)
+  val numRows = Mux(layerReg.tileSize, Config.LARGE_TILE_NUM_ROWS.U, Config.SMALL_TILE_NUM_ROWS.U)
+  val numTiles = Mux(layerReg.tileSize, Config.LARGE_TILE_NUM_TILES.U, Config.SMALL_TILE_NUM_TILES.U)
 
   // Counters
   val (col, colWrap) = Counter.dynamic(numCols, enable = effectiveRead, reset = stateReg === State.idle)
@@ -116,7 +116,7 @@ class TilemapProcessor extends Module {
   val layerPipeline = withReset(stateReg === State.idle) { Module(new TilemapBlitter) }
   layerPipeline.io.layerIndex := io.layerIndex
   layerPipeline.io.lastLayerPriority := lastLayerPriorityReg
-  layerPipeline.io.config.bits.layer := layerInfoReg
+  layerPipeline.io.config.bits.layer := layerReg
   layerPipeline.io.config.bits.tile := tileInfoReg
   pipelineReady := layerPipeline.io.config.ready
   layerPipeline.io.config.valid := updateTileInfo
@@ -148,8 +148,8 @@ class TilemapProcessor extends Module {
 
   // Set first tile index
   val firstTileIndex = {
-    val offset = layerInfoReg.scroll + layerInfoReg.magicOffset(io.layerIndex)
-    Mux(layerInfoReg.tileSize,
+    val offset = layerReg.scroll + layerReg.magicOffset(io.layerIndex)
+    Mux(layerReg.tileSize,
       (offset.y(8, 4) ## 0.U(5.W)) + offset.x(8, 4),
       (offset.y(8, 3) ## 0.U(6.W)) + offset.x(8, 3)
     )
@@ -166,13 +166,13 @@ class TilemapProcessor extends Module {
       val y = firstTileIndex(9, 5) + row
       (y(4, 0) ## 0.U(5.W)) + x(4, 0)
     }
-    Mux(layerInfoReg.tileSize, large, small)
+    Mux(layerReg.tileSize, large, small)
   }
 
   // Set tile format flags
-  val tileFormat_8x8x8 = !layerInfoReg.tileSize && layerFormat === Config.GFX_FORMAT_8BPP.U
-  val tileFormat_16x16x4 = layerInfoReg.tileSize && layerFormat === Config.GFX_FORMAT_4BPP.U
-  val tileFormat_16x16x8 = layerInfoReg.tileSize && layerFormat === Config.GFX_FORMAT_8BPP.U
+  val tileFormat_8x8x8 = !layerReg.tileSize && layerFormat === Config.GFX_FORMAT_8BPP.U
+  val tileFormat_16x16x4 = layerReg.tileSize && layerFormat === Config.GFX_FORMAT_4BPP.U
+  val tileFormat_16x16x8 = layerReg.tileSize && layerFormat === Config.GFX_FORMAT_8BPP.U
 
   // Set tile ROM address
   val tileRomAddr = MuxCase(0.U, Seq(
@@ -227,7 +227,7 @@ class TilemapProcessor extends Module {
   when(stateReg === State.check && io.layerIndex === 0.U) {
     lastLayerPriorityReg := 0.U
   }.elsewhen(stateReg === State.pending && tileWrap) {
-    lastLayerPriorityReg := layerInfoReg.priority
+    lastLayerPriorityReg := layerReg.priority
   }
 
   // FSM
@@ -241,7 +241,7 @@ class TilemapProcessor extends Module {
     is(State.latch) { stateReg := State.check }
 
     // Check whether the layer is enabled
-    is(State.check) { stateReg := Mux(layerInfoReg.disable, State.idle, State.ready) }
+    is(State.check) { stateReg := Mux(layerReg.disable, State.idle, State.ready) }
 
     // Wait for the blitter to be ready
     is(State.ready) { stateReg := State.pending }
