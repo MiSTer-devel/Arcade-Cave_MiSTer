@@ -175,9 +175,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
     is(State.latch) { stateReg := State.check }
 
     // Check whether the sprite is enabled
-    is(State.check) {
-      stateReg := Mux(spriteReg.isEnabled, State.ready, State.next)
-    }
+    is(State.check) { stateReg := Mux(spriteReg.isEnabled, State.ready, State.next) }
 
     // Wait until the blitter is ready
     is(State.ready) {

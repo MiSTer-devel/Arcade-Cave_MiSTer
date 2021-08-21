@@ -109,9 +109,9 @@ class SpriteBlitter extends Module {
   // clock cycle
   val pixelDataReady = io.pixelData.valid && (pisoEmpty || pisoAlmostEmpty)
 
-  // The ready flag is asserted when the blitter is ready to latch a configuration (i.e. the blitter
-  // is not busy, or a blit has just finished)
-  val ready = io.config.valid && (!busyReg || blitDone)
+  // The config ready flag is asserted when the blitter is ready to latch a new configuration (i.e.
+  // the blitter is not busy, or a blit has just finished)
+  val configReady = io.config.valid && (!busyReg || blitDone)
 
   // Decode the palette entry for the current pixel
   paletteEntryReg := PaletteEntry(configReg.sprite.colorCode, piso.io.dout)
@@ -134,7 +134,7 @@ class SpriteBlitter extends Module {
   val frameBufferData = RegNext(io.paletteRam.dout)
 
   // Outputs
-  io.config.ready := ready
+  io.config.ready := configReady
   io.pixelData.ready := pixelDataReady
   io.paletteRam.rd := true.B
   io.paletteRam.addr := paletteRamAddr
@@ -150,5 +150,5 @@ class SpriteBlitter extends Module {
   io.frameBuffer.din := frameBufferData
   io.busy := delayedBusyReg
 
-  printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), ready: $ready, busy: $busyReg, pixelDataReady: $pixelDataReady, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
+  printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), ready: $configReady, busy: $busyReg, pixelDataReady: $pixelDataReady, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
 }
