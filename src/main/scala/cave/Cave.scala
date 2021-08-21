@@ -208,9 +208,9 @@ class Cave extends Module {
 
     // GPU
     gpu.io.videoRegs := videoRegs.io.regs.asUInt
-    gpu.io.layer0Regs := layer0Regs.io.regs.asUInt
-    gpu.io.layer1Regs := layer1Regs.io.regs.asUInt
-    gpu.io.layer2Regs := layer2Regs.io.regs.asUInt
+    gpu.io.layer0 := Layer.decode(layer0Regs.io.regs.asUInt)
+    gpu.io.layer1 := Layer.decode(layer1Regs.io.regs.asUInt)
+    gpu.io.layer2 := Layer.decode(layer2Regs.io.regs.asUInt)
     gpu.io.spriteRam <> spriteRam.io.portB
     gpu.io.layer0Ram <> layer0Ram.io.portB
     gpu.io.layer1Ram <> layer1Ram.io.portB

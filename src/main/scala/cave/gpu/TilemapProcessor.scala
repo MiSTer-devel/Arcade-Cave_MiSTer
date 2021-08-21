@@ -53,8 +53,8 @@ class TilemapProcessor extends Module {
     val busy = Output(Bool())
     /** Layer index */
     val layerIndex = Input(UInt(Config.LAYER_INDEX_WIDTH.W))
-    /** Layer registers port */
-    val layerRegs = Input(Bits(Config.LAYER_REGS_GPU_DATA_WIDTH.W))
+    /** Layer port */
+    val layer = Input(new Layer)
     /** Layer RAM port */
     val layerRam = ReadMemIO(Config.LAYER_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
     /** Palette RAM port */
@@ -89,7 +89,7 @@ class TilemapProcessor extends Module {
 
   // Registers
   val stateReg = RegInit(State.idle)
-  val layerReg = RegEnable(Layer.decode(io.layerRegs), stateReg === State.latch)
+  val layerReg = RegEnable(io.layer, stateReg === State.latch)
   val tileReg = RegEnable(Tile.decode(io.layerRam.dout, layerReg.tileSize), updateTileInfo)
   val tileInfoTakenReg = RegInit(false.B)
   val burstPendingReg = RegInit(false.B)
