@@ -137,9 +137,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val tileRomBurstLength = Mux(is8BPP, 32.U, 16.U)
 
   // The burst pending register is asserted when there is a burst in progress
-  when(stateReg === State.idle) {
-    burstPendingReg := false.B
-  }.elsewhen(effectiveRead) {
+  when(effectiveRead) {
     burstPendingReg := true.B
   }.elsewhen(io.tileRom.burstDone) {
     burstPendingReg := false.B
