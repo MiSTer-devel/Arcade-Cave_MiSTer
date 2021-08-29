@@ -42,6 +42,10 @@ import chisel3.util._
 
 /** Represents a tile blitter configuration. */
 class TilemapBlitterConfig extends Bundle {
+  /** Tilemap column */
+  val col = UInt(Config.TILEMAP_MAX_COLS.W)
+  /** Tilemap row */
+  val row = UInt(Config.TILEMAP_MAX_ROWS.W)
   /** Layer */
   val layer = new Layer
   /** Tile */
@@ -71,16 +75,13 @@ class TilemapBlitter extends Module {
     val priority = new PriorityIO
     /** Frame buffer port */
     val frameBuffer = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH)
-    /** Done flag */
-    val done = Output(Bool())
+    /** Busy flag */
+    val busy = Output(Bool())
   })
 
-  // Wires
-  val updateTileInfo = Wire(Bool())
-  val colCounterEnable = Wire(Bool())
-
   // Registers
-  val configReg = RegEnable(io.config.bits, updateTileInfo)
+  val busyReg = RegInit(false.B)
+  val configReg = RegEnable(io.config.bits, io.config.fire())
   val paletteEntryReg = Reg(new PaletteEntry)
 
   // The PISO buffers the pixels to be copied to the frame buffer
@@ -92,30 +93,25 @@ class TilemapBlitter extends Module {
   val pisoEmpty = piso.io.isEmpty
   val pisoAlmostEmpty = piso.io.isAlmostEmpty
 
-  // Set number of columns/rows/tiles
-  val numCols = Mux(configReg.layer.tileSize, Config.LARGE_TILE_NUM_COLS.U, Config.SMALL_TILE_NUM_COLS.U)
-  val numRows = Mux(configReg.layer.tileSize, Config.LARGE_TILE_NUM_ROWS.U, Config.SMALL_TILE_NUM_ROWS.U)
-
   // Counters
   val (x, xWrap) = Counter.static(Config.SMALL_TILE_SIZE, enable = busyReg && !pisoEmpty)
   val (y, yWrap) = Counter.static(Config.SMALL_TILE_SIZE, enable = xWrap)
-  val (subTileX, subTileXWrap) = Counter.static(2, enable = xWrap && yWrap)
+  val (subTileX, subTileXWrap) = Counter.static(2, enable = configReg.layer.tileSize && xWrap && yWrap)
   val (subTileY, subTileYWrap) = Counter.static(2, enable = subTileXWrap)
-  val (col, colWrap) = Counter.dynamic(numCols, enable = colCounterEnable)
-  val (row, rowWrap) = Counter.dynamic(numRows, enable = colWrap)
 
-  // Set tile done flag
-  val smallTileDone = !pisoEmpty && xWrap && yWrap
-  val largeTileDone = !pisoEmpty && xWrap && yWrap && subTileXWrap && subTileYWrap
-  val tileDone = Mux(configReg.layer.tileSize, largeTileDone, smallTileDone)
+  // Set done flag
+//  val smallTileDone = xWrap && yWrap
+//  val largeTileDone = xWrap && yWrap && subTileXWrap && subTileYWrap
+//  val blitDone = Mux(configReg.layer.tileSize, largeTileDone, smallTileDone)
+  val blitDone = xWrap && yWrap && (!configReg.layer.tileSize || (subTileXWrap && subTileYWrap))
 
   // Pixel position
   val pixelPos = UVec2(x, y)
 
   // Tile position
   val tilePos = {
-    val x = Mux(configReg.layer.tileSize, col ## subTileX ## 0.U(3.W), col ## 0.U(3.W))
-    val y = Mux(configReg.layer.tileSize, row ## subTileY ## 0.U(3.W), row ## 0.U(3.W))
+    val x = Mux(configReg.layer.tileSize, configReg.col ## subTileX ## 0.U(3.W), configReg.col ## 0.U(3.W))
+    val y = Mux(configReg.layer.tileSize, configReg.row ## subTileY ## 0.U(3.W), configReg.row ## 0.U(3.W))
     UVec2(x, y)
   }
 
@@ -132,32 +128,17 @@ class TilemapBlitter extends Module {
   val stage1Pos = RegNext(stage0Pos)
   val stage2Pos = RegNext(stage1Pos)
 
+  // The busy register is set when a configuration is latched, and cleared when a blit has finished
+  when(io.config.fire()) { busyReg := true.B }.elsewhen(blitDone) { busyReg := false.B }
+
   // The FIFO can only be read when it is not empty and should be read if the PISO is empty or will
   // be empty next clock cycle. Since the pipeline after the FIFO has no backpressure, and can
   // accommodate data every clock cycle, this will be the case if the PISO counter is one.
-  val pixelDataReady = io.pixelData.valid && (pisoEmpty || pisoAlmostEmpty)
+  val pixelDataReady = io.pixelData.valid && busyReg && (pisoEmpty || pisoAlmostEmpty)
 
-  // The tile info should be updated when we read a new tile from the FIFO, this can be in
-  // either of two cases. First, when the counters are at 0 (no data yet) and the first pixels
-  // arrive, second, when a tile finishes and the data for the second tile is already there.
-  //
-  // This is to achieve maximum efficiency of the pipeline. While there are tile to draw we burst
-  // them from memory into the pipeline.
-  val updateSmallTileInfo = pixelDataReady && ((x === 0.U && y === 0.U) || (xWrap && yWrap))
-  val updateLargeTileInfo = pixelDataReady && ((x === 0.U && y === 0.U && subTileX === 0.U && subTileY === 0.U) || (xWrap && yWrap && subTileXWrap && subTileYWrap))
-  updateTileInfo := Mux(configReg.layer.tileSize, updateLargeTileInfo, updateSmallTileInfo)
-
-  // Set column counter enable
-  // FIXME: refactor this logic
-  when(!(xWrap && yWrap)) {
-    colCounterEnable := false.B
-  }.elsewhen(!configReg.layer.tileSize) {
-    colCounterEnable := true.B
-  }.elsewhen(subTileXWrap && subTileYWrap) {
-    colCounterEnable := true.B
-  }.otherwise {
-    colCounterEnable := false.B
-  }
+  // The config ready flag is asserted when the blitter is ready to latch a new configuration (i.e.
+  // the blitter is not busy, or a blit has just finished)
+  val configReady = io.config.valid && (!busyReg || blitDone)
 
   // The tiles use the second 64 palettes, and use 16 colors (out of 256 possible in a palette)
   paletteEntryReg := PaletteEntry(1.U ## configReg.tile.colorCode, piso.io.dout)
@@ -165,7 +146,7 @@ class TilemapBlitter extends Module {
 
   // Set delayed valid/done shift registers
   val validReg = ShiftRegister(!pisoEmpty, 2, false.B, true.B)
-  val doneReg = ShiftRegister(tileDone, 2, false.B, true.B)
+  val delayedBusyReg = ShiftRegister(busyReg, 2, false.B, true.B)
 
   // Set priority data
   val priorityReadAddr = GPU.transformAddr(stage1Pos, configReg.flip, configReg.rotate)
@@ -187,7 +168,7 @@ class TilemapBlitter extends Module {
   val frameBufferData = RegNext(io.paletteRam.dout)
 
   // Outputs
-  io.config.ready := updateTileInfo
+  io.config.ready := configReady
   io.pixelData.ready := pixelDataReady
   io.paletteRam.rd := true.B
   io.paletteRam.addr := paletteRamAddr
@@ -201,5 +182,5 @@ class TilemapBlitter extends Module {
   io.frameBuffer.addr := frameBufferAddr
   io.frameBuffer.mask := 0.U
   io.frameBuffer.din := frameBufferData
-  io.done := doneReg
+  io.busy := delayedBusyReg
 }
