@@ -97,7 +97,7 @@ class TilemapBlitter extends Module {
   val numRows = Mux(configReg.layer.tileSize, Config.LARGE_TILE_NUM_ROWS.U, Config.SMALL_TILE_NUM_ROWS.U)
 
   // Counters
-  val (x, xWrap) = Counter.static(Config.SMALL_TILE_SIZE, enable = !pisoEmpty)
+  val (x, xWrap) = Counter.static(Config.SMALL_TILE_SIZE, enable = busyReg && !pisoEmpty)
   val (y, yWrap) = Counter.static(Config.SMALL_TILE_SIZE, enable = xWrap)
   val (subTileX, subTileXWrap) = Counter.static(2, enable = xWrap && yWrap)
   val (subTileY, subTileYWrap) = Counter.static(2, enable = subTileXWrap)

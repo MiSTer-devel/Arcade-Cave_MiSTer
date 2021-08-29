@@ -84,7 +84,7 @@ class SpriteBlitter extends Module {
   val pisoAlmostEmpty = piso.io.isAlmostEmpty
 
   // Counters
-  val (x, xWrap) = Counter.dynamic(configReg.sprite.size.x, enable = !pisoEmpty)
+  val (x, xWrap) = Counter.dynamic(configReg.sprite.size.x, enable = busyReg && !pisoEmpty)
   val (y, yWrap) = Counter.dynamic(configReg.sprite.size.y, enable = xWrap)
 
   // Pixel position
