@@ -150,5 +150,5 @@ class SpriteBlitter extends Module {
   io.frameBuffer.din := frameBufferData
   io.busy := delayedBusyReg
 
-  printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), ready: $configReady, busy: $busyReg, pixelDataReady: $pixelDataReady, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
+  printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), ready: $configReady, busy: $busyReg, write: $frameBufferWrite, pixelDataReady: $pixelDataReady, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
 }
