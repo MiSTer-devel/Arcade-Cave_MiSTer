@@ -99,7 +99,7 @@ class TilemapProcessor extends Module {
   // an element has been written to the queue.
   val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), Config.FIFO_DEPTH, flow = true))
 
-  // Columns/rows/tiles
+  // Columns/rows
   val numCols = Mux(io.layer.tileSize, Config.LARGE_TILE_NUM_COLS.U, Config.SMALL_TILE_NUM_COLS.U)
   val numRows = Mux(io.layer.tileSize, Config.LARGE_TILE_NUM_ROWS.U, Config.SMALL_TILE_NUM_ROWS.U)
 
@@ -277,4 +277,6 @@ class TilemapProcessor extends Module {
   io.debug.pending := stateReg === State.pending
   io.debug.next := stateReg === State.next
   io.debug.done := stateReg === State.done
+
+  printf(p"TilemapProcessor(state: $stateReg, col: $col ($colWrap), row: $row ($rowWrap), ready: $burstReadyReg, pending: $burstPendingReg)\n")
 }
