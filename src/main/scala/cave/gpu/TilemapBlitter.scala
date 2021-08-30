@@ -180,4 +180,6 @@ class TilemapBlitter extends Module {
   io.frameBuffer.mask := 0.U
   io.frameBuffer.din := frameBufferData
   io.busy := delayedBusyReg
+
+  printf(p"TilemapBlitter(x: $x ($xWrap), y: $y ($yWrap), ready: $configReady, busy: $busyReg, write: $frameBufferWrite, pixelDataReady: $pixelDataReady, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
 }
