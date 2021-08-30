@@ -100,9 +100,6 @@ class TilemapBlitter extends Module {
   val (subTileY, subTileYWrap) = Counter.static(2, enable = subTileXWrap)
 
   // Set done flag
-//  val smallTileDone = xWrap && yWrap
-//  val largeTileDone = xWrap && yWrap && subTileXWrap && subTileYWrap
-//  val blitDone = Mux(configReg.layer.tileSize, largeTileDone, smallTileDone)
   val blitDone = xWrap && yWrap && (!configReg.layer.tileSize || (subTileXWrap && subTileYWrap))
 
   // Pixel position
@@ -134,7 +131,7 @@ class TilemapBlitter extends Module {
   // The FIFO can only be read when it is not empty and should be read if the PISO is empty or will
   // be empty next clock cycle. Since the pipeline after the FIFO has no backpressure, and can
   // accommodate data every clock cycle, this will be the case if the PISO counter is one.
-  val pixelDataReady = io.pixelData.valid && busyReg && (pisoEmpty || pisoAlmostEmpty)
+  val pixelDataReady = io.pixelData.valid && (pisoEmpty || pisoAlmostEmpty)
 
   // The config ready flag is asserted when the blitter is ready to latch a new configuration (i.e.
   // the blitter is not busy, or a blit has just finished)
