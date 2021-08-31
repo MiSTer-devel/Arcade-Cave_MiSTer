@@ -38,7 +38,7 @@ import chiseltest._
 import org.scalatest._
 
 trait TilemapProcessorTestHelpers {
-  def mkProcessor() = new TilemapProcessor
+  def mkProcessor() = new TilemapProcessor(1, 1)
 
   def waitForIdle(dut: TilemapProcessor) =
     while (!dut.io.debug.idle.peek().litToBoolean) { dut.clock.step() }
@@ -153,7 +153,7 @@ class TilemapProcessorTest extends FlatSpec with ChiselScalatestTester with Matc
     test(mkProcessor()) { dut =>
       dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP.U)
       dut.io.start.poke(true.B)
-      dut.clock.step(2)
+      waitForLoad(dut)
       dut.io.layerRam.rd.expect(true.B)
     }
   }

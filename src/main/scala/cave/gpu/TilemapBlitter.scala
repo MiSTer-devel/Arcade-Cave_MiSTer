@@ -43,9 +43,9 @@ import chisel3.util._
 /** Represents a tile blitter configuration. */
 class TilemapBlitterConfig extends Bundle {
   /** Tilemap column */
-  val col = UInt(Config.TILEMAP_MAX_COLS.W)
+  val col = UInt(6.W)
   /** Tilemap row */
-  val row = UInt(Config.TILEMAP_MAX_ROWS.W)
+  val row = UInt(5.W)
   /** Layer */
   val layer = new Layer
   /** Tile */

@@ -40,8 +40,13 @@ import cave.types._
 import chisel3._
 import chisel3.util._
 
-/** The tilemap processor is responsible for rendering tilemap layers. */
-class TilemapProcessor extends Module {
+/**
+ * The tilemap processor is responsible for rendering tilemap layers.
+ *
+ * @param cols The number of columns in the tilemap.
+ * @param rows The number of rows in the tilemap.
+ */
+class TilemapProcessor(cols: Int = 40, rows: Int = 30) extends Module {
   val io = IO(new Bundle {
     /** Game config port */
     val gameConfig = Input(GameConfig())
@@ -100,8 +105,8 @@ class TilemapProcessor extends Module {
   val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), Config.FIFO_DEPTH, flow = true))
 
   // Columns/rows
-  val numCols = Mux(io.layer.tileSize, Config.LARGE_TILE_NUM_COLS.U, Config.SMALL_TILE_NUM_COLS.U)
-  val numRows = Mux(io.layer.tileSize, Config.LARGE_TILE_NUM_ROWS.U, Config.SMALL_TILE_NUM_ROWS.U)
+  val numCols = Mux(io.layer.tileSize, (cols / 2 + 1).U, (cols + 1).U)
+  val numRows = Mux(io.layer.tileSize, (rows / 2 + 1).U, (rows + 1).U)
 
   // Counters
   val (col, colWrap) = Counter.dynamic(numCols, enable = stateReg === State.next)
@@ -278,5 +283,5 @@ class TilemapProcessor extends Module {
   io.debug.next := stateReg === State.next
   io.debug.done := stateReg === State.done
 
-  printf(p"TilemapProcessor(state: $stateReg, col: $col ($colWrap), row: $row ($rowWrap), ready: $burstReadyReg, pending: $burstPendingReg)\n")
+  printf(p"TilemapProcessor(state: $stateReg, col: $col ($colWrap), row: $row ($rowWrap), ready: $burstReadyReg, pending: $burstPendingReg, full: ${ fifo.io.count })\n")
 }
