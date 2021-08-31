@@ -141,19 +141,19 @@ class TilemapBlitter extends Module {
   paletteEntryReg := PaletteEntry(1.U ## configReg.tile.colorCode, piso.io.dout)
   val paletteRamAddr = paletteEntryReg.toAddr(configReg.numColors)
 
-  // Set delayed valid/done shift registers
+  // Set delayed shift registers
   val validReg = ShiftRegister(!pisoEmpty, 2, false.B, true.B)
   val delayedBusyReg = ShiftRegister(busyReg, 2, false.B, true.B)
+  val delayedPriorityReg = ShiftRegister(configReg.tile.priority, 2)
 
   // Set priority data
   val priorityReadAddr = GPU.transformAddr(stage1Pos, configReg.flip, configReg.rotate)
   val priorityReadData = io.priority.read.dout
-  val priorityWriteData = ShiftRegister(configReg.tile.priority, 3)
 
   // The current pixel has priority if it has more priority than the previous pixel. Otherwise, if
   // the pixel priorities are the same then it depends on the layer priorities.
-  val hasPriority = (configReg.tile.priority > priorityReadData) ||
-                    (configReg.tile.priority === priorityReadData && configReg.layer.priority >= io.lastLayerPriority)
+  val hasPriority = (delayedPriorityReg > priorityReadData) ||
+                    (delayedPriorityReg === priorityReadData && configReg.layer.priority >= io.lastLayerPriority)
 
   // The transparency flag must be delayed by one cycle, since the colors come from the palette RAM
   // they arrive one cycle later.
@@ -174,7 +174,7 @@ class TilemapBlitter extends Module {
   io.priority.write.wr := frameBufferWrite
   io.priority.write.addr := frameBufferAddr
   io.priority.write.mask := 0.U
-  io.priority.write.din := priorityWriteData
+  io.priority.write.din := delayedPriorityReg
   io.frameBuffer.wr := frameBufferWrite
   io.frameBuffer.addr := frameBufferAddr
   io.frameBuffer.mask := 0.U
