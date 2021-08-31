@@ -70,6 +70,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
     /** Debug port */
     val debug = Output(new Bundle {
       val idle = Bool()
+      val load = Bool()
       val latch = Bool()
       val check = Bool()
       val ready = Bool()
@@ -81,7 +82,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
 
   // States
   object State {
-    val idle :: latch :: check :: ready :: pending :: next :: done :: Nil = Enum(7)
+    val idle :: load :: latch :: check :: ready :: pending :: next :: done :: Nil = Enum(8)
   }
 
   // Set 8BPP flag
@@ -166,8 +167,11 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   switch(stateReg) {
     // Wait for the start signal
     is(State.idle) {
-      when(io.start) { stateReg := State.latch }
+      when(io.start) { stateReg := State.load }
     }
+
+    // Load the sprite
+    is(State.load) { stateReg := State.latch }
 
     // Latch the sprite
     is(State.latch) { stateReg := State.check }
@@ -187,7 +191,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
 
     // Increment the sprite counter
     is(State.next) {
-      stateReg := Mux(spriteCounterWrap, State.done, State.latch)
+      stateReg := Mux(spriteCounterWrap, State.done, State.load)
     }
 
     // Wait until the blitter has finished
@@ -198,12 +202,13 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
 
   // Outputs
   io.busy := stateReg =/= State.idle
-  io.spriteRam.rd := true.B
+  io.spriteRam.rd := stateReg === State.load
   io.spriteRam.addr := spriteRamAddr
   io.tileRom.rd := tileRomRead
   io.tileRom.addr := tileRomAddr
   io.tileRom.burstLength := tileRomBurstLength
   io.debug.idle := stateReg === State.idle
+  io.debug.load := stateReg === State.load
   io.debug.latch := stateReg === State.latch
   io.debug.check := stateReg === State.check
   io.debug.ready := stateReg === State.ready

@@ -42,6 +42,9 @@ trait SpriteProcessorTestHelpers {
   def waitForIdle(dut: SpriteProcessor) =
     while (!dut.io.debug.idle.peek().litToBoolean) { dut.clock.step() }
 
+  def waitForLoad(dut: SpriteProcessor) =
+    while (!dut.io.debug.load.peek().litToBoolean) { dut.clock.step() }
+
   def waitForLatch(dut: SpriteProcessor) =
     while (!dut.io.debug.latch.peek().litToBoolean) { dut.clock.step() }
 
@@ -64,9 +67,18 @@ trait SpriteProcessorTestHelpers {
 class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Matchers with SpriteProcessorTestHelpers {
   behavior of "FSM"
 
-  it should "move to the latch state when the start signal is asserted" in {
+  it should "move to the load state when the start signal is asserted" in {
     test(mkProcessor()) { dut =>
       dut.io.start.poke(true.B)
+      dut.clock.step()
+      dut.io.debug.load.expect(true.B)
+    }
+  }
+
+  it should "move to the latch state after loading a sprite" in {
+    test(mkProcessor()) { dut =>
+      dut.io.start.poke(true.B)
+      waitForLoad(dut)
       dut.clock.step()
       dut.io.debug.latch.expect(true.B)
     }
@@ -149,6 +161,8 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
 
   it should "fetch sprite data from the sprite RAM" in {
     test(mkProcessor()) { dut =>
+      dut.io.start.poke(true.B)
+      waitForLoad(dut)
       dut.io.spriteRam.rd.expect(true.B)
     }
   }
