@@ -100,7 +100,7 @@ class TilemapDecoder extends Module {
   io.pixelData.valid := validReg
   io.pixelData.bits := pixelDataReg
 
-  printf(p"TilemapDecoder(toggleReg: $toggleReg, pendingReg: $pendingReg, validReg: $validReg, start: $start, done: $done, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid })\n")
+  printf(p"TilemapDecoder(start: $start, done: $done, toggle: $toggleReg, pending: $pendingReg, valid: $validReg, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid })\n")
 }
 
 object TilemapDecoder {
