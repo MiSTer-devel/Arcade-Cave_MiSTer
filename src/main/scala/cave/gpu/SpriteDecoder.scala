@@ -61,11 +61,11 @@ class SpriteDecoder extends Module {
 
   // Registers
   val pendingReg = RegInit(false.B)
-  val toggleReg = RegInit(false.B)
   val validReg = RegInit(false.B)
+  val toggleReg = RegInit(false.B)
   val pixelDataReg = Reg(Vec(Config.LARGE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
 
-  // The ready flag is asserted when a new request for pixel data, or there is no valid pixel data
+  // The ready flag is asserted when pixel data is requested, or there is no valid pixel data
   val ready = io.pixelData.ready || !validReg
 
   // The start flag is asserted when the decoder wants to decode a tile
@@ -103,7 +103,7 @@ class SpriteDecoder extends Module {
   io.pixelData.valid := validReg
   io.pixelData.bits := pixelDataReg
 
-  printf(p"SpriteDecoder(start: $start, done: $done, toggle: $toggleReg, pending: $pendingReg, valid: $validReg, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid })\n")
+  printf(p"SpriteDecoder(start: $start, ready: $ready, done: $done, pending: $pendingReg, valid: $validReg, toggle: $toggleReg, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid })\n")
 }
 
 object SpriteDecoder {

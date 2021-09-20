@@ -114,6 +114,7 @@ class SpriteDecoderTest extends FlatSpec with ChiselScalatestTester with Matcher
     test(new SpriteDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_8BPP.U)
       dut.io.pixelData.valid.expect(false.B)
+      dut.io.rom.ready.expect(false.B)
       dut.io.rom.valid.poke(true.B)
       dut.io.rom.ready.expect(true.B)
       dut.clock.step()
