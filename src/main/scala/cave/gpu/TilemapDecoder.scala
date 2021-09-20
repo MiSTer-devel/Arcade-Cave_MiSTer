@@ -53,32 +53,24 @@ class TilemapDecoder extends Module {
 
   // Registers
   val pendingReg = RegInit(false.B)
-  val toggleReg = RegInit(false.B)
   val validReg = RegInit(false.B)
+  val toggleReg = RegInit(false.B)
   val dataReg = Reg(Bits(Config.TILE_ROM_DATA_WIDTH.W))
-  val pixelDataReg = Reg(Vec(Config.SMALL_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
 
-  // Extract the correct bits for a 4BPP tile
-  val bits = Mux(toggleReg, dataReg, io.rom.bits.head(Config.TILE_ROM_DATA_WIDTH / 2))
+  // The start flag is asserted when there is no valid pixel data
+  val start = !pendingReg && !validReg
 
-  // The ready flag is asserted when a new request for pixel data, or there is no valid pixel data
-  val ready = io.pixelData.ready || !validReg
+  // The ready flag is asserted when the decoder needs tile ROM data.
+  //
+  // For 8x8x4 tiles, the decoder only needs to fetch tile ROM data for every other row. For 8x8x8
+  // tiles, the decoder needs to fetch tile ROM data for every row.
+  val ready = io.pixelData.ready && (is8BPP || toggleReg)
 
-  // The start flag is asserted when the decoder needs tile ROM data. For 8x8x4 tiles, the decoder
-  // only needs to fetch tile ROM data for every other request.
-  val start = ready && !pendingReg && (is8BPP || !toggleReg)
-
-  // The done flag is asserted when the decoder has finished decoding a tile
-  val done = pendingReg && toggleReg
-
-  // Update the toggle register when a request is received
-  when(io.pixelData.fire()) { toggleReg := !toggleReg }
-
-  // Update the state when the decoder needs tile ROM data
-  when(start) {
+  // Clear registers when starting a new request
+  when(start || ready) {
     pendingReg := true.B
-    toggleReg := true.B
     validReg := false.B
+    toggleReg := false.B
   }
 
   // Update the state when there is valid tile ROM data
@@ -88,31 +80,40 @@ class TilemapDecoder extends Module {
     dataReg := io.rom.bits
   }
 
-  // Decode pixel data
-  when(io.rom.fire() || (io.pixelData.ready && toggleReg)) {
-    pixelDataReg := MuxLookup(io.format, VecInit(TilemapDecoder.decode4BPP(bits)), Seq(
-      Config.GFX_FORMAT_8BPP.U -> VecInit(TilemapDecoder.decode8BPP(io.rom.bits))
-    ))
-  }
+  // Update the toggle register when a request is received
+  when(io.pixelData.fire()) { toggleReg := !toggleReg }
 
   // Outputs
-  io.rom.ready := io.rom.valid && ready && (is8BPP || pendingReg || !toggleReg)
+  io.rom.ready := io.rom.valid && pendingReg
   io.pixelData.valid := validReg
-  io.pixelData.bits := pixelDataReg
+  io.pixelData.bits := MuxLookup(io.format, VecInit(TilemapDecoder.decode4BPP(dataReg, toggleReg)), Seq(
+    Config.GFX_FORMAT_8BPP.U -> VecInit(TilemapDecoder.decode8BPP(dataReg))
+  ))
 
-  printf(p"TilemapDecoder(start: $start, done: $done, toggle: $toggleReg, pending: $pendingReg, valid: $validReg, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid })\n")
+  printf(p"TilemapDecoder(start: $start, ready: $ready, pending: $pendingReg, valid: $validReg, toggle: $toggleReg, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid }, data: 0x${ Hexadecimal(dataReg) })\n")
 }
 
 object TilemapDecoder {
-  /** Decodes 8x8x4 tiles (i.e. 32 bits per row) */
-  private def decode4BPP(data: Bits): Seq[Bits] =
+  /**
+   * Decodes 8x8x4 tiles (i.e. 32 bits per row)
+   *
+   * @param data The 64-bit tile ROM data.
+   * @param toggle A flag indicating whether to decode the lower or upper 32 bits of the word.
+   */
+  private def decode4BPP(data: Bits, toggle: Bool): Seq[Bits] = {
+    val bits = Mux(toggle, data.tail(Config.TILE_ROM_DATA_WIDTH / 2), data.head(Config.TILE_ROM_DATA_WIDTH / 2))
     Seq(0, 1, 2, 3, 4, 5, 6, 7)
       // Decode data into nibbles
-      .reverseMap(Util.decode(data, 8, 4).apply)
+      .reverseMap(Util.decode(bits, 8, 4).apply)
       // Pad nibbles into 8-bit pixels
       .map(_.pad(8))
+  }
 
-  /** Decodes 8x8x8 tiles (i.e. 64 bits per row) */
+  /**
+   * Decodes 8x8x8 tiles (i.e. 64 bits per row)
+   *
+   * @param data The 64-bit tile ROM data.
+   */
   private def decode8BPP(data: Bits): Seq[Bits] =
     Seq(2, 0, 3, 1, 6, 4, 7, 5, 10, 8, 11, 9, 14, 12, 15, 13)
       // Decode data into nibbles

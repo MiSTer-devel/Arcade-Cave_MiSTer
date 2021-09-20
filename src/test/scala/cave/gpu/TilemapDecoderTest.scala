@@ -40,83 +40,64 @@ import org.scalatest._
 class TilemapDecoderTest extends FlatSpec with ChiselScalatestTester with Matchers {
   behavior of "4BPP"
 
-  it should "initially request tile ROM data" in {
+  it should "request a word from the tile ROM for every two rows" in {
     test(new TilemapDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_4BPP.U)
-      dut.io.pixelData.valid.expect(false.B)
+      dut.clock.step()
+
+      // Initial request
       dut.io.rom.valid.poke(true.B)
       dut.io.rom.ready.expect(true.B)
       dut.clock.step()
       dut.io.pixelData.valid.expect(true.B)
       dut.io.rom.ready.expect(false.B)
-    }
-  }
-
-  it should "request a word from the tile ROM for every two rows" in {
-    test(new TilemapDecoder) { dut =>
-      dut.io.format.poke(Config.GFX_FORMAT_4BPP.U)
-
-      dut.io.rom.valid.poke(true.B)
       dut.clock.step()
 
       // First request
       dut.io.pixelData.ready.poke(true.B)
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(false.B)
       dut.clock.step()
       dut.io.pixelData.ready.poke(false.B)
       dut.io.pixelData.valid.expect(true.B)
+      dut.io.rom.ready.expect(false.B)
       dut.clock.step()
 
       // Second request
       dut.io.pixelData.ready.poke(true.B)
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(true.B)
       dut.clock.step()
       dut.io.pixelData.ready.poke(false.B)
+      dut.io.rom.ready.expect(true.B)
+      dut.clock.step()
       dut.io.pixelData.valid.expect(true.B)
       dut.io.rom.ready.expect(false.B)
-      dut.clock.step()
 
       // Third request
       dut.io.pixelData.ready.poke(true.B)
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(false.B)
       dut.clock.step()
       dut.io.pixelData.ready.poke(false.B)
       dut.io.pixelData.valid.expect(true.B)
       dut.io.rom.ready.expect(false.B)
-    }
-  }
-
-  it should "handle a pending request" in {
-    test(new TilemapDecoder) { dut =>
-      dut.io.format.poke(Config.GFX_FORMAT_4BPP.U)
-      dut.io.pixelData.ready.poke(true.B)
-      dut.io.pixelData.valid.expect(false.B)
-      dut.io.rom.ready.expect(false.B)
-      dut.clock.step()
-      dut.io.pixelData.ready.poke(false.B)
-      dut.io.pixelData.valid.expect(false.B)
-      dut.io.rom.valid.poke(true.B)
-      dut.io.rom.ready.expect(true.B)
-      dut.clock.step()
-      dut.io.pixelData.valid.expect(true.B)
     }
   }
 
   it should "decode a 4BPP tile" in {
     test(new TilemapDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_4BPP.U)
-      dut.io.pixelData.ready.poke(true.B)
+      dut.clock.step()
       dut.io.rom.valid.poke(true.B)
       dut.io.rom.bits.poke("hfedcba9876543210".U)
       dut.clock.step()
+      dut.io.pixelData.ready.poke(true.B)
+
+      // First request
+      dut.io.pixelData.valid.expect(true.B)
       dut.io.pixelData.bits(0).expect(0xf.U)
       dut.io.pixelData.bits(1).expect(0xe.U)
       dut.io.pixelData.bits(6).expect(0x9.U)
       dut.io.pixelData.bits(7).expect(0x8.U)
       dut.clock.step()
+
+      // Second request
+      dut.io.pixelData.valid.expect(true.B)
       dut.io.pixelData.bits(0).expect(0x7.U)
       dut.io.pixelData.bits(1).expect(0x6.U)
       dut.io.pixelData.bits(6).expect(0x1.U)
@@ -126,31 +107,23 @@ class TilemapDecoderTest extends FlatSpec with ChiselScalatestTester with Matche
 
   behavior of "8BPP"
 
-  it should "initially request tile ROM data" in {
+  it should "request a word from the tile ROM for every row" in {
     test(new TilemapDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_8BPP.U)
-      dut.io.pixelData.valid.expect(false.B)
+      dut.clock.step()
+
+      // Initial request
       dut.io.rom.valid.poke(true.B)
       dut.io.rom.ready.expect(true.B)
       dut.clock.step()
       dut.io.pixelData.valid.expect(true.B)
       dut.io.rom.ready.expect(false.B)
-    }
-  }
-
-  it should "request a word from the tile ROM for every row" in {
-    test(new TilemapDecoder) { dut =>
-      dut.io.format.poke(Config.GFX_FORMAT_8BPP.U)
+      dut.clock.step()
 
       // First request
       dut.io.pixelData.ready.poke(true.B)
-      dut.io.pixelData.valid.expect(false.B)
-      dut.io.rom.valid.poke(false.B)
-      dut.io.rom.ready.expect(false.B)
       dut.clock.step()
       dut.io.pixelData.ready.poke(false.B)
-      dut.io.pixelData.valid.expect(false.B)
-      dut.io.rom.valid.poke(true.B)
       dut.io.rom.ready.expect(true.B)
       dut.clock.step()
       dut.io.pixelData.valid.expect(true.B)
@@ -159,46 +132,23 @@ class TilemapDecoderTest extends FlatSpec with ChiselScalatestTester with Matche
 
       // Second request
       dut.io.pixelData.ready.poke(true.B)
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(true.B)
       dut.clock.step()
       dut.io.pixelData.ready.poke(false.B)
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(false.B)
-
-      // Third request
-      dut.io.pixelData.ready.poke(true.B)
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(true.B)
-      dut.clock.step()
-      dut.io.pixelData.ready.poke(false.B)
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(false.B)
-    }
-  }
-
-  it should "handle a pending request" in {
-    test(new TilemapDecoder) { dut =>
-      dut.io.format.poke(Config.GFX_FORMAT_8BPP.U)
-      dut.io.pixelData.ready.poke(true.B)
-      dut.io.pixelData.valid.expect(false.B)
-      dut.io.rom.ready.expect(false.B)
-      dut.clock.step()
-      dut.io.pixelData.ready.poke(false.B)
-      dut.io.pixelData.valid.expect(false.B)
-      dut.io.rom.valid.poke(true.B)
       dut.io.rom.ready.expect(true.B)
       dut.clock.step()
       dut.io.pixelData.valid.expect(true.B)
+      dut.io.rom.ready.expect(false.B)
     }
   }
 
   it should "decode a 8BPP tile" in {
     test(new TilemapDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_8BPP.U)
+      dut.clock.step()
       dut.io.rom.valid.poke(true.B)
       dut.io.rom.bits.poke("hfedcba9876543210".U)
       dut.clock.step()
+      dut.io.pixelData.valid.expect(true.B)
       dut.io.pixelData.bits(0).expect(0xdf.U)
       dut.io.pixelData.bits(1).expect(0xce.U)
       dut.io.pixelData.bits(6).expect(0x13.U)
