@@ -52,6 +52,7 @@ module emu (
 
   input  [11:0] HDMI_WIDTH,
   input  [11:0] HDMI_HEIGHT,
+  output        HDMI_FREEZE,
 
   // Use framebuffer in DDRAM (USE_FB=1 in qsf)
   // FB_FORMAT:
@@ -273,15 +274,13 @@ wire [15:0] ioctl_din;
 wire [15:0] ioctl_dout;
 
 wire [10:0] ps2_key;
-wire [10:0] joystick_0, joystick_1;
+wire [31:0] joystick_0, joystick_1;
 
 wire sdram_available = |sdram_sz[1:0];
 
-hps_io #(.STRLEN($size(CONF_STR)>>3), .WIDE(1)) hps_io (
+hps_io #(.CONF_STR(CONF_STR), .WIDE(1)) hps_io (
   .clk_sys(clk_sys),
   .HPS_BUS(HPS_BUS),
-
-  .conf_str(CONF_STR),
 
   .buttons(buttons),
   .status(status),
@@ -323,16 +322,16 @@ assign CLK_VIDEO = clk_video;
 assign VGA_F1 = 0;
 assign VGA_SL = sl[1:0];
 assign VGA_SCALER = 0;
+assign HDMI_FREEZE = 0;
 
 video_mixer #(.LINE_LENGTH(320), .HALF_DEPTH(0), .GAMMA(1)) video_mixer (
-  .*,
-
   .CLK_VIDEO(clk_video),
   .CE_PIXEL(CE_PIXEL),
   .ce_pix(ce_pix),
 
   .scandoubler(scandoubler),
   .hq2x(scale==1),
+  .gamma_bus(gamma_bus),
 
   .R(r),
   .G(g),
@@ -342,7 +341,14 @@ video_mixer #(.LINE_LENGTH(320), .HALF_DEPTH(0), .GAMMA(1)) video_mixer (
   .HSync(hsync),
   .VSync(vsync),
   .HBlank(hblank),
-  .VBlank(vblank)
+  .VBlank(vblank),
+
+  .VGA_R(VGA_R),
+  .VGA_G(VGA_G),
+  .VGA_B(VGA_B),
+  .VGA_VS(VGA_VS),
+  .VGA_HS(VGA_HS),
+  .VGA_DE(VGA_DE)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
