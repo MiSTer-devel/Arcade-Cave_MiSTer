@@ -40,8 +40,13 @@ import cave.types._
 import chisel3._
 import chisel3.util._
 
-/** The tilemap processor is responsible for rendering tilemap layers. */
-class TilemapProcessor extends Module {
+/**
+ * The tilemap processor is responsible for rendering tilemap layers.
+ *
+ * @param cols The number of columns in the tilemap.
+ * @param rows The number of rows in the tilemap.
+ */
+class TilemapProcessor(cols: Int = 40, rows: Int = 30) extends Module {
   val io = IO(new Bundle {
     /** Game config port */
     val gameConfig = Input(GameConfig())
@@ -51,10 +56,10 @@ class TilemapProcessor extends Module {
     val start = Input(Bool())
     /** The busy flag is asserted while the processor is busy */
     val busy = Output(Bool())
-    /** Layer index */
-    val layerIndex = Input(UInt(Config.LAYER_INDEX_WIDTH.W))
     /** Layer port */
     val layer = Input(new Layer)
+    /** Layer index */
+    val layerIndex = Input(UInt(Config.LAYER_INDEX_WIDTH.W))
     /** Layer RAM port */
     val layerRam = ReadMemIO(Config.LAYER_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
     /** Palette RAM port */
@@ -68,32 +73,29 @@ class TilemapProcessor extends Module {
     /** Debug port */
     val debug = Output(new Bundle {
       val idle = Bool()
-      val latch = Bool()
       val check = Bool()
+      val load = Bool()
+      val latch = Bool()
       val ready = Bool()
       val pending = Bool()
+      val next = Bool()
       val done = Bool()
     })
   })
 
   // States
   object State {
-    val idle :: latch :: check :: ready :: pending :: done :: Nil = Enum(6)
+    val idle :: check :: load :: latch :: ready :: pending :: next :: done :: Nil = Enum(8)
   }
 
   // Wires
   val effectiveRead = Wire(Bool())
-  val updateTileInfo = Wire(Bool())
-  val pipelineReady = Wire(Bool())
-  val pipelineDone = Wire(Bool())
 
   // Registers
   val stateReg = RegInit(State.idle)
-  val layerReg = RegEnable(io.layer, stateReg === State.latch)
-  val tileReg = RegEnable(Tile.decode(io.layerRam.dout, layerReg.tileSize), updateTileInfo)
-  val tileInfoTakenReg = RegInit(false.B)
-  val burstPendingReg = RegInit(false.B)
+  val tileReg = RegEnable(Tile.decode(io.layerRam.dout, io.layer.tileSize), stateReg === State.latch)
   val burstReadyReg = RegInit(false.B)
+  val burstPendingReg = RegInit(false.B)
   val lastLayerPriorityReg = RegInit(0.U)
 
   // The FIFO buffers the raw data read from the tile ROM.
@@ -102,31 +104,21 @@ class TilemapProcessor extends Module {
   // an element has been written to the queue.
   val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), Config.FIFO_DEPTH, flow = true))
 
-  // Columns/rows/tiles
-  val numCols = Mux(layerReg.tileSize, Config.LARGE_TILE_NUM_COLS.U, Config.SMALL_TILE_NUM_COLS.U)
-  val numRows = Mux(layerReg.tileSize, Config.LARGE_TILE_NUM_ROWS.U, Config.SMALL_TILE_NUM_ROWS.U)
-  val numTiles = Mux(layerReg.tileSize, Config.LARGE_TILE_NUM_TILES.U, Config.SMALL_TILE_NUM_TILES.U)
+  // Columns/rows
+  val numCols = Mux(io.layer.tileSize, (cols / 2 + 1).U, (cols + 1).U)
+  val numRows = Mux(io.layer.tileSize, (rows / 2 + 1).U, (rows + 1).U)
 
   // Counters
-  val (col, colWrap) = Counter.dynamic(numCols, enable = effectiveRead, reset = stateReg === State.idle)
-  val (row, rowWrap) = Counter.dynamic(numRows, enable = colWrap, reset = stateReg === State.idle)
-  val (_, tileWrap) = Counter.dynamic(numTiles, enable = pipelineDone, reset = stateReg === State.idle)
+  val (col, colWrap) = Counter.dynamic(numCols, enable = stateReg === State.next)
+  val (row, rowWrap) = Counter.dynamic(numRows, enable = colWrap)
 
   // Tilemap blitter
-  val blitter = withReset(stateReg === State.idle) { Module(new TilemapBlitter) }
+  val blitter = Module(new TilemapBlitter)
   blitter.io.layerIndex := io.layerIndex
   blitter.io.lastLayerPriority := lastLayerPriorityReg
-  blitter.io.config.bits.layer := layerReg
-  blitter.io.config.bits.tile := tileReg
-  pipelineReady := blitter.io.config.ready
-  blitter.io.config.valid := updateTileInfo
   blitter.io.paletteRam <> io.paletteRam
   blitter.io.priority <> io.priority
   blitter.io.frameBuffer <> io.frameBuffer
-  blitter.io.config.bits.numColors := io.gameConfig.numColors
-  blitter.io.config.bits.flip := io.options.flip
-  blitter.io.config.bits.rotate := io.options.rotate
-  pipelineDone := blitter.io.done
 
   // Set layer format
   val layerFormat = MuxLookup(io.layerIndex, io.gameConfig.layer0Format, Seq(
@@ -140,16 +132,16 @@ class TilemapProcessor extends Module {
   decoder.io.rom <> fifo.io.deq
   decoder.io.pixelData <> blitter.io.pixelData
 
-  // Control signals
-  val tileRomRead = burstPendingReg && burstReadyReg && fifo.io.count <= (Config.FIFO_DEPTH / 2).U
-  val lastBurst = effectiveRead && colWrap && rowWrap
+  // Set tile ROM read flag
+  val tileRomRead = burstReadyReg && !burstPendingReg && fifo.io.count <= (Config.FIFO_DEPTH / 2).U
+
+  // Set effective read flag
   effectiveRead := tileRomRead && !io.tileRom.waitReq
-  updateTileInfo := stateReg === State.pending && tileInfoTakenReg
 
   // Set first tile index
   val firstTileIndex = {
-    val offset = layerReg.scroll + layerReg.magicOffset(io.layerIndex)
-    Mux(layerReg.tileSize,
+    val offset = io.layer.scroll + io.layer.magicOffset(io.layerIndex)
+    Mux(io.layer.tileSize,
       (offset.y(8, 4) ## 0.U(5.W)) + offset.x(8, 4),
       (offset.y(8, 3) ## 0.U(6.W)) + offset.x(8, 3)
     )
@@ -166,13 +158,14 @@ class TilemapProcessor extends Module {
       val y = firstTileIndex(9, 5) + row
       (y(4, 0) ## 0.U(5.W)) + x(4, 0)
     }
-    Mux(layerReg.tileSize, large, small)
+    Mux(io.layer.tileSize, large, small)
   }
 
   // Set tile format flags
-  val tileFormat_8x8x8 = !layerReg.tileSize && layerFormat === Config.GFX_FORMAT_8BPP.U
-  val tileFormat_16x16x4 = layerReg.tileSize && layerFormat === Config.GFX_FORMAT_4BPP.U
-  val tileFormat_16x16x8 = layerReg.tileSize && layerFormat === Config.GFX_FORMAT_8BPP.U
+  val tileFormat_8x8x4 = !io.layer.tileSize && layerFormat === Config.GFX_FORMAT_4BPP.U
+  val tileFormat_8x8x8 = !io.layer.tileSize && layerFormat === Config.GFX_FORMAT_8BPP.U
+  val tileFormat_16x16x4 = io.layer.tileSize && layerFormat === Config.GFX_FORMAT_4BPP.U
+  val tileFormat_16x16x8 = io.layer.tileSize && layerFormat === Config.GFX_FORMAT_8BPP.U
 
   // Set tile ROM address
   val tileRomAddr = MuxCase(0.U, Seq(
@@ -181,13 +174,45 @@ class TilemapProcessor extends Module {
     tileFormat_16x16x8 -> (tileReg.code << log2Ceil(Config.TILE_SIZE_16x16x8))
   ))
 
-  // Set tile ROM burst length. The burst length defaults to 8 words, because while the game is
-  // booting the layer registers won't be set properly.
-  val tileRomBurstLength = MuxCase(8.U, Seq(
+  // Set tile ROM burst length
+  val tileRomBurstLength = MuxCase(0.U, Seq(
     tileFormat_8x8x8 -> (Config.TILE_SIZE_8x8x8 / 8).U,
     tileFormat_16x16x4 -> (Config.TILE_SIZE_16x16x4 / 8).U,
     tileFormat_16x16x8 -> (Config.TILE_SIZE_16x16x8 / 8).U
   ))
+
+  // The tilemap should not be rendered if the layer is disabled, or if the burst length is zero
+  // (which occurs during startup)
+  val disable = io.layer.disable || tileRomBurstLength === 0.U
+
+  // The burst ready register is asserted when the tilemap processor is ready to burst pixel data
+  when(stateReg === State.latch) {
+    burstReadyReg := true.B
+  }.elsewhen(effectiveRead) {
+    burstReadyReg := false.B
+  }
+
+  // The burst pending register is asserted when the tilemap processor is waiting for pixel data
+  when(effectiveRead) {
+    burstPendingReg := true.B
+  }.elsewhen(io.tileRom.burstDone) {
+    burstPendingReg := false.B
+  }
+
+  // Enqueue the blitter configuration when the blitter is ready
+  when(stateReg === State.ready) {
+    val config = Wire(new TilemapBlitterConfig)
+    config.col := col
+    config.row := row
+    config.layer := io.layer
+    config.tile := tileReg
+    config.numColors := io.gameConfig.numColors
+    config.rotate := io.options.rotate
+    config.flip := io.options.flip
+    blitter.io.config.enq(config)
+  } otherwise {
+    blitter.io.config.noenq()
+  }
 
   // Enqueue valid tile ROM data into the tile FIFO
   when(io.tileRom.valid) {
@@ -196,78 +221,67 @@ class TilemapProcessor extends Module {
     fifo.io.enq.noenq()
   }
 
-  // Toggle tile info taken register
-  when(stateReg === State.idle) {
-    tileInfoTakenReg := false.B
-  }.elsewhen(stateReg === State.ready || pipelineReady) {
-    tileInfoTakenReg := true.B
-  }.elsewhen(updateTileInfo) {
-    tileInfoTakenReg := false.B
-  }
-
-  // Toggle burst pending register
-  when(stateReg === State.idle) {
-    burstPendingReg := false.B
-  }.elsewhen(updateTileInfo) {
-    burstPendingReg := true.B
-  }.elsewhen(effectiveRead) {
-    burstPendingReg := false.B
-  }
-
-  // Toggle burst ready register
-  when(stateReg === State.idle) {
-    burstReadyReg := true.B
-  }.elsewhen(effectiveRead) {
-    burstReadyReg := false.B
-  }.elsewhen(io.tileRom.burstDone) {
-    burstReadyReg := true.B
-  }
-
   // Set last layer priority register
   when(stateReg === State.check && io.layerIndex === 0.U) {
     lastLayerPriorityReg := 0.U
-  }.elsewhen(stateReg === State.pending && tileWrap) {
-    lastLayerPriorityReg := layerReg.priority
+  }.elsewhen(stateReg === State.done) {
+    lastLayerPriorityReg := io.layer.priority
   }
 
   // FSM
   switch(stateReg) {
     // Wait for the start signal
     is(State.idle) {
-      when(io.start) { stateReg := State.latch }
+      when(io.start) { stateReg := State.check }
     }
 
-    // Latch the layer
-    is(State.latch) { stateReg := State.check }
-
     // Check whether the layer is enabled
-    is(State.check) { stateReg := Mux(layerReg.disable, State.idle, State.ready) }
+    is(State.check) {
+      stateReg := Mux(disable, State.idle, State.load)
+    }
+
+    // Load the tile
+    is(State.load) { stateReg := State.latch }
+
+    // Latch the tile
+    is(State.latch) { stateReg := State.ready }
 
     // Wait for the blitter to be ready
-    is(State.ready) { stateReg := State.pending }
+    is(State.ready) {
+      when(blitter.io.config.ready) { stateReg := State.pending }
+    }
 
-    // Copy the tiles
+    // Wait for the pixel data to be read for the next tile
     is(State.pending) {
-      when(lastBurst) { stateReg := State.done }
+      when(!burstReadyReg) { stateReg := State.next }
+    }
+
+    // Increment the col/row counter
+    is(State.next) {
+      stateReg := Mux(colWrap && rowWrap, State.done, State.load)
     }
 
     // Wait for the blitter to finish
     is(State.done) {
-      when(tileWrap) { stateReg := State.idle }
+      when(!blitter.io.busy) { stateReg := State.idle }
     }
   }
 
   // Outputs
   io.busy := stateReg =/= State.idle
-  io.layerRam.rd := true.B
+  io.layerRam.rd := stateReg === State.load
   io.layerRam.addr := layerRamAddr
   io.tileRom.rd := tileRomRead
   io.tileRom.addr := tileRomAddr
   io.tileRom.burstLength := tileRomBurstLength
   io.debug.idle := stateReg === State.idle
-  io.debug.latch := stateReg === State.latch
   io.debug.check := stateReg === State.check
+  io.debug.load := stateReg === State.load
+  io.debug.latch := stateReg === State.latch
   io.debug.ready := stateReg === State.ready
   io.debug.pending := stateReg === State.pending
+  io.debug.next := stateReg === State.next
   io.debug.done := stateReg === State.done
+
+  printf(p"TilemapProcessor(state: $stateReg, col: $col ($colWrap), row: $row ($rowWrap), ready: $burstReadyReg, pending: $burstPendingReg, full: ${ fifo.io.count })\n")
 }

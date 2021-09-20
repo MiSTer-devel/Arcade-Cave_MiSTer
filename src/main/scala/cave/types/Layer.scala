@@ -71,9 +71,9 @@ class Layer extends Bundle {
    */
   def magicOffset(index: UInt): UVec2 = {
     val x = MuxLookup(index, 0.U, Seq(
-      0.U -> 0x6c.U,
-      1.U -> 0x6d.U,
-      2.U -> Mux(tileSize, 0x6e.U, 0x75.U)
+      0.U -> 0x6b.U,
+      1.U -> 0x6c.U,
+      2.U -> Mux(tileSize, 0x6d.U, 0x75.U)
     ))
     val y = 0x11.U
     UVec2(x, y)

@@ -32,51 +32,73 @@
 
 package cave.gpu
 
+import cave.Config
 import chisel3._
 import chiseltest._
 import org.scalatest._
 
-trait SpriteProcessorTestHelpers {
-  def mkProcessor(maxSprites: Int = 2) = new SpriteProcessor(maxSprites)
+trait TilemapProcessorTestHelpers {
+  def mkProcessor() = new TilemapProcessor(1, 1)
 
-  def waitForIdle(dut: SpriteProcessor) =
+  def waitForIdle(dut: TilemapProcessor) =
     while (!dut.io.debug.idle.peek().litToBoolean) { dut.clock.step() }
 
-  def waitForLoad(dut: SpriteProcessor) =
-    while (!dut.io.debug.load.peek().litToBoolean) { dut.clock.step() }
-
-  def waitForLatch(dut: SpriteProcessor) =
-    while (!dut.io.debug.latch.peek().litToBoolean) { dut.clock.step() }
-
-  def waitForCheck(dut: SpriteProcessor) =
+  def waitForCheck(dut: TilemapProcessor) =
     while (!dut.io.debug.check.peek().litToBoolean) { dut.clock.step() }
 
-  def waitForReady(dut: SpriteProcessor) =
+  def waitForLoad(dut: TilemapProcessor) =
+    while (!dut.io.debug.load.peek().litToBoolean) { dut.clock.step() }
+
+  def waitForLatch(dut: TilemapProcessor) =
+    while (!dut.io.debug.latch.peek().litToBoolean) { dut.clock.step() }
+
+  def waitForReady(dut: TilemapProcessor) =
     while (!dut.io.debug.ready.peek().litToBoolean) { dut.clock.step() }
 
-  def waitForPending(dut: SpriteProcessor) =
+  def waitForPending(dut: TilemapProcessor) =
     while (!dut.io.debug.pending.peek().litToBoolean) { dut.clock.step() }
 
-  def waitForNext(dut: SpriteProcessor) =
+  def waitForNext(dut: TilemapProcessor) =
     while (!dut.io.debug.next.peek().litToBoolean) { dut.clock.step() }
 
-  def waitForDone(dut: SpriteProcessor) =
+  def waitForDone(dut: TilemapProcessor) =
     while (!dut.io.debug.done.peek().litToBoolean) { dut.clock.step() }
 }
 
-class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Matchers with SpriteProcessorTestHelpers {
+class TilemapProcessorTest extends FlatSpec with ChiselScalatestTester with Matchers with TilemapProcessorTestHelpers {
   behavior of "FSM"
 
-  it should "move to the load state when the start signal is asserted" in {
+  it should "move to the check state when the start signal is asserted" in {
     test(mkProcessor()) { dut =>
       dut.io.start.poke(true.B)
+      dut.clock.step()
+      dut.io.debug.check.expect(true.B)
+    }
+  }
+
+  it should "move to the idle state after checking a disabled layer" in {
+    test(mkProcessor()) { dut =>
+      dut.io.layer.disable.poke(true.B)
+      dut.io.start.poke(true.B)
+      waitForCheck(dut)
+      dut.clock.step()
+      dut.io.debug.idle.expect(true.B)
+    }
+  }
+
+  it should "move to the load state after checking an enabled layer" in {
+    test(mkProcessor()) { dut =>
+      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP.U)
+      dut.io.start.poke(true.B)
+      waitForCheck(dut)
       dut.clock.step()
       dut.io.debug.load.expect(true.B)
     }
   }
 
-  it should "move to the latch state after loading a sprite" in {
+  it should "move to the latch state after loading a tile" in {
     test(mkProcessor()) { dut =>
+      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP.U)
       dut.io.start.poke(true.B)
       waitForLoad(dut)
       dut.clock.step()
@@ -84,49 +106,33 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
     }
   }
 
-  it should "move to the check state after latching a sprite" in {
+  it should "move to the ready state after latching a tile" in {
     test(mkProcessor()) { dut =>
+      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP.U)
       dut.io.start.poke(true.B)
       waitForLatch(dut)
-      dut.clock.step()
-      dut.io.debug.check.expect(true.B)
-    }
-  }
-
-  it should "move to the next state after checking an invisible sprite" in {
-    test(mkProcessor()) { dut =>
-      dut.io.start.poke(true.B)
-      waitForCheck(dut)
-      dut.clock.step()
-      dut.io.debug.next.expect(true.B)
-    }
-  }
-
-  it should "move to the ready state after checking a visible sprite" in {
-    test(mkProcessor()) { dut =>
-      dut.io.start.poke(true.B)
-      dut.io.spriteRam.dout.poke("h0101_0000_0000_0000_0000".U)
-      waitForCheck(dut)
       dut.clock.step()
       dut.io.debug.ready.expect(true.B)
     }
   }
 
-  it should "move to the done state after blitting all sprites" in {
-    test(mkProcessor(1)) { dut =>
+  it should "move to the pending state state after starting the blitter" in {
+    test(mkProcessor()) { dut =>
+      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP.U)
       dut.io.start.poke(true.B)
-      waitForNext(dut)
+      waitForReady(dut)
       dut.clock.step()
-      dut.io.debug.done.expect(true.B)
+      dut.io.debug.pending.expect(true.B)
     }
   }
 
-  it should "move to the idle state after the blit is done" in {
+  it should "move to the next state state after reading pixel data" in {
     test(mkProcessor()) { dut =>
+      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP.U)
       dut.io.start.poke(true.B)
-      waitForDone(dut)
+      waitForPending(dut)
       dut.clock.step()
-      dut.io.debug.idle.expect(true.B)
+      dut.io.debug.next.expect(true.B)
     }
   }
 
@@ -141,29 +147,14 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
     }
   }
 
-  it should "deassert the busy flag when the processor has finished" in {
-    test(mkProcessor(1)) { dut =>
-      dut.io.start.poke(true.B)
-      dut.io.spriteRam.dout.poke("h0101_0000_0000_0001_0000".U)
-      waitForPending(dut)
-      dut.io.tileRom.valid.poke(true.B)
-      dut.clock.step(16)
-      dut.io.tileRom.valid.poke(false.B)
-      dut.io.tileRom.burstDone.poke(true.B)
-      waitForDone(dut)
-      dut.io.busy.expect(true.B)
-      dut.clock.step(245)
-      dut.io.busy.expect(false.B)
-    }
-  }
+  behavior of "layer data"
 
-  behavior of "sprite data"
-
-  it should "fetch sprite data from the sprite RAM" in {
+  it should "fetch tile data from the layer RAM" in {
     test(mkProcessor()) { dut =>
+      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP.U)
       dut.io.start.poke(true.B)
       waitForLoad(dut)
-      dut.io.spriteRam.rd.expect(true.B)
+      dut.io.layerRam.rd.expect(true.B)
     }
   }
 
@@ -171,13 +162,14 @@ class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Match
 
   it should "fetch pixel data from the tile ROM" in {
     test(mkProcessor()) { dut =>
+      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP.U)
       dut.io.start.poke(true.B)
-      dut.io.spriteRam.dout.poke("h0101_0000_0000_0001_0000".U)
-      waitForReady(dut)
+      dut.io.layerRam.dout.poke("h0001_0000".U)
+      waitForLatch(dut)
       dut.clock.step()
       dut.io.tileRom.rd.expect(true.B)
-      dut.io.tileRom.addr.expect(0x80.U)
-      dut.io.tileRom.burstLength.expect(16.U)
+      dut.io.tileRom.addr.expect(0x40.U)
+      dut.io.tileRom.burstLength.expect(8.U)
       dut.clock.step()
       dut.io.tileRom.rd.expect(false.B)
     }

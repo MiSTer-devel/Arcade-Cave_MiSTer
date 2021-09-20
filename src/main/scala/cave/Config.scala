@@ -223,22 +223,8 @@ object Config {
 
   /** The size of a small tile in pixels */
   val SMALL_TILE_SIZE = 8
-  /** The number of small tiles that fit horizontally on the screen */
-  val SMALL_TILE_NUM_COLS = SCREEN_WIDTH / SMALL_TILE_SIZE + 1
-  /** The number of small tiles that fit vertically on the screen */
-  val SMALL_TILE_NUM_ROWS = SCREEN_HEIGHT / SMALL_TILE_SIZE + 1
-  /** The number of small tiles that fit on the screen */
-  val SMALL_TILE_NUM_TILES = SMALL_TILE_NUM_COLS * SMALL_TILE_NUM_ROWS
-
   /** The size of a large tile in pixels */
   val LARGE_TILE_SIZE = 16
-  /** The number of large tiles that fit horizontally on the screen */
-  val LARGE_TILE_NUM_COLS = SCREEN_WIDTH / LARGE_TILE_SIZE + 1
-  /** The number of large tiles that fit vertically on the screen */
-  val LARGE_TILE_NUM_ROWS = SCREEN_HEIGHT / LARGE_TILE_SIZE + 1
-  /** The number of large tiles that fit on the screen */
-  val LARGE_TILE_NUM_TILES = LARGE_TILE_NUM_COLS * LARGE_TILE_NUM_ROWS
-
   /** The size of a sprite tile in pixels */
   val SPRITE_TILE_SIZE = 16
 }

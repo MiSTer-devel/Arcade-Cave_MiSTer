@@ -84,7 +84,7 @@ class SpriteBlitter extends Module {
   val pisoAlmostEmpty = piso.io.isAlmostEmpty
 
   // Counters
-  val (x, xWrap) = Counter.dynamic(configReg.sprite.size.x, enable = !pisoEmpty)
+  val (x, xWrap) = Counter.dynamic(configReg.sprite.size.x, enable = busyReg && !pisoEmpty)
   val (y, yWrap) = Counter.dynamic(configReg.sprite.size.y, enable = xWrap)
 
   // Pixel position
@@ -117,12 +117,10 @@ class SpriteBlitter extends Module {
   paletteEntryReg := PaletteEntry(configReg.sprite.colorCode, piso.io.dout)
   val paletteRamAddr = paletteEntryReg.toAddr(configReg.numColors)
 
-  // Set delayed valid/busy shift registers
+  // Set delayed shift registers
   val validReg = ShiftRegister(!pisoEmpty, 2, false.B, true.B)
   val delayedBusyReg = ShiftRegister(busyReg, 2, false.B, true.B)
-
-  // Set priority register
-  val priorityWriteData = ShiftRegister(configReg.sprite.priority, 3)
+  val delayedPriorityReg = ShiftRegister(configReg.sprite.priority, 2)
 
   // The transparency flag must be delayed by one cycle, since the colors come from the palette RAM
   // they arrive one cycle later
@@ -143,12 +141,12 @@ class SpriteBlitter extends Module {
   io.priority.write.wr := frameBufferWrite
   io.priority.write.addr := frameBufferAddr
   io.priority.write.mask := 0.U
-  io.priority.write.din := priorityWriteData
+  io.priority.write.din := delayedPriorityReg
   io.frameBuffer.wr := frameBufferWrite
   io.frameBuffer.addr := frameBufferAddr
   io.frameBuffer.mask := 0.U
   io.frameBuffer.din := frameBufferData
   io.busy := delayedBusyReg
 
-  printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), ready: $configReady, busy: $busyReg, pixelDataReady: $pixelDataReady, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
+  printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), ready: $configReady, busy: $busyReg, write: $frameBufferWrite, pixelDataReady: $pixelDataReady, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
 }

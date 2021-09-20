@@ -109,6 +109,9 @@ class GPU extends Module {
   spriteProcessor.io.spriteRam <> io.spriteRam
 
   // Tilemap processor
+  //
+  // FIXME: The layer isn't properly set when the start signal is asserted. Ideally, these things
+  // should be in place *before* the tilemap processor is started.
   val tilemapProcessor = Module(new TilemapProcessor)
   tilemapProcessor.io.gameConfig <> io.gameConfig
   tilemapProcessor.io.options <> io.options
