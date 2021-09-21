@@ -40,8 +40,7 @@ import chisel3.util._
 /**
  * Decodes sprites tiles from tile ROM data.
  *
- * Tile data is accessed using the 64-bit `rom` port. Some tiles require more than one 64-bit word
- * to be decoded:
+ * Tile ROM data is accessed using the 64-bit `rom` port and decoded:
  *
  *   - 16x16x4: 64-bits (1 word)
  *   - 16x16x8: 128-bits (2 words)
@@ -63,47 +62,50 @@ class SpriteDecoder extends Module {
   val pendingReg = RegInit(false.B)
   val validReg = RegInit(false.B)
   val toggleReg = RegInit(false.B)
-  val pixelDataReg = Reg(Vec(Config.LARGE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
+  val dataReg = Reg(Bits((Config.TILE_ROM_DATA_WIDTH * 2).W))
 
-  // The ready flag is asserted when pixel data is requested, or there is no valid pixel data
-  val ready = io.pixelData.ready || !validReg
+  // The start flag is asserted when there is no valid pixel data
+  val start = !validReg && !pendingReg
 
-  // The start flag is asserted when the decoder wants to decode a tile
-  val start = ready && !pendingReg
+  // The ready flag is asserted when the decoder needs to fetch tile ROM data.
+  //
+  // For 4BPP sprites we need to fetch one 64-bit word for every row, and for 8BPP we need to fetch
+  // two 64-bit words to decode a row.
+  val ready = io.pixelData.ready
 
   // The done flag is asserted when the decoder has finished decoding a tile
-  val done = !is8BPP || (pendingReg && toggleReg)
+  val done = !is8BPP || toggleReg
 
-  // Clear the pending/toggle registers
-  when(start) {
+  // Decode the tile ROM data
+  val bits = MuxLookup(io.format, VecInit(SpriteDecoder.decode4BPP(dataReg.tail(Config.TILE_ROM_DATA_WIDTH))), Seq(
+    Config.GFX_FORMAT_4BPP_MSB.U -> VecInit(SpriteDecoder.decode4BPPMSB(dataReg.tail(Config.TILE_ROM_DATA_WIDTH))),
+    Config.GFX_FORMAT_8BPP.U -> VecInit(SpriteDecoder.decode8BPP(dataReg))
+  ))
+
+  // Clear registers when starting a new request
+  when(start || ready) {
     pendingReg := true.B
-    toggleReg := false.B
     validReg := false.B
+    toggleReg := false.B
   }
 
   // Update the state when there is valid tile ROM data
-  when(io.rom.fire() && !done) {
-    toggleReg := true.B
-  }.elsewhen(io.rom.fire() && done) {
+  when(io.rom.fire()) {
+    dataReg := dataReg.tail(Config.TILE_ROM_DATA_WIDTH) ## io.rom.bits
+    toggleReg := !toggleReg
+  }
+
+  when(io.rom.fire() && done) {
     pendingReg := false.B
-    toggleReg := false.B
     validReg := true.B
   }
 
-  // Set the data register
-  when(io.rom.fire()) {
-    pixelDataReg := MuxLookup(io.format, VecInit(SpriteDecoder.decode4BPP(io.rom.bits)), Seq(
-      Config.GFX_FORMAT_4BPP_MSB.U -> VecInit(SpriteDecoder.decode4BPPMSB(io.rom.bits)),
-      Config.GFX_FORMAT_8BPP.U -> VecInit(SpriteDecoder.decode8BPP(RegNext(io.rom.bits) ## io.rom.bits))
-    ))
-  }
-
   // Outputs
-  io.rom.ready := io.rom.valid && ready
+  io.rom.ready := io.rom.valid && pendingReg
   io.pixelData.valid := validReg
-  io.pixelData.bits := pixelDataReg
+  io.pixelData.bits := bits
 
-  printf(p"SpriteDecoder(start: $start, ready: $ready, done: $done, pending: $pendingReg, valid: $validReg, toggle: $toggleReg, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid })\n")
+  printf(p"SpriteDecoder(start: $start, ready: $ready, done: $done, pending: $pendingReg, valid: $validReg, toggle: $toggleReg, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid }), data: 0x${ Hexadecimal(dataReg) })\n")
 }
 
 object SpriteDecoder {

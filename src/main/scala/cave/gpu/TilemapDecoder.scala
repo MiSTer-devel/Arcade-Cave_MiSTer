@@ -37,7 +37,14 @@ import cave.Config
 import chisel3._
 import chisel3.util._
 
-/** Decodes tilemap tiles from tile ROM data. */
+/**
+ * Decodes tilemap tiles from tile ROM data.
+ *
+ * Tile ROM data is accessed using the 64-bit `rom` port and decoded:
+ *
+ *   - 8x8x4: 32-bits (0.5 words)
+ *   - 8x8x8: 64-bits (1 words)
+ */
 class TilemapDecoder extends Module {
   val io = IO(new Bundle {
     /** Graphics format port */
@@ -60,11 +67,16 @@ class TilemapDecoder extends Module {
   // The start flag is asserted when there is no valid pixel data
   val start = !pendingReg && !validReg
 
-  // The ready flag is asserted when the decoder needs tile ROM data.
+  // The ready flag is asserted when the decoder needs to fetch tile ROM data.
   //
-  // For 8x8x4 tiles, the decoder only needs to fetch tile ROM data for every other row. For 8x8x8
-  // tiles, the decoder needs to fetch tile ROM data for every row.
+  // For 4BPP tiles we only need to fetch one 64-bit word for every other row, and for 8BPP we need
+  // to fetch one 64-bit to decode a row.
   val ready = io.pixelData.ready && (is8BPP || toggleReg)
+
+  // Decode the tile ROM data
+  val bits = MuxLookup(io.format, VecInit(TilemapDecoder.decode4BPP(dataReg, toggleReg)), Seq(
+    Config.GFX_FORMAT_8BPP.U -> VecInit(TilemapDecoder.decode8BPP(dataReg))
+  ))
 
   // Clear registers when starting a new request
   when(start || ready) {
@@ -86,9 +98,7 @@ class TilemapDecoder extends Module {
   // Outputs
   io.rom.ready := io.rom.valid && pendingReg
   io.pixelData.valid := validReg
-  io.pixelData.bits := MuxLookup(io.format, VecInit(TilemapDecoder.decode4BPP(dataReg, toggleReg)), Seq(
-    Config.GFX_FORMAT_8BPP.U -> VecInit(TilemapDecoder.decode8BPP(dataReg))
-  ))
+  io.pixelData.bits := bits
 
   printf(p"TilemapDecoder(start: $start, ready: $ready, pending: $pendingReg, valid: $validReg, toggle: $toggleReg, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid }, data: 0x${ Hexadecimal(dataReg) })\n")
 }
