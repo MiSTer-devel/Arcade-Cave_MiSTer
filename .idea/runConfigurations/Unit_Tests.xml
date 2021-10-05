@@ -324,10 +324,8 @@
             <set>
               <option value="4BPP should decode a 4BPP MSB tile" />
               <option value="4BPP should decode a 4BPP tile" />
-              <option value="4BPP should initially request tile ROM data" />
               <option value="4BPP should request a word from the tile ROM for every row" />
               <option value="8BPP should decode a 8BPP tile" />
-              <option value="8BPP should initially request tile ROM data" />
               <option value="8BPP should request two words from the tile ROM for every row" />
             </set>
           </value>
@@ -338,7 +336,8 @@
               <option value="FSM should move to the check state after latching a sprite" />
               <option value="FSM should move to the done state after blitting all sprites" />
               <option value="FSM should move to the idle state after the blit is done" />
-              <option value="FSM should move to the latch state when the start signal is asserted" />
+              <option value="FSM should move to the latch state after loading a sprite" />
+              <option value="FSM should move to the load state when the start signal is asserted" />
               <option value="FSM should move to the next state after checking an invisible sprite" />
               <option value="FSM should move to the ready state after checking a visible sprite" />
               <option value="busy flag should assert the busy flag when the processor has started" />
@@ -348,17 +347,42 @@
             </set>
           </value>
         </entry>
+        <entry key="cave.gpu.TilemapBlitterTest">
+          <value>
+            <set>
+              <option value="blitting should assert the busy signal" />
+              <option value="blitting should write pixel data to the frame buffer" />
+              <option value="pixel data should request pixel data when the PISO is almost empty" />
+              <option value="pixel data should request pixel data when the PISO is empty" />
+              <option value="tile data should request tile data when blitting the last pixel of a 16x16 tile" />
+              <option value="tile data should request tile data when blitting the last pixel of a 8x8 tile" />
+              <option value="tile data should request tile data when the PISO is empty" />
+            </set>
+          </value>
+        </entry>
         <entry key="cave.gpu.TilemapDecoderTest">
           <value>
             <set>
               <option value="4BPP should decode a 4BPP tile" />
-              <option value="4BPP should handle a pending request" />
-              <option value="4BPP should initially request tile ROM data" />
               <option value="4BPP should request a word from the tile ROM for every two rows" />
               <option value="8BPP should decode a 8BPP tile" />
-              <option value="8BPP should handle a pending request" />
-              <option value="8BPP should initially request tile ROM data" />
               <option value="8BPP should request a word from the tile ROM for every row" />
+            </set>
+          </value>
+        </entry>
+        <entry key="cave.gpu.TilemapProcessorTest">
+          <value>
+            <set>
+              <option value="FSM should move to the check state when the start signal is asserted" />
+              <option value="FSM should move to the idle state after checking a disabled layer" />
+              <option value="FSM should move to the latch state after loading a tile" />
+              <option value="FSM should move to the load state after checking an enabled layer" />
+              <option value="FSM should move to the next state state after reading pixel data" />
+              <option value="FSM should move to the pending state state after starting the blitter" />
+              <option value="FSM should move to the ready state after latching a tile" />
+              <option value="busy flag should assert the busy flag when the processor has started" />
+              <option value="layer data should fetch tile data from the layer RAM" />
+              <option value="pixel data should fetch pixel data from the tile ROM" />
             </set>
           </value>
         </entry>
