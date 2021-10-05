@@ -48,10 +48,10 @@ class GPU extends Module {
     val gameConfig = Input(GameConfig())
     /** Options port */
     val options = OptionsIO()
-    /** Asserted when a frame is requested */
-    val frameReq = Input(Bool())
-    /** Asserted when a frame is ready */
-    val frameReady = Output(Bool())
+    /** Asserted when the program is ready for a new frame */
+    val frameReady = Input(Bool())
+    /** Asserted when a frame is valid */
+    val frameValid = Output(Bool())
     /** Asserted when the DMA controller is ready */
     val dmaReady = Input(Bool())
     /** Video registers port */
@@ -175,7 +175,7 @@ class GPU extends Module {
   switch(stateReg) {
     // Wait for a new frame
     is(State.idle) {
-      when(io.frameReq) { nextState := State.background }
+      when(io.frameReady) { nextState := State.background }
     }
 
     // Latch the background color
@@ -240,7 +240,7 @@ class GPU extends Module {
   }
 
   // Outputs
-  io.frameReady := stateReg === State.dmaStart
+  io.frameValid := stateReg === State.dmaStart
   io.paletteRam <> ReadMemIO.muxLookup(stateReg, backgroundColorMem, Seq(
     State.sprites -> spriteProcessor.io.paletteRam,
     State.layer0 -> tilemapProcessor.io.paletteRam,
