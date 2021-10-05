@@ -80,8 +80,8 @@ class Cave extends Module {
     val cpuReset = Input(Reset())
     /** Vertical blank */
     val vBlank = Input(Bool())
-    /** Asserted when a frame is ready */
-    val frameReady = Output(Bool())
+    /** Asserted when a frame is valid */
+    val frameValid = Output(Bool())
     /** Asserted when the DMA controller is ready */
     val dmaReady = Input(Bool())
     /** Game config port */
@@ -114,7 +114,7 @@ class Cave extends Module {
   // GPU
   val gpu = Module(new GPU)
   gpu.io.frameReady := Util.rising(ShiftRegister(frameStart, 2))
-  io.frameReady := gpu.io.frameValid
+  io.frameValid := gpu.io.frameValid
   gpu.io.dmaReady := io.dmaReady
   gpu.io.gameConfig <> io.gameConfig
   gpu.io.options <> io.options

@@ -153,7 +153,7 @@ class Main extends Module {
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.vBlank := videoSys.io.video.vBlank
-  frameBufferDMA.io.start := cave.io.frameReady
+  frameBufferDMA.io.start := cave.io.frameValid
   cave.io.dmaReady := frameBufferDMA.io.ready
   cave.io.gameConfig <> gameConfigReg
   cave.io.options <> io.options
