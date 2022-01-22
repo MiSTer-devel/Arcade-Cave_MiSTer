@@ -7,19 +7,12 @@
   <category>Shooter</category>
   <rbf>cave</rbf>
 
-  <buttons names="Shots/Laser,Spread/Laser Bomber,Full-Auto,Start,Coin,Pause" default="A,B,X,R,L,Start" />
-
-  <!-- select game -->
-  <rom index="1">
-    <part>1</part>
-  </rom>
-
   <!-- ROM data -->
   <rom index="0" zip="ddonpach.zip|ddonpachj.zip" md5="none">
     <!-- main CPU -->
     <interleave output="16">
-      <part name="u27.bin" crc="2432ff9b" map="10" />
-      <part name="u26.bin" crc="4f3a914a" map="01" />
+      <part name="u27.bin" crc="2432ff9b" map="01" />
+      <part name="u26.bin" crc="4f3a914a" map="10" />
     </interleave>
 
     <!-- sprites -->
@@ -44,9 +37,20 @@
     <!-- eeprom -->
     <part name="eeprom-ddonpach.bin" crc="315fb546" />
 
+    <!-- enable C button in EEPROM -->
+    <patch offset="0x1300002">ff ff</patch>
+    <patch offset="0x1300008">00 04</patch>
+
     <!-- skip CRC -->
-    <patch offset="0x005410">00 60 0C 00</patch>
+    <patch offset="0x005410">60 00 00 0C</patch>
     <!-- skip warning -->
-    <patch offset="0x0054EC">00 60 50 00</patch>
+    <patch offset="0x0054EC">60 00 00 50</patch>
   </rom>
+
+  <!-- select game -->
+  <rom index="1">
+    <part>00 01</part>
+  </rom>
+
+  <buttons names="Shots/Laser,Spread/Laser Bomber,Full-Auto,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />
 </misterromdescription>
