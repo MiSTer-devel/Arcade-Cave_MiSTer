@@ -113,23 +113,23 @@ object SpriteDecoder {
   private def decode4BPP(data: Bits): Seq[Bits] =
     Seq(1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14)
       // Decode data into nibbles
-      .reverseMap(Util.decode(data, 16, 4).apply)
+      .reverseIterator.map(Util.decode(data, 16, 4).apply)
       // Pad nibbles into 8-bit pixels
-      .map(_.pad(8))
+      .map(_.pad(8)).toSeq
 
   /** Decode 16x16x4 MSB tile (i.e. 64 bits per row) */
   private def decode4BPPMSB(data: Bits): Seq[Bits] =
     Seq(2, 3, 0, 1, 6, 7, 4, 5, 10, 11, 8, 9, 14, 15, 12, 13)
       // Decode data into nibbles
-      .reverseMap(Util.decode(data, 16, 4).apply)
+      .reverseIterator.map(Util.decode(data, 16, 4).apply)
       // Pad nibbles into 8-bit pixels
-      .map(_.pad(8))
+      .map(_.pad(8)).toSeq
 
   /** Decode 16x16x8 MSB sprite (i.e. 128 bits per row) */
   private def decode8BPP(data: Bits): Seq[Bits] =
     Seq(1, 3, 0, 2, 5, 7, 4, 6, 9, 11, 8, 10, 13, 15, 12, 14, 17, 19, 16, 18, 21, 23, 20, 22, 25, 27, 24, 26, 29, 31, 28, 30)
       // Decode data into nibbles
-      .reverseMap(Util.decode(data, 32, 4).apply)
+      .reverseIterator.map(Util.decode(data, 32, 4).apply)
       // Join high/low nibbles into 8-bit pixels
       .grouped(2).map(Cat(_)).toSeq
 }

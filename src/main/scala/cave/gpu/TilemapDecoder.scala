@@ -114,9 +114,9 @@ object TilemapDecoder {
     val bits = Mux(toggle, data.tail(Config.TILE_ROM_DATA_WIDTH / 2), data.head(Config.TILE_ROM_DATA_WIDTH / 2))
     Seq(0, 1, 2, 3, 4, 5, 6, 7)
       // Decode data into nibbles
-      .reverseMap(Util.decode(bits, 8, 4).apply)
+      .reverseIterator.map(Util.decode(bits, 8, 4).apply)
       // Pad nibbles into 8-bit pixels
-      .map(_.pad(8))
+      .map(_.pad(8)).toSeq
   }
 
   /**
@@ -127,7 +127,7 @@ object TilemapDecoder {
   private def decode8BPP(data: Bits): Seq[Bits] =
     Seq(2, 0, 3, 1, 6, 4, 7, 5, 10, 8, 11, 9, 14, 12, 15, 13)
       // Decode data into nibbles
-      .reverseMap(Util.decode(data, 16, 4).apply)
+      .reverseIterator.map(Util.decode(data, 16, 4).apply)
       // Join high/low nibbles into 8-bit pixels
       .grouped(2).map(Cat(_)).toSeq
 }
