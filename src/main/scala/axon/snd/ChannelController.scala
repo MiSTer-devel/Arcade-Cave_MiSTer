@@ -136,7 +136,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   }
 
   // PCM data has been fetched
-  when(audioPipeline.io.pcmData.fire()) { channelStateReg.nextAddr(channelReg) }
+  when(audioPipeline.io.pcmData.fire) { channelStateReg.nextAddr(channelReg) }
 
   // Audio pipeline has produced valid output
   when(audioPipeline.io.out.valid) {

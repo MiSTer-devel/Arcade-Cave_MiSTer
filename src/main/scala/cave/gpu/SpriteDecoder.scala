@@ -90,12 +90,12 @@ class SpriteDecoder extends Module {
   }
 
   // Update the state when there is valid tile ROM data
-  when(io.rom.fire()) {
+  when(io.rom.fire) {
     dataReg := dataReg.tail(Config.TILE_ROM_DATA_WIDTH) ## io.rom.bits
     toggleReg := !toggleReg
   }
 
-  when(io.rom.fire() && done) {
+  when(io.rom.fire && done) {
     pendingReg := false.B
     validReg := true.B
   }

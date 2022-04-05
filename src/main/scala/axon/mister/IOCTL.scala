@@ -37,7 +37,7 @@ import chisel3._
 import chisel3.util._
 
 /** A flow control interface used to download data into the core. */
-class IOCTL private extends Bundle {
+class IOCTL extends Bundle {
   /** Download enable */
   val download = Input(Bool())
   /** Upload enable */

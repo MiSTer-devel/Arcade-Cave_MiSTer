@@ -20,17 +20,6 @@
     </option>
     <option name="testsBuf">
       <map>
-        <entry key="axon.DataFreezerTest">
-          <value>
-            <set>
-              <option value="read should latch a read request" />
-              <option value="read should latch valid output data" />
-              <option value="valid should latch the valid signal" />
-              <option value="wait should latch the wait signal" />
-              <option value="write should latch a write request" />
-            </set>
-          </value>
-        </entry>
         <entry key="axon.UtilTest">
           <value>
             <set>
@@ -45,8 +34,8 @@
               <option value="pulseSync should trigger a pulse" />
               <option value="rising should detect rising edges" />
               <option value="rotateLeft should rotate the bits to the left" />
+              <option value="rotateLeft should rotate the bits to the left&#10;rotateRight should rotate the bits to the right&#10;decode should split a bitvector value into a sequence of bitvectors&#10;padWords should pad words packed into a bitvector&#10;edge should detect edges&#10;rising should detect rising edges&#10;falling should detect falling edges&#10;hold should hold a signal&#10;latch should latch and clear a signal&#10;latchSync should latch and clear a signal&#10;latchSync should latch a signal when the trigger is asserted&#10;pulseSync should trigger a pulse&#10;toggle should toggle a bit" />
               <option value="rotateRight should rotate the bits to the right" />
-              <option value="sync should generate a sync pulse for rising edges of the target clock" />
               <option value="toggle should toggle a bit" />
             </set>
           </value>

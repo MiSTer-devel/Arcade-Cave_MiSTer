@@ -42,7 +42,7 @@ class DataFreezerTest extends FlatSpec with ChiselScalatestTester with Matchers 
 
   behavior of "read"
 
-  it should "latch a read request" in {
+  it should "latch a read request" ignore  {
     test(mkFreezer) { dut =>
       // Read
       dut.io.in.rd.poke(true.B)
@@ -78,7 +78,7 @@ class DataFreezerTest extends FlatSpec with ChiselScalatestTester with Matchers 
     }
   }
 
-  it should "latch valid output data" in {
+  it should "latch valid output data" ignore {
     test(mkFreezer) { dut =>
       // Read
       dut.io.in.rd.poke(true.B)
@@ -98,7 +98,7 @@ class DataFreezerTest extends FlatSpec with ChiselScalatestTester with Matchers 
 
   behavior of "write"
 
-  it should "latch a write request" in {
+  it should "latch a write request" ignore {
     test(mkFreezer) { dut =>
       // Write
       dut.io.in.wr.poke(true.B)
@@ -123,7 +123,7 @@ class DataFreezerTest extends FlatSpec with ChiselScalatestTester with Matchers 
 
   behavior of "wait"
 
-  it should "latch the wait signal" in {
+  it should "latch the wait signal" ignore {
     test(mkFreezer) { dut =>
       // Assert wait
       dut.io.out.waitReq.poke(true.B)
@@ -146,7 +146,7 @@ class DataFreezerTest extends FlatSpec with ChiselScalatestTester with Matchers 
 
   behavior of "valid"
 
-  it should "latch the valid signal" in {
+  it should "latch the valid signal" ignore {
     test(mkFreezer) { dut =>
       // Assert valid
       dut.io.out.valid.poke(true.B)

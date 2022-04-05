@@ -35,7 +35,7 @@ package axon.types
 import chisel3._
 
 /** An interface that contains the user options. */
-class OptionsIO private extends Bundle {
+class OptionsIO extends Bundle {
   /** Asserted when SDRAM is enabled */
   val sdram = Input(Bool())
   /** CRT offset */

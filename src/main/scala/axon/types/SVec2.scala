@@ -62,8 +62,6 @@ class SVec2(xWidth: Int, yWidth: Int) extends Bundle {
 
   /** Left shift operator. */
   def <<(n: UInt) = SVec2((this.x << n).asSInt, (this.y << n).asSInt)
-
-  override def cloneType: this.type = new SVec2(xWidth, yWidth).asInstanceOf[this.type]
 }
 
 object SVec2 {

@@ -35,7 +35,7 @@ package axon.types
 import chisel3._
 
 /**
- * Represents a RGB color. 
+ * Represents a RGB color.
  *
  * @param redWidth The red channel width.
  * @param greenWidth The green channel width.
@@ -65,8 +65,6 @@ class RGB(redWidth: Int, greenWidth: Int, blueWidth: Int) extends Bundle {
   def ^(that: RGB): RGB = {
     RGB(this.r ^ that.r, this.g ^ that.g, this.b ^ that.b)
   }
-
-  override def cloneType: this.type = new RGB(redWidth, greenWidth, blueWidth).asInstanceOf[this.type]
 }
 
 object RGB {

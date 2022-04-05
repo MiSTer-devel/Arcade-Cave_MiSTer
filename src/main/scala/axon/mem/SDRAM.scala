@@ -40,7 +40,7 @@ import chisel3.util._
  *
  * @param config The SDRAM configuration.
  */
-class SDRAMIO private(config: SDRAMConfig) extends Bundle {
+class SDRAMIO(config: SDRAMConfig) extends Bundle {
   /** Clock enable */
   val cke = Output(Bool())
   /** Chip select (active-low) */

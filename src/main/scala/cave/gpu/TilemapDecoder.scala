@@ -86,14 +86,14 @@ class TilemapDecoder extends Module {
   }
 
   // Update the state when there is valid tile ROM data
-  when(io.rom.fire()) {
+  when(io.rom.fire) {
     pendingReg := false.B
     validReg := true.B
     dataReg := io.rom.bits
   }
 
   // Update the toggle register when a request is received
-  when(io.pixelData.fire()) { toggleReg := !toggleReg }
+  when(io.pixelData.fire) { toggleReg := !toggleReg }
 
   // Outputs
   io.rom.ready := io.rom.valid && pendingReg

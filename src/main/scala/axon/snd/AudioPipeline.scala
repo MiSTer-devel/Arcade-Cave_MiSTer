@@ -94,10 +94,10 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
 
   // Registers
   val stateReg = RegInit(State.idle)
-  val inputReg = RegEnable(io.in.bits, io.in.fire())
+  val inputReg = RegEnable(io.in.bits, io.in.fire)
   val sampleReg = Reg(SInt(config.internalSampleWidth.W))
   val audioReg = Reg(new Audio(config.internalSampleWidth))
-  val pcmDataReg = RegEnable(io.pcmData.bits, io.pcmData.fire())
+  val pcmDataReg = RegEnable(io.pcmData.bits, io.pcmData.fire)
 
   // ADPCM decoder
   val adpcm = Module(new ADPCM(

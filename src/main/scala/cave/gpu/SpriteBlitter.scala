@@ -71,12 +71,12 @@ class SpriteBlitter extends Module {
 
   // Registers
   val busyReg = RegInit(false.B)
-  val configReg = RegEnable(io.config.bits, io.config.fire())
+  val configReg = RegEnable(io.config.bits, io.config.fire)
   val paletteEntryReg = Reg(new PaletteEntry)
 
   // The PISO is used to buffer a single row of pixels to be copied to the frame buffer
   val piso = Module(new PISO(Config.SPRITE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
-  piso.io.wr := io.pixelData.fire()
+  piso.io.wr := io.pixelData.fire
   piso.io.din := io.pixelData.bits
 
   // Set PISO flags
@@ -103,7 +103,7 @@ class SpriteBlitter extends Module {
   val blitDone = xWrap && yWrap
 
   // The busy register is set when a configuration is latched, and cleared when a blit has finished
-  when(io.config.fire()) { busyReg := true.B }.elsewhen(blitDone) { busyReg := false.B }
+  when(io.config.fire) { busyReg := true.B }.elsewhen(blitDone) { busyReg := false.B }
 
   // The pixel data ready flag is asserted when the PISO is empty, or will be empty in the next
   // clock cycle

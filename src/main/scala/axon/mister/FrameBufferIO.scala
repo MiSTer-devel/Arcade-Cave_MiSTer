@@ -35,7 +35,7 @@ package axon.mister
 import chisel3._
 
 /** MiSTer frame buffer IO */
-class FrameBufferIO private extends Bundle {
+class FrameBufferIO extends Bundle {
   /** Asserted when the frame buffer is enabled */
   val enable = Output(Bool())
   /** The horizontal size of the frame buffer */

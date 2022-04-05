@@ -37,7 +37,7 @@ import axon.util.Counter
 import chisel3._
 
 /** Represents the analog video signals. */
-class VideoIO private extends Bundle {
+class VideoIO extends Bundle {
   /** Asserted when the pixel clock is enabled */
   val pixelClockEnable = Output(Bool())
   /** Beam position */

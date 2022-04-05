@@ -62,8 +62,6 @@ class UVec2(xWidth: Int, yWidth: Int) extends Bundle {
 
   /** Left shift operator. */
   def <<(n: UInt) = UVec2((this.x << n).asUInt, (this.y << n).asUInt)
-
-  override def cloneType: this.type = new UVec2(xWidth, yWidth).asInstanceOf[this.type]
 }
 
 object UVec2 {

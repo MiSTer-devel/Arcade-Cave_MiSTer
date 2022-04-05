@@ -45,15 +45,13 @@ abstract class MemIO protected(val addrWidth: Int, val dataWidth: Int) extends B
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class ReadMemIO protected(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
+class ReadMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
   /** Read enable */
   val rd = Output(Bool())
   /** Address bus */
   val addr = Output(UInt(addrWidth.W))
   /** Data bus */
   val dout = Input(UInt(dataWidth.W))
-
-  override def cloneType: this.type = new ReadMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
 
   /**
    * Maps the address using the given function.
@@ -140,7 +138,7 @@ object ReadMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class WriteMemIO protected(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
+class WriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
   /** Write enable */
   val wr = Output(Bool())
   /** Address bus */
@@ -149,8 +147,6 @@ class WriteMemIO protected(addrWidth: Int, dataWidth: Int) extends MemIO(addrWid
   val mask = Output(Bits(maskWidth.W))
   /** Data bus */
   val din = Output(UInt(dataWidth.W))
-
-  override def cloneType: this.type = new WriteMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
 
   /**
    * Maps the address using the given function.
@@ -203,7 +199,7 @@ object WriteMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class ReadWriteMemIO protected(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
+class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) {
   /** Read enable */
   val rd = Output(Bool())
   /** Write enable */
@@ -216,8 +212,6 @@ class ReadWriteMemIO protected(addrWidth: Int, dataWidth: Int) extends MemIO(add
   val din = Output(Bits(dataWidth.W))
   /** Data output bus */
   val dout = Input(Bits(dataWidth.W))
-
-  override def cloneType: this.type = new ReadWriteMemIO(addrWidth, dataWidth).asInstanceOf[this.type]
 
   /** Converts the interface to read-only */
   def asReadMemIO: ReadMemIO = {

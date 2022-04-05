@@ -38,7 +38,7 @@ import chisel3._
 import chisel3.util._
 
 /** An interface for reading and writing to DDR memory. */
-class DDRIO protected(config: DDRConfig) extends AsyncReadWriteMemIO(config.addrWidth, config.dataWidth) with BurstIO
+class DDRIO(config: DDRConfig) extends AsyncReadWriteMemIO(config.addrWidth, config.dataWidth) with BurstIO
 
 object DDRIO {
   def apply(config: DDRConfig) = new DDRIO(config: DDRConfig)

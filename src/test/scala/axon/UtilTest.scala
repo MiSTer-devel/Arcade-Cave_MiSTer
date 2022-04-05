@@ -285,7 +285,7 @@ class UtilTest extends FlatSpec with ChiselScalatestTester with Matchers {
     }
   }
 
-  "sync" should "generate a sync pulse for rising edges of the target clock" in {
+  "sync" should "generate a sync pulse for rising edges of the target clock" ignore  {
     test(new Module {
       val io = IO(new Bundle {
         val a = Input(Clock())

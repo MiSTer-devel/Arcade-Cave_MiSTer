@@ -81,12 +81,12 @@ class TilemapBlitter extends Module {
 
   // Registers
   val busyReg = RegInit(false.B)
-  val configReg = RegEnable(io.config.bits, io.config.fire())
+  val configReg = RegEnable(io.config.bits, io.config.fire)
   val paletteEntryReg = Reg(new PaletteEntry)
 
   // The PISO buffers the pixels to be copied to the frame buffer
   val piso = Module(new PISO(Config.SMALL_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
-  piso.io.wr := io.pixelData.fire()
+  piso.io.wr := io.pixelData.fire
   piso.io.din := io.pixelData.bits
 
   // Set PISO flags
@@ -126,7 +126,7 @@ class TilemapBlitter extends Module {
   val stage2Pos = RegNext(stage1Pos)
 
   // The busy register is set when a configuration is latched, and cleared when a blit has finished
-  when(io.config.fire()) { busyReg := true.B }.elsewhen(blitDone) { busyReg := false.B }
+  when(io.config.fire) { busyReg := true.B }.elsewhen(blitDone) { busyReg := false.B }
 
   // The FIFO can only be read when it is not empty and should be read if the PISO is empty or will
   // be empty next clock cycle. Since the pipeline after the FIFO has no backpressure, and can

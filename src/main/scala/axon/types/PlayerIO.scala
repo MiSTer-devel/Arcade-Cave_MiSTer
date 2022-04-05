@@ -35,7 +35,7 @@ package axon.types
 import chisel3._
 
 /** An interface that contains the player controls. */
-class PlayerIO private extends Bundle {
+class PlayerIO extends Bundle {
   /** Player up */
   val up = Input(Bool())
   /** Player down */

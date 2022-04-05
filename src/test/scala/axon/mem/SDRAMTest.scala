@@ -242,12 +242,12 @@ class SDRAMTest extends FlatSpec with ChiselScalatestTester with Matchers with S
       dut.io.sdram.bank.expect(1.U)
 
       dut.io.mem.rd.poke(true.B)
-      dut.io.mem.addr.poke(0x42991744.U)
+      dut.io.mem.addr.poke(0x3ffffff.U)
       waitForActive(dut)
-      dut.io.sdram.addr.expect(0x1322.U) // row
+      dut.io.sdram.addr.expect(0x1fff.U) // row
       waitForRead(dut)
-      dut.io.sdram.addr.expect(0x7a2.U) // col
-      dut.io.sdram.bank.expect(2.U)
+      dut.io.sdram.addr.expect(0x7ff.U) // col
+      dut.io.sdram.bank.expect(3.U)
     }
   }
 

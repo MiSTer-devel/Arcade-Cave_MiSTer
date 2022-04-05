@@ -45,8 +45,6 @@ class MemRequest[S <: Data](s: S) extends Bundle {
 
   /** Returns true if the read or write enable flag is asserted */
   def valid: Bool = rd || wr
-
-  override def cloneType: this.type = new MemRequest(s).asInstanceOf[this.type]
 }
 
 object MemRequest {

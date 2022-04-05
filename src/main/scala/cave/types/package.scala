@@ -37,9 +37,7 @@ import chisel3._
 
 package object types {
   /** Frame buffer DMA IO */
-  class FrameBufferDMAIO extends ReadMemIO(Config.FRAME_BUFFER_DMA_ADDR_WIDTH, Config.FRAME_BUFFER_DMA_DATA_WIDTH) {
-    override def cloneType: this.type = new FrameBufferDMAIO().asInstanceOf[this.type]
-  }
+  class FrameBufferDMAIO extends ReadMemIO(Config.FRAME_BUFFER_DMA_ADDR_WIDTH, Config.FRAME_BUFFER_DMA_DATA_WIDTH)
 
   /** Priority IO */
   class PriorityIO extends Bundle {
@@ -50,22 +48,14 @@ package object types {
   }
 
   /** Program ROM IO */
-  class ProgRomIO extends AsyncReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH) {
-    override def cloneType: this.type = new ProgRomIO().asInstanceOf[this.type]
-  }
+  class ProgRomIO extends AsyncReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH)
 
   /** Sound ROM IO */
-  class SoundRomIO extends AsyncReadMemIO(Config.SOUND_ROM_ADDR_WIDTH, Config.SOUND_ROM_DATA_WIDTH) {
-    override def cloneType: this.type = new SoundRomIO().asInstanceOf[this.type]
-  }
+  class SoundRomIO extends AsyncReadMemIO(Config.SOUND_ROM_ADDR_WIDTH, Config.SOUND_ROM_DATA_WIDTH)
 
   /** EEPROM IO */
-  class EEPROMIO extends AsyncReadWriteMemIO(Config.EEPROM_ADDR_WIDTH, Config.EEPROM_DATA_WIDTH) {
-    override def cloneType: this.type = new EEPROMIO().asInstanceOf[this.type]
-  }
+  class EEPROMIO extends AsyncReadWriteMemIO(Config.EEPROM_ADDR_WIDTH, Config.EEPROM_DATA_WIDTH)
 
   /** Tile ROM IO */
-  class TileRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH) {
-    override def cloneType: this.type = new TileRomIO().asInstanceOf[this.type]
-  }
+  class TileRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH)
 }
