@@ -60,21 +60,30 @@ class SVec2(xWidth: Int, yWidth: Int) extends Bundle {
   /** Scalar multiplication operator. */
   def *(n: UInt) = SVec2(this.x * n, this.y * n)
 
-  /** Left shift operator. */
-  def <<(n: UInt) = SVec2((this.x << n).asSInt, (this.y << n).asSInt)
+  /** Static left shift operator. */
+  def <<(n: Int) = SVec2(this.x << n, this.y << n)
+
+  /** Dynamic left shift operator. */
+  def <<(n: UInt) = SVec2(this.x << n, this.y << n)
+
+  /** Static right shift operator. */
+  def >>(n: Int) = SVec2(this.x >> n, this.y >> n)
+
+  /** Dynamic right shift operator. */
+  def >>(n: UInt) = SVec2(this.x >> n, this.y >> n)
 }
 
 object SVec2 {
   /**
-   * Creates a signed vector from X and Y values.
+   * Creates a signed vector from X and Y bitvector values.
    *
    * @param x The horizontal position.
    * @param y The vertical position.
    */
-  def apply(x: SInt, y: SInt): SVec2 = {
+  def apply(x: Bits, y: Bits): SVec2 = {
     val pos = Wire(new SVec2(x.getWidth, y.getWidth))
-    pos.x := x
-    pos.y := y
+    pos.x := x.asSInt
+    pos.y := y.asSInt
     pos
   }
 
