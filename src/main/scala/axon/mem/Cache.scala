@@ -42,8 +42,8 @@ import chisel3.util._
  * @param inDataWidth  The width of the input data bus.
  * @param outAddrWidth The width of the output address bus.
  * @param outDataWidth The width of the output data bus.
- * @param depth        The number of entries in the cache.
  * @param lineWidth    The number of words in a cache line.
+ * @param depth        The number of entries in the cache.
  * @param wrapping     A boolean indicating whether burst wrapping should be enabled for the cache.
  *                     When a wrapping burst reaches a burst boundary, the address wraps back to the
  *                     previous burst boundary.
@@ -78,13 +78,13 @@ case class CacheConfig(inAddrWidth: Int,
  * A cache line can also be represented a vector of input words, by rearranging the byte grouping.
  */
 class CacheLine(private val config: CacheConfig) extends Bundle {
+  /** The cache line data */
   val words: Vec[Bits] = Vec(config.lineWidth, Bits(config.outDataWidth.W))
 
   /** Returns the cache line represented as a vector input words */
   def inWords: Vec[Bits] = words.asTypeOf(Vec(config.inWords, Bits(config.inDataWidth.W)))
-
   /** The output words in the cache line */
-  def outWords = words
+  def outWords: Vec[Bits] = words
 }
 
 /** Represents the location of a word stored in the cache. */
