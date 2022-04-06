@@ -148,5 +148,4 @@ class CounterTest extends FlatSpec with ChiselScalatestTester with Matchers {
       dut.io.wrap.expect(true.B)
     }
   }
-
 }
