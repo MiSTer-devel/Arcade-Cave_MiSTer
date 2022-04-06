@@ -120,7 +120,7 @@ object Sprite {
     sprite.pos := SVec2(words(2)(9, 0).asSInt, words(3)(9, 0).asSInt)
     sprite.cols := words(4)(15, 8)
     sprite.rows := words(4)(7, 0)
-    sprite.zoom := UVec2.zero
+    sprite.zoom := UVec2(0x100.U, 0x100.U)
     sprite
   }
 
