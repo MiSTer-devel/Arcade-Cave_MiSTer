@@ -87,28 +87,8 @@ class SpriteBlitter extends Module {
   val (x, xWrap) = Counter.dynamic(configReg.sprite.size.x, enable = busyReg && !pisoEmpty)
   val (y, yWrap) = Counter.dynamic(configReg.sprite.size.y, enable = xWrap)
 
-  // TODO: Check register width
-  val u = RegInit(0.U(20.W))
-  val v = RegInit(0.U(20.W))
-
-  // TODO: Check logic
-  when(xWrap) { u := 0.U }.elsewhen(!pisoEmpty) { u := u + configReg.sprite.zoom.x }
-  when(yWrap) { v := 0.U }.elsewhen(xWrap) { v := v + configReg.sprite.zoom.y }
-
-  // Pixel position
-  // TODO: Truncate the fractional bits
-  // TODO: Use correct size for flipped sprites
-  val pixelPos = {
-    val x = (u >> 8).asUInt
-    val y = (v >> 8).asUInt
-    val xPos = Mux(configReg.sprite.flipX, configReg.sprite.size.x - x - 1.U, x)
-    val yPos = Mux(configReg.sprite.flipY, configReg.sprite.size.y - y - 1.U, y)
-    SVec2(xPos.asSInt, yPos.asSInt)
-  }
-
   // Pixel position pipeline
-  // TODO: Add fixed-point sprite position to the pixel position, before truncating
-  val stage0Pos = configReg.sprite.pos + pixelPos
+  val stage0Pos = configReg.sprite.pixelPos(x, y)
   val stage1Pos = RegNext(stage0Pos)
   val stage2Pos = RegNext(stage1Pos)
 
@@ -161,5 +141,5 @@ class SpriteBlitter extends Module {
   io.frameBuffer.din := frameBufferData
   io.busy := delayedBusyReg
 
-  printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), u: ${ u >> 8 }, v: ${ v >> 8 }, ready: $configReady, busy: $busyReg, write: $frameBufferWrite, pixelDataReady: $pixelDataReady, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
+  printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), ready: $configReady, busy: $busyReg, write: $frameBufferWrite, pixelDataReady: $pixelDataReady, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
 }

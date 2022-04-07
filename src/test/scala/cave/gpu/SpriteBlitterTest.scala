@@ -87,11 +87,31 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
 
   behavior of "blitting"
 
+  it should "assert the busy signal" in {
+    test(new SpriteBlitter) { dut =>
+      dut.io.config.valid.poke(true.B)
+      dut.io.config.bits.sprite.cols.poke(1.U)
+      dut.io.config.bits.sprite.rows.poke(1.U)
+      dut.io.config.bits.sprite.zoom.x.poke(0x100.U)
+      dut.io.config.bits.sprite.zoom.y.poke(0x100.U)
+      dut.io.pixelData.valid.poke(true.B)
+      dut.clock.step()
+      dut.io.config.valid.poke(false.B)
+      dut.io.busy.expect(false.B)
+      dut.clock.step(2)
+      dut.io.busy.expect(true.B)
+      dut.clock.step(256)
+      dut.io.busy.expect(false.B)
+    }
+  }
+
   it should "write pixel data to the frame buffer" in {
     test(new SpriteBlitter) { dut =>
       dut.io.config.valid.poke(true.B)
       dut.io.config.bits.sprite.cols.poke(2.U)
       dut.io.config.bits.sprite.rows.poke(1.U)
+      dut.io.config.bits.sprite.pos.x.poke(0x1000.S)
+      dut.io.config.bits.sprite.pos.y.poke(0x1000.S)
       dut.io.config.bits.sprite.zoom.x.poke(0x100.U)
       dut.io.config.bits.sprite.zoom.y.poke(0x100.U)
       dut.io.pixelData.valid.poke(true.B)
@@ -101,30 +121,30 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
 
       // Pixel 0
       dut.io.frameBuffer.wr.expect(true.B)
-      dut.io.frameBuffer.addr.expect(0x0000.U)
+      dut.io.frameBuffer.addr.expect(0x1410.U)
       dut.io.frameBuffer.din.expect(1.U)
       dut.clock.step()
 
       // Pixel 1
       dut.io.frameBuffer.wr.expect(true.B)
-      dut.io.frameBuffer.addr.expect(0x0001.U)
+      dut.io.frameBuffer.addr.expect(0x1411.U)
       dut.io.frameBuffer.din.expect(1.U)
       dut.clock.step(29)
 
       // Pixel 30
       dut.io.frameBuffer.wr.expect(true.B)
-      dut.io.frameBuffer.addr.expect(0x01e.U)
+      dut.io.frameBuffer.addr.expect(0x142e.U)
       dut.io.frameBuffer.din.expect(1.U)
       dut.clock.step()
 
       // Pixel 31
       dut.io.frameBuffer.wr.expect(true.B)
-      dut.io.frameBuffer.addr.expect(0x01f.U)
+      dut.io.frameBuffer.addr.expect(0x142f.U)
       dut.io.frameBuffer.din.expect(1.U)
     }
   }
 
-  it should "allow horizontal flipping" in {
+  it should "handle horizontal flipping" in {
     test(new SpriteBlitter) { dut =>
       dut.io.config.valid.poke(true.B)
       dut.io.config.bits.sprite.cols.poke(1.U)
@@ -139,27 +159,27 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
 
       // Pixel 0
       dut.io.frameBuffer.wr.expect(true.B)
-      dut.io.frameBuffer.addr.expect(0x000f.U)
+      dut.io.frameBuffer.addr.expect(0x0f.U)
       dut.io.frameBuffer.din.expect(1.U)
       dut.clock.step()
 
       // Pixel 1
-      dut.io.frameBuffer.addr.expect(0x000e.U)
+      dut.io.frameBuffer.addr.expect(0x0e.U)
       dut.io.frameBuffer.din.expect(1.U)
       dut.clock.step(13)
 
       // Pixel 14
-      dut.io.frameBuffer.addr.expect(0x0001.U)
+      dut.io.frameBuffer.addr.expect(0x01.U)
       dut.io.frameBuffer.din.expect(1.U)
       dut.clock.step()
 
       // Pixel 15
-      dut.io.frameBuffer.addr.expect(0x0000.U)
+      dut.io.frameBuffer.addr.expect(0x00.U)
       dut.io.frameBuffer.din.expect(1.U)
     }
   }
 
-  it should "allow vertical flipping" in {
+  it should "handle vertical flipping" in {
     test(new SpriteBlitter) { dut =>
       dut.io.config.valid.poke(true.B)
       dut.io.config.bits.sprite.cols.poke(1.U)
@@ -194,21 +214,151 @@ class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matcher
     }
   }
 
-  it should "assert the busy signal" in {
+  behavior of "downscaling"
+
+  it should "write pixel data to the frame buffer" in {
     test(new SpriteBlitter) { dut =>
       dut.io.config.valid.poke(true.B)
       dut.io.config.bits.sprite.cols.poke(1.U)
       dut.io.config.bits.sprite.rows.poke(1.U)
-      dut.io.config.bits.sprite.zoom.x.poke(0x100.U)
+      dut.io.config.bits.sprite.zoom.x.poke(0x80.U) // 0.5x scaling
       dut.io.config.bits.sprite.zoom.y.poke(0x100.U)
       dut.io.pixelData.valid.poke(true.B)
+      for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1.U) }
+      dut.io.paletteRam.dout.poke(1.U)
+      dut.clock.step(4)
+
+      // Pixel 0
+      dut.io.frameBuffer.wr.expect(true.B)
+      dut.io.frameBuffer.addr.expect(0x00.U)
+      dut.io.frameBuffer.din.expect(1.U)
       dut.clock.step()
-      dut.io.config.valid.poke(false.B)
-      dut.io.busy.expect(false.B)
-      dut.clock.step(2)
-      dut.io.busy.expect(true.B)
-      dut.clock.step(256)
-      dut.io.busy.expect(false.B)
+
+      // Pixel 1
+      dut.io.frameBuffer.wr.expect(true.B)
+      dut.io.frameBuffer.addr.expect(0x00.U)
+      dut.io.frameBuffer.din.expect(1.U)
+      dut.clock.step(13)
+
+      // Pixel 14
+      dut.io.frameBuffer.wr.expect(true.B)
+      dut.io.frameBuffer.addr.expect(0x07.U)
+      dut.io.frameBuffer.din.expect(1.U)
+      dut.clock.step()
+
+      // Pixel 15
+      dut.io.frameBuffer.wr.expect(true.B)
+      dut.io.frameBuffer.addr.expect(0x07.U)
+      dut.io.frameBuffer.din.expect(1.U)
+    }
+  }
+
+  it should "handle horizontal flipping" in {
+    test(new SpriteBlitter) { dut =>
+      dut.io.config.valid.poke(true.B)
+      dut.io.config.bits.sprite.cols.poke(1.U)
+      dut.io.config.bits.sprite.rows.poke(1.U)
+      dut.io.config.bits.sprite.zoom.x.poke(0x80.U) // 0.5x scaling
+      dut.io.config.bits.sprite.zoom.y.poke(0x100.U)
+      dut.io.config.bits.sprite.flipX.poke(true.B)
+      dut.io.pixelData.valid.poke(true.B)
+      for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1.U) }
+      dut.io.paletteRam.dout.poke(1.U)
+      dut.clock.step(4)
+
+      // Pixel 0
+      dut.io.frameBuffer.wr.expect(true.B)
+      dut.io.frameBuffer.addr.expect(0x0f.U)
+      dut.io.frameBuffer.din.expect(1.U)
+      dut.clock.step()
+
+      // Pixel 1
+      dut.io.frameBuffer.addr.expect(0x0f.U)
+      dut.io.frameBuffer.din.expect(1.U)
+      dut.clock.step(13)
+
+      // Pixel 14
+      dut.io.frameBuffer.addr.expect(0x08.U)
+      dut.io.frameBuffer.din.expect(1.U)
+      dut.clock.step()
+
+      // Pixel 15
+      dut.io.frameBuffer.addr.expect(0x08.U)
+      dut.io.frameBuffer.din.expect(1.U)
+    }
+  }
+
+  behavior of "upscaling"
+
+  it should "write pixel data to the frame buffer" in {
+    test(new SpriteBlitter) { dut =>
+      dut.io.config.valid.poke(true.B)
+      dut.io.config.bits.sprite.cols.poke(1.U)
+      dut.io.config.bits.sprite.rows.poke(1.U)
+      dut.io.config.bits.sprite.zoom.x.poke(0x200.U) // 2x scaling
+      dut.io.config.bits.sprite.zoom.y.poke(0x100.U)
+      dut.io.pixelData.valid.poke(true.B)
+      for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1.U) }
+      dut.io.paletteRam.dout.poke(1.U)
+      dut.clock.step(4)
+
+      // Pixel 0
+      dut.io.frameBuffer.wr.expect(true.B)
+      dut.io.frameBuffer.addr.expect(0x00.U)
+      dut.io.frameBuffer.din.expect(1.U)
+      dut.clock.step()
+
+      // Pixel 1
+      dut.io.frameBuffer.wr.expect(true.B)
+      dut.io.frameBuffer.addr.expect(0x02.U)
+      dut.io.frameBuffer.din.expect(1.U)
+      dut.clock.step(13)
+
+      // Pixel 14
+      dut.io.frameBuffer.wr.expect(true.B)
+      dut.io.frameBuffer.addr.expect(0x1c.U)
+      dut.io.frameBuffer.din.expect(1.U)
+      dut.clock.step()
+
+      // Pixel 15
+      dut.io.frameBuffer.wr.expect(true.B)
+      dut.io.frameBuffer.addr.expect(0x1e.U)
+      dut.io.frameBuffer.din.expect(1.U)
+    }
+  }
+
+  it should "handle horizontal flipping" in {
+    test(new SpriteBlitter) { dut =>
+      dut.io.config.valid.poke(true.B)
+      dut.io.config.bits.sprite.cols.poke(1.U)
+      dut.io.config.bits.sprite.rows.poke(1.U)
+      dut.io.config.bits.sprite.zoom.x.poke(0x200.U) // 2x scaling
+      dut.io.config.bits.sprite.zoom.y.poke(0x100.U)
+      dut.io.config.bits.sprite.flipX.poke(true.B)
+      dut.io.pixelData.valid.poke(true.B)
+      for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1.U) }
+      dut.io.paletteRam.dout.poke(1.U)
+      dut.clock.step(4)
+
+      // Pixel 0
+      dut.io.frameBuffer.wr.expect(true.B)
+      dut.io.frameBuffer.addr.expect(0xf.U)
+      dut.io.frameBuffer.din.expect(1.U)
+      dut.clock.step()
+
+      // Pixel 1
+      dut.io.frameBuffer.addr.expect(0xd.U)
+      dut.io.frameBuffer.din.expect(1.U)
+      dut.clock.step(13)
+
+      // Pixel 14
+      dut.io.frameBuffer.addr.expect(0x1f3.U)
+      dut.io.frameBuffer.din.expect(1.U)
+      dut.clock.step()
+
+      // Pixel 15
+      dut.io.frameBuffer.addr.expect(0x1f1.U)
+      dut.io.frameBuffer.din.expect(1.U)
     }
   }
 }
