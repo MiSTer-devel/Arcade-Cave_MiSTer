@@ -35,6 +35,8 @@ package axon.snd
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
 trait ChannelControllerTestHelpers {
   protected val ymzConfig = YMZ280BConfig(clockFreq = 44100 * 50, numChannels = 1)
@@ -100,7 +102,7 @@ trait ChannelControllerTestHelpers {
     while (!dut.io.audio.valid.peek().litToBoolean) { dut.clock.step() }
 }
 
-class ChannelControllerTest extends FlatSpec with ChiselScalatestTester with Matchers with ChannelControllerTestHelpers {
+class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with ChannelControllerTestHelpers {
   behavior of "FSM"
 
   it should "remain in the init state when the channel controller is disabled" in {

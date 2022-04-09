@@ -35,8 +35,10 @@ package axon.snd
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
-class ADPCMTest extends FlatSpec with ChiselScalatestTester with Matchers {
+class ADPCMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   it should "decode sample values" in {
     test(new ADPCM) { dut =>
       dut.io.data.poke(8.U)

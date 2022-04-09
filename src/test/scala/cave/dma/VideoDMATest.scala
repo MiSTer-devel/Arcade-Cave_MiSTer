@@ -35,12 +35,14 @@ package cave.dma
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
 trait VideoDMATestHelpers {
   protected def mkDMA() = new VideoDMA(addr = 1, numWords = 8, burstLength = 4)
 }
 
-class VideoDMATest extends FlatSpec with ChiselScalatestTester with Matchers with VideoDMATestHelpers {
+class VideoDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with VideoDMATestHelpers {
   it should "deassert the ready signal during a transfer" in {
     test(mkDMA()) { dut =>
       dut.io.enable.poke(true.B)

@@ -36,8 +36,10 @@ import chisel3._
 import chiseltest._
 import chiseltest.experimental.UncheckedClockPoke._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
-class DataFreezerTest extends FlatSpec with ChiselScalatestTester with Matchers {
+class DataFreezerTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   private def mkFreezer = new ReadWriteDataFreezer(addrWidth = 8, dataWidth = 8)
 
   behavior of "read"

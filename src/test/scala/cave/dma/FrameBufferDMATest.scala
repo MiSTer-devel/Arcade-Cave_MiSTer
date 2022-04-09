@@ -35,12 +35,14 @@ package cave.dma
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
 trait FrameBufferDMATestHelpers {
   protected def mkDMA() = new FrameBufferDMA(addr = 1, numWords = 8, burstLength = 4)
 }
 
-class FrameBufferDMATest extends FlatSpec with ChiselScalatestTester with Matchers with FrameBufferDMATestHelpers {
+class FrameBufferDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with FrameBufferDMATestHelpers {
   it should "deassert the ready signal during a transfer" in {
     test(mkDMA()) { dut =>
       dut.io.enable.poke(true.B)

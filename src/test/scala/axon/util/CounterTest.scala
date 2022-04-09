@@ -35,8 +35,10 @@ package axon.util
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
-class CounterTest extends FlatSpec with ChiselScalatestTester with Matchers {
+class CounterTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   it should "increment a static counter" in {
     test(new Module {
       val io = IO(new Bundle {

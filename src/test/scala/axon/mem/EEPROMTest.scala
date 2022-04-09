@@ -35,6 +35,8 @@ package axon.mem
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
 trait EEPROMTestHelpers {
   /** Sends a start bit to the given EEPROM device. */
@@ -100,7 +102,7 @@ trait EEPROMTestHelpers {
     while (!dut.io.debug.read.peek().litToBoolean) { dut.clock.step() }
 }
 
-class EEPROMTest extends FlatSpec with ChiselScalatestTester with Matchers with EEPROMTestHelpers {
+class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with EEPROMTestHelpers {
   behavior of "FSM"
 
   it should "move to the command state after receiving a start bit" in {

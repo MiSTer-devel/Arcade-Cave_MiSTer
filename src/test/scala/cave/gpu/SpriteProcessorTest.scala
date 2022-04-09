@@ -35,6 +35,8 @@ package cave.gpu
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
 trait SpriteProcessorTestHelpers {
   def mkProcessor(maxSprites: Int = 2) = new SpriteProcessor(maxSprites)
@@ -64,7 +66,7 @@ trait SpriteProcessorTestHelpers {
     while (!dut.io.debug.done.peek().litToBoolean) { dut.clock.step() }
 }
 
-class SpriteProcessorTest extends FlatSpec with ChiselScalatestTester with Matchers with SpriteProcessorTestHelpers {
+class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with SpriteProcessorTestHelpers {
   behavior of "FSM"
 
   it should "move to the load state when the start signal is asserted" in {

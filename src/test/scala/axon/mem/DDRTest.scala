@@ -35,6 +35,8 @@ package axon.mem
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
 trait DDRTestHelpers {
   protected val ddrConfig = DDRConfig(addrWidth = 16, dataWidth = 16)
@@ -42,7 +44,7 @@ trait DDRTestHelpers {
   protected def mkDDR(config: DDRConfig = ddrConfig) = new DDR(config)
 }
 
-class DDRTest extends FlatSpec with ChiselScalatestTester with Matchers with DDRTestHelpers {
+class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with DDRTestHelpers {
   behavior of "read"
 
   it should "read from DDR memory (burst=1)" in {

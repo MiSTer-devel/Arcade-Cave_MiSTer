@@ -36,6 +36,8 @@ import cave.Config
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
 trait TilemapProcessorTestHelpers {
   def mkProcessor() = new TilemapProcessor(1, 1)
@@ -65,7 +67,7 @@ trait TilemapProcessorTestHelpers {
     while (!dut.io.debug.done.peek().litToBoolean) { dut.clock.step() }
 }
 
-class TilemapProcessorTest extends FlatSpec with ChiselScalatestTester with Matchers with TilemapProcessorTestHelpers {
+class TilemapProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with TilemapProcessorTestHelpers {
   behavior of "FSM"
 
   it should "move to the check state when the start signal is asserted" in {

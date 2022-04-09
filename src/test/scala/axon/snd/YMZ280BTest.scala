@@ -35,6 +35,8 @@ package axon.snd
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
 trait YMZ280BTestHelpers {
   protected val config = YMZ280BConfig(clockFreq = 44100, numChannels = 2)
@@ -61,7 +63,7 @@ trait YMZ280BTestHelpers {
   }
 }
 
-class YMZ280BTest extends FlatSpec with ChiselScalatestTester with Matchers with YMZ280BTestHelpers {
+class YMZ280BTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with YMZ280BTestHelpers {
   behavior of "function register"
 
   it should "allow writing the channel pitch" in {

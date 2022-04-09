@@ -36,8 +36,10 @@ import chisel3._
 import chiseltest._
 import chiseltest.experimental.UncheckedClockPoke._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
-class UtilTest extends FlatSpec with ChiselScalatestTester with Matchers {
+class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   "rotateLeft" should "rotate the bits to the left" in {
     test(new Module {
       val io = IO(new Bundle {

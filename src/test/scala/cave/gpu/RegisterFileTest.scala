@@ -35,8 +35,10 @@ package cave.gpu
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
-class RegisterFileTest extends FlatSpec with ChiselScalatestTester with Matchers {
+class RegisterFileTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   it should "allow writing masked bytes" in {
     test(new RegisterFile(3)) { dut =>
       dut.io.mem.wr.poke(true.B)

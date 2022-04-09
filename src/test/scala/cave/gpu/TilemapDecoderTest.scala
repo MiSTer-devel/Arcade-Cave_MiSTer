@@ -36,8 +36,10 @@ import cave.Config
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
-class TilemapDecoderTest extends FlatSpec with ChiselScalatestTester with Matchers {
+class TilemapDecoderTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   behavior of "4BPP"
 
   it should "request a word from the tile ROM for every two rows" in {

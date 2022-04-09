@@ -35,8 +35,10 @@ package axon.snd
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
-class LERPTest extends FlatSpec with ChiselScalatestTester with Matchers {
+class LERPTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   it should "interpolate sample values" in {
     test(new LERP) { dut =>
       dut.io.samples(0).poke(0.S)

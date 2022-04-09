@@ -35,8 +35,10 @@ package cave.gpu
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
-class SpriteBlitterTest extends FlatSpec with ChiselScalatestTester with Matchers {
+class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   behavior of "sprite data"
 
   it should "request sprite data when the PISO is empty" in {

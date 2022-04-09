@@ -35,6 +35,8 @@ package axon.snd
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
 trait AudioPipelineTestHelpers {
   protected val config = YMZ280BConfig(clockFreq = 44100, numChannels = 2)
@@ -86,7 +88,7 @@ trait AudioPipelineTestHelpers {
     while (!dut.io.debug.done.peek().litToBoolean) { dut.clock.step() }
 }
 
-class AudioPipelineTest extends FlatSpec with ChiselScalatestTester with Matchers with AudioPipelineTestHelpers {
+class AudioPipelineTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with AudioPipelineTestHelpers {
   behavior of "FSM"
 
   it should "assert the ready signal during the idle state" in {

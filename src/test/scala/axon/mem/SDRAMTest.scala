@@ -35,6 +35,8 @@ package axon.mem
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
 trait SDRAMTestHelpers {
   protected val sdramConfig = SDRAMConfig(
@@ -72,7 +74,7 @@ trait SDRAMTestHelpers {
     while (!dut.io.debug.refresh.peek().litToBoolean) { dut.clock.step() }
 }
 
-class SDRAMTest extends FlatSpec with ChiselScalatestTester with Matchers with SDRAMTestHelpers {
+class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with SDRAMTestHelpers {
   behavior of "FSM"
 
   it should "move to the mode state after initializing" in {

@@ -35,8 +35,10 @@ package axon.mem
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
-class MemArbiterTest extends FlatSpec with ChiselScalatestTester with Matchers {
+class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   private def mkMemArbiter = new MemArbiter(2, 8, 8)
 
   it should "mux the request to the input port with the highest priority" in {

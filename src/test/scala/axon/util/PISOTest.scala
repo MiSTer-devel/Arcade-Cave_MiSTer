@@ -35,8 +35,10 @@ package axon.util
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
-class PISOTest extends FlatSpec with ChiselScalatestTester with Matchers {
+class PISOTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   def mkPISO = new Module {
     val io = IO(new Bundle {
       val wr = Input(Bool())

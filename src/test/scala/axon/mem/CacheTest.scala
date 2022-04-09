@@ -35,6 +35,8 @@ package axon.mem
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
 trait CacheMemTestHelpers {
   protected val cacheConfig = CacheConfig(
@@ -118,7 +120,7 @@ trait CacheMemTestHelpers {
     while (!dut.io.debug.write.peek().litToBoolean) { dut.clock.step() }
 }
 
-class CacheTest extends FlatSpec with ChiselScalatestTester with Matchers with CacheMemTestHelpers {
+class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with CacheMemTestHelpers {
   behavior of "FSM"
 
   it should "move to the latch state after a request" in {

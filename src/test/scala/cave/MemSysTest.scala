@@ -35,13 +35,15 @@ package cave
 import chisel3._
 import chiseltest._
 import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
 trait MemSysTestHelpers {
   protected def waitForDownloadReady(dut: MemSys) =
     while (dut.io.ioctl.waitReq.peek().litToBoolean) { dut.clock.step() }
 }
 
-class MemSysTest extends FlatSpec with ChiselScalatestTester with Matchers with MemSysTestHelpers {
+class MemSysTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with MemSysTestHelpers {
   it should "write download data to memory" in {
     test(new MemSys) { dut =>
       waitForDownloadReady(dut)
