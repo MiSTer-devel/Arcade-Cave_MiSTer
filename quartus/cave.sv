@@ -154,23 +154,23 @@ assign AUDIO_MIX = 0;
 
 assign BUTTONS = 0;
 
-assign VIDEO_ARX = status[1] ? 12'd16 : status[2] ? 12'd3 : 12'd4;
-assign VIDEO_ARY = status[1] ? 12'd9  : status[2] ? 12'd4 : 12'd3;
+assign VIDEO_ARX = (!aspect_ratio) ? (orientation  ? 8'd4 : 3'd219) : (aspect_ratio - 1'd1);
+assign VIDEO_ARY = (!aspect_ratio) ? (orientation  ? 8'd3 : 4'd4) : 12'd0;
 
 `include "build_id.v"
 localparam CONF_STR = {
   "cave;;",
   "OOR,CRT H adjust,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;",
   "OSV,CRT V adjust,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;",
-  "D0O1,Aspect Ratio,4:3,16:9;",
-  "D0O2,Orientation,Horizontal,Vertical;",
-  "O3,Flip Screen,Off,On;",
-  "O46,Scandoubler,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
+  "D0O12,Aspect Ratio,Original,Full Screen,[ARC1],[ARC2];",
+  "D0O3,Orientation,Horizontal,Vertical;",
+  "O4,Flip Screen,Off,On;",
+  "O57,Scandoubler FX,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
   "-;",
   "P1,Advanced;",
   "P1-;",
-  "P1O7,Refresh Rate,57Hz,60Hz;",
-  "d1P1O8,ROM Storage,SDRAM,DDR3;",
+  "P1O8,Refresh Rate,57Hz,60Hz;",
+  "d1P1O9,ROM Storage,SDRAM,DDR3;",
   "P2,Debug;",
   "P2-;",
   "P2OA,Sprites,On,Off;",
@@ -257,7 +257,7 @@ reset_ctrl reset_video_ctrl (
 ////////////////////////////////////////////////////////////////////////////////
 
 wire  [1:0] buttons;
-wire [31:0] status;
+wire [63:0] status;
 wire        forced_scandoubler;
 wire [21:0] gamma_bus;
 wire        direct_video;
@@ -314,7 +314,8 @@ wire [7:0] r, g, b;
 wire hsync, vsync;
 wire hblank, vblank;
 wire video_enable;
-wire [2:0] fx = status[6:4];
+wire [1:0] aspect_ratio = status[2:1];
+wire [2:0] fx = status[7:5];
 wire [2:0] sl = fx ? fx - 1'd1 : 3'd0;
 wire       scandoubler = fx || forced_scandoubler;
 
@@ -458,12 +459,12 @@ Main main (
   .io_cpuClock(clk_cpu),
   .io_cpuReset(rst_cpu),
   // Options
-  .io_options_sdram(sdram_available & ~status[8]),
+  .io_options_sdram(sdram_available & ~status[9]),
   .io_options_offset_x(status[27:24]),
   .io_options_offset_y(status[31:28]),
-  .io_options_rotate(status[2]),
-  .io_options_flip(status[3]),
-  .io_options_compatibility(status[7]),
+  .io_options_rotate(status[3]),
+  .io_options_flip(status[4]),
+  .io_options_compatibility(status[8]),
   .io_options_layer_sprites(status[10]),
   .io_options_layer_layer0(status[11]),
   .io_options_layer_layer1(status[12]),
