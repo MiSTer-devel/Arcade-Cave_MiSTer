@@ -53,25 +53,25 @@ trait SDRAMTestHelpers {
   protected def mkSDRAM(config: SDRAMConfig = sdramConfig) = new SDRAM(config)
 
   protected def waitForInit(dut: SDRAM) =
-    while (!dut.io.debug.init.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.init.peekBoolean()) { dut.clock.step() }
 
   protected def waitForMode(dut: SDRAM) =
-    while (!dut.io.debug.mode.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.mode.peekBoolean()) { dut.clock.step() }
 
   protected def waitForIdle(dut: SDRAM) =
-    while (!dut.io.debug.idle.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.idle.peekBoolean()) { dut.clock.step() }
 
   protected def waitForActive(dut: SDRAM) =
-    while (!dut.io.debug.active.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.active.peekBoolean()) { dut.clock.step() }
 
   protected def waitForRead(dut: SDRAM) =
-    while (!dut.io.debug.read.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.read.peekBoolean()) { dut.clock.step() }
 
   protected def waitForWrite(dut: SDRAM) =
-    while (!dut.io.debug.write.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.write.peekBoolean()) { dut.clock.step() }
 
   protected def waitForRefresh(dut: SDRAM) =
-    while (!dut.io.debug.refresh.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.refresh.peekBoolean()) { dut.clock.step() }
 }
 
 class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with SDRAMTestHelpers {

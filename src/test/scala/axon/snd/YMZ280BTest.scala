@@ -48,7 +48,7 @@ trait YMZ280BTestHelpers {
     dut.io.cpu.addr.poke(1.U)
     dut.clock.step()
     dut.io.cpu.rd.poke(false.B)
-    dut.io.cpu.dout.peek().litValue()
+    dut.io.cpu.dout.peekInt()
   }
 
   protected def writeReg(dut: YMZ280B, addr: Int, data: Int) = {

@@ -57,7 +57,7 @@ trait CacheMemTestHelpers {
     dut.clock.step()
     dut.io.in.rd.poke(false.B)
     dut.clock.step()
-    val result = dut.io.in.dout.peek().litValue()
+    val result = dut.io.in.dout.peekInt()
     waitForIdle(dut)
     result
   }
@@ -93,31 +93,31 @@ trait CacheMemTestHelpers {
   }
 
   protected def waitForIdle(dut: Cache) =
-    while (!dut.io.debug.idle.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.idle.peekBoolean()) { dut.clock.step() }
 
   protected def waitForLatch(dut: Cache) =
-    while (!dut.io.debug.latch.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.latch.peekBoolean()) { dut.clock.step() }
 
   protected def waitForCheck(dut: Cache) =
-    while (!dut.io.debug.check.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.check.peekBoolean()) { dut.clock.step() }
 
   protected def waitForFill(dut: Cache) =
-    while (!dut.io.debug.fill.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.fill.peekBoolean()) { dut.clock.step() }
 
   protected def waitForFillWait(dut: Cache) =
-    while (!dut.io.debug.fillWait.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.fillWait.peekBoolean()) { dut.clock.step() }
 
   protected def waitForEvict(dut: Cache) =
-    while (!dut.io.debug.evict.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.evict.peekBoolean()) { dut.clock.step() }
 
   protected def waitForEvictWait(dut: Cache) =
-    while (!dut.io.debug.evictWait.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.evictWait.peekBoolean()) { dut.clock.step() }
 
   protected def waitForMerge(dut: Cache) =
-    while (!dut.io.debug.merge.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.merge.peekBoolean()) { dut.clock.step() }
 
   protected def waitForWrite(dut: Cache) =
-    while (!dut.io.debug.write.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.write.peekBoolean()) { dut.clock.step() }
 }
 
 class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with CacheMemTestHelpers {

@@ -64,28 +64,28 @@ trait AudioPipelineTestHelpers {
   }
 
   protected def waitForIdle(dut: AudioPipeline) =
-    while (!dut.io.debug.idle.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.idle.peekBoolean()) { dut.clock.step() }
 
   protected def waitForCheck(dut: AudioPipeline) =
-    while (!dut.io.debug.check.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.check.peekBoolean()) { dut.clock.step() }
 
   protected def waitForFetch(dut: AudioPipeline) =
-    while (!dut.io.debug.fetch.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.fetch.peekBoolean()) { dut.clock.step() }
 
   protected def waitForDecode(dut: AudioPipeline) =
-    while (!dut.io.debug.decode.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.decode.peekBoolean()) { dut.clock.step() }
 
   protected def waitForInterpolate(dut: AudioPipeline) =
-    while (!dut.io.debug.interpolate.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.interpolate.peekBoolean()) { dut.clock.step() }
 
   protected def waitForLevel(dut: AudioPipeline) =
-    while (!dut.io.debug.level.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.level.peekBoolean()) { dut.clock.step() }
 
   protected def waitForPan(dut: AudioPipeline) =
-    while (!dut.io.debug.pan.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.pan.peekBoolean()) { dut.clock.step() }
 
   protected def waitForDone(dut: AudioPipeline) =
-    while (!dut.io.debug.done.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.done.peekBoolean()) { dut.clock.step() }
 }
 
 class AudioPipelineTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with AudioPipelineTestHelpers {

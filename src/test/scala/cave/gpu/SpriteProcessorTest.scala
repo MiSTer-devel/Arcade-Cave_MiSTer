@@ -42,28 +42,28 @@ trait SpriteProcessorTestHelpers {
   def mkProcessor(maxSprites: Int = 2) = new SpriteProcessor(maxSprites)
 
   def waitForIdle(dut: SpriteProcessor) =
-    while (!dut.io.debug.idle.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.idle.peekBoolean()) { dut.clock.step() }
 
   def waitForLoad(dut: SpriteProcessor) =
-    while (!dut.io.debug.load.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.load.peekBoolean()) { dut.clock.step() }
 
   def waitForLatch(dut: SpriteProcessor) =
-    while (!dut.io.debug.latch.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.latch.peekBoolean()) { dut.clock.step() }
 
   def waitForCheck(dut: SpriteProcessor) =
-    while (!dut.io.debug.check.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.check.peekBoolean()) { dut.clock.step() }
 
   def waitForReady(dut: SpriteProcessor) =
-    while (!dut.io.debug.ready.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.ready.peekBoolean()) { dut.clock.step() }
 
   def waitForPending(dut: SpriteProcessor) =
-    while (!dut.io.debug.pending.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.pending.peekBoolean()) { dut.clock.step() }
 
   def waitForNext(dut: SpriteProcessor) =
-    while (!dut.io.debug.next.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.next.peekBoolean()) { dut.clock.step() }
 
   def waitForDone(dut: SpriteProcessor) =
-    while (!dut.io.debug.done.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.done.peekBoolean()) { dut.clock.step() }
 }
 
 class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with SpriteProcessorTestHelpers {

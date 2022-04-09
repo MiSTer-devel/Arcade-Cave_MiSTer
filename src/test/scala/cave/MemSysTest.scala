@@ -40,7 +40,7 @@ import matchers.should.Matchers
 
 trait MemSysTestHelpers {
   protected def waitForDownloadReady(dut: MemSys) =
-    while (dut.io.ioctl.waitReq.peek().litToBoolean) { dut.clock.step() }
+    while (dut.io.ioctl.waitReq.peekBoolean()) { dut.clock.step() }
 }
 
 class MemSysTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with MemSysTestHelpers {

@@ -69,37 +69,37 @@ trait ChannelControllerTestHelpers {
   }
 
   protected def waitForIdle(dut: ChannelController) =
-    while (!dut.io.debug.idle.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.idle.peekBoolean()) { dut.clock.step() }
 
   protected def waitForRead(dut: ChannelController) =
-    while (!dut.io.debug.read.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.read.peekBoolean()) { dut.clock.step() }
 
   protected def waitForLatch(dut: ChannelController) =
-    while (!dut.io.debug.latch.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.latch.peekBoolean()) { dut.clock.step() }
 
   protected def waitForCheck(dut: ChannelController) =
-    while (!dut.io.debug.check.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.check.peekBoolean()) { dut.clock.step() }
 
   protected def waitForReady(dut: ChannelController) =
-    while (!dut.io.debug.ready.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.ready.peekBoolean()) { dut.clock.step() }
 
   protected def waitForProcess(dut: ChannelController) =
-    while (!dut.io.debug.process.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.process.peekBoolean()) { dut.clock.step() }
 
   protected def waitForWrite(dut: ChannelController) =
-    while (!dut.io.debug.write.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.write.peekBoolean()) { dut.clock.step() }
 
   protected def waitForNext(dut: ChannelController) =
-    while (!dut.io.debug.next.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.next.peekBoolean()) { dut.clock.step() }
 
   protected def waitForDone(dut: ChannelController) =
-    while (!dut.io.debug.done.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.done.peekBoolean()) { dut.clock.step() }
 
   protected def waitForMemRead(dut: ChannelController) =
-    while (!dut.io.mem.rd.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.mem.rd.peekBoolean()) { dut.clock.step() }
 
   protected def waitForAudioValid(dut: ChannelController) =
-    while (!dut.io.audio.valid.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.audio.valid.peekBoolean()) { dut.clock.step() }
 }
 
 class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with ChannelControllerTestHelpers {

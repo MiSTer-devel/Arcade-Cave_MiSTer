@@ -55,7 +55,7 @@ trait EEPROMTestHelpers {
     dut.clock.step()
     dut.io.serial.sck.poke(true.B)
     dut.clock.step()
-    dut.io.serial.sdo.peek().litToBoolean
+    dut.io.serial.sdo.peekBoolean()
   }
 
   /** Writes a bit to the given EEPROM device. */
@@ -93,13 +93,13 @@ trait EEPROMTestHelpers {
   protected def disableWrite(dut: EEPROM) = command(dut, 0, 0)
 
   protected def waitForIdle(dut: EEPROM) =
-    while (!dut.io.debug.idle.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.idle.peekBoolean()) { dut.clock.step() }
 
   protected def waitForCommand(dut: EEPROM) =
-    while (!dut.io.debug.command.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.command.peekBoolean()) { dut.clock.step() }
 
   protected def waitForRead(dut: EEPROM) =
-    while (!dut.io.debug.read.peek().litToBoolean) { dut.clock.step() }
+    while (!dut.io.debug.read.peekBoolean()) { dut.clock.step() }
 }
 
 class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with EEPROMTestHelpers {
