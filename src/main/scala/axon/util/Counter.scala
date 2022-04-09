@@ -35,7 +35,7 @@ package axon.util
 import chisel3._
 import chisel3.util._
 
-private class CounterStatic(to: Int, init: Int = 0) {
+private class CounterStatic(to: Int, init: Int) {
   require(to >= init, s"Counter value must greater than initial value, got: $to")
   val value = if (to > 1) RegInit(init.U(log2Ceil(to).W)) else init.U
 
@@ -61,8 +61,8 @@ private class CounterStatic(to: Int, init: Int = 0) {
   }
 }
 
-private class CounterDynamic(to: UInt) {
-  val value = RegInit(0.U(to.getWidth.W))
+private class CounterDynamic(to: UInt, init: Int) {
+  val value = RegInit(init.U(to.getWidth.W))
 
   /** Increments the counter */
   def inc(): Bool = {
@@ -74,7 +74,7 @@ private class CounterDynamic(to: UInt) {
 
   /** Resets the counter to its initial value */
   def reset(): Unit = {
-    value := 0.U
+    value := init.U
   }
 }
 
@@ -86,8 +86,8 @@ object Counter {
     (c.value, wrap)
   }
 
-  def dynamic(n: UInt, enable: Bool = true.B, reset: Bool = false.B): (UInt, Bool) = {
-    val c = new CounterDynamic(n)
+  def dynamic(n: UInt, enable: Bool = true.B, reset: Bool = false.B, init: Int = 0): (UInt, Bool) = {
+    val c = new CounterDynamic(n, init)
     val wrap = WireInit(false.B)
     when(reset) { c.reset() }.elsewhen(enable) { wrap := c.inc() }
     (c.value, wrap)

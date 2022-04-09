@@ -64,6 +64,34 @@ class Sprite extends Bundle {
 
   /** Asserted when the sprite is enabled */
   def isEnabled: Bool = cols =/= 0.U && rows =/= 0.U
+
+  /**
+   * Calculates the final position of the given sprite pixel, taking scaling and flipping into
+   * account.
+   *
+   * This is calculated using 8-bit fixed-point arithmetic.
+   *
+   * @param x The horizontal position.
+   * @param y The vertical position.
+   */
+  def pixelPos(x: UInt, y: UInt): SVec2 = {
+    // Convert size to fixed-point
+    val size_ = size << 8
+
+    // Scale x/y values
+    val x_ = x * zoom.x
+    val y_ = y * zoom.y
+
+    // Flip x/y values
+    val x__ = Mux(flipX, size_.x - x_ - 0x80.U, x_)
+    val y__ = Mux(flipY, size_.y - y_ - 0x80.U, y_)
+
+    // Calculate pixel position
+    val result = pos + SVec2(x__, y__)
+
+    // Truncate fractional bits
+    result >> 8
+  }
 }
 
 object Sprite {
@@ -72,7 +100,7 @@ object Sprite {
   /** The width of the sprite code */
   val CODE_WIDTH = 18
   /** The width of the sprite position */
-  val POS_WIDTH = 10
+  val POS_WIDTH = 18
   /** The width of the sprite tile columns value */
   val COLS_WIDTH = 8
   /** The width of the sprite tile rows value */
@@ -117,10 +145,10 @@ object Sprite {
     sprite.code := words(0)(1, 0) ## words(1)(15, 0)
     sprite.flipX := words(0)(3)
     sprite.flipY := words(0)(2)
-    sprite.pos := SVec2(words(2)(9, 0).asSInt, words(3)(9, 0).asSInt)
+    sprite.pos := SVec2(words(2)(9, 0) ## 0.U(8.W), words(3)(9, 0) ## 0.U(8.W))
     sprite.cols := words(4)(15, 8)
     sprite.rows := words(4)(7, 0)
-    sprite.zoom := UVec2.zero
+    sprite.zoom := UVec2(0x100.U, 0x100.U)
     sprite
   }
 
@@ -151,10 +179,10 @@ object Sprite {
     sprite.code := words(2)(1, 0) ## words(3)(15, 0)
     sprite.flipX := words(2)(3)
     sprite.flipY := words(2)(2)
-    sprite.pos := SVec2(words(0)(15, 6).asSInt, words(1)(15, 6).asSInt)
+    sprite.pos := SVec2(words(0) ## 0.U(2.W), words(1) ## 0.U(2.W))
     sprite.cols := words(6)(15, 8)
     sprite.rows := words(6)(7, 0)
-    sprite.zoom := UVec2(words(4)(15, 0), words(5)(15, 0))
+    sprite.zoom := UVec2(words(4), words(5))
     sprite
   }
 }

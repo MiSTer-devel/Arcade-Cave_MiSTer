@@ -87,15 +87,8 @@ class SpriteBlitter extends Module {
   val (x, xWrap) = Counter.dynamic(configReg.sprite.size.x, enable = busyReg && !pisoEmpty)
   val (y, yWrap) = Counter.dynamic(configReg.sprite.size.y, enable = xWrap)
 
-  // Pixel position
-  val pixelPos = {
-    val xPos = Mux(configReg.sprite.flipX, configReg.sprite.size.x - x - 1.U, x)
-    val yPos = Mux(configReg.sprite.flipY, configReg.sprite.size.y - y - 1.U, y)
-    SVec2(xPos.asSInt, yPos.asSInt)
-  }
-
   // Pixel position pipeline
-  val stage0Pos = configReg.sprite.pos + pixelPos
+  val stage0Pos = configReg.sprite.pixelPos(x, y)
   val stage1Pos = RegNext(stage0Pos)
   val stage2Pos = RegNext(stage1Pos)
 

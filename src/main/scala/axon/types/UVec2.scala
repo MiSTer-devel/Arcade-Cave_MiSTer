@@ -60,8 +60,17 @@ class UVec2(xWidth: Int, yWidth: Int) extends Bundle {
   /** Scalar multiplication operator. */
   def *(n: UInt) = UVec2(this.x * n, this.y * n)
 
-  /** Left shift operator. */
-  def <<(n: UInt) = UVec2((this.x << n).asUInt, (this.y << n).asUInt)
+  /** Static left shift operator. */
+  def <<(n: Int) = UVec2(this.x << n, this.y << n)
+
+  /** Dynamic left shift operator. */
+  def <<(n: UInt) = UVec2(this.x << n, this.y << n)
+
+  /** Static right shift operator. */
+  def >>(n: Int) = UVec2(this.x >> n, this.y >> n)
+
+  /** Dynamic right shift operator. */
+  def >>(n: UInt) = UVec2(this.x >> n, this.y >> n)
 }
 
 object UVec2 {
@@ -71,10 +80,10 @@ object UVec2 {
    * @param x The horizontal position.
    * @param y The vertical position.
    */
-  def apply(x: UInt, y: UInt): UVec2 = {
+  def apply(x: Bits, y: Bits): UVec2 = {
     val pos = Wire(new UVec2(x.getWidth, y.getWidth))
-    pos.x := x
-    pos.y := y
+    pos.x := x.asUInt
+    pos.y := y.asUInt
     pos
   }
 
