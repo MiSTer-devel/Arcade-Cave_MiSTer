@@ -41,38 +41,38 @@ import matchers.should.Matchers
 class LERPTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   it should "interpolate sample values" in {
     test(new LERP) { dut =>
-      dut.io.samples(0).poke(0.S)
-      dut.io.samples(1).poke(16.S)
+      dut.io.samples(0).poke(0)
+      dut.io.samples(1).poke(16)
 
-      dut.io.index.poke(0.U)
+      dut.io.index.poke(0)
       dut.io.out.expect(0.S)
 
-      dut.io.index.poke(64.U)
+      dut.io.index.poke(64)
       dut.io.out.expect(4.S)
 
-      dut.io.index.poke(128.U)
+      dut.io.index.poke(128)
       dut.io.out.expect(8.S)
 
-      dut.io.index.poke(192.U)
+      dut.io.index.poke(192)
       dut.io.out.expect(12.S)
 
-      dut.io.index.poke(256.U)
+      dut.io.index.poke(256)
       dut.io.out.expect(16.S)
     }
   }
 
   it should "handle min/max sample values" in {
     test(new LERP) { dut =>
-      dut.io.samples(0).poke(-32767.S)
-      dut.io.samples(1).poke(32767.S)
+      dut.io.samples(0).poke(-32767)
+      dut.io.samples(1).poke(32767)
 
-      dut.io.index.poke(0.U)
+      dut.io.index.poke(0)
       dut.io.out.expect(-32767.S)
 
-      dut.io.index.poke(128.U)
+      dut.io.index.poke(128)
       dut.io.out.expect(0.S)
 
-      dut.io.index.poke(256.U)
+      dut.io.index.poke(256)
       dut.io.out.expect(32767.S)
     }
   }

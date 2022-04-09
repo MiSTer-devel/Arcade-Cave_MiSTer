@@ -41,16 +41,16 @@ import matchers.should.Matchers
 class ADPCMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   it should "decode sample values" in {
     test(new ADPCM) { dut =>
-      dut.io.data.poke(8.U)
-      dut.io.in.step.poke(127.S)
-      dut.io.in.sample.poke(0.S)
+      dut.io.data.poke(8)
+      dut.io.in.step.poke(127)
+      dut.io.in.sample.poke(0)
       dut.clock.step()
       dut.io.out.step.expect(127.S)
       dut.io.out.sample.expect(-16.S)
 
-      dut.io.data.poke(7.U)
-      dut.io.in.step.poke(127.S)
-      dut.io.in.sample.poke(-16.S)
+      dut.io.data.poke(7)
+      dut.io.in.step.poke(127)
+      dut.io.in.sample.poke(-16)
       dut.clock.step()
       dut.io.out.step.expect(304.S)
       dut.io.out.sample.expect(222.S)

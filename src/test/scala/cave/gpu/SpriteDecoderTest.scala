@@ -44,46 +44,46 @@ class SpriteDecoderTest extends AnyFlatSpec with ChiselScalatestTester with Matc
 
   it should "request a word from the tile ROM for every row" in {
     test(new SpriteDecoder) { dut =>
-      dut.io.format.poke(Config.GFX_FORMAT_4BPP.U)
+      dut.io.format.poke(Config.GFX_FORMAT_4BPP)
       dut.clock.step()
 
       // Initial request
-      dut.io.rom.valid.poke(true.B)
-      dut.io.rom.ready.expect(true.B)
+      dut.io.rom.valid.poke(true)
+      dut.io.rom.ready.expect(true)
       dut.clock.step()
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(false.B)
+      dut.io.pixelData.valid.expect(true)
+      dut.io.rom.ready.expect(false)
       dut.clock.step()
 
       // First request
-      dut.io.pixelData.ready.poke(true.B)
+      dut.io.pixelData.ready.poke(true)
       dut.clock.step()
-      dut.io.pixelData.ready.poke(false.B)
-      dut.io.rom.ready.expect(true.B)
+      dut.io.pixelData.ready.poke(false)
+      dut.io.rom.ready.expect(true)
       dut.clock.step()
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(false.B)
+      dut.io.pixelData.valid.expect(true)
+      dut.io.rom.ready.expect(false)
       dut.clock.step()
 
       // Second request
-      dut.io.pixelData.ready.poke(true.B)
+      dut.io.pixelData.ready.poke(true)
       dut.clock.step()
-      dut.io.pixelData.ready.poke(false.B)
-      dut.io.rom.ready.expect(true.B)
+      dut.io.pixelData.ready.poke(false)
+      dut.io.rom.ready.expect(true)
       dut.clock.step()
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(false.B)
+      dut.io.pixelData.valid.expect(true)
+      dut.io.rom.ready.expect(false)
     }
   }
 
   it should "decode a 4BPP tile" in {
     test(new SpriteDecoder) { dut =>
-      dut.io.format.poke(Config.GFX_FORMAT_4BPP.U)
+      dut.io.format.poke(Config.GFX_FORMAT_4BPP)
       dut.clock.step()
-      dut.io.rom.valid.poke(true.B)
+      dut.io.rom.valid.poke(true)
       dut.io.rom.bits.poke("hfedcba9876543210".U)
       dut.clock.step()
-      dut.io.pixelData.valid.expect(true.B)
+      dut.io.pixelData.valid.expect(true)
       dut.io.pixelData.bits(0).expect(0xe.U)
       dut.io.pixelData.bits(1).expect(0xf.U)
       dut.io.pixelData.bits(14).expect(0x0.U)
@@ -93,12 +93,12 @@ class SpriteDecoderTest extends AnyFlatSpec with ChiselScalatestTester with Matc
 
   it should "decode a 4BPP MSB tile" in {
     test(new SpriteDecoder) { dut =>
-      dut.io.format.poke(Config.GFX_FORMAT_4BPP_MSB.U)
+      dut.io.format.poke(Config.GFX_FORMAT_4BPP_MSB)
       dut.clock.step()
-      dut.io.rom.valid.poke(true.B)
+      dut.io.rom.valid.poke(true)
       dut.io.rom.bits.poke("hfedcba9876543210".U)
       dut.clock.step()
-      dut.io.pixelData.valid.expect(true.B)
+      dut.io.pixelData.valid.expect(true)
       dut.io.pixelData.bits(0).expect(0xd.U)
       dut.io.pixelData.bits(1).expect(0xc.U)
       dut.io.pixelData.bits(14).expect(0x3.U)
@@ -110,56 +110,56 @@ class SpriteDecoderTest extends AnyFlatSpec with ChiselScalatestTester with Matc
 
   it should "request two words from the tile ROM for every row" in {
     test(new SpriteDecoder) { dut =>
-      dut.io.format.poke(Config.GFX_FORMAT_8BPP.U)
+      dut.io.format.poke(Config.GFX_FORMAT_8BPP)
       dut.clock.step()
 
       // Initial request
-      dut.io.rom.valid.poke(true.B)
-      dut.io.rom.ready.expect(true.B)
+      dut.io.rom.valid.poke(true)
+      dut.io.rom.ready.expect(true)
       dut.clock.step()
-      dut.io.pixelData.valid.expect(false.B)
-      dut.io.rom.ready.expect(true.B)
+      dut.io.pixelData.valid.expect(false)
+      dut.io.rom.ready.expect(true)
       dut.clock.step()
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(false.B)
+      dut.io.pixelData.valid.expect(true)
+      dut.io.rom.ready.expect(false)
       dut.clock.step()
 
       // First request
-      dut.io.pixelData.ready.poke(true.B)
+      dut.io.pixelData.ready.poke(true)
       dut.clock.step()
-      dut.io.pixelData.ready.poke(false.B)
-      dut.io.rom.ready.expect(true.B)
+      dut.io.pixelData.ready.poke(false)
+      dut.io.rom.ready.expect(true)
       dut.clock.step()
-      dut.io.pixelData.valid.expect(false.B)
-      dut.io.rom.ready.expect(true.B)
+      dut.io.pixelData.valid.expect(false)
+      dut.io.rom.ready.expect(true)
       dut.clock.step()
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(false.B)
+      dut.io.pixelData.valid.expect(true)
+      dut.io.rom.ready.expect(false)
       dut.clock.step()
 
       // Second request
-      dut.io.pixelData.ready.poke(true.B)
+      dut.io.pixelData.ready.poke(true)
       dut.clock.step()
-      dut.io.pixelData.ready.poke(false.B)
-      dut.io.rom.ready.expect(true.B)
+      dut.io.pixelData.ready.poke(false)
+      dut.io.rom.ready.expect(true)
       dut.clock.step()
-      dut.io.pixelData.valid.expect(false.B)
-      dut.io.rom.ready.expect(true.B)
+      dut.io.pixelData.valid.expect(false)
+      dut.io.rom.ready.expect(true)
       dut.clock.step()
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(false.B)
+      dut.io.pixelData.valid.expect(true)
+      dut.io.rom.ready.expect(false)
       dut.clock.step()
     }
   }
 
   it should "decode a 8BPP tile" in {
     test(new SpriteDecoder) { dut =>
-      dut.io.format.poke(Config.GFX_FORMAT_8BPP.U)
+      dut.io.format.poke(Config.GFX_FORMAT_8BPP)
       dut.clock.step()
-      dut.io.rom.valid.poke(true.B)
+      dut.io.rom.valid.poke(true)
       dut.io.rom.bits.poke("hfedcba9876543210".U)
       dut.clock.step(2)
-      dut.io.pixelData.valid.expect(true.B)
+      dut.io.pixelData.valid.expect(true)
       dut.io.pixelData.bits(0).expect(0xec.U)
       dut.io.pixelData.bits(1).expect(0xfd.U)
       dut.io.pixelData.bits(14).expect(0x20.U)

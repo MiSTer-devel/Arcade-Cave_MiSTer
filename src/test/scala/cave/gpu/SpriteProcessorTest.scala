@@ -71,64 +71,64 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
 
   it should "move to the load state when the start signal is asserted" in {
     test(mkProcessor()) { dut =>
-      dut.io.start.poke(true.B)
+      dut.io.start.poke(true)
       dut.clock.step()
-      dut.io.debug.load.expect(true.B)
+      dut.io.debug.load.expect(true)
     }
   }
 
   it should "move to the latch state after loading a sprite" in {
     test(mkProcessor()) { dut =>
-      dut.io.start.poke(true.B)
+      dut.io.start.poke(true)
       waitForLoad(dut)
       dut.clock.step()
-      dut.io.debug.latch.expect(true.B)
+      dut.io.debug.latch.expect(true)
     }
   }
 
   it should "move to the check state after latching a sprite" in {
     test(mkProcessor()) { dut =>
-      dut.io.start.poke(true.B)
+      dut.io.start.poke(true)
       waitForLatch(dut)
       dut.clock.step()
-      dut.io.debug.check.expect(true.B)
+      dut.io.debug.check.expect(true)
     }
   }
 
   it should "move to the next state after checking an invisible sprite" in {
     test(mkProcessor()) { dut =>
-      dut.io.start.poke(true.B)
+      dut.io.start.poke(true)
       waitForCheck(dut)
       dut.clock.step()
-      dut.io.debug.next.expect(true.B)
+      dut.io.debug.next.expect(true)
     }
   }
 
   it should "move to the ready state after checking a visible sprite" in {
     test(mkProcessor()) { dut =>
-      dut.io.start.poke(true.B)
+      dut.io.start.poke(true)
       dut.io.spriteRam.dout.poke("h0101_0000_0000_0000_0000".U)
       waitForCheck(dut)
       dut.clock.step()
-      dut.io.debug.ready.expect(true.B)
+      dut.io.debug.ready.expect(true)
     }
   }
 
   it should "move to the done state after blitting all sprites" in {
     test(mkProcessor(1)) { dut =>
-      dut.io.start.poke(true.B)
+      dut.io.start.poke(true)
       waitForNext(dut)
       dut.clock.step()
-      dut.io.debug.done.expect(true.B)
+      dut.io.debug.done.expect(true)
     }
   }
 
   it should "move to the idle state after the blit is done" in {
     test(mkProcessor()) { dut =>
-      dut.io.start.poke(true.B)
+      dut.io.start.poke(true)
       waitForDone(dut)
       dut.clock.step()
-      dut.io.debug.idle.expect(true.B)
+      dut.io.debug.idle.expect(true)
     }
   }
 
@@ -136,26 +136,26 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
 
   it should "assert the busy flag when the processor has started" in {
     test(mkProcessor()) { dut =>
-      dut.io.busy.expect(false.B)
-      dut.io.start.poke(true.B)
+      dut.io.busy.expect(false)
+      dut.io.start.poke(true)
       dut.clock.step()
-      dut.io.busy.expect(true.B)
+      dut.io.busy.expect(true)
     }
   }
 
   it should "deassert the busy flag when the processor has finished" in {
     test(mkProcessor(1)) { dut =>
-      dut.io.start.poke(true.B)
+      dut.io.start.poke(true)
       dut.io.spriteRam.dout.poke("h0101_0000_0000_0001_0000".U)
       waitForPending(dut)
-      dut.io.tileRom.valid.poke(true.B)
+      dut.io.tileRom.valid.poke(true)
       dut.clock.step(16)
-      dut.io.tileRom.valid.poke(false.B)
-      dut.io.tileRom.burstDone.poke(true.B)
+      dut.io.tileRom.valid.poke(false)
+      dut.io.tileRom.burstDone.poke(true)
       waitForDone(dut)
-      dut.io.busy.expect(true.B)
+      dut.io.busy.expect(true)
       dut.clock.step(245)
-      dut.io.busy.expect(false.B)
+      dut.io.busy.expect(false)
     }
   }
 
@@ -163,9 +163,9 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
 
   it should "fetch sprite data from the sprite RAM" in {
     test(mkProcessor()) { dut =>
-      dut.io.start.poke(true.B)
+      dut.io.start.poke(true)
       waitForLoad(dut)
-      dut.io.spriteRam.rd.expect(true.B)
+      dut.io.spriteRam.rd.expect(true)
     }
   }
 
@@ -173,15 +173,15 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
 
   it should "fetch pixel data from the tile ROM" in {
     test(mkProcessor()) { dut =>
-      dut.io.start.poke(true.B)
+      dut.io.start.poke(true)
       dut.io.spriteRam.dout.poke("h0101_0000_0000_0001_0000".U)
       waitForReady(dut)
       dut.clock.step()
-      dut.io.tileRom.rd.expect(true.B)
+      dut.io.tileRom.rd.expect(true)
       dut.io.tileRom.addr.expect(0x80.U)
       dut.io.tileRom.burstLength.expect(16.U)
       dut.clock.step()
-      dut.io.tileRom.rd.expect(false.B)
+      dut.io.tileRom.rd.expect(false)
     }
   }
 }

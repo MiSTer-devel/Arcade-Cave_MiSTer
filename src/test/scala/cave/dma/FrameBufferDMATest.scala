@@ -45,111 +45,111 @@ trait FrameBufferDMATestHelpers {
 class FrameBufferDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with FrameBufferDMATestHelpers {
   it should "deassert the ready signal during a transfer" in {
     test(mkDMA()) { dut =>
-      dut.io.enable.poke(true.B)
-      dut.io.start.poke(true.B)
-      dut.io.ready.expect(true.B)
+      dut.io.enable.poke(true)
+      dut.io.start.poke(true)
+      dut.io.ready.expect(true)
       dut.clock.step()
-      dut.io.start.poke(false.B)
-      dut.io.ddr.burstDone.poke(true.B)
-      dut.io.ready.expect(false.B)
+      dut.io.start.poke(false)
+      dut.io.ddr.burstDone.poke(true)
+      dut.io.ready.expect(false)
       dut.clock.step(2)
-      dut.io.ready.expect(true.B)
+      dut.io.ready.expect(true)
     }
   }
 
   it should "assert the write enable signal during a transfer" in {
     test(mkDMA()) { dut =>
-      dut.io.enable.poke(true.B)
-      dut.io.start.poke(true.B)
+      dut.io.enable.poke(true)
+      dut.io.start.poke(true)
       dut.clock.step()
-      dut.io.start.poke(false.B)
-      dut.io.ddr.wr.expect(true.B)
-      dut.io.ddr.burstDone.poke(true.B)
+      dut.io.start.poke(false)
+      dut.io.ddr.wr.expect(true)
+      dut.io.ddr.burstDone.poke(true)
       dut.clock.step(2)
-      dut.io.ddr.wr.expect(false.B)
+      dut.io.ddr.wr.expect(false)
     }
   }
 
   it should "not start a transfer when the enable signal is deasserted" in {
     test(mkDMA()) { dut =>
-      dut.io.start.poke(true.B)
+      dut.io.start.poke(true)
       dut.clock.step()
-      dut.io.ddr.wr.expect(false.B)
-      dut.io.enable.poke(true.B)
+      dut.io.ddr.wr.expect(false)
+      dut.io.enable.poke(true)
       dut.clock.step()
-      dut.io.ddr.wr.expect(true.B)
+      dut.io.ddr.wr.expect(true)
     }
   }
 
   it should "not increment the address when the wait signal is asserted" in {
     test(mkDMA()) { dut =>
-      dut.io.enable.poke(true.B)
-      dut.io.start.poke(true.B)
-      dut.io.ddr.waitReq.poke(true.B)
-      dut.io.frameBufferDMA.rd.expect(true.B)
+      dut.io.enable.poke(true)
+      dut.io.start.poke(true)
+      dut.io.ddr.waitReq.poke(true)
+      dut.io.frameBufferDMA.rd.expect(true)
       dut.io.frameBufferDMA.addr.expect(0.U)
       dut.clock.step()
-      dut.io.ddr.waitReq.poke(false.B)
-      dut.io.frameBufferDMA.rd.expect(true.B)
+      dut.io.ddr.waitReq.poke(false)
+      dut.io.frameBufferDMA.rd.expect(true)
       dut.io.frameBufferDMA.addr.expect(1.U)
       dut.clock.step()
-      dut.io.frameBufferDMA.rd.expect(true.B)
+      dut.io.frameBufferDMA.rd.expect(true)
       dut.io.frameBufferDMA.addr.expect(2.U)
     }
   }
 
   it should "pack the pixel data" in {
     test(mkDMA()) { dut =>
-      dut.io.enable.poke(true.B)
-      dut.io.start.poke(true.B)
+      dut.io.enable.poke(true)
+      dut.io.start.poke(true)
       dut.clock.step()
-      dut.io.frameBufferDMA.dout.poke(0x112233445566L.U)
+      dut.io.frameBufferDMA.dout.poke(0x112233445566L)
       dut.io.ddr.din.expect(0x0011223300445566L.U)
     }
   }
 
   it should "apply the frame buffer index to the DDR address offset" in {
     test(mkDMA()) { dut =>
-      dut.io.enable.poke(true.B)
+      dut.io.enable.poke(true)
       dut.io.ddr.addr.expect(0x01.U)
-      dut.io.frameBufferIndex.poke(1.U)
+      dut.io.frameBufferIndex.poke(1)
       dut.io.ddr.addr.expect(0x41.U)
     }
   }
 
   it should "write frame buffer data to DDR memory" in {
     test(mkDMA()) { dut =>
-      dut.io.enable.poke(true.B)
-      dut.io.start.poke(true.B)
-      dut.io.frameBufferDMA.rd.expect(true.B)
+      dut.io.enable.poke(true)
+      dut.io.start.poke(true)
+      dut.io.frameBufferDMA.rd.expect(true)
       dut.io.frameBufferDMA.addr.expect(0.U)
-      dut.io.ddr.wr.expect(false.B)
+      dut.io.ddr.wr.expect(false)
       dut.clock.step()
-      dut.io.start.poke(false.B)
+      dut.io.start.poke(false)
 
       // Burst 1
-      dut.io.frameBufferDMA.rd.expect(true.B)
-      dut.io.ddr.wr.expect(true.B)
+      dut.io.frameBufferDMA.rd.expect(true)
+      dut.io.ddr.wr.expect(true)
       dut.io.ddr.addr.expect(0x01.U)
       dut.io.ddr.mask.expect(0xff.U)
       0.to(3).foreach { n =>
-        if (n == 3) dut.io.ddr.burstDone.poke(true.B)
+        if (n == 3) dut.io.ddr.burstDone.poke(true)
         dut.io.frameBufferDMA.addr.expect((n + 1).U)
-        dut.io.frameBufferDMA.dout.poke(n.U)
+        dut.io.frameBufferDMA.dout.poke(n)
         dut.io.ddr.din.expect(n.U)
         dut.clock.step()
       }
-      dut.io.ddr.burstDone.poke(false.B)
+      dut.io.ddr.burstDone.poke(false)
 
       // Burst 2
-      dut.io.frameBufferDMA.rd.expect(true.B)
-      dut.io.ddr.wr.expect(true.B)
+      dut.io.frameBufferDMA.rd.expect(true)
+      dut.io.ddr.wr.expect(true)
       dut.io.ddr.addr.expect(0x21.U)
       dut.io.ddr.mask.expect(0xff.U)
       0.to(3).foreach { n =>
-        if (n == 3) dut.io.ddr.burstDone.poke(true.B)
+        if (n == 3) dut.io.ddr.burstDone.poke(true)
         dut.io.frameBufferDMA.addr.expect((n + 5).U)
-        dut.io.frameBufferDMA.dout.poke(n.U)
+        dut.io.frameBufferDMA.dout.poke(n)
         dut.io.ddr.din.expect(n.U)
         dut.clock.step()
       }

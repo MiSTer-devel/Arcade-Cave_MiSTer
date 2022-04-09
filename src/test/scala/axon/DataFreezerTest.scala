@@ -47,47 +47,47 @@ class DataFreezerTest extends AnyFlatSpec with ChiselScalatestTester with Matche
   it should "latch a read request" ignore  {
     test(mkFreezer) { dut =>
       // Read
-      dut.io.in.rd.poke(true.B)
-      dut.io.out.waitReq.poke(true.B)
-      dut.io.out.rd.expect(true.B)
+      dut.io.in.rd.poke(true)
+      dut.io.out.waitReq.poke(true)
+      dut.io.out.rd.expect(true)
       dut.clock.step()
 
       // Wait
-      dut.io.out.waitReq.poke(false.B)
-      dut.io.out.rd.expect(true.B)
+      dut.io.out.waitReq.poke(false)
+      dut.io.out.rd.expect(true)
       dut.clock.step()
-      dut.io.out.waitReq.poke(true.B)
-      dut.io.out.rd.expect(false.B)
+      dut.io.out.waitReq.poke(true)
+      dut.io.out.rd.expect(false)
       dut.clock.step()
 
       // Rising edge
       dut.io.targetClock.low()
       dut.io.targetClock.high()
-      dut.io.out.rd.expect(false.B)
+      dut.io.out.rd.expect(false)
       dut.clock.step()
 
       // Valid
-      dut.io.out.valid.poke(true.B)
-      dut.io.out.rd.expect(false.B)
+      dut.io.out.valid.poke(true)
+      dut.io.out.rd.expect(false)
       dut.clock.step()
-      dut.io.out.valid.poke(false.B)
-      dut.io.out.rd.expect(false.B)
+      dut.io.out.valid.poke(false)
+      dut.io.out.rd.expect(false)
 
       // Rising edge
       dut.io.targetClock.low()
       dut.io.targetClock.high()
-      dut.io.out.rd.expect(true.B)
+      dut.io.out.rd.expect(true)
     }
   }
 
   it should "latch valid output data" ignore {
     test(mkFreezer) { dut =>
       // Read
-      dut.io.in.rd.poke(true.B)
-      dut.io.out.valid.poke(true.B)
-      dut.io.out.dout.poke(1.U)
+      dut.io.in.rd.poke(true)
+      dut.io.out.valid.poke(true)
+      dut.io.out.dout.poke(1)
       dut.clock.step()
-      dut.io.out.dout.poke(0.U)
+      dut.io.out.dout.poke(0)
       dut.io.in.dout.expect(1.U)
       dut.clock.step()
 
@@ -103,23 +103,23 @@ class DataFreezerTest extends AnyFlatSpec with ChiselScalatestTester with Matche
   it should "latch a write request" ignore {
     test(mkFreezer) { dut =>
       // Write
-      dut.io.in.wr.poke(true.B)
-      dut.io.out.waitReq.poke(true.B)
-      dut.io.out.wr.expect(true.B)
+      dut.io.in.wr.poke(true)
+      dut.io.out.waitReq.poke(true)
+      dut.io.out.wr.expect(true)
       dut.clock.step()
 
       // Wait
-      dut.io.out.waitReq.poke(false.B)
-      dut.io.out.wr.expect(true.B)
+      dut.io.out.waitReq.poke(false)
+      dut.io.out.wr.expect(true)
       dut.clock.step()
-      dut.io.out.waitReq.poke(true.B)
-      dut.io.out.wr.expect(false.B)
+      dut.io.out.waitReq.poke(true)
+      dut.io.out.wr.expect(false)
       dut.clock.step()
 
       // Rising edge
       dut.io.targetClock.low()
       dut.io.targetClock.high()
-      dut.io.out.wr.expect(true.B)
+      dut.io.out.wr.expect(true)
     }
   }
 
@@ -128,21 +128,21 @@ class DataFreezerTest extends AnyFlatSpec with ChiselScalatestTester with Matche
   it should "latch the wait signal" ignore {
     test(mkFreezer) { dut =>
       // Assert wait
-      dut.io.out.waitReq.poke(true.B)
-      dut.io.in.waitReq.expect(true.B)
+      dut.io.out.waitReq.poke(true)
+      dut.io.in.waitReq.expect(true)
       dut.clock.step()
 
       // Deassert wait
-      dut.io.out.waitReq.poke(false.B)
-      dut.io.in.waitReq.expect(false.B)
+      dut.io.out.waitReq.poke(false)
+      dut.io.in.waitReq.expect(false)
       dut.clock.step()
-      dut.io.out.waitReq.poke(true.B)
-      dut.io.in.waitReq.expect(false.B)
+      dut.io.out.waitReq.poke(true)
+      dut.io.in.waitReq.expect(false)
 
       // Rising edge
       dut.io.targetClock.low()
       dut.io.targetClock.high()
-      dut.io.in.waitReq.expect(true.B)
+      dut.io.in.waitReq.expect(true)
     }
   }
 
@@ -151,20 +151,20 @@ class DataFreezerTest extends AnyFlatSpec with ChiselScalatestTester with Matche
   it should "latch the valid signal" ignore {
     test(mkFreezer) { dut =>
       // Assert valid
-      dut.io.out.valid.poke(true.B)
-      dut.io.in.valid.expect(true.B)
+      dut.io.out.valid.poke(true)
+      dut.io.in.valid.expect(true)
       dut.clock.step()
 
       // Deassert valid
-      dut.io.out.valid.poke(false.B)
-      dut.io.in.valid.expect(true.B)
+      dut.io.out.valid.poke(false)
+      dut.io.in.valid.expect(true)
       dut.clock.step()
-      dut.io.in.valid.expect(true.B)
+      dut.io.in.valid.expect(true)
 
       // Rising edge
       dut.io.targetClock.low()
       dut.io.targetClock.high()
-      dut.io.in.valid.expect(false.B)
+      dut.io.in.valid.expect(false)
     }
   }
 }

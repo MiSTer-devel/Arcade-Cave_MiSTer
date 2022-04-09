@@ -45,88 +45,88 @@ trait VideoDMATestHelpers {
 class VideoDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with VideoDMATestHelpers {
   it should "deassert the ready signal during a transfer" in {
     test(mkDMA()) { dut =>
-      dut.io.enable.poke(true.B)
-      dut.io.pixelData.ready.poke(true.B)
-      dut.io.ready.expect(true.B)
+      dut.io.enable.poke(true)
+      dut.io.pixelData.ready.poke(true)
+      dut.io.ready.expect(true)
       dut.clock.step()
-      dut.io.ready.expect(false.B)
-      dut.io.ddr.burstDone.poke(true.B)
+      dut.io.ready.expect(false)
+      dut.io.ddr.burstDone.poke(true)
       dut.clock.step(3)
-      dut.io.ready.expect(true.B)
+      dut.io.ready.expect(true)
     }
   }
 
   it should "assert the read enable signal at the start of a transfer" in {
     test(mkDMA()) { dut =>
-      dut.io.enable.poke(true.B)
-      dut.io.pixelData.ready.poke(true.B)
-      dut.io.ddr.rd.expect(true.B)
+      dut.io.enable.poke(true)
+      dut.io.pixelData.ready.poke(true)
+      dut.io.ddr.rd.expect(true)
       dut.clock.step()
-      dut.io.ddr.rd.expect(false.B)
+      dut.io.ddr.rd.expect(false)
     }
   }
 
   it should "not start a transfer when the enable signal is deasserted" in {
     test(mkDMA()) { dut =>
-      dut.io.pixelData.ready.poke(true.B)
-      dut.io.ddr.rd.expect(false.B)
-      dut.io.enable.poke(true.B)
-      dut.io.ddr.rd.expect(true.B)
+      dut.io.pixelData.ready.poke(true)
+      dut.io.ddr.rd.expect(false)
+      dut.io.enable.poke(true)
+      dut.io.ddr.rd.expect(true)
     }
   }
 
   it should "not start a transfer when the wait signal is asserted" in {
     test(mkDMA()) { dut =>
-      dut.io.enable.poke(true.B)
-      dut.io.pixelData.ready.poke(true.B)
-      dut.io.ddr.waitReq.poke(true.B)
-      dut.io.ddr.rd.expect(true.B)
+      dut.io.enable.poke(true)
+      dut.io.pixelData.ready.poke(true)
+      dut.io.ddr.waitReq.poke(true)
+      dut.io.ddr.rd.expect(true)
       dut.clock.step()
-      dut.io.ddr.waitReq.poke(false.B)
-      dut.io.ddr.rd.expect(true.B)
+      dut.io.ddr.waitReq.poke(false)
+      dut.io.ddr.rd.expect(true)
       dut.clock.step()
-      dut.io.ddr.rd.expect(false.B)
+      dut.io.ddr.rd.expect(false)
     }
   }
 
   it should "apply the frame buffer index to the DDR address offset" in {
     test(mkDMA()) { dut =>
-      dut.io.enable.poke(true.B)
+      dut.io.enable.poke(true)
       dut.io.ddr.addr.expect(0x01.U)
-      dut.io.frameBufferIndex.poke(1.U)
+      dut.io.frameBufferIndex.poke(1)
       dut.io.ddr.addr.expect(0x41.U)
     }
   }
 
   it should "read frame buffer data from DDR memory" in {
     test(mkDMA()) { dut =>
-      dut.io.enable.poke(true.B)
-      dut.io.pixelData.ready.poke(true.B)
+      dut.io.enable.poke(true)
+      dut.io.pixelData.ready.poke(true)
 
       // Burst 1
-      dut.io.ddr.rd.expect(true.B)
+      dut.io.ddr.rd.expect(true)
       dut.io.ddr.addr.expect(0x01.U)
       dut.clock.step()
-      dut.io.ddr.rd.expect(false.B)
+      dut.io.ddr.rd.expect(false)
       0.to(3).foreach { n =>
-        if (n == 3) dut.io.ddr.burstDone.poke(true.B)
-        dut.io.ddr.valid.poke(true.B)
-        dut.io.ddr.dout.poke(n.U)
-        dut.io.pixelData.valid.expect(true.B)
+        if (n == 3) dut.io.ddr.burstDone.poke(true)
+        dut.io.ddr.valid.poke(true)
+        dut.io.ddr.dout.poke(n)
+        dut.io.pixelData.valid.expect(true)
         dut.io.pixelData.bits.expect(n.U)
         dut.clock.step()
       }
-      dut.io.ddr.burstDone.poke(false.B)
+      dut.io.ddr.burstDone.poke(false)
 
       // Burst 2
-      dut.io.ddr.rd.expect(true.B)
+      dut.io.ddr.rd.expect(true)
       dut.io.ddr.addr.expect(0x21.U)
       dut.clock.step()
-      dut.io.ddr.rd.expect(false.B)
+      dut.io.ddr.rd.expect(false)
       0.to(3).foreach { n =>
-        dut.io.ddr.valid.poke(true.B)
-        dut.io.ddr.dout.poke(n.U)
-        dut.io.pixelData.valid.expect(true.B)
+        dut.io.ddr.valid.poke(true)
+        dut.io.ddr.dout.poke(n)
+        dut.io.pixelData.valid.expect(true)
         dut.io.pixelData.bits.expect(n.U)
         dut.clock.step()
       }

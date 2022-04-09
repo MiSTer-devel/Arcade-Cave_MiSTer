@@ -44,22 +44,22 @@ trait YMZ280BTestHelpers {
   protected def mkADPCM = new YMZ280B(config)
 
   protected def readStatusReg(dut: YMZ280B) = {
-    dut.io.cpu.rd.poke(true.B)
-    dut.io.cpu.addr.poke(1.U)
+    dut.io.cpu.rd.poke(true)
+    dut.io.cpu.addr.poke(1)
     dut.clock.step()
-    dut.io.cpu.rd.poke(false.B)
+    dut.io.cpu.rd.poke(false)
     dut.io.cpu.dout.peekInt()
   }
 
   protected def writeReg(dut: YMZ280B, addr: Int, data: Int) = {
-    dut.io.cpu.wr.poke(true.B)
-    dut.io.cpu.addr.poke(0.U)
-    dut.io.cpu.din.poke(addr.U)
+    dut.io.cpu.wr.poke(true)
+    dut.io.cpu.addr.poke(0)
+    dut.io.cpu.din.poke(addr)
     dut.clock.step()
-    dut.io.cpu.addr.poke(1.U)
-    dut.io.cpu.din.poke(data.U)
+    dut.io.cpu.addr.poke(1)
+    dut.io.cpu.din.poke(data)
     dut.clock.step()
-    dut.io.cpu.wr.poke(false.B)
+    dut.io.cpu.wr.poke(false)
   }
 }
 
@@ -120,7 +120,7 @@ class YMZ280BTest extends AnyFlatSpec with ChiselScalatestTester with Matchers w
 
   it should "allow reading the status of the channels" in {
     test(mkADPCM) { dut =>
-      dut.io.mem.valid.poke(true.B)
+      dut.io.mem.valid.poke(true)
       writeReg(dut, 0x00, 0xff) // channel 0 pitch
       writeReg(dut, 0x63, 0x01) // channel 0 end address
       writeReg(dut, 0x01, 0x80) // channel 0 key on
@@ -143,9 +143,9 @@ class YMZ280BTest extends AnyFlatSpec with ChiselScalatestTester with Matchers w
   it should "allow writing the enable flags" in {
     test(mkADPCM) { dut =>
       writeReg(dut, 0xff, 0xd0)
-      dut.io.debug.utilReg.flags.keyOnEnable.expect(true.B)
-      dut.io.debug.utilReg.flags.memEnable.expect(true.B)
-      dut.io.debug.utilReg.flags.irqEnable.expect(true.B)
+      dut.io.debug.utilReg.flags.keyOnEnable.expect(true)
+      dut.io.debug.utilReg.flags.memEnable.expect(true)
+      dut.io.debug.utilReg.flags.irqEnable.expect(true)
     }
   }
 
@@ -153,27 +153,27 @@ class YMZ280BTest extends AnyFlatSpec with ChiselScalatestTester with Matchers w
 
   it should "assert the IRQ signal for channels that are done" in {
     test(mkADPCM) { dut =>
-      dut.io.mem.valid.poke(true.B)
+      dut.io.mem.valid.poke(true)
       writeReg(dut, 0x04, 0xff) // channel 1 pitch
       writeReg(dut, 0x67, 0x01) // channel 1 end address
       writeReg(dut, 0x05, 0x80) // channel 1 key on
       writeReg(dut, 0xfe, 0x02) // IRQ mask
       writeReg(dut, 0xff, 0x90) // key on & IRQ enable
       dut.clock.step(100)
-      dut.io.irq.expect(true.B)
+      dut.io.irq.expect(true)
     }
   }
 
   it should "not assert the IRQ signal for masked channels" in {
     test(mkADPCM) { dut =>
-      dut.io.mem.valid.poke(true.B)
+      dut.io.mem.valid.poke(true)
       writeReg(dut, 0x04, 0xff) // channel 1 pitch
       writeReg(dut, 0x67, 0x01) // channel 1 end address
       writeReg(dut, 0x05, 0x80) // channel 1 key on
       writeReg(dut, 0xfe, 0x00) // IRQ mask
       writeReg(dut, 0xff, 0x90) // key on & IRQ enable
       dut.clock.step(100)
-      dut.io.irq.expect(false.B)
+      dut.io.irq.expect(false)
     }
   }
 }

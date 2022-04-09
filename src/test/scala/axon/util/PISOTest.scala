@@ -57,12 +57,12 @@ class PISOTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
 
   it should "latch parallel values and emit them serially" in {
     test(mkPISO) { dut =>
-      dut.io.din(0).poke(1.U)
-      dut.io.din(1).poke(2.U)
-      dut.io.din(2).poke(3.U)
-      dut.io.wr.poke(true.B)
+      dut.io.din(0).poke(1)
+      dut.io.din(1).poke(2)
+      dut.io.din(2).poke(3)
+      dut.io.wr.poke(true)
       dut.clock.step()
-      dut.io.wr.poke(false.B)
+      dut.io.wr.poke(false)
       dut.io.dout.expect(1.U)
       dut.clock.step()
       dut.io.dout.expect(2.U)
@@ -73,27 +73,27 @@ class PISOTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
 
   it should "assert the isEmpty signal" in {
     test(mkPISO) { dut =>
-      dut.io.isEmpty.expect(true.B)
-      dut.io.wr.poke(true.B)
+      dut.io.isEmpty.expect(true)
+      dut.io.wr.poke(true)
       dut.clock.step()
-      dut.io.wr.poke(false.B)
-      dut.io.isEmpty.expect(false.B)
+      dut.io.wr.poke(false)
+      dut.io.isEmpty.expect(false)
       dut.clock.step(3)
-      dut.io.isEmpty.expect(true.B)
+      dut.io.isEmpty.expect(true)
     }
   }
 
   it should "assert the isAlmostEmpty signal" in {
     test(mkPISO) { dut =>
-      dut.io.isAlmostEmpty.expect(false.B)
-      dut.io.wr.poke(true.B)
+      dut.io.isAlmostEmpty.expect(false)
+      dut.io.wr.poke(true)
       dut.clock.step()
-      dut.io.wr.poke(false.B)
-      dut.io.isAlmostEmpty.expect(false.B)
+      dut.io.wr.poke(false)
+      dut.io.isAlmostEmpty.expect(false)
       dut.clock.step(2)
-      dut.io.isAlmostEmpty.expect(true.B)
+      dut.io.isAlmostEmpty.expect(true)
       dut.clock.step()
-      dut.io.isAlmostEmpty.expect(false.B)
+      dut.io.isAlmostEmpty.expect(false)
     }
   }
 }

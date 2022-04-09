@@ -44,54 +44,54 @@ class TilemapDecoderTest extends AnyFlatSpec with ChiselScalatestTester with Mat
 
   it should "request a word from the tile ROM for every two rows" in {
     test(new TilemapDecoder) { dut =>
-      dut.io.format.poke(Config.GFX_FORMAT_4BPP.U)
+      dut.io.format.poke(Config.GFX_FORMAT_4BPP)
       dut.clock.step()
 
       // Initial request
-      dut.io.rom.valid.poke(true.B)
-      dut.io.rom.ready.expect(true.B)
+      dut.io.rom.valid.poke(true)
+      dut.io.rom.ready.expect(true)
       dut.clock.step()
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(false.B)
+      dut.io.pixelData.valid.expect(true)
+      dut.io.rom.ready.expect(false)
       dut.clock.step()
 
       // First request
-      dut.io.pixelData.ready.poke(true.B)
+      dut.io.pixelData.ready.poke(true)
       dut.clock.step()
-      dut.io.pixelData.ready.poke(false.B)
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(false.B)
+      dut.io.pixelData.ready.poke(false)
+      dut.io.pixelData.valid.expect(true)
+      dut.io.rom.ready.expect(false)
       dut.clock.step()
 
       // Second request
-      dut.io.pixelData.ready.poke(true.B)
+      dut.io.pixelData.ready.poke(true)
       dut.clock.step()
-      dut.io.pixelData.ready.poke(false.B)
-      dut.io.rom.ready.expect(true.B)
+      dut.io.pixelData.ready.poke(false)
+      dut.io.rom.ready.expect(true)
       dut.clock.step()
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(false.B)
+      dut.io.pixelData.valid.expect(true)
+      dut.io.rom.ready.expect(false)
 
       // Third request
-      dut.io.pixelData.ready.poke(true.B)
+      dut.io.pixelData.ready.poke(true)
       dut.clock.step()
-      dut.io.pixelData.ready.poke(false.B)
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(false.B)
+      dut.io.pixelData.ready.poke(false)
+      dut.io.pixelData.valid.expect(true)
+      dut.io.rom.ready.expect(false)
     }
   }
 
   it should "decode a 4BPP tile" in {
     test(new TilemapDecoder) { dut =>
-      dut.io.format.poke(Config.GFX_FORMAT_4BPP.U)
+      dut.io.format.poke(Config.GFX_FORMAT_4BPP)
       dut.clock.step()
-      dut.io.rom.valid.poke(true.B)
+      dut.io.rom.valid.poke(true)
       dut.io.rom.bits.poke("hfedcba9876543210".U)
       dut.clock.step()
-      dut.io.pixelData.ready.poke(true.B)
+      dut.io.pixelData.ready.poke(true)
 
       // First request
-      dut.io.pixelData.valid.expect(true.B)
+      dut.io.pixelData.valid.expect(true)
       dut.io.pixelData.bits(0).expect(0xf.U)
       dut.io.pixelData.bits(1).expect(0xe.U)
       dut.io.pixelData.bits(6).expect(0x9.U)
@@ -99,7 +99,7 @@ class TilemapDecoderTest extends AnyFlatSpec with ChiselScalatestTester with Mat
       dut.clock.step()
 
       // Second request
-      dut.io.pixelData.valid.expect(true.B)
+      dut.io.pixelData.valid.expect(true)
       dut.io.pixelData.bits(0).expect(0x7.U)
       dut.io.pixelData.bits(1).expect(0x6.U)
       dut.io.pixelData.bits(6).expect(0x1.U)
@@ -111,46 +111,46 @@ class TilemapDecoderTest extends AnyFlatSpec with ChiselScalatestTester with Mat
 
   it should "request a word from the tile ROM for every row" in {
     test(new TilemapDecoder) { dut =>
-      dut.io.format.poke(Config.GFX_FORMAT_8BPP.U)
+      dut.io.format.poke(Config.GFX_FORMAT_8BPP)
       dut.clock.step()
 
       // Initial request
-      dut.io.rom.valid.poke(true.B)
-      dut.io.rom.ready.expect(true.B)
+      dut.io.rom.valid.poke(true)
+      dut.io.rom.ready.expect(true)
       dut.clock.step()
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(false.B)
+      dut.io.pixelData.valid.expect(true)
+      dut.io.rom.ready.expect(false)
       dut.clock.step()
 
       // First request
-      dut.io.pixelData.ready.poke(true.B)
+      dut.io.pixelData.ready.poke(true)
       dut.clock.step()
-      dut.io.pixelData.ready.poke(false.B)
-      dut.io.rom.ready.expect(true.B)
+      dut.io.pixelData.ready.poke(false)
+      dut.io.rom.ready.expect(true)
       dut.clock.step()
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(false.B)
+      dut.io.pixelData.valid.expect(true)
+      dut.io.rom.ready.expect(false)
       dut.clock.step()
 
       // Second request
-      dut.io.pixelData.ready.poke(true.B)
+      dut.io.pixelData.ready.poke(true)
       dut.clock.step()
-      dut.io.pixelData.ready.poke(false.B)
-      dut.io.rom.ready.expect(true.B)
+      dut.io.pixelData.ready.poke(false)
+      dut.io.rom.ready.expect(true)
       dut.clock.step()
-      dut.io.pixelData.valid.expect(true.B)
-      dut.io.rom.ready.expect(false.B)
+      dut.io.pixelData.valid.expect(true)
+      dut.io.rom.ready.expect(false)
     }
   }
 
   it should "decode a 8BPP tile" in {
     test(new TilemapDecoder) { dut =>
-      dut.io.format.poke(Config.GFX_FORMAT_8BPP.U)
+      dut.io.format.poke(Config.GFX_FORMAT_8BPP)
       dut.clock.step()
-      dut.io.rom.valid.poke(true.B)
+      dut.io.rom.valid.poke(true)
       dut.io.rom.bits.poke("hfedcba9876543210".U)
       dut.clock.step()
-      dut.io.pixelData.valid.expect(true.B)
+      dut.io.pixelData.valid.expect(true)
       dut.io.pixelData.bits(0).expect(0xdf.U)
       dut.io.pixelData.bits(1).expect(0xce.U)
       dut.io.pixelData.bits(6).expect(0x13.U)

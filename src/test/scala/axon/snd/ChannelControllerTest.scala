@@ -53,19 +53,19 @@ trait ChannelControllerTestHelpers {
                              loopStartAddr: Int = 0,
                              loopEndAddr: Int = 0,
                              endAddress: Int = 0) = {
-    dut.io.regs(index).flags.keyOn.poke(true.B)
-    dut.io.regs(index).flags.loop.poke(loop.B)
-    dut.io.regs(index).pitch.poke(pitch.U)
-    dut.io.regs(index).level.poke(level.U)
-    dut.io.regs(index).pan.poke(pan.U)
-    dut.io.regs(index).startAddr.poke(startAddress.U)
-    dut.io.regs(index).loopStartAddr.poke(loopStartAddr.U)
-    dut.io.regs(index).loopEndAddr.poke(loopEndAddr.U)
-    dut.io.regs(index).endAddr.poke(endAddress.U)
+    dut.io.regs(index).flags.keyOn.poke(true)
+    dut.io.regs(index).flags.loop.poke(loop)
+    dut.io.regs(index).pitch.poke(pitch)
+    dut.io.regs(index).level.poke(level)
+    dut.io.regs(index).pan.poke(pan)
+    dut.io.regs(index).startAddr.poke(startAddress)
+    dut.io.regs(index).loopStartAddr.poke(loopStartAddr)
+    dut.io.regs(index).loopEndAddr.poke(loopEndAddr)
+    dut.io.regs(index).endAddr.poke(endAddress)
   }
 
   protected def stopChannel(dut: ChannelController, index: Int) = {
-    dut.io.regs(index).flags.keyOn.poke(false.B)
+    dut.io.regs(index).flags.keyOn.poke(false)
   }
 
   protected def waitForIdle(dut: ChannelController) =
@@ -109,76 +109,76 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
     test(mkChannelController()) { dut =>
       waitForIdle(dut)
       dut.clock.step()
-      dut.io.enable.poke(true.B)
-      dut.io.debug.idle.expect(true.B)
+      dut.io.enable.poke(true)
+      dut.io.debug.idle.expect(true)
       dut.clock.step()
-      dut.io.debug.idle.expect(false.B)
+      dut.io.debug.idle.expect(false)
     }
   }
 
   it should "move to the read state after initializing" in {
     test(mkChannelController()) { dut =>
-      dut.io.enable.poke(true.B)
+      dut.io.enable.poke(true)
       waitForIdle(dut)
       dut.clock.step()
-      dut.io.debug.read.expect(true.B)
+      dut.io.debug.read.expect(true)
     }
   }
 
   it should "move to the latch state after reading the channel state" in {
     test(mkChannelController()) { dut =>
-      dut.io.enable.poke(true.B)
+      dut.io.enable.poke(true)
       waitForRead(dut)
       dut.clock.step()
-      dut.io.debug.latch.expect(true.B)
+      dut.io.debug.latch.expect(true)
     }
   }
 
   it should "move to the check state after latching the channel state" in {
     test(mkChannelController()) { dut =>
-      dut.io.enable.poke(true.B)
+      dut.io.enable.poke(true)
       waitForLatch(dut)
       dut.clock.step()
-      dut.io.debug.check.expect(true.B)
+      dut.io.debug.check.expect(true)
     }
   }
 
   it should "move to the ready state after checking an enabled channel" in {
     test(mkChannelController()) { dut =>
-      dut.io.enable.poke(true.B)
-      dut.io.regs(0).flags.keyOn.poke(true.B)
+      dut.io.enable.poke(true)
+      dut.io.regs(0).flags.keyOn.poke(true)
       waitForCheck(dut)
       dut.clock.step()
-      dut.io.debug.ready.expect(true.B)
+      dut.io.debug.ready.expect(true)
     }
   }
 
   it should "move to the write state after checking a disabled channel" in {
     test(mkChannelController()) { dut =>
-      dut.io.enable.poke(true.B)
+      dut.io.enable.poke(true)
       waitForCheck(dut)
       dut.clock.step()
-      dut.io.debug.write.expect(true.B)
+      dut.io.debug.write.expect(true)
     }
   }
 
   it should "move to the done state after processing all channels" in {
     test(mkChannelController()) { dut =>
-      dut.io.enable.poke(true.B)
+      dut.io.enable.poke(true)
       waitForNext(dut)
       dut.clock.step()
       waitForNext(dut)
       dut.clock.step()
-      dut.io.debug.done.expect(true.B)
+      dut.io.debug.done.expect(true)
     }
   }
 
   it should "move to the idle state after setting the audio output" in {
     test(mkChannelController()) { dut =>
-      dut.io.enable.poke(true.B)
+      dut.io.enable.poke(true)
       waitForAudioValid(dut)
       dut.clock.step()
-      dut.io.debug.idle.expect(true.B)
+      dut.io.debug.idle.expect(true)
     }
   }
 
@@ -187,40 +187,40 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   it should "assert the memory read enable signal" in {
     test(mkChannelController()) { dut =>
       // Start
-      dut.io.enable.poke(true.B)
+      dut.io.enable.poke(true)
       startChannel(dut, index = 0)
 
       // Fetch
       waitForProcess(dut)
       dut.clock.step()
-      dut.io.mem.waitReq.poke(true.B)
-      dut.io.mem.rd.expect(true.B)
+      dut.io.mem.waitReq.poke(true)
+      dut.io.mem.rd.expect(true)
       dut.clock.step()
-      dut.io.mem.waitReq.poke(false.B)
-      dut.io.mem.rd.expect(true.B)
+      dut.io.mem.waitReq.poke(false)
+      dut.io.mem.rd.expect(true)
       dut.clock.step()
-      dut.io.mem.rd.expect(false.B)
+      dut.io.mem.rd.expect(false)
     }
   }
 
   it should "fetch PCM data for the channels" in {
     test(mkChannelController()) { dut =>
       // Start
-      dut.io.enable.poke(true.B)
-      dut.io.mem.valid.poke(true.B)
+      dut.io.enable.poke(true)
+      dut.io.mem.valid.poke(true)
       startChannel(dut, index = 0, pitch = 127, startAddress = 1)
 
       for (n <- Seq(1, 1, 2, 2)) {
         // Fetch
         waitForProcess(dut)
         dut.clock.step()
-        dut.io.mem.rd.expect(true.B)
+        dut.io.mem.rd.expect(true)
         dut.io.mem.addr.expect(n.U)
         waitForNext(dut)
 
         // No fetch
         waitForProcess(dut)
-        dut.io.mem.rd.expect(false.B)
+        dut.io.mem.rd.expect(false)
         waitForNext(dut)
       }
     }
@@ -229,15 +229,15 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   it should "reset the address nibble when restarting a channel" in {
     test(mkChannelController()) { dut =>
       // Start
-      dut.io.enable.poke(true.B)
-      dut.io.mem.valid.poke(true.B)
+      dut.io.enable.poke(true)
+      dut.io.mem.valid.poke(true)
       startChannel(dut, index = 0, pitch = 127)
 
       // Process
       waitForProcess(dut)
-      dut.io.debug.channelReg.nibble.expect(false.B)
+      dut.io.debug.channelReg.nibble.expect(false)
       waitForNext(dut)
-      dut.io.debug.channelReg.nibble.expect(true.B)
+      dut.io.debug.channelReg.nibble.expect(true)
 
       // Stop
       waitForIdle(dut)
@@ -250,9 +250,9 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
 
       // Process
       waitForProcess(dut)
-      dut.io.debug.channelReg.nibble.expect(false.B)
+      dut.io.debug.channelReg.nibble.expect(false)
       waitForNext(dut)
-      dut.io.debug.channelReg.nibble.expect(true.B)
+      dut.io.debug.channelReg.nibble.expect(true)
     }
   }
 
@@ -261,15 +261,15 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   it should "play a looped sample" in {
     test(mkChannelController()) { dut =>
       // Start
-      dut.io.enable.poke(true.B)
+      dut.io.enable.poke(true)
       startChannel(dut, index = 0, loop = true, loopEndAddr = 1, endAddress = 1)
 
       // Fetch
       waitForMemRead(dut)
-      dut.io.mem.valid.poke(true.B)
-      dut.io.mem.dout.poke(0x12.U)
+      dut.io.mem.valid.poke(true)
+      dut.io.mem.dout.poke(0x12)
       waitForNext(dut)
-      dut.io.mem.valid.poke(false.B)
+      dut.io.mem.valid.poke(false)
 
       // Valid
       waitForAudioValid(dut)
@@ -279,10 +279,10 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
 
       // Fetch
       waitForMemRead(dut)
-      dut.io.mem.valid.poke(true.B)
-      dut.io.mem.dout.poke(0x12.U)
+      dut.io.mem.valid.poke(true)
+      dut.io.mem.dout.poke(0x12)
       waitForNext(dut)
-      dut.io.mem.valid.poke(false.B)
+      dut.io.mem.valid.poke(false)
 
       // Valid
       waitForAudioValid(dut)
@@ -292,10 +292,10 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
 
       // Fetch
       waitForMemRead(dut)
-      dut.io.mem.valid.poke(true.B)
-      dut.io.mem.dout.poke(0x12.U)
+      dut.io.mem.valid.poke(true)
+      dut.io.mem.dout.poke(0x12)
       waitForNext(dut)
-      dut.io.mem.valid.poke(false.B)
+      dut.io.mem.valid.poke(false)
 
       // Valid
       waitForAudioValid(dut)
@@ -305,10 +305,10 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
 
       // Fetch
       waitForMemRead(dut)
-      dut.io.mem.valid.poke(true.B)
-      dut.io.mem.dout.poke(0x12.U)
+      dut.io.mem.valid.poke(true)
+      dut.io.mem.dout.poke(0x12)
       waitForNext(dut)
-      dut.io.mem.valid.poke(false.B)
+      dut.io.mem.valid.poke(false)
 
       // Valid
       waitForAudioValid(dut)
@@ -318,10 +318,10 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
 
       // Fetch
       waitForMemRead(dut)
-      dut.io.mem.valid.poke(true.B)
-      dut.io.mem.dout.poke(0x12.U)
+      dut.io.mem.valid.poke(true)
+      dut.io.mem.dout.poke(0x12)
       waitForNext(dut)
-      dut.io.mem.valid.poke(false.B)
+      dut.io.mem.valid.poke(false)
 
       // Valid
       waitForAudioValid(dut)
@@ -331,10 +331,10 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
 
       // Fetch
       waitForMemRead(dut)
-      dut.io.mem.valid.poke(true.B)
-      dut.io.mem.dout.poke(0x12.U)
+      dut.io.mem.valid.poke(true)
+      dut.io.mem.dout.poke(0x12)
       waitForNext(dut)
-      dut.io.mem.valid.poke(false.B)
+      dut.io.mem.valid.poke(false)
 
       // Valid
       waitForAudioValid(dut)
@@ -346,25 +346,25 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   it should "sum the channel outputs" in {
     test(mkChannelController(ymzConfig.copy(numChannels = 2))) { dut =>
       // Start
-      dut.io.enable.poke(true.B)
+      dut.io.enable.poke(true)
       startChannel(dut, index = 0, pitch = 127)
       startChannel(dut, index = 1, pitch = 127)
 
       // Fetch (channel 0)
       waitForMemRead(dut)
-      dut.io.mem.valid.poke(true.B)
-      dut.io.mem.dout.poke(0x10.U)
+      dut.io.mem.valid.poke(true)
+      dut.io.mem.dout.poke(0x10)
       dut.io.index.expect(0.U)
       waitForNext(dut)
-      dut.io.mem.valid.poke(false.B)
+      dut.io.mem.valid.poke(false)
 
       // Fetch (channel 1)
       waitForMemRead(dut)
-      dut.io.mem.valid.poke(true.B)
-      dut.io.mem.dout.poke(0x20.U)
+      dut.io.mem.valid.poke(true)
+      dut.io.mem.dout.poke(0x20)
       dut.io.index.expect(1.U)
       waitForNext(dut)
-      dut.io.mem.valid.poke(false.B)
+      dut.io.mem.valid.poke(false)
 
       // Valid
       waitForAudioValid(dut)
@@ -382,8 +382,8 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   it should "not allow a channel to play another sample until the key is released" in {
     test(mkChannelController()) { dut =>
       // Start
-      dut.io.enable.poke(true.B)
-      dut.io.mem.valid.poke(true.B)
+      dut.io.enable.poke(true)
+      dut.io.mem.valid.poke(true)
       startChannel(dut, index = 0, endAddress = 1)
 
       // Done
@@ -391,13 +391,13 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
         waitForRead(dut)
         waitForCheck(dut)
       }
-      dut.io.active.expect(false.B)
-      dut.io.done.expect(true.B)
+      dut.io.active.expect(false)
+      dut.io.done.expect(true)
 
       // Key still down
       waitForRead(dut)
       waitForCheck(dut)
-      dut.io.active.expect(false.B)
+      dut.io.active.expect(false)
 
       // Stop
       stopChannel(dut, index = 0)
@@ -408,7 +408,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
       startChannel(dut, index = 0, endAddress = 1)
       waitForRead(dut)
       waitForCheck(dut)
-      dut.io.active.expect(true.B)
+      dut.io.active.expect(true)
     }
   }
 
@@ -416,38 +416,38 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
 
   it should "assert the active signal when a channel is playing" in {
     test(mkChannelController()) { dut =>
-      dut.io.enable.poke(true.B)
+      dut.io.enable.poke(true)
 
       // Active
       startChannel(dut, index = 0, endAddress = 1)
       waitForCheck(dut)
-      dut.io.active.expect(true.B)
+      dut.io.active.expect(true)
 
       // Inactive
       stopChannel(dut, index = 0)
       waitForCheck(dut)
-      dut.io.active.expect(false.B)
+      dut.io.active.expect(false)
     }
   }
 
   it should "deassert the active signal when a channel has reached the end address" in {
     test(mkChannelController()) { dut =>
       // Start
-      dut.io.enable.poke(true.B)
-      dut.io.mem.valid.poke(true.B)
+      dut.io.enable.poke(true)
+      dut.io.mem.valid.poke(true)
       startChannel(dut, index = 0, endAddress = 1)
 
       // Status
       for (_ <- 0 to 3) {
         waitForRead(dut)
         waitForCheck(dut)
-        dut.io.active.expect(true.B)
+        dut.io.active.expect(true)
       }
 
       // Done
       waitForRead(dut)
       waitForCheck(dut)
-      dut.io.active.expect(false.B)
+      dut.io.active.expect(false)
     }
   }
 
@@ -456,36 +456,36 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   it should "assert the done signal when a channel has reached the end address" in {
     test(mkChannelController()) { dut =>
       // Start
-      dut.io.enable.poke(true.B)
-      dut.io.mem.valid.poke(true.B)
+      dut.io.enable.poke(true)
+      dut.io.mem.valid.poke(true)
       startChannel(dut, index = 0, endAddress = 1)
 
       // Status
       for (_ <- 0 to 3) {
         waitForRead(dut)
         waitForCheck(dut)
-        dut.io.done.expect(false.B)
+        dut.io.done.expect(false)
       }
 
       // Done
       waitForRead(dut)
       waitForCheck(dut)
-      dut.io.done.expect(true.B)
+      dut.io.done.expect(true)
     }
   }
 
   it should "not assert the done signal when the loop end address is equal to the end address" in {
     test(mkChannelController()) { dut =>
       // Start
-      dut.io.enable.poke(true.B)
-      dut.io.mem.valid.poke(true.B)
+      dut.io.enable.poke(true)
+      dut.io.mem.valid.poke(true)
       startChannel(dut, index = 0, loop = true, loopEndAddr = 1, endAddress = 1)
 
       // Status
       for (n <- Seq(0, 1, 1, 0)) {
         waitForRead(dut)
         waitForCheck(dut)
-        dut.io.done.expect(false.B)
+        dut.io.done.expect(false)
       }
     }
   }
@@ -493,8 +493,8 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   it should "not assert the done signal when a channel is stopped" in {
     test(mkChannelController()) { dut =>
       // Start
-      dut.io.enable.poke(true.B)
-      dut.io.mem.valid.poke(true.B)
+      dut.io.enable.poke(true)
+      dut.io.mem.valid.poke(true)
       startChannel(dut, index = 0, endAddress = 1)
 
       // Stop
@@ -503,15 +503,15 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
 
       // Status
       waitForCheck(dut)
-      dut.io.done.expect(false.B)
+      dut.io.done.expect(false)
     }
   }
 
   it should "not assert the done signal when a channel is inactive" in {
     test(mkChannelController()) { dut =>
       // Start
-      dut.io.enable.poke(true.B)
-      dut.io.mem.valid.poke(true.B)
+      dut.io.enable.poke(true)
+      dut.io.mem.valid.poke(true)
       startChannel(dut, index = 0, endAddress = 1)
 
       // Done
@@ -519,12 +519,12 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
         waitForRead(dut)
         waitForCheck(dut)
       }
-      dut.io.done.expect(true.B)
+      dut.io.done.expect(true)
 
       // Disabled
       waitForRead(dut)
       waitForCheck(dut)
-      dut.io.done.expect(false.B)
+      dut.io.done.expect(false)
     }
   }
 }

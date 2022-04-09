@@ -74,7 +74,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       })
       io.b := VecInit(Util.decode(io.a, 4, 4))
     }) { dut =>
-      dut.io.a.poke(0x1234.U)
+      dut.io.a.poke(0x1234)
       dut.io.b(3).expect(1.U)
       dut.io.b(2).expect(2.U)
       dut.io.b(1).expect(3.U)
@@ -103,14 +103,14 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       })
       io.b := Util.edge(io.a)
     }) { dut =>
-      dut.io.a.poke(false.B)
-      dut.io.b.expect(false.B)
+      dut.io.a.poke(false)
+      dut.io.b.expect(false)
       dut.clock.step()
-      dut.io.a.poke(true.B)
-      dut.io.b.expect(true.B)
+      dut.io.a.poke(true)
+      dut.io.b.expect(true)
       dut.clock.step()
-      dut.io.a.poke(false.B)
-      dut.io.b.expect(true.B)
+      dut.io.a.poke(false)
+      dut.io.b.expect(true)
     }
   }
 
@@ -122,14 +122,14 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       })
       io.b := Util.rising(io.a)
     }) { dut =>
-      dut.io.a.poke(false.B)
-      dut.io.b.expect(false.B)
+      dut.io.a.poke(false)
+      dut.io.b.expect(false)
       dut.clock.step()
-      dut.io.a.poke(true.B)
-      dut.io.b.expect(true.B)
+      dut.io.a.poke(true)
+      dut.io.b.expect(true)
       dut.clock.step()
-      dut.io.a.poke(false.B)
-      dut.io.b.expect(false.B)
+      dut.io.a.poke(false)
+      dut.io.b.expect(false)
     }
   }
 
@@ -141,14 +141,14 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       })
       io.b := Util.falling(io.a)
     }) { dut =>
-      dut.io.a.poke(true.B)
-      dut.io.b.expect(false.B)
+      dut.io.a.poke(true)
+      dut.io.b.expect(false)
       dut.clock.step()
-      dut.io.a.poke(false.B)
-      dut.io.b.expect(true.B)
+      dut.io.a.poke(false)
+      dut.io.b.expect(true)
       dut.clock.step()
-      dut.io.a.poke(false.B)
-      dut.io.b.expect(false.B)
+      dut.io.a.poke(false)
+      dut.io.b.expect(false)
     }
   }
 
@@ -161,15 +161,15 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       })
       io.c := Util.hold(io.a, io.b)
     }) { dut =>
-      dut.io.a.poke(1.U)
-      dut.io.b.poke(true.B)
+      dut.io.a.poke(1)
+      dut.io.b.poke(true)
       dut.io.c.expect(1.U)
       dut.clock.step()
-      dut.io.a.poke(0.U)
+      dut.io.a.poke(0)
       dut.io.c.expect(1.U)
       dut.clock.step()
       dut.io.c.expect(1.U)
-      dut.io.b.poke(false.B)
+      dut.io.b.poke(false)
       dut.clock.step()
       dut.io.c.expect(0.U)
     }
@@ -184,17 +184,17 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       })
       io.c := Util.latch(io.a, io.b)
     }) { dut =>
-      dut.io.a.poke(true.B)
-      dut.io.c.expect(true.B)
+      dut.io.a.poke(true)
+      dut.io.c.expect(true)
       dut.clock.step()
-      dut.io.a.poke(false.B)
-      dut.io.c.expect(true.B)
+      dut.io.a.poke(false)
+      dut.io.c.expect(true)
       dut.clock.step()
-      dut.io.b.poke(true.B)
-      dut.io.c.expect(false.B)
+      dut.io.b.poke(true)
+      dut.io.c.expect(false)
       dut.clock.step()
-      dut.io.b.poke(false.B)
-      dut.io.c.expect(false.B)
+      dut.io.b.poke(false)
+      dut.io.c.expect(false)
     }
   }
 
@@ -207,17 +207,17 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       })
       io.c := Util.latchSync(io.a, io.b)
     }) { dut =>
-      dut.io.a.poke(true.B)
-      dut.io.c.expect(false.B)
+      dut.io.a.poke(true)
+      dut.io.c.expect(false)
       dut.clock.step()
-      dut.io.a.poke(false.B)
-      dut.io.c.expect(true.B)
+      dut.io.a.poke(false)
+      dut.io.c.expect(true)
       dut.clock.step()
-      dut.io.b.poke(true.B)
-      dut.io.c.expect(true.B)
+      dut.io.b.poke(true)
+      dut.io.c.expect(true)
       dut.clock.step()
-      dut.io.b.poke(false.B)
-      dut.io.c.expect(false.B)
+      dut.io.b.poke(false)
+      dut.io.c.expect(false)
     }
   }
 
@@ -231,18 +231,18 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       })
       io.d := Util.latch(io.a, io.b, io.c)
     }) { dut =>
-      dut.io.a.poke(1.U)
-      dut.io.b.poke(true.B)
+      dut.io.a.poke(1)
+      dut.io.b.poke(true)
       dut.io.d.expect(1.U)
       dut.clock.step()
-      dut.io.a.poke(2.U)
-      dut.io.b.poke(false.B)
+      dut.io.a.poke(2)
+      dut.io.b.poke(false)
       dut.io.d.expect(1.U)
       dut.clock.step()
-      dut.io.c.poke(true.B)
+      dut.io.c.poke(true)
       dut.io.d.expect(2.U)
       dut.clock.step()
-      dut.io.c.poke(false.B)
+      dut.io.c.poke(false)
       dut.io.d.expect(2.U)
     }
   }
@@ -255,16 +255,16 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       })
       io.b := Util.pulseSync(2, io.a)
     }) { dut =>
-      dut.io.a.poke(true.B)
-      dut.io.b.expect(false.B)
+      dut.io.a.poke(true)
+      dut.io.b.expect(false)
       dut.clock.step()
-      dut.io.b.expect(true.B)
+      dut.io.b.expect(true)
       dut.clock.step()
-      dut.io.b.expect(true.B)
+      dut.io.b.expect(true)
       dut.clock.step()
-      dut.io.b.expect(false.B)
+      dut.io.b.expect(false)
       dut.clock.step()
-      dut.io.a.poke(false.B)
+      dut.io.a.poke(false)
     }
   }
 
@@ -276,14 +276,14 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       })
       io.b := Util.toggle(io.a)
     }) { dut =>
-      dut.io.b.expect(false.B)
+      dut.io.b.expect(false)
       dut.clock.step()
-      dut.io.a.poke(true.B)
-      dut.io.b.expect(false.B)
+      dut.io.a.poke(true)
+      dut.io.b.expect(false)
       dut.clock.step()
-      dut.io.b.expect(true.B)
+      dut.io.b.expect(true)
       dut.clock.step()
-      dut.io.b.expect(false.B)
+      dut.io.b.expect(false)
     }
   }
 
@@ -296,13 +296,13 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       io.b := Util.sync(io.a)
     }) { dut =>
       dut.io.a.low()
-      dut.io.b.expect(false.B)
+      dut.io.b.expect(false)
       dut.clock.step()
       dut.io.a.high()
-      dut.io.b.expect(true.B)
+      dut.io.b.expect(true)
       dut.clock.step()
       dut.io.a.low()
-      dut.io.b.expect(false.B)
+      dut.io.b.expect(false)
     }
   }
 }

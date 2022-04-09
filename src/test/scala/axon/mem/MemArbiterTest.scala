@@ -44,114 +44,114 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
   it should "mux the request to the input port with the highest priority" in {
     test(mkMemArbiter) { dut =>
       // Read 0+1
-      dut.io.in(0).rd.poke(true.B)
-      dut.io.in(0).addr.poke(1.U)
-      dut.io.in(1).rd.poke(true.B)
-      dut.io.in(1).addr.poke(2.U)
-      dut.io.out.rd.expect(true.B)
+      dut.io.in(0).rd.poke(true)
+      dut.io.in(0).addr.poke(1)
+      dut.io.in(1).rd.poke(true)
+      dut.io.in(1).addr.poke(2)
+      dut.io.out.rd.expect(true)
       dut.io.out.addr.expect(1.U)
 
       // Read 1
-      dut.io.in(0).rd.poke(false.B)
-      dut.io.out.rd.expect(true.B)
+      dut.io.in(0).rd.poke(false)
+      dut.io.out.rd.expect(true)
       dut.io.out.addr.expect(2.U)
 
       // Done
-      dut.io.in(1).rd.poke(false.B)
-      dut.io.out.rd.expect(false.B)
+      dut.io.in(1).rd.poke(false)
+      dut.io.out.rd.expect(false)
       dut.io.out.addr.expect(0.U)
     }
   }
 
   it should "assert the wait signal" in {
     test(mkMemArbiter) { dut =>
-      dut.io.out.waitReq.poke(true.B)
+      dut.io.out.waitReq.poke(true)
 
       // Read 0+1
-      dut.io.in(0).rd.poke(true.B)
-      dut.io.in(1).rd.poke(true.B)
-      dut.io.in(0).waitReq.expect(true.B)
-      dut.io.in(1).waitReq.expect(true.B)
+      dut.io.in(0).rd.poke(true)
+      dut.io.in(1).rd.poke(true)
+      dut.io.in(0).waitReq.expect(true)
+      dut.io.in(1).waitReq.expect(true)
 
       // Wait 0
-      dut.io.out.waitReq.poke(false.B)
-      dut.io.in(0).waitReq.expect(false.B)
-      dut.io.in(1).waitReq.expect(true.B)
-      dut.io.out.waitReq.poke(true.B)
-      dut.io.in(0).waitReq.expect(true.B)
-      dut.io.in(1).waitReq.expect(true.B)
+      dut.io.out.waitReq.poke(false)
+      dut.io.in(0).waitReq.expect(false)
+      dut.io.in(1).waitReq.expect(true)
+      dut.io.out.waitReq.poke(true)
+      dut.io.in(0).waitReq.expect(true)
+      dut.io.in(1).waitReq.expect(true)
 
       // Read 1
-      dut.io.in(0).rd.poke(false.B)
-      dut.io.in(1).rd.poke(true.B)
-      dut.io.in(0).waitReq.expect(false.B)
-      dut.io.in(1).waitReq.expect(true.B)
+      dut.io.in(0).rd.poke(false)
+      dut.io.in(1).rd.poke(true)
+      dut.io.in(0).waitReq.expect(false)
+      dut.io.in(1).waitReq.expect(true)
 
       // Wait 1
-      dut.io.out.waitReq.poke(false.B)
-      dut.io.in(0).waitReq.expect(false.B)
-      dut.io.in(1).waitReq.expect(false.B)
-      dut.io.out.waitReq.poke(true.B)
-      dut.io.in(0).waitReq.expect(false.B)
-      dut.io.in(1).waitReq.expect(true.B)
+      dut.io.out.waitReq.poke(false)
+      dut.io.in(0).waitReq.expect(false)
+      dut.io.in(1).waitReq.expect(false)
+      dut.io.out.waitReq.poke(true)
+      dut.io.in(0).waitReq.expect(false)
+      dut.io.in(1).waitReq.expect(true)
     }
   }
 
   it should "assert the valid signal" in {
     test(mkMemArbiter) { dut =>
       // Read 0+1
-      dut.io.in(0).rd.poke(true.B)
-      dut.io.in(1).rd.poke(true.B)
+      dut.io.in(0).rd.poke(true)
+      dut.io.in(1).rd.poke(true)
       dut.clock.step()
 
       // Valid 0
-      dut.io.out.valid.poke(true.B)
-      dut.io.out.dout.poke(1.U)
-      dut.io.in(0).valid.expect(true.B)
-      dut.io.in(1).valid.expect(false.B)
+      dut.io.out.valid.poke(true)
+      dut.io.out.dout.poke(1)
+      dut.io.in(0).valid.expect(true)
+      dut.io.in(1).valid.expect(false)
       dut.io.in(0).dout.expect(1.U)
       dut.clock.step()
 
       // Burst done
-      dut.io.out.burstDone.poke(true.B)
+      dut.io.out.burstDone.poke(true)
       dut.clock.step()
-      dut.io.in(0).rd.poke(false.B)
+      dut.io.in(0).rd.poke(false)
       dut.clock.step()
-      dut.io.out.burstDone.poke(false.B)
+      dut.io.out.burstDone.poke(false)
 
       // Valid 1
-      dut.io.in(1).rd.poke(false.B)
-      dut.io.out.valid.poke(true.B)
-      dut.io.out.dout.poke(2.U)
-      dut.io.in(0).valid.expect(false.B)
-      dut.io.in(1).valid.expect(true.B)
+      dut.io.in(1).rd.poke(false)
+      dut.io.out.valid.poke(true)
+      dut.io.out.dout.poke(2)
+      dut.io.in(0).valid.expect(false)
+      dut.io.in(1).valid.expect(true)
       dut.io.in(1).dout.expect(2.U)
-      dut.io.out.valid.poke(false.B)
+      dut.io.out.valid.poke(false)
     }
   }
 
   it should "assert the burst done signal" in {
     test(mkMemArbiter) { dut =>
       // Read 0+1
-      dut.io.in(0).rd.poke(true.B)
-      dut.io.in(1).rd.poke(true.B)
+      dut.io.in(0).rd.poke(true)
+      dut.io.in(1).rd.poke(true)
       dut.clock.step()
 
       // Burst done 0
-      dut.io.out.burstDone.poke(true.B)
-      dut.io.in(0).burstDone.expect(true.B)
-      dut.io.in(1).burstDone.expect(false.B)
+      dut.io.out.burstDone.poke(true)
+      dut.io.in(0).burstDone.expect(true)
+      dut.io.in(1).burstDone.expect(false)
       dut.clock.step()
-      dut.io.in(0).rd.poke(false.B)
+      dut.io.in(0).rd.poke(false)
       dut.clock.step()
 
       // Burst done 1
-      dut.io.in(0).burstDone.expect(false.B)
-      dut.io.in(1).burstDone.expect(true.B)
+      dut.io.in(0).burstDone.expect(false)
+      dut.io.in(1).burstDone.expect(true)
       dut.clock.step()
-      dut.io.in(1).rd.poke(false.B)
-      dut.io.in(0).burstDone.expect(false.B)
-      dut.io.in(1).burstDone.expect(false.B)
+      dut.io.in(1).rd.poke(false)
+      dut.io.in(0).burstDone.expect(false)
+      dut.io.in(1).burstDone.expect(false)
     }
   }
 }

@@ -41,30 +41,30 @@ import matchers.should.Matchers
 class RegisterFileTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   it should "allow writing masked bytes" in {
     test(new RegisterFile(3)) { dut =>
-      dut.io.mem.wr.poke(true.B)
-      dut.io.mem.rd.poke(true.B)
+      dut.io.mem.wr.poke(true)
+      dut.io.mem.rd.poke(true)
 
       // Write
-      dut.io.mem.mask.poke(0.U)
-      dut.io.mem.din.poke(0x1234.U)
+      dut.io.mem.mask.poke(0)
+      dut.io.mem.din.poke(0x1234)
       dut.clock.step()
       dut.io.mem.dout.expect(0x0000.U)
 
       // Write
-      dut.io.mem.mask.poke(1.U)
-      dut.io.mem.din.poke(0x1234.U)
+      dut.io.mem.mask.poke(1)
+      dut.io.mem.din.poke(0x1234)
       dut.clock.step()
       dut.io.mem.dout.expect(0x0034.U)
 
       // Write
-      dut.io.mem.mask.poke(2.U)
-      dut.io.mem.din.poke(0x5678.U)
+      dut.io.mem.mask.poke(2)
+      dut.io.mem.din.poke(0x5678)
       dut.clock.step()
       dut.io.mem.dout.expect(0x5634.U)
 
       // Write
-      dut.io.mem.mask.poke(3.U)
-      dut.io.mem.din.poke(0xabcd.U)
+      dut.io.mem.mask.poke(3)
+      dut.io.mem.din.poke(0xabcd)
       dut.clock.step()
       dut.io.mem.dout.expect(0xabcd.U)
     }
@@ -72,18 +72,18 @@ class RegisterFileTest extends AnyFlatSpec with ChiselScalatestTester with Match
 
   it should "output the registers" in {
     test(new RegisterFile(3)) { dut =>
-      dut.io.mem.wr.poke(true.B)
-      dut.io.mem.mask.poke(3.U)
+      dut.io.mem.wr.poke(true)
+      dut.io.mem.mask.poke(3)
 
       // Write
-      dut.io.mem.addr.poke(0.U)
-      dut.io.mem.din.poke(0x1234.U)
+      dut.io.mem.addr.poke(0)
+      dut.io.mem.din.poke(0x1234)
       dut.clock.step()
-      dut.io.mem.addr.poke(1.U)
-      dut.io.mem.din.poke(0x5678.U)
+      dut.io.mem.addr.poke(1)
+      dut.io.mem.din.poke(0x5678)
       dut.clock.step()
-      dut.io.mem.addr.poke(2.U)
-      dut.io.mem.din.poke(0xabcd.U)
+      dut.io.mem.addr.poke(2)
+      dut.io.mem.din.poke(0xabcd)
       dut.clock.step()
 
       // Read

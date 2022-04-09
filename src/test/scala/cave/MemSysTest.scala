@@ -47,47 +47,47 @@ class MemSysTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   it should "write download data to memory" in {
     test(new MemSys) { dut =>
       waitForDownloadReady(dut)
-      dut.io.ioctl.download.poke(true.B)
+      dut.io.ioctl.download.poke(true)
 
       // Download & fill
-      dut.io.ioctl.wr.poke(true.B)
-      dut.io.ioctl.addr.poke(0.U)
-      dut.io.ioctl.dout.poke(0x1234.U)
+      dut.io.ioctl.wr.poke(true)
+      dut.io.ioctl.addr.poke(0)
+      dut.io.ioctl.dout.poke(0x1234)
       dut.clock.step()
-      dut.io.ioctl.wr.poke(false.B)
+      dut.io.ioctl.wr.poke(false)
       dut.clock.step(2)
-      dut.io.ddr.rd.expect(true.B)
+      dut.io.ddr.rd.expect(true)
       dut.io.ddr.burstLength.expect(1.U)
-      dut.io.sdram.rd.expect(true.B)
+      dut.io.sdram.rd.expect(true)
       dut.io.sdram.burstLength.expect(4.U)
 
       // DDR valid
-      dut.io.ddr.valid.poke(true.B)
+      dut.io.ddr.valid.poke(true)
       dut.clock.step(2)
-      dut.io.ddr.valid.poke(false.B)
+      dut.io.ddr.valid.poke(false)
 
       // SDRAM valid
-      dut.io.sdram.valid.poke(true.B)
+      dut.io.sdram.valid.poke(true)
       dut.clock.step(5)
-      dut.io.sdram.valid.poke(false.B)
+      dut.io.sdram.valid.poke(false)
 
       // Burst done
-      dut.io.ddr.burstDone.poke(true.B)
-      dut.io.sdram.burstDone.poke(true.B)
+      dut.io.ddr.burstDone.poke(true)
+      dut.io.sdram.burstDone.poke(true)
       dut.clock.step()
-      dut.io.ddr.burstDone.poke(false.B)
-      dut.io.sdram.burstDone.poke(false.B)
+      dut.io.ddr.burstDone.poke(false)
+      dut.io.sdram.burstDone.poke(false)
 
       // Download & evict
-      dut.io.ioctl.wr.poke(true.B)
-      dut.io.ioctl.addr.poke(8.U)
-      dut.io.ioctl.dout.poke(0x5678.U)
+      dut.io.ioctl.wr.poke(true)
+      dut.io.ioctl.addr.poke(8)
+      dut.io.ioctl.dout.poke(0x5678)
       dut.clock.step()
-      dut.io.ioctl.wr.poke(false.B)
+      dut.io.ioctl.wr.poke(false)
       dut.clock.step(2)
-      dut.io.ddr.wr.expect(true.B)
+      dut.io.ddr.wr.expect(true)
       dut.io.ddr.burstLength.expect(1.U)
-      dut.io.sdram.wr.expect(true.B)
+      dut.io.sdram.wr.expect(true)
       dut.io.sdram.burstLength.expect(4.U)
     }
   }

@@ -52,28 +52,28 @@ class CounterTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       io.wrap := wrap
     }) { dut =>
       dut.io.value.expect(0.U)
-      dut.io.wrap.expect(false.B)
+      dut.io.wrap.expect(false)
       dut.clock.step()
       dut.io.value.expect(0.U)
-      dut.io.wrap.expect(false.B)
-      dut.io.enable.poke(true.B)
+      dut.io.wrap.expect(false)
+      dut.io.enable.poke(true)
       dut.clock.step()
       dut.io.value.expect(1.U)
-      dut.io.wrap.expect(false.B)
-      dut.io.reset.poke(true.B)
+      dut.io.wrap.expect(false)
+      dut.io.reset.poke(true)
       dut.clock.step()
-      dut.io.reset.poke(false.B)
+      dut.io.reset.poke(false)
       dut.io.value.expect(0.U)
-      dut.io.wrap.expect(false.B)
+      dut.io.wrap.expect(false)
       dut.clock.step()
       dut.io.value.expect(1.U)
-      dut.io.wrap.expect(false.B)
+      dut.io.wrap.expect(false)
       dut.clock.step()
       dut.io.value.expect(2.U)
-      dut.io.wrap.expect(true.B)
+      dut.io.wrap.expect(true)
       dut.clock.step()
       dut.io.value.expect(0.U)
-      dut.io.wrap.expect(false.B)
+      dut.io.wrap.expect(false)
     }
   }
 
@@ -88,10 +88,10 @@ class CounterTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       io.wrap := wrap
     }) { dut =>
       dut.io.value.expect(0.U)
-      dut.io.wrap.expect(true.B)
+      dut.io.wrap.expect(true)
       dut.clock.step()
       dut.io.value.expect(0.U)
-      dut.io.wrap.expect(true.B)
+      dut.io.wrap.expect(true)
     }
   }
 
@@ -108,28 +108,28 @@ class CounterTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       io.wrap := wrap
     }) { dut =>
       dut.io.value.expect(0.U)
-      dut.io.wrap.expect(false.B)
+      dut.io.wrap.expect(false)
       dut.clock.step()
       dut.io.value.expect(0.U)
-      dut.io.wrap.expect(false.B)
-      dut.io.enable.poke(true.B)
+      dut.io.wrap.expect(false)
+      dut.io.enable.poke(true)
       dut.clock.step()
       dut.io.value.expect(1.U)
-      dut.io.wrap.expect(false.B)
-      dut.io.reset.poke(true.B)
+      dut.io.wrap.expect(false)
+      dut.io.reset.poke(true)
       dut.clock.step()
-      dut.io.reset.poke(false.B)
+      dut.io.reset.poke(false)
       dut.io.value.expect(0.U)
-      dut.io.wrap.expect(false.B)
+      dut.io.wrap.expect(false)
       dut.clock.step()
       dut.io.value.expect(1.U)
-      dut.io.wrap.expect(false.B)
+      dut.io.wrap.expect(false)
       dut.clock.step()
       dut.io.value.expect(2.U)
-      dut.io.wrap.expect(true.B)
+      dut.io.wrap.expect(true)
       dut.clock.step()
       dut.io.value.expect(0.U)
-      dut.io.wrap.expect(false.B)
+      dut.io.wrap.expect(false)
     }
   }
 
@@ -144,10 +144,10 @@ class CounterTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       io.wrap := wrap
     }) { dut =>
       dut.io.value.expect(0.U)
-      dut.io.wrap.expect(true.B)
+      dut.io.wrap.expect(true)
       dut.clock.step()
       dut.io.value.expect(0.U)
-      dut.io.wrap.expect(true.B)
+      dut.io.wrap.expect(true)
     }
   }
 }

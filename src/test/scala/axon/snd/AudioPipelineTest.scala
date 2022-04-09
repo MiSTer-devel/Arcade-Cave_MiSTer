@@ -52,15 +52,15 @@ trait AudioPipelineTestHelpers {
                               level: Int = 255,
                               pan: Int = 8) = {
     waitForIdle(dut)
-    dut.io.in.valid.poke(true.B)
-    dut.io.in.bits.state.samples(0).poke(samples._1.S)
-    dut.io.in.bits.state.samples(1).poke(samples._2.S)
-    dut.io.in.bits.state.adpcmStep.poke(adpcmStep.S)
-    dut.io.in.bits.state.lerpIndex.poke(lerpIndex.U)
-    dut.io.in.bits.state.underflow.poke(underflow.B)
-    dut.io.in.bits.pitch.poke(pitch.U)
-    dut.io.in.bits.level.poke(level.U)
-    dut.io.in.bits.pan.poke(pan.U)
+    dut.io.in.valid.poke(true)
+    dut.io.in.bits.state.samples(0).poke(samples._1)
+    dut.io.in.bits.state.samples(1).poke(samples._2)
+    dut.io.in.bits.state.adpcmStep.poke(adpcmStep)
+    dut.io.in.bits.state.lerpIndex.poke(lerpIndex)
+    dut.io.in.bits.state.underflow.poke(underflow)
+    dut.io.in.bits.pitch.poke(pitch)
+    dut.io.in.bits.level.poke(level)
+    dut.io.in.bits.pan.poke(pan)
   }
 
   protected def waitForIdle(dut: AudioPipeline) =
@@ -93,75 +93,75 @@ class AudioPipelineTest extends AnyFlatSpec with ChiselScalatestTester with Matc
 
   it should "assert the ready signal during the idle state" in {
     test(mkChannelPipeline) { dut =>
-      dut.io.in.valid.poke(true.B)
+      dut.io.in.valid.poke(true)
       waitForIdle(dut)
-      dut.io.in.ready.expect(true.B)
+      dut.io.in.ready.expect(true)
       dut.clock.step()
-      dut.io.in.ready.expect(false.B)
+      dut.io.in.ready.expect(false)
     }
   }
 
   it should "move to the check state after receiving a request" in {
     test(mkChannelPipeline) { dut =>
-      dut.io.in.valid.poke(true.B)
+      dut.io.in.valid.poke(true)
       waitForIdle(dut)
       dut.clock.step()
-      dut.io.debug.check.expect(true.B)
+      dut.io.debug.check.expect(true)
     }
   }
 
   it should "move to the interpolate state when the pipeline has not underflowed" in {
     test(mkChannelPipeline) { dut =>
-      dut.io.in.valid.poke(true.B)
+      dut.io.in.valid.poke(true)
       waitForCheck(dut)
       dut.clock.step()
-      dut.io.debug.interpolate.expect(true.B)
+      dut.io.debug.interpolate.expect(true)
     }
   }
 
   it should "move to the latch state when the pipeline has underflowed" in {
     test(mkChannelPipeline) { dut =>
-      dut.io.in.valid.poke(true.B)
-      dut.io.in.bits.state.underflow.poke(true.B)
+      dut.io.in.valid.poke(true)
+      dut.io.in.bits.state.underflow.poke(true)
       waitForCheck(dut)
       dut.clock.step()
-      dut.io.debug.fetch.expect(true.B)
+      dut.io.debug.fetch.expect(true)
     }
   }
 
   it should "move to the level state after interpolating the sample" in {
     test(mkChannelPipeline) { dut =>
-      dut.io.in.valid.poke(true.B)
+      dut.io.in.valid.poke(true)
       waitForInterpolate(dut)
       dut.clock.step()
-      dut.io.debug.level.expect(true.B)
+      dut.io.debug.level.expect(true)
     }
   }
 
   it should "move to the pan state after applying the level" in {
     test(mkChannelPipeline) { dut =>
-      dut.io.in.valid.poke(true.B)
+      dut.io.in.valid.poke(true)
       waitForLevel(dut)
       dut.clock.step()
-      dut.io.debug.pan.expect(true.B)
+      dut.io.debug.pan.expect(true)
     }
   }
 
   it should "move to the done state after applying the pan" in {
     test(mkChannelPipeline) { dut =>
-      dut.io.in.valid.poke(true.B)
+      dut.io.in.valid.poke(true)
       waitForPan(dut)
       dut.clock.step()
-      dut.io.debug.done.expect(true.B)
+      dut.io.debug.done.expect(true)
     }
   }
 
   it should "assert the valid signal during the done state" in {
     test(mkChannelPipeline) { dut =>
-      dut.io.in.valid.poke(true.B)
-      dut.io.out.valid.expect(false.B)
+      dut.io.in.valid.poke(true)
+      dut.io.out.valid.expect(false)
       waitForDone(dut)
-      dut.io.out.valid.expect(true.B)
+      dut.io.out.valid.expect(true)
     }
   }
 
@@ -170,18 +170,18 @@ class AudioPipelineTest extends AnyFlatSpec with ChiselScalatestTester with Matc
   it should "fetch ADPCM data when the pipeline has underflowed" in {
     test(mkChannelPipeline) { dut =>
       startPipeline(dut, underflow = true, lerpIndex = 64, pitch = 63)
-      dut.io.pcmData.ready.expect(false.B)
+      dut.io.pcmData.ready.expect(false)
       waitForFetch(dut)
-      dut.io.pcmData.ready.expect(true.B)
+      dut.io.pcmData.ready.expect(true)
     }
   }
 
   it should "not fetch ADPCM data when the pipeline has not underflowed" in {
     test(mkChannelPipeline) { dut =>
       startPipeline(dut)
-      dut.io.pcmData.ready.expect(false.B)
+      dut.io.pcmData.ready.expect(false)
       waitForCheck(dut)
-      dut.io.pcmData.ready.expect(false.B)
+      dut.io.pcmData.ready.expect(false)
     }
   }
 
@@ -189,12 +189,12 @@ class AudioPipelineTest extends AnyFlatSpec with ChiselScalatestTester with Matc
     test(mkChannelPipeline) { dut =>
       startPipeline(dut, pitch = 127)
       waitForDone(dut)
-      dut.io.out.bits.state.underflow.expect(false.B)
+      dut.io.out.bits.state.underflow.expect(false)
       dut.io.out.bits.state.lerpIndex.expect(128.U)
 
       startPipeline(dut, pitch = 127, lerpIndex = 128)
       waitForDone(dut)
-      dut.io.out.bits.state.underflow.expect(true.B)
+      dut.io.out.bits.state.underflow.expect(true)
       dut.io.out.bits.state.lerpIndex.expect(0.U)
     }
   }
@@ -203,12 +203,12 @@ class AudioPipelineTest extends AnyFlatSpec with ChiselScalatestTester with Matc
     test(mkChannelPipeline) { dut =>
       // Start
       startPipeline(dut, underflow = true, lerpIndex = 64)
-      dut.io.pcmData.ready.expect(false.B)
+      dut.io.pcmData.ready.expect(false)
 
       // Data
       waitForFetch(dut)
-      dut.io.pcmData.valid.poke(true.B)
-      dut.io.pcmData.bits.poke(8.U)
+      dut.io.pcmData.valid.poke(true)
+      dut.io.pcmData.bits.poke(8)
 
       // Valid
       waitForDone(dut)

@@ -72,69 +72,69 @@ class TilemapProcessorTest extends AnyFlatSpec with ChiselScalatestTester with M
 
   it should "move to the check state when the start signal is asserted" in {
     test(mkProcessor()) { dut =>
-      dut.io.start.poke(true.B)
+      dut.io.start.poke(true)
       dut.clock.step()
-      dut.io.debug.check.expect(true.B)
+      dut.io.debug.check.expect(true)
     }
   }
 
   it should "move to the idle state after checking a disabled layer" in {
     test(mkProcessor()) { dut =>
-      dut.io.layer.disable.poke(true.B)
-      dut.io.start.poke(true.B)
+      dut.io.layer.disable.poke(true)
+      dut.io.start.poke(true)
       waitForCheck(dut)
       dut.clock.step()
-      dut.io.debug.idle.expect(true.B)
+      dut.io.debug.idle.expect(true)
     }
   }
 
   it should "move to the load state after checking an enabled layer" in {
     test(mkProcessor()) { dut =>
-      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP.U)
-      dut.io.start.poke(true.B)
+      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP)
+      dut.io.start.poke(true)
       waitForCheck(dut)
       dut.clock.step()
-      dut.io.debug.load.expect(true.B)
+      dut.io.debug.load.expect(true)
     }
   }
 
   it should "move to the latch state after loading a tile" in {
     test(mkProcessor()) { dut =>
-      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP.U)
-      dut.io.start.poke(true.B)
+      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP)
+      dut.io.start.poke(true)
       waitForLoad(dut)
       dut.clock.step()
-      dut.io.debug.latch.expect(true.B)
+      dut.io.debug.latch.expect(true)
     }
   }
 
   it should "move to the ready state after latching a tile" in {
     test(mkProcessor()) { dut =>
-      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP.U)
-      dut.io.start.poke(true.B)
+      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP)
+      dut.io.start.poke(true)
       waitForLatch(dut)
       dut.clock.step()
-      dut.io.debug.ready.expect(true.B)
+      dut.io.debug.ready.expect(true)
     }
   }
 
   it should "move to the pending state state after starting the blitter" in {
     test(mkProcessor()) { dut =>
-      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP.U)
-      dut.io.start.poke(true.B)
+      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP)
+      dut.io.start.poke(true)
       waitForReady(dut)
       dut.clock.step()
-      dut.io.debug.pending.expect(true.B)
+      dut.io.debug.pending.expect(true)
     }
   }
 
   it should "move to the next state state after reading pixel data" in {
     test(mkProcessor()) { dut =>
-      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP.U)
-      dut.io.start.poke(true.B)
+      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP)
+      dut.io.start.poke(true)
       waitForPending(dut)
       dut.clock.step()
-      dut.io.debug.next.expect(true.B)
+      dut.io.debug.next.expect(true)
     }
   }
 
@@ -142,10 +142,10 @@ class TilemapProcessorTest extends AnyFlatSpec with ChiselScalatestTester with M
 
   it should "assert the busy flag when the processor has started" in {
     test(mkProcessor()) { dut =>
-      dut.io.busy.expect(false.B)
-      dut.io.start.poke(true.B)
+      dut.io.busy.expect(false)
+      dut.io.start.poke(true)
       dut.clock.step()
-      dut.io.busy.expect(true.B)
+      dut.io.busy.expect(true)
     }
   }
 
@@ -153,10 +153,10 @@ class TilemapProcessorTest extends AnyFlatSpec with ChiselScalatestTester with M
 
   it should "fetch tile data from the layer RAM" in {
     test(mkProcessor()) { dut =>
-      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP.U)
-      dut.io.start.poke(true.B)
+      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP)
+      dut.io.start.poke(true)
       waitForLoad(dut)
-      dut.io.layerRam.rd.expect(true.B)
+      dut.io.layerRam.rd.expect(true)
     }
   }
 
@@ -164,16 +164,16 @@ class TilemapProcessorTest extends AnyFlatSpec with ChiselScalatestTester with M
 
   it should "fetch pixel data from the tile ROM" in {
     test(mkProcessor()) { dut =>
-      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP.U)
-      dut.io.start.poke(true.B)
+      dut.io.gameConfig.layer0Format.poke(Config.GFX_FORMAT_8BPP)
+      dut.io.start.poke(true)
       dut.io.layerRam.dout.poke("h0001_0000".U)
       waitForLatch(dut)
       dut.clock.step()
-      dut.io.tileRom.rd.expect(true.B)
+      dut.io.tileRom.rd.expect(true)
       dut.io.tileRom.addr.expect(0x40.U)
       dut.io.tileRom.burstLength.expect(8.U)
       dut.clock.step()
-      dut.io.tileRom.rd.expect(false.B)
+      dut.io.tileRom.rd.expect(false)
     }
   }
 }

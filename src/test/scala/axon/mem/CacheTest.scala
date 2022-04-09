@@ -51,11 +51,11 @@ trait CacheMemTestHelpers {
   protected def mkCacheMem(config: CacheConfig = cacheConfig) = new Cache(config)
 
   protected def readCache(dut: Cache, addr: Int) = {
-    dut.io.in.rd.poke(true.B)
-    dut.io.in.wr.poke(false.B)
-    dut.io.in.addr.poke(addr.U)
+    dut.io.in.rd.poke(true)
+    dut.io.in.wr.poke(false)
+    dut.io.in.addr.poke(addr)
     dut.clock.step()
-    dut.io.in.rd.poke(false.B)
+    dut.io.in.rd.poke(false)
     dut.clock.step()
     val result = dut.io.in.dout.peekInt()
     waitForIdle(dut)
@@ -63,32 +63,32 @@ trait CacheMemTestHelpers {
   }
 
   protected def writeCache(dut: Cache, addr: Int, data: Int) = {
-    dut.io.in.rd.poke(false.B)
-    dut.io.in.wr.poke(true.B)
-    dut.io.in.addr.poke(addr.U)
-    dut.io.in.din.poke(data.U)
+    dut.io.in.rd.poke(false)
+    dut.io.in.wr.poke(true)
+    dut.io.in.addr.poke(addr)
+    dut.io.in.din.poke(data)
     dut.clock.step()
-    dut.io.in.wr.poke(false.B)
+    dut.io.in.wr.poke(false)
     waitForIdle(dut)
   }
 
   protected def fillCacheLine(dut: Cache, addr: Int, data: Seq[Long]) = {
-    dut.io.in.rd.poke(true.B)
-    dut.io.in.wr.poke(false.B)
-    dut.io.in.addr.poke(addr.U)
+    dut.io.in.rd.poke(true)
+    dut.io.in.wr.poke(false)
+    dut.io.in.addr.poke(addr)
     dut.clock.step()
-    dut.io.in.rd.poke(false.B)
+    dut.io.in.rd.poke(false)
     dut.clock.step(2)
-    dut.io.out.waitReq.poke(false.B)
+    dut.io.out.waitReq.poke(false)
     dut.clock.step()
 
     data.foreach { n =>
-      dut.io.out.valid.poke(true.B)
-      dut.io.out.dout.poke(n.U)
+      dut.io.out.valid.poke(true)
+      dut.io.out.dout.poke(n)
       dut.clock.step()
     }
 
-    dut.io.out.valid.poke(false.B)
+    dut.io.out.valid.poke(false)
     waitForIdle(dut)
   }
 
@@ -125,37 +125,37 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
 
   it should "move to the latch state after a request" in {
     test(mkCacheMem()) { dut =>
-      dut.io.in.rd.poke(true.B)
+      dut.io.in.rd.poke(true)
       waitForIdle(dut)
       dut.clock.step()
-      dut.io.debug.latch.expect(true.B)
+      dut.io.debug.latch.expect(true)
     }
   }
 
   it should "move to the check state after latching a cache entry" in {
     test(mkCacheMem()) { dut =>
-      dut.io.in.rd.poke(true.B)
+      dut.io.in.rd.poke(true)
       waitForLatch(dut)
       dut.clock.step()
-      dut.io.debug.check.expect(true.B)
+      dut.io.debug.check.expect(true)
     }
   }
 
   it should "move to the fill state after a read miss" in {
     test(mkCacheMem()) { dut =>
-      dut.io.in.rd.poke(true.B)
+      dut.io.in.rd.poke(true)
       waitForCheck(dut)
       dut.clock.step()
-      dut.io.debug.fill.expect(true.B)
+      dut.io.debug.fill.expect(true)
     }
   }
 
   it should "move to the fill state after a write miss" in {
     test(mkCacheMem()) { dut =>
-      dut.io.in.wr.poke(true.B)
+      dut.io.in.wr.poke(true)
       waitForCheck(dut)
       dut.clock.step()
-      dut.io.debug.fill.expect(true.B)
+      dut.io.debug.fill.expect(true)
     }
   }
 
@@ -164,12 +164,12 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       waitForIdle(dut)
       fillCacheLine(dut, 0, Seq(1, 2))
       writeCache(dut, 2, 3)
-      dut.io.in.wr.poke(true.B)
-      dut.io.in.addr.poke(0x20.U)
+      dut.io.in.wr.poke(true)
+      dut.io.in.addr.poke(0x20)
       waitForCheck(dut)
-      dut.io.in.wr.poke(false.B)
+      dut.io.in.wr.poke(false)
       dut.clock.step()
-      dut.io.debug.evict.expect(true.B)
+      dut.io.debug.evict.expect(true)
     }
   }
 
@@ -178,11 +178,11 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       waitForIdle(dut)
       fillCacheLine(dut, 0, Seq(1, 2))
       writeCache(dut, 2, 3)
-      dut.io.in.wr.poke(true.B)
-      dut.io.in.addr.poke(0x20.U)
+      dut.io.in.wr.poke(true)
+      dut.io.in.addr.poke(0x20)
       waitForEvict(dut)
       dut.clock.step(2)
-      dut.io.debug.fill.expect(true.B)
+      dut.io.debug.fill.expect(true)
     }
   }
 
@@ -191,35 +191,35 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       waitForIdle(dut)
       fillCacheLine(dut, 0, Seq(1, 2))
       writeCache(dut, 2, 3)
-      dut.io.in.wr.poke(true.B)
-      dut.io.in.addr.poke(0x20.U)
+      dut.io.in.wr.poke(true)
+      dut.io.in.addr.poke(0x20)
       waitForFill(dut)
-      dut.io.out.valid.poke(true.B)
+      dut.io.out.valid.poke(true)
       dut.clock.step(3)
-      dut.io.debug.merge.expect(true.B)
+      dut.io.debug.merge.expect(true)
     }
   }
 
   it should "return to the idle state after writing a cache entry" in {
     test(mkCacheMem()) { dut =>
-      dut.io.in.rd.poke(true.B)
+      dut.io.in.rd.poke(true)
       waitForFill(dut)
-      dut.io.in.rd.poke(false.B)
-      dut.io.out.valid.poke(true.B)
+      dut.io.in.rd.poke(false)
+      dut.io.out.valid.poke(true)
       waitForWrite(dut)
       dut.clock.step()
-      dut.io.debug.idle.expect(true.B)
+      dut.io.debug.idle.expect(true)
     }
   }
 
   it should "return to the latch state after writing a cache entry (chained)" in {
     test(mkCacheMem()) { dut =>
-      dut.io.in.rd.poke(true.B)
+      dut.io.in.rd.poke(true)
       waitForFill(dut)
-      dut.io.out.valid.poke(true.B)
+      dut.io.out.valid.poke(true)
       waitForWrite(dut)
       dut.clock.step()
-      dut.io.debug.latch.expect(true.B)
+      dut.io.debug.latch.expect(true)
     }
   }
 
@@ -227,11 +227,11 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
     test(mkCacheMem()) { dut =>
       waitForIdle(dut)
       fillCacheLine(dut, 0, Seq(1, 2))
-      dut.io.in.rd.poke(true.B)
+      dut.io.in.rd.poke(true)
       waitForCheck(dut)
-      dut.io.in.rd.poke(false.B)
+      dut.io.in.rd.poke(false)
       dut.clock.step()
-      dut.io.debug.idle.expect(true.B)
+      dut.io.debug.idle.expect(true)
     }
   }
 
@@ -239,10 +239,10 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
     test(mkCacheMem()) { dut =>
       waitForIdle(dut)
       fillCacheLine(dut, 0, Seq(1, 2))
-      dut.io.in.rd.poke(true.B)
+      dut.io.in.rd.poke(true)
       waitForCheck(dut)
       dut.clock.step()
-      dut.io.debug.latch.expect(true.B)
+      dut.io.debug.latch.expect(true)
     }
   }
 
@@ -250,12 +250,12 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
     test(mkCacheMem()) { dut =>
       waitForIdle(dut)
       fillCacheLine(dut, 0, Seq(1, 2))
-      dut.io.in.wr.poke(true.B)
+      dut.io.in.wr.poke(true)
       waitForCheck(dut)
-      dut.io.in.wr.poke(false.B)
+      dut.io.in.wr.poke(false)
       waitForWrite(dut)
       dut.clock.step()
-      dut.io.debug.idle.expect(true.B)
+      dut.io.debug.idle.expect(true)
     }
   }
 
@@ -263,10 +263,10 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
     test(mkCacheMem()) { dut =>
       waitForIdle(dut)
       fillCacheLine(dut, 0, Seq(1, 2))
-      dut.io.in.wr.poke(true.B)
+      dut.io.in.wr.poke(true)
       waitForWrite(dut)
       dut.clock.step()
-      dut.io.debug.latch.expect(true.B)
+      dut.io.debug.latch.expect(true)
     }
   }
 
@@ -275,7 +275,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "deassert the wait signal" in {
     test(mkCacheMem()) { dut =>
       waitForIdle(dut)
-      dut.io.in.waitReq.expect(false.B)
+      dut.io.in.waitReq.expect(false)
     }
   }
 
@@ -287,22 +287,22 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       fillCacheLine(dut, 0, Seq(0x1234, 0x5678))
 
       // Read
-      dut.io.in.rd.poke(true.B)
-      dut.io.in.addr.poke(0.U)
+      dut.io.in.rd.poke(true)
+      dut.io.in.addr.poke(0)
       dut.clock.step()
-      dut.io.out.rd.expect(false.B)
-      dut.io.out.wr.expect(false.B)
+      dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(false)
       dut.clock.step()
-      dut.io.in.valid.expect(true.B)
+      dut.io.in.valid.expect(true)
       dut.io.in.dout.expect(0x12.U)
 
       // Read
-      dut.io.in.addr.poke(3.U)
+      dut.io.in.addr.poke(3)
       dut.clock.step()
-      dut.io.out.rd.expect(false.B)
-      dut.io.out.wr.expect(false.B)
+      dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(false)
       dut.clock.step()
-      dut.io.in.valid.expect(true.B)
+      dut.io.in.valid.expect(true)
       dut.io.in.dout.expect(0x78.U)
     }
   }
@@ -312,30 +312,30 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       waitForIdle(dut)
 
       // Read
-      dut.io.offset.poke(0x1000.U)
-      dut.io.in.rd.poke(true.B)
-      dut.io.in.addr.poke(3.U)
+      dut.io.offset.poke(0x1000)
+      dut.io.in.rd.poke(true)
+      dut.io.in.addr.poke(3)
       dut.clock.step()
-      dut.io.in.rd.poke(false.B)
+      dut.io.in.rd.poke(false)
       dut.clock.step(2)
 
       // Line fill
-      dut.io.out.rd.expect(true.B)
-      dut.io.out.wr.expect(false.B)
+      dut.io.out.rd.expect(true)
+      dut.io.out.wr.expect(false)
       dut.io.out.burstLength.expect(2.U)
       dut.io.out.addr.expect(0x1000.U)
       dut.clock.step()
-      dut.io.out.valid.poke(true.B)
-      dut.io.out.dout.poke(0x1234.U)
-      dut.io.in.valid.expect(false.B)
+      dut.io.out.valid.poke(true)
+      dut.io.out.dout.poke(0x1234)
+      dut.io.in.valid.expect(false)
       dut.clock.step()
-      dut.io.out.dout.poke(0x5678.U)
-      dut.io.in.valid.expect(false.B)
-      dut.io.out.rd.expect(false.B)
-      dut.io.out.wr.expect(false.B)
+      dut.io.out.dout.poke(0x5678)
+      dut.io.in.valid.expect(false)
+      dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(false)
       dut.clock.step()
-      dut.io.out.valid.poke(false.B)
-      dut.io.in.valid.expect(true.B)
+      dut.io.out.valid.poke(false)
+      dut.io.in.valid.expect(true)
       dut.io.in.dout.expect(0x78.U)
     }
   }
@@ -345,31 +345,31 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       waitForIdle(dut)
 
       // Read
-      dut.io.offset.poke(0x1000.U)
-      dut.io.in.rd.poke(true.B)
-      dut.io.in.addr.poke(3.U)
+      dut.io.offset.poke(0x1000)
+      dut.io.in.rd.poke(true)
+      dut.io.in.addr.poke(3)
       dut.clock.step()
-      dut.io.in.rd.poke(false.B)
+      dut.io.in.rd.poke(false)
       dut.clock.step(2)
 
       // Line fill
-      dut.io.out.rd.expect(true.B)
-      dut.io.out.wr.expect(false.B)
+      dut.io.out.rd.expect(true)
+      dut.io.out.wr.expect(false)
       dut.io.out.burstLength.expect(2.U)
       dut.io.out.addr.expect(0x1002.U)
       dut.clock.step()
-      dut.io.out.valid.poke(true.B)
-      dut.io.out.dout.poke(0x1234.U)
-      dut.io.in.valid.expect(false.B)
+      dut.io.out.valid.poke(true)
+      dut.io.out.dout.poke(0x1234)
+      dut.io.in.valid.expect(false)
       dut.clock.step()
-      dut.io.out.dout.poke(0x5678.U)
-      dut.io.in.valid.expect(true.B)
+      dut.io.out.dout.poke(0x5678)
+      dut.io.in.valid.expect(true)
       dut.io.in.dout.expect(0x34.U)
-      dut.io.out.rd.expect(false.B)
-      dut.io.out.wr.expect(false.B)
+      dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(false)
       dut.clock.step()
-      dut.io.out.valid.poke(false.B)
-      dut.io.in.valid.expect(false.B)
+      dut.io.out.valid.poke(false)
+      dut.io.in.valid.expect(false)
     }
   }
 
@@ -380,41 +380,41 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       writeCache(dut, 2, 0xab)
 
       // Read
-      dut.io.offset.poke(0x1000.U)
-      dut.io.in.rd.poke(true.B)
-      dut.io.in.addr.poke(0x23.U)
+      dut.io.offset.poke(0x1000)
+      dut.io.in.rd.poke(true)
+      dut.io.in.addr.poke(0x23)
       dut.clock.step()
-      dut.io.in.rd.poke(false.B)
+      dut.io.in.rd.poke(false)
       dut.clock.step(2)
 
       // Evict
-      dut.io.out.rd.expect(false.B)
-      dut.io.out.wr.expect(true.B)
+      dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(true)
       dut.io.out.burstLength.expect(2.U)
       dut.io.out.addr.expect(0x1000.U)
       dut.io.out.din.expect(0x1234.U)
       dut.clock.step()
-      dut.io.out.rd.expect(false.B)
-      dut.io.out.wr.expect(true.B)
+      dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(true)
       dut.io.out.din.expect(0xab78.U)
       dut.clock.step()
 
       // Line fill
-      dut.io.out.rd.expect(true.B)
-      dut.io.out.wr.expect(false.B)
+      dut.io.out.rd.expect(true)
+      dut.io.out.wr.expect(false)
       dut.io.out.burstLength.expect(2.U)
       dut.io.out.addr.expect(0x1020.U)
       dut.clock.step()
-      dut.io.out.valid.poke(true.B)
-      dut.io.out.dout.poke(0x1234.U)
-      dut.io.in.valid.expect(false.B)
+      dut.io.out.valid.poke(true)
+      dut.io.out.dout.poke(0x1234)
+      dut.io.in.valid.expect(false)
       dut.clock.step()
-      dut.io.out.dout.poke(0x5678.U)
-      dut.io.out.rd.expect(false.B)
-      dut.io.out.wr.expect(false.B)
+      dut.io.out.dout.poke(0x5678)
+      dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(false)
       dut.clock.step()
-      dut.io.out.valid.poke(false.B)
-      dut.io.in.valid.expect(true.B)
+      dut.io.out.valid.poke(false)
+      dut.io.in.valid.expect(true)
       dut.io.in.dout.expect(0x78.U)
     }
   }
@@ -426,54 +426,54 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       writeCache(dut, 2, 0xab)
 
       // Read
-      dut.io.offset.poke(0x1000.U)
-      dut.io.in.rd.poke(true.B)
-      dut.io.in.addr.poke(0x23.U)
+      dut.io.offset.poke(0x1000)
+      dut.io.in.rd.poke(true)
+      dut.io.in.addr.poke(0x23)
       dut.clock.step()
-      dut.io.in.rd.poke(false.B)
+      dut.io.in.rd.poke(false)
       dut.clock.step(2)
 
       // Evict
-      dut.io.out.rd.expect(false.B)
-      dut.io.out.wr.expect(true.B)
+      dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(true)
       dut.io.out.burstLength.expect(2.U)
       dut.io.out.addr.expect(0x1000.U)
       dut.io.out.din.expect(0x1234.U)
       dut.clock.step()
-      dut.io.out.rd.expect(false.B)
-      dut.io.out.wr.expect(true.B)
+      dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(true)
       dut.io.out.din.expect(0xab78.U)
       dut.clock.step()
 
       // Line fill
-      dut.io.out.rd.expect(true.B)
-      dut.io.out.wr.expect(false.B)
+      dut.io.out.rd.expect(true)
+      dut.io.out.wr.expect(false)
       dut.io.out.burstLength.expect(2.U)
       dut.io.out.addr.expect(0x1022.U)
       dut.clock.step()
-      dut.io.out.valid.poke(true.B)
-      dut.io.out.dout.poke(0x1234.U)
-      dut.io.in.valid.expect(false.B)
+      dut.io.out.valid.poke(true)
+      dut.io.out.dout.poke(0x1234)
+      dut.io.in.valid.expect(false)
       dut.clock.step()
-      dut.io.out.dout.poke(0x5678.U)
-      dut.io.in.valid.expect(true.B)
+      dut.io.out.dout.poke(0x5678)
+      dut.io.in.valid.expect(true)
       dut.io.in.dout.expect(0x34.U)
-      dut.io.out.rd.expect(false.B)
-      dut.io.out.wr.expect(false.B)
+      dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(false)
       dut.clock.step()
-      dut.io.out.valid.poke(false.B)
-      dut.io.in.valid.expect(false.B)
+      dut.io.out.valid.poke(false)
+      dut.io.in.valid.expect(false)
     }
   }
 
   it should "assert the wait signal" in {
     test(mkCacheMem()) { dut =>
-      dut.io.in.rd.poke(true.B)
-      dut.io.in.waitReq.expect(true.B)
+      dut.io.in.rd.poke(true)
+      dut.io.in.waitReq.expect(true)
       waitForIdle(dut)
-      dut.io.in.waitReq.expect(false.B)
+      dut.io.in.waitReq.expect(false)
       waitForCheck(dut)
-      dut.io.in.waitReq.expect(true.B)
+      dut.io.in.waitReq.expect(true)
     }
   }
 
@@ -485,20 +485,20 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       fillCacheLine(dut, 0, Seq(0x1234, 0x5678))
 
       // Write
-      dut.io.in.wr.poke(true.B)
-      dut.io.in.addr.poke(0.U)
-      dut.io.in.din.poke(0xab.U)
+      dut.io.in.wr.poke(true)
+      dut.io.in.addr.poke(0)
+      dut.io.in.din.poke(0xab)
       dut.clock.step()
-      dut.io.out.rd.expect(false.B)
-      dut.io.out.wr.expect(false.B)
+      dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(false)
       dut.clock.step(3)
 
       // Write
-      dut.io.in.addr.poke(3.U)
-      dut.io.in.din.poke(0xcd.U)
+      dut.io.in.addr.poke(3)
+      dut.io.in.din.poke(0xcd)
       dut.clock.step()
-      dut.io.out.rd.expect(false.B)
-      dut.io.out.wr.expect(false.B)
+      dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(false)
       dut.clock.step(3)
 
       readCache(dut, 0) shouldBe 0xab
@@ -513,30 +513,30 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       waitForIdle(dut)
 
       // Write
-      dut.io.offset.poke(0x1000.U)
-      dut.io.in.wr.poke(true.B)
-      dut.io.in.addr.poke(1.U)
-      dut.io.in.din.poke(0xab.U)
+      dut.io.offset.poke(0x1000)
+      dut.io.in.wr.poke(true)
+      dut.io.in.addr.poke(1)
+      dut.io.in.din.poke(0xab)
       dut.clock.step()
-      dut.io.in.wr.poke(false.B)
+      dut.io.in.wr.poke(false)
       dut.clock.step(2)
 
       // Line fill & merge
-      dut.io.out.rd.expect(true.B)
-      dut.io.out.wr.expect(false.B)
+      dut.io.out.rd.expect(true)
+      dut.io.out.wr.expect(false)
       dut.io.out.addr.expect(0x1000.U)
       dut.io.out.burstLength.expect(2.U)
       dut.clock.step()
-      dut.io.out.valid.poke(true.B)
-      dut.io.out.dout.poke(0x1234.U)
-      dut.io.in.valid.expect(false.B)
+      dut.io.out.valid.poke(true)
+      dut.io.out.dout.poke(0x1234)
+      dut.io.in.valid.expect(false)
       dut.clock.step()
-      dut.io.out.dout.poke(0x5678.U)
-      dut.io.in.valid.expect(false.B)
-      dut.io.out.rd.expect(false.B)
-      dut.io.out.wr.expect(false.B)
+      dut.io.out.dout.poke(0x5678)
+      dut.io.in.valid.expect(false)
+      dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(false)
       dut.clock.step()
-      dut.io.out.valid.poke(false.B)
+      dut.io.out.valid.poke(false)
       dut.clock.step()
 
       readCache(dut, 0) shouldBe 0x12
@@ -553,43 +553,43 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       writeCache(dut, 2, 0xab)
 
       // Write
-      dut.io.offset.poke(0x1000.U)
-      dut.io.in.wr.poke(true.B)
-      dut.io.in.addr.poke(0x20.U)
-      dut.io.in.din.poke(0xcd.U)
+      dut.io.offset.poke(0x1000)
+      dut.io.in.wr.poke(true)
+      dut.io.in.addr.poke(0x20)
+      dut.io.in.din.poke(0xcd)
       dut.clock.step()
-      dut.io.in.wr.poke(false.B)
+      dut.io.in.wr.poke(false)
       dut.clock.step(2)
 
       // Evict
-      dut.io.out.rd.expect(false.B)
-      dut.io.out.wr.expect(true.B)
+      dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(true)
       dut.io.out.burstLength.expect(2.U)
       dut.io.out.addr.expect(0x1000.U)
       dut.io.out.din.expect(0x1234.U)
       dut.clock.step()
-      dut.io.out.rd.expect(false.B)
-      dut.io.out.wr.expect(true.B)
+      dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(true)
       dut.io.out.din.expect(0xab78.U)
       dut.clock.step()
 
       // Line fill & merge
-      dut.io.out.rd.expect(true.B)
-      dut.io.out.wr.expect(false.B)
+      dut.io.out.rd.expect(true)
+      dut.io.out.wr.expect(false)
       dut.io.out.burstLength.expect(2.U)
       dut.io.out.addr.expect(0x1020.U)
       dut.clock.step()
-      dut.io.out.valid.poke(true.B)
-      dut.io.out.dout.poke(0x1234.U)
-      dut.io.in.valid.expect(false.B)
+      dut.io.out.valid.poke(true)
+      dut.io.out.dout.poke(0x1234)
+      dut.io.in.valid.expect(false)
       dut.clock.step()
-      dut.io.out.dout.poke(0x5678.U)
-      dut.io.in.valid.expect(false.B)
-      dut.io.out.rd.expect(false.B)
-      dut.io.out.wr.expect(false.B)
+      dut.io.out.dout.poke(0x5678)
+      dut.io.in.valid.expect(false)
+      dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(false)
       dut.clock.step()
-      dut.io.out.valid.poke(false.B)
-      dut.io.in.valid.expect(false.B)
+      dut.io.out.valid.poke(false)
+      dut.io.in.valid.expect(false)
       dut.clock.step()
 
       readCache(dut, 0x20) shouldBe 0xcd
@@ -601,12 +601,12 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
 
   it should "assert the wait signal" in {
     test(mkCacheMem()) { dut =>
-      dut.io.in.wr.poke(true.B)
-      dut.io.in.waitReq.expect(true.B)
+      dut.io.in.wr.poke(true)
+      dut.io.in.waitReq.expect(true)
       waitForIdle(dut)
-      dut.io.in.waitReq.expect(false.B)
+      dut.io.in.waitReq.expect(false)
       waitForCheck(dut)
-      dut.io.in.waitReq.expect(true.B)
+      dut.io.in.waitReq.expect(true)
     }
   }
 
