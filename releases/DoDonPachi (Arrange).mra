@@ -37,6 +37,10 @@
     <!-- eeprom -->
     <part name="eeprom-ddonpach.bin" crc="2df16438" />
 
+    <!-- enable C button in EEPROM -->
+    <patch offset="0x1300002">ff ff</patch>
+    <patch offset="0x1300008">00 04</patch>
+
     <!-- skip CRC -->
     <patch offset="0x005410">60 00 00 0C</patch>
     <!-- skip warning -->
