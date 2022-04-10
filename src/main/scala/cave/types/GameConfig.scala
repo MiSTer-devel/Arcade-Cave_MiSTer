@@ -84,7 +84,7 @@ object GameConfig {
   /** Guwange */
   val GUWANGE = 5
   /** Gaia Crusaders */
-  val GAIA = 5
+  val GAIA = 6
 
   def apply() = new GameConfig
 
