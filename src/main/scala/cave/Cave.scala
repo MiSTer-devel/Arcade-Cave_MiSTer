@@ -396,8 +396,8 @@ class Cave extends Module {
       map(0x700000 to 0x707fff).readWriteMem(layer2Ram.io.portA)
       map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
       map(0x800000 to 0x800007).r { (_, offset) =>
-        when(offset === 4.U) { videoIRQ := false.B }
-        "b001".U ## !videoIRQ
+        when(offset === 0.U) { videoIRQ := false.B }
+        "b011".U ## !videoIRQ
       }
       map(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
       map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
