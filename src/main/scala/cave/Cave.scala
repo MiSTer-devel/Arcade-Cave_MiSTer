@@ -163,31 +163,31 @@ class Cave extends Module {
     spriteRam.io.clockB := clock
 
     // Layer 0 VRAM
-    val layer0Ram = Module(new TrueDualPortRam(
+    val layerRam0 = Module(new TrueDualPortRam(
       addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
       dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
       addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
       dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH
     ))
-    layer0Ram.io.clockB := clock
+    layerRam0.io.clockB := clock
 
     // Layer 1 VRAM
-    val layer1Ram = Module(new TrueDualPortRam(
+    val layerRam1 = Module(new TrueDualPortRam(
       addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
       dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
       addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
       dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH
     ))
-    layer1Ram.io.clockB := clock
+    layerRam1.io.clockB := clock
 
     // Layer 2 VRAM
-    val layer2Ram = Module(new TrueDualPortRam(
+    val layerRam2 = Module(new TrueDualPortRam(
       addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
       dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
       addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
       dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH
     ))
-    layer2Ram.io.clockB := clock
+    layerRam2.io.clockB := clock
 
     // Layer 0 Line RAM
     val lineRam0 = Module(new TrueDualPortRam(
@@ -239,9 +239,9 @@ class Cave extends Module {
     gpu.io.layer1 := Layer.decode(layer1Regs.io.regs.asUInt)
     gpu.io.layer2 := Layer.decode(layer2Regs.io.regs.asUInt)
     gpu.io.spriteRam <> spriteRam.io.portB
-    gpu.io.layer0Ram <> layer0Ram.io.portB
-    gpu.io.layer1Ram <> layer1Ram.io.portB
-    gpu.io.layer2Ram <> layer2Ram.io.portB
+    gpu.io.layerRam0 <> layerRam0.io.portB
+    gpu.io.layerRam1 <> layerRam1.io.portB
+    gpu.io.layerRam2 <> layerRam2.io.portB
     gpu.io.lineRam0 <> lineRam0.io.portB
     gpu.io.lineRam1 <> lineRam1.io.portB
     gpu.io.lineRam2 <> lineRam2.io.portB
@@ -267,9 +267,9 @@ class Cave extends Module {
     mainRam.io.default()
     paletteRam.io.portA.default()
     spriteRam.io.portA.default()
-    layer0Ram.io.portA.default()
-    layer1Ram.io.portA.default()
-    layer2Ram.io.portA.default()
+    layerRam0.io.portA.default()
+    layerRam1.io.portA.default()
+    layerRam2.io.portA.default()
     lineRam0.io.portA.default()
     lineRam1.io.portA.default()
     lineRam2.io.portA.default()
@@ -296,14 +296,14 @@ class Cave extends Module {
       map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
       map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
       map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-      map(0x500000 to 0x500fff).readWriteMem(layer0Ram.io.portA)
+      map(0x500000 to 0x500fff).readWriteMem(layerRam0.io.portA)
       map(0x501000 to 0x5017ff).readWriteMem(lineRam0.io.portA)
       map(0x501800 to 0x507fff).ignore()
-      map(0x600000 to 0x600fff).readWriteMem(layer1Ram.io.portA)
+      map(0x600000 to 0x600fff).readWriteMem(layerRam1.io.portA)
       map(0x601000 to 0x6017ff).readWriteMem(lineRam1.io.portA)
       map(0x601800 to 0x607fff).ignore()
       map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
-      map(0x710000 to 0x710fff).readWriteMem(layer2Ram.io.portA)
+      map(0x710000 to 0x710fff).readWriteMem(layerRam2.io.portA)
       map(0x711000 to 0x7117ff).readWriteMem(lineRam2.io.portA)
       map(0x711800 to 0x717fff).ignore()
       map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
@@ -325,8 +325,8 @@ class Cave extends Module {
       map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
       map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
       map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-      map(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
-      map(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
+      map(0x500000 to 0x507fff).readWriteMem(layerRam0.io.portA)
+      map(0x600000 to 0x607fff).readWriteMem(layerRam1.io.portA)
       // Access to address 0x5fxxxx occurs during the attract loop on the air stage at frame 9355
       // (i.e. after roughly 150 sec). The game is accessing data relative to a layer 1 address and
       // underflows. These accesses do nothing, but should be acknowledged in order not to block the
@@ -336,7 +336,7 @@ class Cave extends Module {
       // simpler to write (no need to handle edge cases). These accesses are simply ignored by the
       // hardware.
       map(0x5f0000 to 0x5fffff).ignore()
-      map(0x700000 to 0x70ffff).readWriteMemT(layer2Ram.io.portA)(a => a(12, 0))
+      map(0x700000 to 0x70ffff).readWriteMemT(layerRam2.io.portA)(a => a(12, 0))
       map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
       map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
       map(0x800000 to 0x800007).r { (_, offset) =>
@@ -358,11 +358,11 @@ class Cave extends Module {
       map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
       map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
       map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-      map(0x500000 to 0x500fff).readWriteMem(layer0Ram.io.portA)
+      map(0x500000 to 0x500fff).readWriteMem(layerRam0.io.portA)
       map(0x501000 to 0x507fff).ignore()
-      map(0x600000 to 0x600fff).readWriteMem(layer1Ram.io.portA)
+      map(0x600000 to 0x600fff).readWriteMem(layerRam1.io.portA)
       map(0x601000 to 0x607fff).ignore()
-      map(0x700000 to 0x700fff).readWriteMem(layer2Ram.io.portA)
+      map(0x700000 to 0x700fff).readWriteMem(layerRam2.io.portA)
       map(0x701000 to 0x707fff).ignore()
       map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
       map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
@@ -392,9 +392,9 @@ class Cave extends Module {
       map(0x300008).w { (_, _, _) => frameStart := true.B }
       map(0x300009 to 0x300fff).ignore()
       map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-      map(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
-      map(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
-      map(0x700000 to 0x707fff).readWriteMem(layer2Ram.io.portA)
+      map(0x500000 to 0x507fff).readWriteMem(layerRam0.io.portA)
+      map(0x600000 to 0x607fff).readWriteMem(layerRam1.io.portA)
+      map(0x700000 to 0x707fff).readWriteMem(layerRam2.io.portA)
       map(0x800000 to 0x800003).readWriteMem(ymz.io.cpu)
       map(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
       map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
@@ -412,7 +412,7 @@ class Cave extends Module {
       map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
       map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
       map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-      map(0x500000 to 0x500fff).readWriteMem(layer0Ram.io.portA)
+      map(0x500000 to 0x500fff).readWriteMem(layerRam0.io.portA)
       map(0x501000 to 0x5017ff).readWriteMem(lineRam0.io.portA)
       map(0x501800 to 0x507fff).ignore()
       map(0x600000 to 0x60007f).writeMem(videoRegs.io.mem.asWriteMemIO)
