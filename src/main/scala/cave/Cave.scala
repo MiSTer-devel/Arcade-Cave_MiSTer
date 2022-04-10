@@ -403,8 +403,6 @@ class Cave extends Module {
       map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
       map(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
       map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-      map(0xd00010 to 0xd00014).ignore()
-      map(0xd00010).writeMem(eepromMem)
       map(0xd00010).r { (_, _) => input0 }
       map(0xd00012).r { (_, _) => input1 }
       map(0xd00014).r { (_, _) => 0.U }
