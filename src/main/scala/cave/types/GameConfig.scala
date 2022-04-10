@@ -98,7 +98,8 @@ object GameConfig {
       DFEVERON.U -> dfeveron,
       ESPRADE.U -> esprade,
       GUWANGE.U -> guwange,
-      UOPOKO.U -> uopoko
+      UOPOKO.U -> uopoko,
+      GAIA.U -> gaia
     ))
   }
 
