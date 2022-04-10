@@ -83,6 +83,8 @@ object GameConfig {
   val UOPOKO = 4
   /** Guwange */
   val GUWANGE = 5
+  /** Gaia Crusaders */
+  val GAIA = 5
 
   def apply() = new GameConfig
 
@@ -197,6 +199,26 @@ object GameConfig {
     wire.layer0Format := Config.GFX_FORMAT_8BPP.U
     wire.layer1Format := Config.GFX_FORMAT_UNKNOWN.U
     wire.layer2Format := Config.GFX_FORMAT_UNKNOWN.U
+    wire
+  }
+  
+    private def gaia = {
+    val wire = Wire(new GameConfig)
+    wire.index := GAIA.U
+    wire.progRomOffset := 0x00000000.U
+    wire.spriteRomOffset := 0x00100000.U
+    wire.layer0RomOffset := 0x00900000.U
+    wire.layer1RomOffset := 0x00D00000.U
+    wire.layer2RomOffset := 0x01100000.U
+    wire.soundRomOffset := 0x01500000.U
+    wire.eepromOffset := 0x03500000.U
+    wire.numColors := 256.U
+    wire.numLayers := 3.U
+    wire.spriteZoom := true.B
+    wire.spriteFormat := Config.GFX_FORMAT_4BPP_MSB.U
+    wire.layer0Format := Config.GFX_FORMAT_4BPP.U
+    wire.layer1Format := Config.GFX_FORMAT_4BPP.U
+    wire.layer2Format := Config.GFX_FORMAT_8BPP.U
     wire
   }
 }

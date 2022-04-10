@@ -177,7 +177,7 @@ localparam CONF_STR = {
   "P2OB,Layer 0,On,Off;",
   "P2OC,Layer 1,On,Off;",
   "P2OD,Layer 2,On,Off;",
-  "P2OGJ,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.,Puzzle Uo Poko,Guwange;",
+  "P2OGJ,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.,Puzzle Uo Poko,Guwange,Gaia Crusaders;",
   "-;",
   "R0,Reset;",
   "J,B0,B1,B2,Start,Coin,Pause,Service;",
@@ -315,6 +315,7 @@ wire hsync, vsync;
 wire hblank, vblank;
 wire video_enable;
 wire [1:0] aspect_ratio = status[2:1];
+wire orientation = ~status[3];
 wire [2:0] fx = status[7:5];
 wire [2:0] sl = fx ? fx - 1'd1 : 3'd0;
 wire       scandoubler = fx || forced_scandoubler;
