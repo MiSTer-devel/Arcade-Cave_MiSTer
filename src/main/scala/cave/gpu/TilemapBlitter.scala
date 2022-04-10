@@ -69,6 +69,8 @@ class TilemapBlitter extends Module {
     val lastLayerPriority = Input(UInt(Config.PRIO_WIDTH.W))
     /** Pixel data port */
     val pixelData = DeqIO(Vec(Config.SMALL_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
+    /** Line RAM port */
+    val lineRam = ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
     /** Palette RAM port */
     val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
     /** Priority port */
@@ -169,6 +171,8 @@ class TilemapBlitter extends Module {
   io.pixelData.ready := pixelDataReady
   io.paletteRam.rd := true.B
   io.paletteRam.addr := paletteRamAddr
+  io.lineRam.rd := false.B
+  io.lineRam.addr := 0.U
   io.priority.read.rd := true.B
   io.priority.read.addr := priorityReadAddr
   io.priority.write.wr := frameBufferWrite

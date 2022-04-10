@@ -62,6 +62,8 @@ class TilemapProcessor(maxCols: Int = 40, maxRows: Int = 30) extends Module {
     val layerIndex = Input(UInt(Config.LAYER_INDEX_WIDTH.W))
     /** Layer RAM port */
     val layerRam = ReadMemIO(Config.LAYER_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
+    /** Line RAM port */
+    val lineRam = ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
     /** Palette RAM port */
     val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
     /** Tile ROM port */
@@ -116,6 +118,7 @@ class TilemapProcessor(maxCols: Int = 40, maxRows: Int = 30) extends Module {
   val blitter = Module(new TilemapBlitter)
   blitter.io.layerIndex := io.layerIndex
   blitter.io.lastLayerPriority := lastLayerPriorityReg
+  blitter.io.lineRam <> io.lineRam
   blitter.io.paletteRam <> io.paletteRam
   blitter.io.priority <> io.priority
   blitter.io.frameBuffer <> io.frameBuffer
