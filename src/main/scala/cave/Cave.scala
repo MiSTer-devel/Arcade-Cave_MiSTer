@@ -34,6 +34,7 @@ package cave
 
 import axon._
 import axon.cpu.m68k._
+import axon.gfx._
 import axon.mem._
 import axon.snd._
 import axon.types._
@@ -53,8 +54,8 @@ class Cave extends Module {
     val cpuClock = Input(Clock())
     /** CPU reset */
     val cpuReset = Input(Reset())
-    /** Vertical blank */
-    val vBlank = Input(Bool())
+    /** Video port */
+    val video = Flipped(VideoIO())
     /** Asserted when a frame is valid */
     val frameValid = Output(Bool())
     /** Asserted when the DMA controller is ready */
@@ -88,6 +89,7 @@ class Cave extends Module {
 
   // GPU
   val gpu = Module(new GPU)
+  gpu.io.video <> io.video
   gpu.io.frameReady := Util.rising(ShiftRegister(frameStart, 2))
   io.frameValid := gpu.io.frameValid
   gpu.io.dmaReady := io.dmaReady
@@ -99,7 +101,7 @@ class Cave extends Module {
   // The CPU and registers run in the CPU clock domain
   withClockAndReset(io.cpuClock, io.cpuReset) {
     // Registers
-    val vBlank = ShiftRegister(io.vBlank, 2)
+    val vBlank = ShiftRegister(io.video.vBlank, 2)
     val videoIRQ = RegInit(false.B)
     val iplReg = RegInit(0.U)
     val pauseReg = Util.toggle(Util.rising(io.joystick.player1.pause || io.joystick.player2.pause))

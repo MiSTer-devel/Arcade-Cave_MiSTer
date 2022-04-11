@@ -152,7 +152,7 @@ class Main extends Module {
   val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
-  cave.io.vBlank := videoSys.io.video.vBlank
+  cave.io.video := videoSys.io.video
   frameBufferDMA.io.start := cave.io.frameValid
   cave.io.dmaReady := frameBufferDMA.io.ready
   cave.io.gameConfig <> gameConfigReg

@@ -33,6 +33,7 @@
 package cave.gpu
 
 import axon.Util
+import axon.gfx._
 import axon.mem._
 import axon.types._
 import axon.util.Counter
@@ -48,6 +49,8 @@ class GPU extends Module {
     val gameConfig = Input(GameConfig())
     /** Options port */
     val options = OptionsIO()
+    /** Video port */
+    val video = Flipped(VideoIO())
     /** Asserted when the program is ready for a new frame */
     val frameReady = Input(Bool())
     /** Asserted when a frame is valid */
