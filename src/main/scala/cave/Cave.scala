@@ -150,7 +150,8 @@ class Cave extends Module {
     // Main RAM
     val mainRam = Module(new SinglePortRam(
       addrWidth = Config.MAIN_RAM_ADDR_WIDTH,
-      dataWidth = Config.MAIN_RAM_DATA_WIDTH
+      dataWidth = Config.MAIN_RAM_DATA_WIDTH,
+      maskEnable = true
     ))
 
     // Sprite RAM
@@ -158,7 +159,8 @@ class Cave extends Module {
       addrWidthA = Config.SPRITE_RAM_ADDR_WIDTH,
       dataWidthA = Config.SPRITE_RAM_DATA_WIDTH,
       addrWidthB = Config.SPRITE_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.SPRITE_RAM_GPU_DATA_WIDTH
+      dataWidthB = Config.SPRITE_RAM_GPU_DATA_WIDTH,
+      maskEnable = true
     ))
     spriteRam.io.clockB := clock
 
@@ -167,7 +169,8 @@ class Cave extends Module {
       addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
       dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
       addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH
+      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH,
+      maskEnable = true
     ))
     layerRam0.io.clockB := clock
 
@@ -176,7 +179,8 @@ class Cave extends Module {
       addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
       dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
       addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH
+      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH,
+      maskEnable = true
     ))
     layerRam1.io.clockB := clock
 
@@ -185,7 +189,8 @@ class Cave extends Module {
       addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
       dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
       addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH
+      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH,
+      maskEnable = true
     ))
     layerRam2.io.clockB := clock
 
@@ -194,7 +199,8 @@ class Cave extends Module {
       addrWidthA = Config.LINE_RAM_ADDR_WIDTH,
       dataWidthA = Config.LINE_RAM_DATA_WIDTH,
       addrWidthB = Config.LINE_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LINE_RAM_GPU_DATA_WIDTH
+      dataWidthB = Config.LINE_RAM_GPU_DATA_WIDTH,
+      maskEnable = true
     ))
     lineRam0.io.clockB := clock
 
@@ -203,7 +209,8 @@ class Cave extends Module {
       addrWidthA = Config.LINE_RAM_ADDR_WIDTH,
       dataWidthA = Config.LINE_RAM_DATA_WIDTH,
       addrWidthB = Config.LINE_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LINE_RAM_GPU_DATA_WIDTH
+      dataWidthB = Config.LINE_RAM_GPU_DATA_WIDTH,
+      maskEnable = true
     ))
     lineRam1.io.clockB := clock
 
@@ -212,7 +219,8 @@ class Cave extends Module {
       addrWidthA = Config.LINE_RAM_ADDR_WIDTH,
       dataWidthA = Config.LINE_RAM_DATA_WIDTH,
       addrWidthB = Config.LINE_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LINE_RAM_GPU_DATA_WIDTH
+      dataWidthB = Config.LINE_RAM_GPU_DATA_WIDTH,
+      maskEnable = true
     ))
     lineRam2.io.clockB := clock
 
@@ -221,7 +229,8 @@ class Cave extends Module {
       addrWidthA = Config.PALETTE_RAM_ADDR_WIDTH,
       dataWidthA = Config.PALETTE_RAM_DATA_WIDTH,
       addrWidthB = Config.PALETTE_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.PALETTE_RAM_GPU_DATA_WIDTH
+      dataWidthB = Config.PALETTE_RAM_GPU_DATA_WIDTH,
+      maskEnable = true
     ))
     paletteRam.io.clockB := clock
 

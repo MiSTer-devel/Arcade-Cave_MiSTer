@@ -45,7 +45,7 @@ entity single_port_ram is
     ADDR_WIDTH  : natural := 8;
     DATA_WIDTH  : natural := 8;
     DEPTH       : natural := 0;
-    MASK_ENABLE : boolean := true
+    MASK_ENABLE : boolean := false
   );
   port (
     clk  : in std_logic;

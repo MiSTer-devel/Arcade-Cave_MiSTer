@@ -51,7 +51,7 @@ class DualPortRam(addrWidthA: Int,
                   addrWidthB: Int,
                   dataWidthB: Int,
                   depthB: Option[Int] = None,
-                  maskEnable: Boolean = true) extends Module {
+                  maskEnable: Boolean = false) extends Module {
   val io = IO(new Bundle {
     /** Write-only port */
     val portA = Flipped(WriteMemIO(addrWidthA, dataWidthA))

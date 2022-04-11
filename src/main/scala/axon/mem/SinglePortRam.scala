@@ -45,7 +45,7 @@ import chisel3._
 class SinglePortRam(addrWidth: Int,
                     dataWidth: Int,
                     depth: Option[Int] = None,
-                    maskEnable: Boolean = true) extends Module {
+                    maskEnable: Boolean = false) extends Module {
   val io = IO(Flipped(ReadWriteMemIO(addrWidth, dataWidth)))
 
   private val depth_ = depth.getOrElse(0)

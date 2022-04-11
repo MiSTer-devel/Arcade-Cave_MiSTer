@@ -48,7 +48,7 @@ entity true_dual_port_ram is
     DATA_WIDTH_B : natural := 8;
     DEPTH_A      : natural := 0;
     DEPTH_B      : natural := 0;
-    MASK_ENABLE  : boolean := true
+    MASK_ENABLE  : boolean := false
   );
   port (
     clk_a  : in std_logic;

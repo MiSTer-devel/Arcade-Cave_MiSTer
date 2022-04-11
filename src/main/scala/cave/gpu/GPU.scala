@@ -136,8 +136,7 @@ class GPU extends Module {
     depthA = Some(Config.FRAME_BUFFER_DEPTH),
     addrWidthB = Config.PRIO_BUFFER_ADDR_WIDTH,
     dataWidthB = Config.PRIO_BUFFER_DATA_WIDTH,
-    depthB = Some(Config.FRAME_BUFFER_DEPTH),
-    maskEnable = false
+    depthB = Some(Config.FRAME_BUFFER_DEPTH)
   ))
   priorityRam.io.portA <> WriteMemIO.mux(stateReg, Seq(
     State.clear -> GPU.clearMem(clearAddr),
@@ -158,8 +157,7 @@ class GPU extends Module {
     depthA = Some(Config.FRAME_BUFFER_DEPTH),
     addrWidthB = Config.FRAME_BUFFER_DMA_ADDR_WIDTH,
     dataWidthB = Config.FRAME_BUFFER_DATA_WIDTH * Config.FRAME_BUFFER_DMA_PIXELS,
-    depthB = Some(Config.FRAME_BUFFER_DMA_DEPTH),
-    maskEnable = false
+    depthB = Some(Config.FRAME_BUFFER_DMA_DEPTH)
   ))
   frameBuffer.io.portA <> WriteMemIO.mux(stateReg, Seq(
     State.clear -> GPU.clearMem(clearAddr, backgroundColorReg),
