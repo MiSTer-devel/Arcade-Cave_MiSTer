@@ -392,19 +392,24 @@ class Cave extends Module {
       map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
       map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
       map(0x500000 to 0x507fff).readWriteMem(layer0Ram.io.portA)
+      map(0x508000 to 0x50ffff).readWriteMem(mainRam.io)
       map(0x600000 to 0x607fff).readWriteMem(layer1Ram.io.portA)
+      map(0x608000 to 0x60ffff).readWriteMem(mainRam.io)
       map(0x700000 to 0x707fff).readWriteMem(layer2Ram.io.portA)
+      map(0x708000 to 0x70ffff).readWriteMem(mainRam.io)
       map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
-      map(0x800000 to 0x800007).r { (_, offset) =>
-        when(offset === 4.U) { videoIRQ := false.B }
+      map(0x800000 to 0x800007).r {
+        (, offset) => when(offset === 4.U) { videoIRQ := false.B }
         "b001".U ## !videoIRQ
       }
+      map(0x800000 to 0x80007f).r {(, offset) => 0.U}
       map(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
       map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
       map(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
       map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-      map(0xd00010).r { (_, _) => input0 }
-      map(0xd00012).r { (_, _) => input1 }
+      map(0xd00010).r { (, ) => input0 }
+      map(0xd00012).r { (, ) => input1 }
+      map(0xd00014).ignore()
     }
 
     // When the game is paused, request frames at the start of every vertical blank
