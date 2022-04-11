@@ -87,6 +87,10 @@ object SVec2 {
     pos
   }
 
-  /** Creates a zero vector. */
-  def zero = SVec2(0.S, 0.S)
+  /**
+   * Creates a zero vector.
+   *
+   * @param width The data width.
+   */
+  def zero(width: Int) = SVec2(0.U(width.W), 0.U(width.W))
 }
