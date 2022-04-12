@@ -66,7 +66,7 @@ class DataFreezer(addrWidth: Int, dataWidth: Int) extends Module {
   val valid = Util.latch(io.out.valid, clear)
 
   // Latch valid output data
-  val data = Util.latch(io.out.dout, io.out.valid, clear)
+  val data = Util.latchData(io.out.dout, io.out.valid, clear)
 
   // Latch pending requests until they have completed
   val pendingRead = Util.latch(RegNext(io.in.rd && !io.out.waitReq), clear && RegNext(valid))
@@ -101,7 +101,7 @@ class ReadWriteDataFreezer(addrWidth: Int, dataWidth: Int) extends Module {
   val valid = Util.latch(io.out.valid, clear)
 
   // Latch valid output data
-  val data = Util.latch(io.out.dout, io.out.valid, clear)
+  val data = Util.latchData(io.out.dout, io.out.valid, clear)
 
   // Latch pending requests until they have completed
   val pendingRead = Util.latch(RegNext(io.in.rd && !io.out.waitReq), clear && RegNext(valid))

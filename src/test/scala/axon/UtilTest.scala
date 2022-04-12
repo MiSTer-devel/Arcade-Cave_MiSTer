@@ -221,7 +221,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
     }
   }
 
-  it should "latch a signal when the trigger is asserted" in {
+  "latchData" should "latch data when the trigger is asserted" in {
     test(new Module {
       val io = IO(new Bundle {
         val a = Input(UInt(8.W))
@@ -229,7 +229,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
         val c = Input(Bool())
         val d = Output(UInt(8.W))
       })
-      io.d := Util.latch(io.a, io.b, io.c)
+      io.d := Util.latchData(io.a, io.b, io.c)
     }) { dut =>
       dut.io.a.poke(1)
       dut.io.b.poke(true)

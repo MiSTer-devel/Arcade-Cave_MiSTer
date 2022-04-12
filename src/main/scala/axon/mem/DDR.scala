@@ -78,7 +78,7 @@ class DDR(config: DDRConfig) extends Module {
 
   // Registers
   val stateReg = RegInit(State.idle)
-  val burstLength = Util.latch(io.mem.burstLength, stateReg === State.idle, stateReg === State.idle)
+  val burstLength = Util.latchData(io.mem.burstLength, stateReg === State.idle, stateReg === State.idle)
 
   // Read/write control signals
   val read = stateReg === State.idle && io.mem.rd && !io.ddr.waitReq
