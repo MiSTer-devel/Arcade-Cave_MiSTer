@@ -170,11 +170,7 @@ object Util {
    */
   def latch(s: Bool, clear: Bool = false.B): Bool = {
     val enableReg = RegInit(false.B)
-    when(s) {
-      enableReg := true.B
-    }.elsewhen(clear) {
-      enableReg := false.B
-    }
+    when(s) { enableReg := true.B }.elsewhen(clear) { enableReg := false.B }
     s || (enableReg && !clear)
   }
 
@@ -190,11 +186,7 @@ object Util {
   def latchData[T <: Data](s: T, t: Bool, clear: Bool): T = {
     val dataReg = RegEnable(s, t)
     val enableReg = RegInit(false.B)
-    when(t) {
-      enableReg := true.B
-    }.elsewhen(clear) {
-      enableReg := false.B
-    }
+    when(t) { enableReg := true.B }.elsewhen(clear) { enableReg := false.B }
     Mux(enableReg && !clear, dataReg, s)
   }
 
@@ -208,11 +200,7 @@ object Util {
    */
   def latchSync(s: Bool, clear: Bool = false.B): Bool = {
     val enableReg = RegInit(false.B)
-    when(clear) {
-      enableReg := false.B
-    }.elsewhen(s) {
-      enableReg := true.B
-    }
+    when(clear) { enableReg := false.B }.elsewhen(s) { enableReg := true.B }
     enableReg
   }
 
