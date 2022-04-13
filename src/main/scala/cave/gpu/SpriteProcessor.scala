@@ -58,7 +58,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
     /** Sprite bank */
     val spriteBank = Input(Bool())
     /** Sprite RAM port */
-    val spriteRam = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
+    val spriteRam = new SpriteRamIO
     /** Palette RAM port */
     val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
     /** Tile ROM port */
