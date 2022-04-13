@@ -61,7 +61,7 @@ class TilemapProcessor(maxCols: Int = 40, maxRows: Int = 30) extends Module {
     /** Layer index */
     val layerIndex = Input(UInt(Config.LAYER_INDEX_WIDTH.W))
     /** Layer RAM port */
-    val layerRam = ReadMemIO(Config.LAYER_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
+    val layerRam = new LayerRamIO
     /** Line RAM port */
     val lineRam = ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
     /** Palette RAM port */
