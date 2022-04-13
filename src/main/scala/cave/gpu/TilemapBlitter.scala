@@ -155,7 +155,7 @@ class TilemapBlitter extends Module {
   // The current pixel has priority if it has more priority than the previous pixel. Otherwise, if
   // the pixel priorities are the same then it depends on the layer priorities.
   val hasPriority = (delayedPriorityReg > priorityReadData) ||
-                    (delayedPriorityReg === priorityReadData && configReg.layer.priority >= io.lastLayerPriority)
+    (delayedPriorityReg === priorityReadData && configReg.layer.priority >= io.lastLayerPriority)
 
   // The transparency flag must be delayed by one cycle, since the colors come from the palette RAM
   // they arrive one cycle later.

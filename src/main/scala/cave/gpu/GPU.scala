@@ -122,8 +122,8 @@ class GPU extends Module {
   tilemapProcessor.io.gameConfig <> io.gameConfig
   tilemapProcessor.io.options <> io.options
   tilemapProcessor.io.start := (stateReg =/= State.layer0 && nextState === State.layer0) ||
-                               (stateReg =/= State.layer1 && nextState === State.layer1) ||
-                               (stateReg =/= State.layer2 && nextState === State.layer2)
+    (stateReg =/= State.layer1 && nextState === State.layer1) ||
+    (stateReg =/= State.layer2 && nextState === State.layer2)
   tilemapProcessor.io.layerIndex := MuxLookup(stateReg, 0.U, Seq(State.layer0 -> 0.U, State.layer1 -> 1.U, State.layer2 -> 2.U))
   tilemapProcessor.io.layer := MuxLookup(stateReg, DontCare, Seq(State.layer0 -> io.layer0, State.layer1 -> io.layer1, State.layer2 -> io.layer2))
   tilemapProcessor.io.layerRam <> ReadMemIO.demux(stateReg, Seq(State.layer0 -> io.layerRam0, State.layer1 -> io.layerRam1, State.layer2 -> io.layerRam2))
@@ -351,9 +351,9 @@ object GPU {
    */
   def isVisible(pos: UVec2): Bool =
     Util.between(pos.x, 0 until Config.SCREEN_WIDTH) &&
-    Util.between(pos.y, 0 until Config.SCREEN_HEIGHT)
+      Util.between(pos.y, 0 until Config.SCREEN_HEIGHT)
 
   def isVisible(pos: SVec2): Bool =
     Util.between(pos.x, 0 until Config.SCREEN_WIDTH) &&
-    Util.between(pos.y, 0 until Config.SCREEN_HEIGHT)
+      Util.between(pos.y, 0 until Config.SCREEN_HEIGHT)
 }

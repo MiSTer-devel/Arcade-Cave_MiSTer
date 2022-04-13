@@ -82,7 +82,7 @@ object PaletteEntry {
    * Constructs a new palette entry.
    *
    * @param palette The palette index.
-   * @param color The color index.
+   * @param color   The color index.
    */
   def apply(palette: UInt, color: UInt): PaletteEntry = {
     val wire = Wire(new PaletteEntry)
