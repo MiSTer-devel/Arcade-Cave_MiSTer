@@ -196,10 +196,10 @@ class TilemapProcessor(maxCols: Int = 40, maxRows: Int = 30) extends Module {
   }
 
   // The burst pending register is asserted when the tilemap processor is waiting for pixel data
-  when(effectiveRead) {
-    burstPendingReg := true.B
-  }.elsewhen(io.tileRom.burstDone) {
+  when(io.tileRom.burstDone) {
     burstPendingReg := false.B
+  }.elsewhen(effectiveRead) {
+    burstPendingReg := true.B
   }
 
   // Enqueue the blitter configuration when the blitter is ready
