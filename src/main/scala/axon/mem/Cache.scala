@@ -83,6 +83,7 @@ class CacheLine(private val config: CacheConfig) extends Bundle {
 
   /** Returns the cache line represented as a vector input words */
   def inWords: Vec[Bits] = words.asTypeOf(Vec(config.inWords, Bits(config.inDataWidth.W)))
+
   /** The output words in the cache line */
   def outWords: Vec[Bits] = words
 }

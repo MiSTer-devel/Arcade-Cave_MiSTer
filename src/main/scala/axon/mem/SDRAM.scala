@@ -136,11 +136,11 @@ case class SDRAMConfig(clockFreq: Double,
   /** The mode opcode value used for configuring the SDRAM module. */
   def mode: UInt =
     0.U(3.W) ## // unused
-    writeBurstMode.U(1.W) ##
-    0.U(2.W) ## // unused
-    casLatency.U(3.W) ##
-    burstType.U(1.W) ##
-    log2Ceil(burstLength).U(3.W)
+      writeBurstMode.U(1.W) ##
+      0.U(2.W) ## // unused
+      casLatency.U(3.W) ##
+      burstType.U(1.W) ##
+      log2Ceil(burstLength).U(3.W)
 }
 
 /** Represents the address of a word stored in SDRAM. */

@@ -37,9 +37,9 @@ import chisel3._
 /**
  * Represents a RGB color.
  *
- * @param redWidth The red channel width.
+ * @param redWidth   The red channel width.
  * @param greenWidth The green channel width.
- * @param blueWidth The blue channel width.
+ * @param blueWidth  The blue channel width.
  */
 class RGB(redWidth: Int, greenWidth: Int, blueWidth: Int) extends Bundle {
   /** Red */

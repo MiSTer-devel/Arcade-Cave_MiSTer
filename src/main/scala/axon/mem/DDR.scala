@@ -87,8 +87,8 @@ class DDR(config: DDRConfig) extends Module {
   // Burst counter enable flag
   val burstCounterEnable =
     write ||
-    (stateReg === State.writeWait && !io.ddr.waitReq) ||
-    (stateReg === State.readWait && io.ddr.valid)
+      (stateReg === State.writeWait && !io.ddr.waitReq) ||
+      (stateReg === State.readWait && io.ddr.valid)
 
   // Burst counter
   val (burstCounter, burstCounterWrap) = Counter.dynamic(burstLength, burstCounterEnable)
