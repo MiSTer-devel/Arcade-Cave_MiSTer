@@ -60,7 +60,7 @@ class SpriteBlitter extends Module {
     /** Pixel data port */
     val pixelData = DeqIO(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
     /** Palette RAM port */
-    val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
+    val paletteRam = new PaletteRamIO
     /** Priority port */
     val priority = new PriorityIO
     /** Frame buffer port */

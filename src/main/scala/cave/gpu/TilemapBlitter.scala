@@ -72,7 +72,7 @@ class TilemapBlitter extends Module {
     /** Line RAM port */
     val lineRam = new LineRamIO
     /** Palette RAM port */
-    val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
+    val paletteRam = new PaletteRamIO
     /** Priority port */
     val priority = new PriorityIO
     /** Frame buffer port */

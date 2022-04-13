@@ -77,7 +77,7 @@ class GPU extends Module {
     /** Sprite RAM port */
     val spriteRam = new SpriteRamIO
     /** Palette RAM port */
-    val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
+    val paletteRam = new PaletteRamIO
     /** Tile ROM port */
     val tileRom = new TileRomIO
     /** Frame buffer DMA port */
