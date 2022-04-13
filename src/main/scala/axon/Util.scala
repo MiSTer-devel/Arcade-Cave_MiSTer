@@ -175,18 +175,18 @@ object Util {
   }
 
   /**
-   * Latches a data signal when the given trigger is asserted.
+   * Latches a signal when the given trigger is asserted.
    *
    * The output will remain stable until the latch is triggered or cleared.
    *
-   * @param s     The data signal.
+   * @param s     The signal value.
    * @param t     The trigger value.
    * @param clear The clear signal.
    */
   def latchData[T <: Data](s: T, t: Bool, clear: Bool): T = {
     val dataReg = RegEnable(s, t)
     val enableReg = RegInit(false.B)
-    when(t) { enableReg := true.B }.elsewhen(clear) { enableReg := false.B }
+    when(clear) { enableReg := false.B }.elsewhen(t) { enableReg := true.B }
     Mux(enableReg && !clear, dataReg, s)
   }
 
