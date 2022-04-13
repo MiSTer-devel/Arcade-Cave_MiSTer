@@ -14,7 +14,7 @@
  * https://twitter.com/nullobject
  * https://github.com/nullobject
  *
- * Copyright (c) 2021 Josh Bassett
+ * Copyright (c) 2022 Josh Bassett
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,4 +58,16 @@ package object types {
 
   /** Tile ROM IO */
   class TileRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH)
+
+  /** Layer RAM IO (GPU-side) */
+  class LayerRamIO extends ReadMemIO(Config.LAYER_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
+
+  /** Sprite RAM IO (GPU-side) */
+  class SpriteRamIO extends ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
+
+  /** Line RAM IO (GPU-side) */
+  class LineRamIO extends ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
+
+  /** Palette RAM IO (GPU-side) */
+  class PaletteRamIO extends ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
 }

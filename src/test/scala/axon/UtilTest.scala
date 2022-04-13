@@ -14,7 +14,7 @@
  * https://twitter.com/nullobject
  * https://github.com/nullobject
  *
- * Copyright (c) 2021 Josh Bassett
+ * Copyright (c) 2022 Josh Bassett
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -221,7 +221,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
     }
   }
 
-  it should "latch a signal when the trigger is asserted" in {
+  "latchData" should "latch data when the trigger is asserted" in {
     test(new Module {
       val io = IO(new Bundle {
         val a = Input(UInt(8.W))
@@ -229,7 +229,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
         val c = Input(Bool())
         val d = Output(UInt(8.W))
       })
-      io.d := Util.latch(io.a, io.b, io.c)
+      io.d := Util.latchData(io.a, io.b, io.c)
     }) { dut =>
       dut.io.a.poke(1)
       dut.io.b.poke(true)

@@ -14,7 +14,7 @@
  * https://twitter.com/nullobject
  * https://github.com/nullobject
  *
- * Copyright (c) 2021 Josh Bassett
+ * Copyright (c) 2022 Josh Bassett
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -82,7 +82,7 @@ object PaletteEntry {
    * Constructs a new palette entry.
    *
    * @param palette The palette index.
-   * @param color The color index.
+   * @param color   The color index.
    */
   def apply(palette: UInt, color: UInt): PaletteEntry = {
     val wire = Wire(new PaletteEntry)

@@ -14,7 +14,7 @@
  * https://twitter.com/nullobject
  * https://github.com/nullobject
  *
- * Copyright (c) 2021 Josh Bassett
+ * Copyright (c) 2022 Josh Bassett
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -135,10 +135,15 @@ object Config {
   val SPRITE_RAM_GPU_ADDR_WIDTH = 12
   val SPRITE_RAM_GPU_DATA_WIDTH = 128
 
-  val LAYER_RAM_ADDR_WIDTH = 14
+  val LAYER_RAM_ADDR_WIDTH = 11
   val LAYER_RAM_DATA_WIDTH = 16
-  val LAYER_RAM_GPU_ADDR_WIDTH = 13
+  val LAYER_RAM_GPU_ADDR_WIDTH = 10
   val LAYER_RAM_GPU_DATA_WIDTH = 32
+
+  val LINE_RAM_ADDR_WIDTH = 10
+  val LINE_RAM_DATA_WIDTH = 16
+  val LINE_RAM_GPU_ADDR_WIDTH = 9
+  val LINE_RAM_GPU_DATA_WIDTH = 32
 
   val PALETTE_RAM_ADDR_WIDTH = 15
   val PALETTE_RAM_DATA_WIDTH = 16

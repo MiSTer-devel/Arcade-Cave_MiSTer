@@ -14,7 +14,7 @@
  * https://twitter.com/nullobject
  * https://github.com/nullobject
  *
- * Copyright (c) 2021 Josh Bassett
+ * Copyright (c) 2022 Josh Bassett
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -69,8 +69,10 @@ class TilemapBlitter extends Module {
     val lastLayerPriority = Input(UInt(Config.PRIO_WIDTH.W))
     /** Pixel data port */
     val pixelData = DeqIO(Vec(Config.SMALL_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
+    /** Line RAM port */
+    val lineRam = new LineRamIO
     /** Palette RAM port */
-    val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
+    val paletteRam = new PaletteRamIO
     /** Priority port */
     val priority = new PriorityIO
     /** Frame buffer port */
@@ -153,7 +155,7 @@ class TilemapBlitter extends Module {
   // The current pixel has priority if it has more priority than the previous pixel. Otherwise, if
   // the pixel priorities are the same then it depends on the layer priorities.
   val hasPriority = (delayedPriorityReg > priorityReadData) ||
-                    (delayedPriorityReg === priorityReadData && configReg.layer.priority >= io.lastLayerPriority)
+    (delayedPriorityReg === priorityReadData && configReg.layer.priority >= io.lastLayerPriority)
 
   // The transparency flag must be delayed by one cycle, since the colors come from the palette RAM
   // they arrive one cycle later.
@@ -169,6 +171,8 @@ class TilemapBlitter extends Module {
   io.pixelData.ready := pixelDataReady
   io.paletteRam.rd := true.B
   io.paletteRam.addr := paletteRamAddr
+  io.lineRam.rd := false.B
+  io.lineRam.addr := 0.U
   io.priority.read.rd := true.B
   io.priority.read.addr := priorityReadAddr
   io.priority.write.wr := frameBufferWrite

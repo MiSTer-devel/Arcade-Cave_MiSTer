@@ -14,7 +14,7 @@
  * https://twitter.com/nullobject
  * https://github.com/nullobject
  *
- * Copyright (c) 2021 Josh Bassett
+ * Copyright (c) 2022 Josh Bassett
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -87,6 +87,10 @@ object UVec2 {
     pos
   }
 
-  /** Creates a zero vector. */
-  def zero = UVec2(0.U, 0.U)
+  /**
+   * Creates a zero vector.
+   *
+   * @param width The data width.
+   */
+  def zero(width: Int) = UVec2(0.U(width.W), 0.U(width.W))
 }

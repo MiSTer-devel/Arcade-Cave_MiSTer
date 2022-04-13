@@ -14,7 +14,7 @@
  * https://twitter.com/nullobject
  * https://github.com/nullobject
  *
- * Copyright (c) 2021 Josh Bassett
+ * Copyright (c) 2022 Josh Bassett
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,10 +43,10 @@ import chisel3.util._
 /**
  * The tilemap processor is responsible for rendering tilemap layers.
  *
- * @param cols The number of columns in the tilemap.
- * @param rows The number of rows in the tilemap.
+ * @param maxCols The maximum number of columns in the tilemap.
+ * @param maxRows The maximum number of rows in the tilemap.
  */
-class TilemapProcessor(cols: Int = 40, rows: Int = 30) extends Module {
+class TilemapProcessor(maxCols: Int = 40, maxRows: Int = 30) extends Module {
   val io = IO(new Bundle {
     /** Game config port */
     val gameConfig = Input(GameConfig())
@@ -61,9 +61,11 @@ class TilemapProcessor(cols: Int = 40, rows: Int = 30) extends Module {
     /** Layer index */
     val layerIndex = Input(UInt(Config.LAYER_INDEX_WIDTH.W))
     /** Layer RAM port */
-    val layerRam = ReadMemIO(Config.LAYER_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
+    val layerRam = new LayerRamIO
+    /** Line RAM port */
+    val lineRam = new LineRamIO
     /** Palette RAM port */
-    val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
+    val paletteRam = new PaletteRamIO
     /** Tile ROM port */
     val tileRom = new TileRomIO
     /** Priority port */
@@ -105,8 +107,8 @@ class TilemapProcessor(cols: Int = 40, rows: Int = 30) extends Module {
   val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), Config.FIFO_DEPTH, flow = true))
 
   // Columns/rows
-  val numCols = Mux(io.layer.tileSize, (cols / 2 + 1).U, (cols + 1).U)
-  val numRows = Mux(io.layer.tileSize, (rows / 2 + 1).U, (rows + 1).U)
+  val numCols = Mux(io.layer.tileSize, (maxCols / 2 + 1).U, (maxCols + 1).U)
+  val numRows = Mux(io.layer.tileSize, (maxRows / 2 + 1).U, (maxRows + 1).U)
 
   // Counters
   val (col, colWrap) = Counter.dynamic(numCols, enable = stateReg === State.next)
@@ -116,6 +118,7 @@ class TilemapProcessor(cols: Int = 40, rows: Int = 30) extends Module {
   val blitter = Module(new TilemapBlitter)
   blitter.io.layerIndex := io.layerIndex
   blitter.io.lastLayerPriority := lastLayerPriorityReg
+  blitter.io.lineRam <> io.lineRam
   blitter.io.paletteRam <> io.paletteRam
   blitter.io.priority <> io.priority
   blitter.io.frameBuffer <> io.frameBuffer
@@ -193,10 +196,10 @@ class TilemapProcessor(cols: Int = 40, rows: Int = 30) extends Module {
   }
 
   // The burst pending register is asserted when the tilemap processor is waiting for pixel data
-  when(effectiveRead) {
-    burstPendingReg := true.B
-  }.elsewhen(io.tileRom.burstDone) {
+  when(io.tileRom.burstDone) {
     burstPendingReg := false.B
+  }.elsewhen(effectiveRead) {
+    burstPendingReg := true.B
   }
 
   // Enqueue the blitter configuration when the blitter is ready

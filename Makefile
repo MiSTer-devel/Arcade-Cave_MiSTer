@@ -5,7 +5,7 @@ build:
 	cd quartus; quartus_sh --flow compile cave
 
 program:
-	cd quartus; quartus_pgm -m jtag -c 1 -o "p;output_files/cave.sof@2"
+	cd quartus; quartus_pgm -m jtag -c DE-SoC -o "p;output_files/cave.sof@2"
 
 test:
 	sbt test

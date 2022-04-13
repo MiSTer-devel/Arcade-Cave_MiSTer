@@ -14,7 +14,7 @@
  * https://twitter.com/nullobject
  * https://github.com/nullobject
  *
- * Copyright (c) 2021 Josh Bassett
+ * Copyright (c) 2022 Josh Bassett
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -78,7 +78,7 @@ class DDR(config: DDRConfig) extends Module {
 
   // Registers
   val stateReg = RegInit(State.idle)
-  val burstLength = Util.latch(io.mem.burstLength, stateReg === State.idle, stateReg === State.idle)
+  val burstLength = Util.latchData(io.mem.burstLength, stateReg === State.idle, stateReg === State.idle)
 
   // Read/write control signals
   val read = stateReg === State.idle && io.mem.rd && !io.ddr.waitReq

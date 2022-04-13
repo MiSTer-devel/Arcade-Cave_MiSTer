@@ -14,7 +14,7 @@
  * https://twitter.com/nullobject
  * https://github.com/nullobject
  *
- * Copyright (c) 2021 Josh Bassett
+ * Copyright (c) 2022 Josh Bassett
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,9 +58,9 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
     /** Sprite bank */
     val spriteBank = Input(Bool())
     /** Sprite RAM port */
-    val spriteRam = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
+    val spriteRam = new SpriteRamIO
     /** Palette RAM port */
-    val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
+    val paletteRam = new PaletteRamIO
     /** Tile ROM port */
     val tileRom = new TileRomIO
     /** Priority port */
@@ -138,10 +138,10 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val tileRomBurstLength = Mux(is8BPP, 32.U, 16.U)
 
   // The burst pending register is asserted when there is a burst in progress
-  when(effectiveRead) {
-    burstPendingReg := true.B
-  }.elsewhen(io.tileRom.burstDone) {
+  when(io.tileRom.burstDone) {
     burstPendingReg := false.B
+  }.elsewhen(effectiveRead) {
+    burstPendingReg := true.B
   }
 
   // Enqueue the blitter configuration when the blitter is ready

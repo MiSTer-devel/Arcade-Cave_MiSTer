@@ -14,7 +14,7 @@
  * https://twitter.com/nullobject
  * https://github.com/nullobject
  *
- * Copyright (c) 2021 Josh Bassett
+ * Copyright (c) 2022 Josh Bassett
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -66,10 +66,13 @@ class DataFreezer(addrWidth: Int, dataWidth: Int) extends Module {
   val valid = Util.latch(io.out.valid, clear)
 
   // Latch valid output data
-  val data = Util.latch(io.out.dout, io.out.valid, clear)
+  val data = Util.latchData(io.out.dout, io.out.valid, clear)
 
   // Latch pending requests until they have completed
-  val pendingRead = Util.latch(RegNext(io.in.rd && !io.out.waitReq), clear && RegNext(valid))
+  val pendingRead = RegInit(false.B)
+  val effectiveRead = io.in.rd && !io.out.waitReq
+  val clearRead = clear && RegNext(valid)
+  when(effectiveRead) { pendingRead := true.B }.elsewhen(clearRead) { pendingRead := false.B }
 
   // Connect I/O ports
   io.in <> io.out
@@ -78,7 +81,7 @@ class DataFreezer(addrWidth: Int, dataWidth: Int) extends Module {
   io.in.waitReq := waitReq
   io.in.valid := valid
   io.in.dout := data
-  io.out.rd := io.in.rd && !pendingRead
+  io.out.rd := io.in.rd && (!pendingRead || clearRead)
 
   printf(p"DataFreezer(read: ${ io.out.rd }, wait: $waitReq, valid: $valid, clear: $clear)\n")
 }
@@ -101,11 +104,17 @@ class ReadWriteDataFreezer(addrWidth: Int, dataWidth: Int) extends Module {
   val valid = Util.latch(io.out.valid, clear)
 
   // Latch valid output data
-  val data = Util.latch(io.out.dout, io.out.valid, clear)
+  val data = Util.latchData(io.out.dout, io.out.valid, clear)
 
   // Latch pending requests until they have completed
-  val pendingRead = Util.latch(RegNext(io.in.rd && !io.out.waitReq), clear && RegNext(valid))
-  val pendingWrite = Util.latch(RegNext(io.in.wr && !io.out.waitReq), clear)
+  val pendingRead = RegInit(false.B)
+  val pendingWrite = RegInit(false.B)
+  val effectiveRead = io.in.rd && !io.out.waitReq
+  val effectiveWrite = io.in.wr && !io.out.waitReq
+  val clearRead = clear && RegNext(valid)
+  val clearWrite = clear
+  when(effectiveRead) { pendingRead := true.B }.elsewhen(clearRead) { pendingRead := false.B }
+  when(effectiveWrite) { pendingWrite := true.B }.elsewhen(clearWrite) { pendingWrite := false.B }
 
   // Connect I/O ports
   io.in <> io.out
@@ -114,8 +123,8 @@ class ReadWriteDataFreezer(addrWidth: Int, dataWidth: Int) extends Module {
   io.in.waitReq := waitReq
   io.in.valid := valid
   io.in.dout := data
-  io.out.rd := io.in.rd && !pendingRead
-  io.out.wr := io.in.wr && !pendingWrite
+  io.out.rd := io.in.rd && (!pendingRead || clearRead)
+  io.out.wr := io.in.wr && (!pendingWrite || clearWrite)
 
   printf(p"DataFreezer(read: ${ io.out.rd }, write: ${ io.out.wr }, wait: $waitReq, valid: $valid, clear: $clear)\n")
 }

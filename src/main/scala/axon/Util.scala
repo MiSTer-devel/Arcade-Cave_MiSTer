@@ -14,7 +14,7 @@
  * https://twitter.com/nullobject
  * https://github.com/nullobject
  *
- * Copyright (c) 2021 Josh Bassett
+ * Copyright (c) 2022 Josh Bassett
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -170,11 +170,7 @@ object Util {
    */
   def latch(s: Bool, clear: Bool = false.B): Bool = {
     val enableReg = RegInit(false.B)
-    when(s) {
-      enableReg := true.B
-    }.elsewhen(clear) {
-      enableReg := false.B
-    }
+    when(s) { enableReg := true.B }.elsewhen(clear) { enableReg := false.B }
     s || (enableReg && !clear)
   }
 
@@ -187,14 +183,10 @@ object Util {
    * @param t     The trigger value.
    * @param clear The clear signal.
    */
-  def latch[T <: Data](s: T, t: Bool, clear: Bool): T = {
+  def latchData[T <: Data](s: T, t: Bool, clear: Bool): T = {
     val dataReg = RegEnable(s, t)
     val enableReg = RegInit(false.B)
-    when(t) {
-      enableReg := true.B
-    }.elsewhen(clear) {
-      enableReg := false.B
-    }
+    when(clear) { enableReg := false.B }.elsewhen(t) { enableReg := true.B }
     Mux(enableReg && !clear, dataReg, s)
   }
 
@@ -208,11 +200,7 @@ object Util {
    */
   def latchSync(s: Bool, clear: Bool = false.B): Bool = {
     val enableReg = RegInit(false.B)
-    when(clear) {
-      enableReg := false.B
-    }.elsewhen(s) {
-      enableReg := true.B
-    }
+    when(clear) { enableReg := false.B }.elsewhen(s) { enableReg := true.B }
     enableReg
   }
 

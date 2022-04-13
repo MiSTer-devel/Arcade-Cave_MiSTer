@@ -14,7 +14,7 @@
  * https://twitter.com/nullobject
  * https://github.com/nullobject
  *
- * Copyright (c) 2021 Josh Bassett
+ * Copyright (c) 2022 Josh Bassett
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -107,7 +107,7 @@ object TilemapDecoder {
   /**
    * Decodes 8x8x4 tiles (i.e. 32 bits per row)
    *
-   * @param data The 64-bit tile ROM data.
+   * @param data   The 64-bit tile ROM data.
    * @param toggle A flag indicating whether to decode the lower or upper 32 bits of the word.
    */
   private def decode4BPP(data: Bits, toggle: Bool): Seq[Bits] = {

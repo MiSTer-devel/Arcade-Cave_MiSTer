@@ -14,7 +14,7 @@
  * https://twitter.com/nullobject
  * https://github.com/nullobject
  *
- * Copyright (c) 2021 Josh Bassett
+ * Copyright (c) 2022 Josh Bassett
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ import chisel3._
 class SinglePortRam(addrWidth: Int,
                     dataWidth: Int,
                     depth: Option[Int] = None,
-                    maskEnable: Boolean = true) extends Module {
+                    maskEnable: Boolean = false) extends Module {
   val io = IO(Flipped(ReadWriteMemIO(addrWidth, dataWidth)))
 
   private val depth_ = depth.getOrElse(0)
