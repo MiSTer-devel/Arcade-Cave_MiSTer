@@ -69,11 +69,11 @@ class GPU extends Module {
     /** Layer 2 VRAM port */
     val layerRam2 = new LayerRamIO
     /** Line RAM 0 port */
-    val lineRam0 = ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
+    val lineRam0 = new LineRamIO
     /** Line RAM 1 port */
-    val lineRam1 = ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
+    val lineRam1 = new LineRamIO
     /** Line RAM 2 port */
-    val lineRam2 = ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
+    val lineRam2 = new LineRamIO
     /** Sprite RAM port */
     val spriteRam = new SpriteRamIO
     /** Palette RAM port */

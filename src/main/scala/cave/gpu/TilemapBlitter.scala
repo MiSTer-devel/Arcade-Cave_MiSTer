@@ -70,7 +70,7 @@ class TilemapBlitter extends Module {
     /** Pixel data port */
     val pixelData = DeqIO(Vec(Config.SMALL_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
     /** Line RAM port */
-    val lineRam = ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
+    val lineRam = new LineRamIO
     /** Palette RAM port */
     val paletteRam = ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
     /** Priority port */
