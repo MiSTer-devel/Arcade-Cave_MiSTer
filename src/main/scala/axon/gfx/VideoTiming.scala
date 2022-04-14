@@ -67,11 +67,13 @@ object VideoIO {
  * @param hDisplay    The horizontal display width.
  * @param hFrontPorch The width of the horizontal front porch region.
  * @param hRetrace    The width of the horizontal retrace region.
+ * @param hOffset     The horizontal offset (in pixels) of the beam position.
  * @param hInit       The initial horizontal position (for testing).
  * @param vFreq       The vertical frequency (Hz).
  * @param vDisplay    The vertical display height.
  * @param vFrontPorch The width of the vertical front porch region.
  * @param vRetrace    The width of the vertical retrace region.
+ * @param vOffset     The vertical offset (in pixels) of the beam position.
  * @param vInit       The initial vertical position (for testing).
  */
 case class VideoTimingConfig(clockFreq: Double,
@@ -80,11 +82,13 @@ case class VideoTimingConfig(clockFreq: Double,
                              hDisplay: Int,
                              hFrontPorch: Int,
                              hRetrace: Int,
+                             hOffset: Int = 0,
                              hInit: Int = 0,
                              vFreq: Double,
                              vDisplay: Int,
                              vFrontPorch: Int,
                              vRetrace: Int,
+                             vOffset: Int = 0,
                              vInit: Int = 0) {
   /** Total width in pixels */
   val width = math.ceil(clockFreq / clockDiv / hFreq).toInt
