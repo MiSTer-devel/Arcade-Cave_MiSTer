@@ -36,12 +36,12 @@ import chisel3._
 import chisel3.util._
 
 trait WaitIO {
-  /** The wait request signal is asserted when the device isn't ready to proceed with the request */
+  /** The wait request signal is asserted when the device isn't ready to proceed with the request. */
   val waitReq = Input(Bool())
 }
 
 trait ValidIO {
-  /** The valid signal is asserted when the output data is valid */
+  /** The valid signal is asserted when the output data is valid. */
   val valid = Input(Bool())
 }
 
@@ -76,7 +76,7 @@ object AsyncWriteMemIO {
  * @param dataWidth The width of the data bus.
  */
 class AsyncReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends ReadWriteMemIO(addrWidth, dataWidth) with WaitIO with ValidIO {
-  /** Converts the interface to read-only */
+  /** Converts the interface to read-only. */
   def asAsyncReadMemIO: AsyncReadMemIO = {
     val wire = Wire(Flipped(AsyncReadMemIO(addrWidth, dataWidth)))
     rd := wire.rd
@@ -90,7 +90,7 @@ class AsyncReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends ReadWriteMemIO
     wire
   }
 
-  /** Converts the interface to write-only */
+  /** Converts the interface to write-only. */
   def asAsyncWriteMemIO: AsyncWriteMemIO = {
     val wire = Wire(Flipped(AsyncWriteMemIO(addrWidth, dataWidth)))
     rd := false.B

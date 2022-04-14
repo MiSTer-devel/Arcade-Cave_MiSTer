@@ -36,9 +36,9 @@ import chisel3._
 import chisel3.util._
 
 trait BurstIO {
-  /** The number of words to transfer during a burst */
+  /** The number of words to transfer during a burst. */
   val burstLength = Output(UInt(8.W))
-  /** A flag indicating whether a burst has finished */
+  /** A flag indicating whether a burst has finished. */
   val burstDone = Input(Bool())
 }
 
@@ -93,7 +93,7 @@ object BurstWriteMemIO {
  * @param dataWidth The width of the data bus.
  */
 class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWriteMemIO(addrWidth, dataWidth) with BurstIO {
-  /** Converts the interface to read-only */
+  /** Converts the interface to read-only. */
   def asBurstReadMemIO: BurstReadMemIO = {
     val mem = Wire(Flipped(BurstReadMemIO(addrWidth, dataWidth)))
     rd := mem.rd
@@ -109,7 +109,7 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
     mem
   }
 
-  /** Converts the interface to write-only */
+  /** Converts the interface to write-only. */
   def asBurstWriteMemIO: BurstWriteMemIO = {
     val mem = Wire(Flipped(BurstWriteMemIO(addrWidth, dataWidth)))
     rd := false.B
@@ -150,7 +150,22 @@ object BurstReadWriteMemIO {
     mem
   }
 
+  /**
+   * Multiplexes requests from multiple read-write memory interface to a single read-write memory
+   * interfaces. The request is routed to the first enabled interface.
+   *
+   * @param sel A list of enable signals.
+   * @param in  A list of read-write memory interfaces.
+   */
   def mux1H(sel: Seq[Bool], in: Seq[BurstReadWriteMemIO]): BurstReadWriteMemIO = mux1H(sel zip in)
 
-  def mux1H(sel: UInt, in: Seq[BurstReadWriteMemIO]): BurstReadWriteMemIO = mux1H(in.indices.map(sel(_)), in)
+
+  /**
+   * Multiplexes requests from multiple read-write memory interface to a single read-write memory
+   * interfaces. The request is routed to indexed interface.
+   *
+   * @param index An index signal.
+   * @param in    A list of read-write memory interfaces.
+   */
+  def mux1H(index: UInt, in: Seq[BurstReadWriteMemIO]): BurstReadWriteMemIO = mux1H(in.indices.map(index(_)), in)
 }

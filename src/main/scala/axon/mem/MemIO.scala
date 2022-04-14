@@ -35,7 +35,14 @@ package axon.mem
 import chisel3._
 import chisel3.util._
 
+/**
+ * An abstract interface for reading/writing from a memory device.
+ *
+ * @param addrWidth The width of the address bus.
+ * @param dataWidth The width of the data bus.
+ */
 abstract class MemIO protected(val addrWidth: Int, val dataWidth: Int) extends Bundle {
+  /** The number of bytes to be masked when writing data. */
   def maskWidth = dataWidth / 8
 }
 
@@ -66,6 +73,7 @@ class ReadMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWid
     mem
   }
 
+  /** Sets default values for all the signals. */
   def default() = {
     rd := false.B
     addr := DontCare
@@ -162,6 +170,7 @@ class WriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWi
     mem
   }
 
+  /** Sets default values for all the signals. */
   def default() = {
     wr := false.B
     addr := DontCare
@@ -213,7 +222,7 @@ class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, da
   /** Data output bus */
   val dout = Input(Bits(dataWidth.W))
 
-  /** Converts the interface to read-only */
+  /** Converts the interface to read-only. */
   def asReadMemIO: ReadMemIO = {
     val mem = Wire(Flipped(ReadMemIO(addrWidth, dataWidth)))
     rd := mem.rd
@@ -225,7 +234,7 @@ class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, da
     mem
   }
 
-  /** Converts the interface to write-only */
+  /** Converts the interface to write-only. */
   def asWriteMemIO: WriteMemIO = {
     val mem = Wire(Flipped(WriteMemIO(addrWidth, dataWidth)))
     rd := false.B
@@ -236,6 +245,7 @@ class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, da
     mem
   }
 
+  /** Sets default values for all the signals. */
   def default() = {
     rd := false.B
     wr := false.B
