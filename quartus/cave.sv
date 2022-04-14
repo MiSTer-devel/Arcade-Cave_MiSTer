@@ -310,13 +310,13 @@ hps_io #(.CONF_STR(CONF_STR), .WIDE(1)) hps_io (
 // VIDEO
 ////////////////////////////////////////////////////////////////////////////////
 
+wire ce_pix;
 wire [7:0] r, g, b;
 wire hsync, vsync;
 wire hblank, vblank;
-wire video_enable;
 wire [2:0] fx = status[6:4];
 wire [2:0] sl = fx ? fx - 1'd1 : 3'd0;
-wire       scandoubler = fx || forced_scandoubler;
+wire scandoubler = fx || forced_scandoubler;
 
 assign CLK_VIDEO = clk_video;
 assign VGA_F1 = 0;
@@ -494,7 +494,6 @@ Main main (
   .io_video_vSync(vsync),
   .io_video_hBlank(hblank),
   .io_video_vBlank(vblank),
-  .io_video_enable(video_enable),
   // Frame buffer signals
   .io_frameBuffer_enable(FB_EN),
   .io_frameBuffer_hSize(FB_WIDTH),
