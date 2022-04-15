@@ -62,10 +62,6 @@ class MemSys extends Module {
     val eeprom = Flipped(new EEPROMIO)
     /** Tile ROM port */
     val tileRom = Flipped(new TileRomIO)
-    /** Frame buffer DMA port */
-    val frameBufferDMA = Flipped(BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
-    /** Video DMA port */
-    val videoDMA = Flipped(BurstReadMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
     /** DDR port */
     val ddr = BurstReadWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
     /** SDRAM port */
@@ -154,15 +150,13 @@ class MemSys extends Module {
   eepromCache.io.offset := io.gameConfig.eepromOffset + Config.DDR_DOWNLOAD_OFFSET.U
 
   // DDR arbiter
-  val ddrArbiter = Module(new MemArbiter(7, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
+  val ddrArbiter = Module(new MemArbiter(5, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
   ddrArbiter.io.in(0) <> ddrDownloadCache.io.out
   ddrArbiter.io.in(1) <> progRomCache1.io.out
   ddrArbiter.io.in(2) <> soundRomCache1.io.out
   ddrArbiter.io.in(3) <> eepromCache.io.out
-  ddrArbiter.io.in(4).asBurstReadMemIO <> io.videoDMA
-  ddrArbiter.io.in(5).asBurstWriteMemIO <> io.frameBufferDMA
-  ddrArbiter.io.in(6).asBurstReadMemIO <> io.tileRom
-  ddrArbiter.io.in(6).addr := io.tileRom.addr + Config.DDR_DOWNLOAD_OFFSET.U // override tile ROM address
+  ddrArbiter.io.in(4).asBurstReadMemIO <> io.tileRom
+  ddrArbiter.io.in(4).addr := io.tileRom.addr + Config.DDR_DOWNLOAD_OFFSET.U // override tile ROM address
   ddrArbiter.io.out <> io.ddr
 
   // SDRAM arbiter

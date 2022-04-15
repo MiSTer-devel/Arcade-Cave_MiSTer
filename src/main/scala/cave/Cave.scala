@@ -56,10 +56,6 @@ class Cave extends Module {
     val cpuReset = Input(Reset())
     /** Video port */
     val video = Flipped(VideoIO())
-    /** Asserted when a frame is valid */
-    val frameValid = Output(Bool())
-    /** Asserted when the DMA controller is ready */
-    val dmaReady = Input(Bool())
     /** Game config port */
     val gameConfig = Input(GameConfig())
     /** Options port */
@@ -76,8 +72,8 @@ class Cave extends Module {
     val tileRom = new TileRomIO
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
-    /** Frame buffer DMA port */
-    val frameBufferDMA = Flipped(new FrameBufferDMAIO)
+    /** RGB output */
+    val rgb = Output(new RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL))
   })
 
   // Wires
@@ -91,12 +87,10 @@ class Cave extends Module {
   val gpu = Module(new GPU)
   gpu.io.video <> io.video
   gpu.io.frameReady := Util.rising(ShiftRegister(frameStart, 2))
-  io.frameValid := gpu.io.frameValid
-  gpu.io.dmaReady := io.dmaReady
   gpu.io.gameConfig <> io.gameConfig
   gpu.io.options <> io.options
-  io.tileRom <> gpu.io.tileRom
-  io.frameBufferDMA <> gpu.io.frameBufferDMA
+  gpu.io.tileRom <> io.tileRom
+  gpu.io.rgb <> io.rgb
 
   // The CPU and registers run in the CPU clock domain
   withClockAndReset(io.cpuClock, io.cpuReset) {

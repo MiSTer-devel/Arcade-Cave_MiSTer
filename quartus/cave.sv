@@ -315,40 +315,34 @@ wire [7:0] r, g, b;
 wire hsync, vsync;
 wire hblank, vblank;
 wire [2:0] fx = status[6:4];
-wire [2:0] sl = fx ? fx - 1'd1 : 3'd0;
-wire scandoubler = fx || forced_scandoubler;
 
-assign CLK_VIDEO = clk_video;
 assign VGA_F1 = 0;
-assign VGA_SL = sl[1:0];
 assign VGA_SCALER = 0;
 assign HDMI_FREEZE = 0;
 
-video_mixer #(.LINE_LENGTH(320), .HALF_DEPTH(0), .GAMMA(1)) video_mixer (
-  .CLK_VIDEO(clk_video),
-  .CE_PIXEL(CE_PIXEL),
+arcade_video #(.WIDTH(256), .DW(24)) arcade_video (
+  .clk_video(clk_video),
   .ce_pix(ce_pix),
 
-  .scandoubler(scandoubler),
-  .hq2x(scale==1),
-  .gamma_bus(gamma_bus),
-
-  .R(r),
-  .G(g),
-  .B(b),
-
-  // Positive pulses.
-  .HSync(hsync),
-  .VSync(vsync),
+  .RGB_in({r, g, b}),
   .HBlank(hblank),
   .VBlank(vblank),
+  .HSync(hsync),
+  .VSync(vsync),
 
+  .CLK_VIDEO(CLK_VIDEO),
+  .CE_PIXEL(CE_PIXEL),
   .VGA_R(VGA_R),
   .VGA_G(VGA_G),
   .VGA_B(VGA_B),
-  .VGA_VS(VGA_VS),
   .VGA_HS(VGA_HS),
-  .VGA_DE(VGA_DE)
+  .VGA_VS(VGA_VS),
+  .VGA_DE(VGA_DE),
+  .VGA_SL(VGA_SL),
+
+  .fx(fx),
+  .forced_scandoubler(forced_scandoubler),
+  .gamma_bus(gamma_bus)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -494,16 +488,6 @@ Main main (
   .io_video_vSync(vsync),
   .io_video_hBlank(hblank),
   .io_video_vBlank(vblank),
-  // Frame buffer signals
-  .io_frameBuffer_enable(FB_EN),
-  .io_frameBuffer_hSize(FB_WIDTH),
-  .io_frameBuffer_vSize(FB_HEIGHT),
-  .io_frameBuffer_format(FB_FORMAT),
-  .io_frameBuffer_base(FB_BASE),
-  .io_frameBuffer_stride(FB_STRIDE),
-  .io_frameBuffer_vBlank(FB_VBL),
-  .io_frameBuffer_lowLat(FB_LL),
-  .io_frameBuffer_forceBlank(FB_FORCE_BLANK),
   // DDR
   .io_ddr_rd(DDRAM_RD),
   .io_ddr_wr(DDRAM_WE),

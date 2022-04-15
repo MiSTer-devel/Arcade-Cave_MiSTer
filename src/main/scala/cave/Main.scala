@@ -42,6 +42,7 @@ import cave.dma._
 import cave.types._
 import chisel3._
 import chisel3.stage._
+import chisel3.util.RegEnable
 
 /**
  * The top-level module.
@@ -63,8 +64,6 @@ class Main extends Module {
     val video = VideoIO()
     /** RGB output */
     val rgb = Output(new RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL))
-    /** Frame buffer port */
-    val frameBuffer = mister.FrameBufferIO()
     /** Joystick port */
     val joystick = JoystickIO()
     /** IOCTL port */
@@ -117,44 +116,20 @@ class Main extends Module {
   memSys.io.ddr <> ddr.io.mem
   memSys.io.sdram <> sdram.io.mem
 
-  // Video subsystem
-  val videoSys = Module(new VideoSys)
-  videoSys.io.videoClock := io.videoClock
-  videoSys.io.videoReset := io.videoReset
-  videoSys.io.forceBlank := io.cpuReset
-  videoSys.io.options <> io.options
-  videoSys.io.video <> io.video
-  videoSys.io.rgb <> io.rgb
-  videoSys.io.frameBuffer <> io.frameBuffer
+  val video = Wire(VideoIO())
 
-  // Frame buffer DMA
-  val frameBufferDMA = Module(new FrameBufferDMA(
-    addr = Config.FRAME_BUFFER_OFFSET,
-    numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
-    burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
-  ))
-  frameBufferDMA.io.enable := downloadDoneReg
-  frameBufferDMA.io.frameBufferIndex := videoSys.io.frameBufferDMAIndex
-  frameBufferDMA.io.ddr <> memSys.io.frameBufferDMA
+  withClockAndReset(io.videoClock, io.videoReset) {
+    val videoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
+    videoTiming.io.offset := RegEnable(io.options.offset, videoTiming.io.video.vSync)
+    videoTiming.io.video <> video
+  }
 
-  // Video DMA
-  val videoDMA = Module(new VideoDMA(
-    addr = Config.FRAME_BUFFER_OFFSET,
-    numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
-    burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
-  ))
-  videoDMA.io.enable := downloadDoneReg
-  videoDMA.io.frameBufferIndex := videoSys.io.videoDMAIndex
-  videoDMA.io.pixelData <> videoSys.io.pixelData
-  videoDMA.io.ddr <> memSys.io.videoDMA
+  video <> io.video
 
   // Cave
   val cave = Module(new Cave)
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
-  cave.io.video := videoSys.io.video
-  frameBufferDMA.io.start := cave.io.frameValid
-  cave.io.dmaReady := frameBufferDMA.io.ready
   cave.io.gameConfig <> gameConfigReg
   cave.io.options <> io.options
   cave.io.joystick <> io.joystick
@@ -163,7 +138,8 @@ class Main extends Module {
   cave.io.eeprom <> DataFreezer.freeze(io.cpuClock, memSys.io.eeprom)
   cave.io.tileRom <> memSys.io.tileRom
   cave.io.audio <> io.audio
-  cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
+  cave.io.video <> video
+  cave.io.rgb <> io.rgb
 
   // Set LED outputs
   io.led.power := false.B
