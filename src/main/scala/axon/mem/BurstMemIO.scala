@@ -48,7 +48,13 @@ trait BurstIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addrWidth, dataWidth) with BurstIO
+class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addrWidth, dataWidth) with BurstIO {
+  /** Sets default values for all the signals. */
+  override def default() = {
+    super.default()
+    burstLength := 0.U
+  }
+}
 
 object BurstReadMemIO {
   def apply(addrWidth: Int, dataWidth: Int) = new BurstReadMemIO(addrWidth, dataWidth)
@@ -80,7 +86,13 @@ object BurstReadMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(addrWidth, dataWidth) with BurstIO
+class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(addrWidth, dataWidth) with BurstIO {
+  /** Sets default values for all the signals. */
+  override def default() = {
+    super.default()
+    burstLength := 0.U
+  }
+}
 
 object BurstWriteMemIO {
   def apply(addrWidth: Int, dataWidth: Int) = new BurstWriteMemIO(addrWidth, dataWidth)
@@ -121,6 +133,12 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
     mask := mem.mask
     din := mem.din
     mem
+  }
+
+  /** Sets default values for all the signals. */
+  override def default() = {
+    super.default()
+    burstLength := 0.U
   }
 }
 
