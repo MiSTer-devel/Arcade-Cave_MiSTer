@@ -65,9 +65,6 @@ package object types {
   /** Sprite RAM IO (GPU-side) */
   class SpriteRamIO extends ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
 
-  /** Line RAM IO (GPU-side) */
-  class LineRamIO extends ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
-
   /** Palette RAM IO (GPU-side) */
   class PaletteRamIO extends ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
 }

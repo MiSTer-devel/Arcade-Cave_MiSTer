@@ -62,8 +62,6 @@ class TilemapProcessor(maxCols: Int = 40, maxRows: Int = 30) extends Module {
     val layerIndex = Input(UInt(Config.LAYER_INDEX_WIDTH.W))
     /** Layer RAM port */
     val layerRam = new LayerRamIO
-    /** Line RAM port */
-    val lineRam = new LineRamIO
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
     /** Tile ROM port */
@@ -118,7 +116,6 @@ class TilemapProcessor(maxCols: Int = 40, maxRows: Int = 30) extends Module {
   val blitter = Module(new TilemapBlitter)
   blitter.io.layerIndex := io.layerIndex
   blitter.io.lastLayerPriority := lastLayerPriorityReg
-  blitter.io.lineRam <> io.lineRam
   blitter.io.paletteRam <> io.paletteRam
   blitter.io.priority <> io.priority
   blitter.io.frameBuffer <> io.frameBuffer
