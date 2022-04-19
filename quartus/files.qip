@@ -11,3 +11,4 @@ set_global_assignment -name VERILOG_FILE rtl/reset_ctrl.v
 set_global_assignment -name VHDL_FILE rtl/mem/dual_port_ram.vhd
 set_global_assignment -name VHDL_FILE rtl/mem/single_port_ram.vhd
 set_global_assignment -name VHDL_FILE rtl/mem/true_dual_port_ram.vhd
+set_global_assignment -name VHDL_FILE rtl/mem/dual_clock_fifo.vhd
