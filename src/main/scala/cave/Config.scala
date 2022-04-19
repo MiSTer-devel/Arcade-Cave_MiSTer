@@ -112,7 +112,9 @@ object Config {
   /** The width of the pulse generated when a player presses the coin button */
   val PLAYER_COIN_PULSE_WIDTH = (100000000 / CPU_CLOCK_PERIOD).ceil.toInt // 100ms
 
-  val FRAME_BUFFER_OFFSET = 0x24000000
+  /** The byte offset of the framebuffer stored in DDR. */
+  val DDR_FRAME_BUFFER_OFFSET = 0x24000000
+  /** The byte offset of the IOCTL data stored in DDR. */
   val DDR_DOWNLOAD_OFFSET = 0x30000000
 
   val PROG_ROM_ADDR_WIDTH = 20 // 1MB

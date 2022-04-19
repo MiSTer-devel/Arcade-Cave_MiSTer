@@ -138,7 +138,7 @@ class VideoSys extends Module {
     io.frameBuffer.hSize := Mux(io.options.rotate, Config.SCREEN_HEIGHT.U, Config.SCREEN_WIDTH.U)
     io.frameBuffer.vSize := Mux(io.options.rotate, Config.SCREEN_WIDTH.U, Config.SCREEN_HEIGHT.U)
     io.frameBuffer.format := mister.FrameBufferIO.FORMAT_32BPP.U
-    io.frameBuffer.base := Config.FRAME_BUFFER_OFFSET.U + (readIndex2 ## 0.U(19.W))
+    io.frameBuffer.base := Config.DDR_FRAME_BUFFER_OFFSET.U + (readIndex2 ## 0.U(19.W))
     io.frameBuffer.stride := Mux(io.options.rotate, (Config.SCREEN_HEIGHT * 4).U, (Config.SCREEN_WIDTH * 4).U)
     io.frameBuffer.forceBlank := io.forceBlank
 
