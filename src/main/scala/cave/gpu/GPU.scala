@@ -45,6 +45,12 @@ import chisel3.util._
 /** Graphics processing unit (GPU). */
 class GPU extends Module {
   val io = IO(new Bundle {
+    /** Video clock domain */
+    val videoClock = Input(Clock())
+    /** Video reset */
+    val videoReset = Input(Bool())
+    /** Video port */
+    val video = Flipped(VideoIO())
     /** Game config port */
     val gameConfig = Input(GameConfig())
     /** Layer 0 port */
@@ -71,8 +77,6 @@ class GPU extends Module {
     val spriteRam = new SpriteRamIO
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
-    /** Video port */
-    val video = Flipped(VideoIO())
     /** RGB output */
     val rgb = Output(new RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL))
   })
@@ -81,28 +85,28 @@ class GPU extends Module {
   io.spriteRom.default()
 
   // Layer 0 processor
-  val layer0Processor = Module(new TilemapProcessor)
+  val layer0Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
   layer0Processor.io.layer <> io.layer0
   layer0Processor.io.layerRam <> io.layer0Ram
   layer0Processor.io.tileRom <> io.layer0Rom
   layer0Processor.io.video <> io.video
 
   // Layer 1 processor
-  val layer1Processor = Module(new TilemapProcessor)
+  val layer1Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
   layer1Processor.io.layer <> io.layer1
   layer1Processor.io.layerRam <> io.layer1Ram
   layer1Processor.io.tileRom <> io.layer1Rom
   layer1Processor.io.video <> io.video
 
   // Layer 2 processor
-  val layer2Processor = Module(new TilemapProcessor)
+  val layer2Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
   layer2Processor.io.layer <> io.layer2
   layer2Processor.io.layerRam <> io.layer2Ram
   layer2Processor.io.tileRom <> io.layer2Rom
   layer2Processor.io.video <> io.video
 
   // Color mixer
-  val colorMixer = Module(new ColorMixer)
+  val colorMixer = withClockAndReset(io.videoClock, io.videoReset) { Module(new ColorMixer) }
   colorMixer.io.numColors := io.gameConfig.numColors
   colorMixer.io.layer0Pen := layer0Processor.io.pen
   colorMixer.io.layer1Pen := layer1Processor.io.pen

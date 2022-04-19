@@ -94,8 +94,10 @@ class Cave extends Module {
   val eepromMem = Wire(WriteMemIO(CPU.ADDR_WIDTH, CPU.DATA_WIDTH))
 
   // The GPU runs in the video clock domain
-  val gpu = withClockAndReset(io.videoClock, io.videoReset) { Module(new GPU) }
+  val gpu = Module(new GPU)
   gpu.io.gameConfig <> io.gameConfig
+  gpu.io.videoClock := io.videoClock
+  gpu.io.videoReset := io.videoReset
   gpu.io.video <> io.video
   gpu.io.layer0Rom <> io.layer0Rom
   gpu.io.layer1Rom <> io.layer1Rom
