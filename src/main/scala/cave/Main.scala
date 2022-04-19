@@ -137,7 +137,8 @@ class Main extends Module {
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock, memSys.io.progRom)
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock, memSys.io.soundRom)
   cave.io.eeprom <> DataFreezer.freeze(io.cpuClock, memSys.io.eeprom)
-  cave.io.tileRom0 <> ClockDomain.syncronize(io.videoClock, memSys.io.tileRom0)
+  cave.io.layer0Rom <> ClockDomain.syncronize(io.videoClock, memSys.io.layer0Rom)
+  cave.io.layer1Rom <> ClockDomain.syncronize(io.videoClock, memSys.io.layer1Rom)
   cave.io.audio <> io.audio
   cave.io.video <> video
   cave.io.rgb <> io.rgb

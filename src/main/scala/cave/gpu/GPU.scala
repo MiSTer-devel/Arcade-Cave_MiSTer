@@ -63,8 +63,10 @@ class GPU extends Module {
     val spriteRam = new SpriteRamIO
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
-    /** Tile ROM 0 port */
-    val tileRom0 = new LayerRomIO
+    /** Layer 0 tile ROM port */
+    val layer0Rom = new LayerRomIO
+    /** Layer 1 tile ROM port */
+    val layer1Rom = new LayerRomIO
     /** Video port */
     val video = Flipped(VideoIO())
     /** RGB output */
@@ -72,19 +74,25 @@ class GPU extends Module {
   })
 
   io.spriteRam.default()
-  io.layerRam1.default()
   io.layerRam2.default()
 
-  // Layer 0 tilemap processor
-  val tilemapProcessor = Module(new TilemapProcessor)
-  tilemapProcessor.io.layer <> io.layer0
-  tilemapProcessor.io.layerRam <> io.layerRam0
-  tilemapProcessor.io.tileRom <> io.tileRom0
-  tilemapProcessor.io.video <> io.video
+  // Layer 0 processor
+  val layer0Processor = Module(new TilemapProcessor)
+  layer0Processor.io.layer <> io.layer0
+  layer0Processor.io.layerRam <> io.layerRam0
+  layer0Processor.io.tileRom <> io.layer0Rom
+  layer0Processor.io.video <> io.video
+
+  // Layer 1 processor
+  val layer1Processor = Module(new TilemapProcessor)
+  layer1Processor.io.layer <> io.layer1
+  layer1Processor.io.layerRam <> io.layerRam1
+  layer1Processor.io.tileRom <> io.layer1Rom
+  layer1Processor.io.video <> io.video
 
   // Outputs
   io.paletteRam.rd := true.B // read-only
-  io.paletteRam.addr := tilemapProcessor.io.pen.toAddr(io.gameConfig.numColors)
+  io.paletteRam.addr := layer1Processor.io.pen.toAddr(io.gameConfig.numColors)
   io.rgb := RegNext(GPU.decodeRGB(io.paletteRam.dout))
 }
 

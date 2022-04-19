@@ -34,7 +34,6 @@ package cave
 
 import axon.mem._
 import axon.mister._
-import axon.types._
 import cave.types._
 import chisel3._
 
@@ -58,8 +57,10 @@ class MemSys extends Module {
     val soundRom = Flipped(new SoundRomIO)
     /** EEPROM port */
     val eeprom = Flipped(new EEPROMIO)
-    /** Tile ROM 0 port */
-    val tileRom0 = Flipped(new LayerRomIO)
+    /** Layer 0 tile ROM port */
+    val layer0Rom = Flipped(new LayerRomIO)
+    /** Layer 1 tile ROM port */
+    val layer1Rom = Flipped(new LayerRomIO)
     /** DDR port */
     val ddr = BurstReadWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
     /** SDRAM port */
@@ -130,8 +131,8 @@ class MemSys extends Module {
   eepromCache.io.in <> io.eeprom
   eepromCache.io.offset := io.gameConfig.eepromOffset + Config.DDR_DOWNLOAD_OFFSET.U
 
-  // Tile ROM (layer 0) cache
-  val tileRom0Cache = Module(new Cache(CacheConfig(
+  // Layer 0 tile ROM cache
+  val layer0RomCache = Module(new Cache(CacheConfig(
     inAddrWidth = Config.TILE_ROM_ADDR_WIDTH,
     inDataWidth = Config.TILE_ROM_DATA_WIDTH,
     outAddrWidth = Config.sdramConfig.addrWidth,
@@ -140,8 +141,21 @@ class MemSys extends Module {
     depth = 256,
     wrapping = true
   )))
-  tileRom0Cache.io.in.asAsyncReadMemIO <> io.tileRom0
-  tileRom0Cache.io.offset := io.gameConfig.layer0RomOffset
+  layer0RomCache.io.in.asAsyncReadMemIO <> io.layer0Rom
+  layer0RomCache.io.offset := io.gameConfig.layer0RomOffset
+
+  // Layer 0 tile ROM cache
+  val layer1RomCache = Module(new Cache(CacheConfig(
+    inAddrWidth = Config.TILE_ROM_ADDR_WIDTH,
+    inDataWidth = Config.TILE_ROM_DATA_WIDTH,
+    outAddrWidth = Config.sdramConfig.addrWidth,
+    outDataWidth = Config.sdramConfig.dataWidth,
+    lineWidth = Config.sdramConfig.burstLength,
+    depth = 256,
+    wrapping = true
+  )))
+  layer1RomCache.io.in.asAsyncReadMemIO <> io.layer1Rom
+  layer1RomCache.io.offset := io.gameConfig.layer1RomOffset
 
   // DDR arbiter
   val ddrArbiter = Module(new MemArbiter(4, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
@@ -152,9 +166,10 @@ class MemSys extends Module {
   ddrArbiter.io.out <> io.ddr
 
   // SDRAM arbiter
-  val sdramArbiter = Module(new MemArbiter(2, Config.sdramConfig.addrWidth, Config.sdramConfig.dataWidth))
+  val sdramArbiter = Module(new MemArbiter(3, Config.sdramConfig.addrWidth, Config.sdramConfig.dataWidth))
   sdramArbiter.io.in(0) <> sdramDownloadCache.io.out
-  sdramArbiter.io.in(1) <> tileRom0Cache.io.out
+  sdramArbiter.io.in(1) <> layer0RomCache.io.out
+  sdramArbiter.io.in(2) <> layer1RomCache.io.out
   sdramArbiter.io.out <> io.sdram
 
   // Wait until both DDR and SDRAM are ready

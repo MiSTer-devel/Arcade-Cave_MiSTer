@@ -80,7 +80,7 @@ class TilemapProcessor extends Module {
    * @param offset The pixel offset.
    */
   def decodePixels(data: Bits, offset: UVec2): Vec[Bits] = {
-    val word = offset.y(0) // toggle word for alternating scanlines
+    val word = offset.y(0) // toggle the word bit on alternate scanlines
     val pixels_4BPP = VecInit(TilemapProcessor.decode4BPP(data, word))
     val pixels_8BPP = VecInit(TilemapProcessor.decode8BPP(data))
     Mux(io.layer.format === Config.GFX_FORMAT_8BPP.U, pixels_8BPP, pixels_4BPP)

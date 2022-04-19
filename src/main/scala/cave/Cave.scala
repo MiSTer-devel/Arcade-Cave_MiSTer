@@ -72,8 +72,10 @@ class Cave extends Module {
     val soundRom = new SoundRomIO
     /** EEPROM port */
     val eeprom = new EEPROMIO
-    /** Tile ROM 0 port */
-    val tileRom0 = new LayerRomIO
+    /** Layer 0 tile ROM port */
+    val layer0Rom = new LayerRomIO
+    /** Layer 1 tile ROM port */
+    val layer1Rom = new LayerRomIO
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** RGB output */
@@ -91,7 +93,8 @@ class Cave extends Module {
   val gpu = withClockAndReset(io.videoClock, io.videoReset) { Module(new GPU) }
   gpu.io.gameConfig <> io.gameConfig
   gpu.io.video <> io.video
-  gpu.io.tileRom0 <> io.tileRom0
+  gpu.io.layer0Rom <> io.layer0Rom
+  gpu.io.layer1Rom <> io.layer1Rom
   gpu.io.rgb <> io.rgb
 
   // The CPU and registers run in the CPU clock domain
