@@ -54,11 +54,11 @@ class GPU extends Module {
     /** Layer 2 port */
     val layer2 = Input(new Layer)
     /** Layer 0 VRAM port */
-    val layerRam0 = new LayerRamIO
+    val layer0Ram = new LayerRamIO
     /** Layer 1 VRAM port */
-    val layerRam1 = new LayerRamIO
+    val layer1Ram = new LayerRamIO
     /** Layer 2 VRAM port */
-    val layerRam2 = new LayerRamIO
+    val layer2Ram = new LayerRamIO
     /** Sprite RAM port */
     val spriteRam = new SpriteRamIO
     /** Palette RAM port */
@@ -74,19 +74,19 @@ class GPU extends Module {
   })
 
   io.spriteRam.default()
-  io.layerRam2.default()
+  io.layer2Ram.default()
 
   // Layer 0 processor
   val layer0Processor = Module(new TilemapProcessor)
   layer0Processor.io.layer <> io.layer0
-  layer0Processor.io.layerRam <> io.layerRam0
+  layer0Processor.io.layerRam <> io.layer0Ram
   layer0Processor.io.tileRom <> io.layer0Rom
   layer0Processor.io.video <> io.video
 
   // Layer 1 processor
   val layer1Processor = Module(new TilemapProcessor)
   layer1Processor.io.layer <> io.layer1
-  layer1Processor.io.layerRam <> io.layerRam1
+  layer1Processor.io.layerRam <> io.layer1Ram
   layer1Processor.io.tileRom <> io.layer1Rom
   layer1Processor.io.video <> io.video
 
