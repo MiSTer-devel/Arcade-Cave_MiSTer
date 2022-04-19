@@ -55,6 +55,19 @@ class ColorMixer extends Module {
     val rgb = Output(new RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL))
   })
 
+  /**
+   * Calculates the palette RAM address from the given palette entry.
+   *
+   * The address is calculated differently, depending on the maximum number of colors per palette.
+   *
+   * @param pen The palette entry.
+   */
+  def calculatePaletteRamAddr(pen: PaletteEntry): UInt =
+    MuxLookup(io.numColors, pen.palette ## pen.color, Seq(
+      16.U -> pen.palette ## pen.color(3, 0),
+      64.U -> pen.palette ## pen.color(5, 0)
+    ))
+
   // Find the layer with the highest priority
   val layer = MuxCase(ColorMixer.FILL.U, Seq(
     !io.layer2Pen.isTransparent -> ColorMixer.LAYER2.U,
@@ -64,9 +77,9 @@ class ColorMixer extends Module {
 
   // Mux the layers
   val paletteRamAddr = MuxLookup(layer, 0.U, Seq(
-    ColorMixer.LAYER2.U -> io.layer2Pen.toAddr(io.numColors),
-    ColorMixer.LAYER1.U -> io.layer1Pen.toAddr(io.numColors),
-    ColorMixer.LAYER0.U -> io.layer0Pen.toAddr(io.numColors),
+    ColorMixer.LAYER2.U -> calculatePaletteRamAddr(io.layer2Pen),
+    ColorMixer.LAYER1.U -> calculatePaletteRamAddr(io.layer1Pen),
+    ColorMixer.LAYER0.U -> calculatePaletteRamAddr(io.layer0Pen)
   ))
 
   // Outputs

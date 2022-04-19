@@ -59,17 +59,6 @@ class PaletteEntry extends Bundle {
    * One wonders why they didn't do this on first-generation hardware.
    */
   def isTransparent: Bool = color === 0.U
-
-  /**
-   * Converts the palette entry to an address.
-   *
-   * @param numColors The maximum number of colors per palette.
-   */
-  def toAddr(numColors: UInt): UInt =
-    MuxLookup(numColors, palette ## color, Seq(
-      16.U -> palette ## color(3, 0),
-      64.U -> palette ## color(5, 0)
-    ))
 }
 
 object PaletteEntry {
