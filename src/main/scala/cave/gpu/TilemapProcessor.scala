@@ -48,14 +48,14 @@ import chisel3.util._
  */
 class TilemapProcessor extends Module {
   val io = IO(new Bundle {
+    /** Video port */
+    val video = Input(new VideoIO)
     /** Layer port */
     val layer = Input(new Layer)
     /** Layer RAM port */
     val layerRam = new LayerRamIO
     /** Tile ROM port */
     val tileRom = new LayerRomIO
-    /** Video port */
-    val video = Input(new VideoIO)
     /** Palette entry output */
     val pen = Output(new PaletteEntry)
   })
