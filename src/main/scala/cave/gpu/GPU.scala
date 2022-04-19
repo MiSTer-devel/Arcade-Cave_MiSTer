@@ -63,6 +63,8 @@ class GPU extends Module {
     val layer0Rom = new LayerRomIO
     /** Layer 1 tile ROM port */
     val layer1Rom = new LayerRomIO
+    /** Layer 2 tile ROM port */
+    val layer2Rom = new LayerRomIO
     /** Sprite RAM port */
     val spriteRam = new SpriteRamIO
     /** Palette RAM port */
@@ -74,7 +76,6 @@ class GPU extends Module {
   })
 
   io.spriteRam.default()
-  io.layer2Ram.default()
 
   // Layer 0 processor
   val layer0Processor = Module(new TilemapProcessor)
@@ -90,11 +91,19 @@ class GPU extends Module {
   layer1Processor.io.tileRom <> io.layer1Rom
   layer1Processor.io.video <> io.video
 
+  // Layer 2 processor
+  val layer2Processor = Module(new TilemapProcessor)
+  layer2Processor.io.layer <> io.layer2
+  layer2Processor.io.layerRam <> io.layer2Ram
+  layer2Processor.io.tileRom <> io.layer2Rom
+  layer2Processor.io.video <> io.video
+
   // Color mixer
   val colorMixer = Module(new ColorMixer)
   colorMixer.io.numColors := io.gameConfig.numColors
   colorMixer.io.layer0Pen := layer0Processor.io.pen
   colorMixer.io.layer1Pen := layer1Processor.io.pen
+  colorMixer.io.layer2Pen := layer2Processor.io.pen
   colorMixer.io.paletteRam <> io.paletteRam
   colorMixer.io.rgb <> io.rgb
 }

@@ -47,6 +47,8 @@ class ColorMixer extends Module {
     val layer0Pen = Input(new PaletteEntry)
     /** Layer 1 palette entry */
     val layer1Pen = Input(new PaletteEntry)
+    /** Layer 2 palette entry */
+    val layer2Pen = Input(new PaletteEntry)
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
     /** RGB output */
@@ -54,12 +56,17 @@ class ColorMixer extends Module {
   })
 
   // Find the layer with the highest priority
-  val layer = ColorMixer.muxLayers(io.layer0Pen, io.layer1Pen)
+  val layer = MuxCase(ColorMixer.FILL.U, Seq(
+    !io.layer2Pen.isTransparent -> ColorMixer.LAYER2.U,
+    !io.layer1Pen.isTransparent -> ColorMixer.LAYER1.U,
+    !io.layer0Pen.isTransparent -> ColorMixer.LAYER0.U
+  ))
 
   // Mux the layers
   val paletteRamAddr = MuxLookup(layer, 0.U, Seq(
+    ColorMixer.LAYER2.U -> io.layer2Pen.toAddr(io.numColors),
+    ColorMixer.LAYER1.U -> io.layer1Pen.toAddr(io.numColors),
     ColorMixer.LAYER0.U -> io.layer0Pen.toAddr(io.numColors),
-    ColorMixer.LAYER1.U -> io.layer1Pen.toAddr(io.numColors)
   ))
 
   // Outputs
@@ -74,18 +81,6 @@ object ColorMixer {
   val LAYER2 = 2
   val SPRITE = 3
   val FILL = 4
-
-  /**
-   * Calculates the layer with the highest priority for the given layer data.
-   *
-   * @param layer0Pen The layer 0 palette entry.
-   * @param layer1Pen The layer 1 palette entry.
-   */
-  private def muxLayers(layer0Pen: PaletteEntry, layer1Pen: PaletteEntry): UInt =
-    MuxCase(FILL.U, Seq(
-      !layer1Pen.isTransparent -> LAYER1.U,
-      !layer0Pen.isTransparent -> LAYER0.U
-    ))
 
   /**
    * Decodes a RGB color from a 16-bit word.

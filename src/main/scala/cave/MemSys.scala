@@ -61,6 +61,8 @@ class MemSys extends Module {
     val layer0Rom = Flipped(new LayerRomIO)
     /** Layer 1 tile ROM port */
     val layer1Rom = Flipped(new LayerRomIO)
+    /** Layer 2 tile ROM port */
+    val layer2Rom = Flipped(new LayerRomIO)
     /** DDR port */
     val ddr = BurstReadWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
     /** SDRAM port */
@@ -144,7 +146,7 @@ class MemSys extends Module {
   layer0RomCache.io.in.asAsyncReadMemIO <> io.layer0Rom
   layer0RomCache.io.offset := io.gameConfig.layer0RomOffset
 
-  // Layer 0 tile ROM cache
+  // Layer 1 tile ROM cache
   val layer1RomCache = Module(new Cache(CacheConfig(
     inAddrWidth = Config.TILE_ROM_ADDR_WIDTH,
     inDataWidth = Config.TILE_ROM_DATA_WIDTH,
@@ -157,6 +159,19 @@ class MemSys extends Module {
   layer1RomCache.io.in.asAsyncReadMemIO <> io.layer1Rom
   layer1RomCache.io.offset := io.gameConfig.layer1RomOffset
 
+  // Layer 2 tile ROM cache
+  val layer2RomCache = Module(new Cache(CacheConfig(
+    inAddrWidth = Config.TILE_ROM_ADDR_WIDTH,
+    inDataWidth = Config.TILE_ROM_DATA_WIDTH,
+    outAddrWidth = Config.sdramConfig.addrWidth,
+    outDataWidth = Config.sdramConfig.dataWidth,
+    lineWidth = Config.sdramConfig.burstLength,
+    depth = 256,
+    wrapping = true
+  )))
+  layer2RomCache.io.in.asAsyncReadMemIO <> io.layer2Rom
+  layer2RomCache.io.offset := io.gameConfig.layer2RomOffset
+
   // DDR arbiter
   val ddrArbiter = Module(new MemArbiter(4, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
   ddrArbiter.io.in(0) <> ddrDownloadCache.io.out
@@ -166,10 +181,11 @@ class MemSys extends Module {
   ddrArbiter.io.out <> io.ddr
 
   // SDRAM arbiter
-  val sdramArbiter = Module(new MemArbiter(3, Config.sdramConfig.addrWidth, Config.sdramConfig.dataWidth))
+  val sdramArbiter = Module(new MemArbiter(4, Config.sdramConfig.addrWidth, Config.sdramConfig.dataWidth))
   sdramArbiter.io.in(0) <> sdramDownloadCache.io.out
   sdramArbiter.io.in(1) <> layer0RomCache.io.out
   sdramArbiter.io.in(2) <> layer1RomCache.io.out
+  sdramArbiter.io.in(3) <> layer2RomCache.io.out
   sdramArbiter.io.out <> io.sdram
 
   // Wait until both DDR and SDRAM are ready
