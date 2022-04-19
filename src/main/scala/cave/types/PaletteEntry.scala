@@ -63,7 +63,7 @@ class PaletteEntry extends Bundle {
   /**
    * Converts the palette entry to an address.
    *
-   * @param numColors The number of colors per palette.
+   * @param numColors The maximum number of colors per palette.
    */
   def toAddr(numColors: UInt): UInt =
     MuxLookup(numColors, palette ## color, Seq(

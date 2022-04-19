@@ -90,10 +90,13 @@ class GPU extends Module {
   layer1Processor.io.tileRom <> io.layer1Rom
   layer1Processor.io.video <> io.video
 
-  // Outputs
-  io.paletteRam.rd := true.B // read-only
-  io.paletteRam.addr := layer1Processor.io.pen.toAddr(io.gameConfig.numColors)
-  io.rgb := RegNext(GPU.decodeRGB(io.paletteRam.dout))
+  // Color mixer
+  val colorMixer = Module(new ColorMixer)
+  colorMixer.io.numColors := io.gameConfig.numColors
+  colorMixer.io.layer0Pen := layer0Processor.io.pen
+  colorMixer.io.layer1Pen := layer1Processor.io.pen
+  colorMixer.io.paletteRam <> io.paletteRam
+  colorMixer.io.rgb <> io.rgb
 }
 
 object GPU {
