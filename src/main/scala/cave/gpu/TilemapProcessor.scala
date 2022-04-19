@@ -66,12 +66,13 @@ class TilemapProcessor extends Module {
    * @param code   The tile code.
    * @param offset The pixel offset.
    */
-  def calculateTileRomAddr(code: UInt, offset: UVec2): UInt = MuxCase(0.U, Seq(
-    io.layer.format_8x8x4 -> code ## offset.y(2, 1) ## 0.U(3.W),
-    io.layer.format_8x8x8 -> code ## offset.y(2, 0) ## 0.U(3.W),
-    io.layer.format_16x16x4 -> code ## offset.y(3) ## ~offset.x(3) ## offset.y(2, 1) ## 0.U(3.W),
-    io.layer.format_16x16x8 -> code ## offset.y(3) ## ~offset.x(3) ## offset.y(2, 0) ## 0.U(3.W)
-  ))
+  def calculateTileRomAddr(code: UInt, offset: UVec2): UInt =
+    MuxCase(0.U, Seq(
+      io.layer.format_8x8x4 -> code ## offset.y(2, 1) ## 0.U(3.W),
+      io.layer.format_8x8x8 -> code ## offset.y(2, 0) ## 0.U(3.W),
+      io.layer.format_16x16x4 -> code ## offset.y(3) ## ~offset.x(3) ## offset.y(2, 1) ## 0.U(3.W),
+      io.layer.format_16x16x8 -> code ## offset.y(3) ## ~offset.x(3) ## offset.y(2, 0) ## 0.U(3.W)
+    ))
 
   /**
    * Decodes a row of pixels from the given tile ROM data.
