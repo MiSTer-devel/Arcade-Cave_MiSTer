@@ -159,18 +159,6 @@ object GPU {
   }
 
   /**
-   * Decodes a RGB color from a 16-bit word.
-   *
-   * @param data The color data.
-   */
-  def decodeRGB(data: UInt): RGB = {
-    val b = data(4, 0) ## data(4, 2)
-    val r = data(9, 5) ## data(9, 7)
-    val g = data(14, 10) ## data(14, 12)
-    RGB(r, g, b)
-  }
-
-  /**
    * Decodes a list of pixels.
    *
    * @param data The pixel data.

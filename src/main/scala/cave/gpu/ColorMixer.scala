@@ -36,6 +36,7 @@ import axon.types._
 import cave.Config
 import cave.types._
 import chisel3._
+import chisel3.util._
 
 /** The color mixer combines the output from different layers to produce the final pixel. */
 class ColorMixer extends Module {
@@ -52,8 +53,49 @@ class ColorMixer extends Module {
     val rgb = Output(new RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL))
   })
 
+  // Find the layer with the highest priority
+  val layer = ColorMixer.muxLayers(io.layer0Pen, io.layer1Pen)
+
+  // Mux the layers
+  val paletteRamAddr = MuxLookup(layer, 0.U, Seq(
+    ColorMixer.LAYER0.U -> io.layer0Pen.toAddr(io.numColors),
+    ColorMixer.LAYER1.U -> io.layer1Pen.toAddr(io.numColors)
+  ))
+
   // Outputs
   io.paletteRam.rd := true.B // read-only
-  io.paletteRam.addr := io.layer0Pen.toAddr(io.numColors)
-  io.rgb := RegNext(GPU.decodeRGB(io.paletteRam.dout))
+  io.paletteRam.addr := paletteRamAddr
+  io.rgb := RegNext(ColorMixer.decodeRGB(io.paletteRam.dout))
+}
+
+object ColorMixer {
+  val LAYER0 = 0
+  val LAYER1 = 1
+  val LAYER2 = 2
+  val SPRITE = 3
+  val FILL = 4
+
+  /**
+   * Calculates the layer with the highest priority for the given layer data.
+   *
+   * @param layer0Pen The layer 0 palette entry.
+   * @param layer1Pen The layer 1 palette entry.
+   */
+  private def muxLayers(layer0Pen: PaletteEntry, layer1Pen: PaletteEntry): UInt =
+    MuxCase(FILL.U, Seq(
+      !layer1Pen.isTransparent -> LAYER1.U,
+      !layer0Pen.isTransparent -> LAYER0.U
+    ))
+
+  /**
+   * Decodes a RGB color from a 16-bit word.
+   *
+   * @param data The color data.
+   */
+  private def decodeRGB(data: UInt): RGB = {
+    val b = data(4, 0) ## data(4, 2)
+    val r = data(9, 5) ## data(9, 7)
+    val g = data(14, 10) ## data(14, 12)
+    RGB(r, g, b)
+  }
 }
