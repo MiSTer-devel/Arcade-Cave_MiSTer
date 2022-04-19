@@ -40,6 +40,10 @@ import chisel3.util._
 
 /** Represents a layer descriptor. */
 class Layer extends Bundle {
+  /** Index */
+  val index = UInt(2.W)
+  /** Graphics format */
+  val format = UInt(2.W)
   /** Priority */
   val priority = UInt(Config.PRIO_WIDTH.W)
   /** Tile size (8x8 or 16x16) */
@@ -58,7 +62,7 @@ class Layer extends Bundle {
   val scroll = new UVec2(Config.LAYER_SCROLL_WIDTH)
 
   /**
-   * Returns the magic offset value for the given layer index.
+   * Returns the adjusted scroll offset for the layer.
    *
    * The X offset in DDP is 0x195 for the first layer 0x195 = 405, 405 + 107 (0x6b) = 512.
    *
@@ -66,18 +70,28 @@ class Layer extends Bundle {
    * small tiles).
    *
    * The Y offset in DDP is 0x1EF = 495, 495 + 17 = 512.
-   *
-   * @param index The layer index.
    */
-  def magicOffset(index: UInt): UVec2 = {
+  def adjustedScroll: UVec2 = {
     val x = MuxLookup(index, 0.U, Seq(
       0.U -> 0x6b.U,
       1.U -> 0x6c.U,
       2.U -> Mux(tileSize, 0x6d.U, 0x75.U)
     ))
     val y = 0x11.U
-    UVec2(x, y)
+    UVec2(x, y) + scroll
   }
+
+  /** Returns true if the layer format is 8x8x4BPP. */
+  def format_8x8x4: Bool = !tileSize && format === Config.GFX_FORMAT_4BPP.U
+
+  /** Returns true if the layer format is 8x8x8. */
+  def format_8x8x8: Bool = !tileSize && format === Config.GFX_FORMAT_8BPP.U
+
+  /** Returns true if the layer format is 16x16x4BPP. */
+  def format_16x16x4: Bool = tileSize && format === Config.GFX_FORMAT_4BPP.U
+
+  /** Returns true if the layer format is 16x16x8BPP. */
+  def format_16x16x8: Bool = tileSize && format === Config.GFX_FORMAT_8BPP.U
 }
 
 object Layer {
@@ -98,11 +112,15 @@ object Layer {
    *      | ---- ---- ---- --xx | priority
    * }}}
    *
-   * @param data The layer data.
+   * @param index  The index of the layer.
+   * @param format The graphics format of the layer.
+   * @param data   The layer data.
    */
-  def decode(data: Bits): Layer = {
+  def decode(index: UInt, format: UInt, data: Bits): Layer = {
     val words = Util.decode(data, 3, 16)
     val layer = Wire(new Layer)
+    layer.index := index
+    layer.format := format
     layer.priority := words(2)(1, 0)
     layer.tileSize := words(1)(13)
     layer.disable := words(2)(4)

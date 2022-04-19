@@ -72,8 +72,8 @@ class Cave extends Module {
     val soundRom = new SoundRomIO
     /** EEPROM port */
     val eeprom = new EEPROMIO
-    /** Tile ROM port */
-    val tileRom = new TileRomIO
+    /** Tile ROM 0 port */
+    val tileRom0 = new LayerRomIO
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** RGB output */
@@ -87,13 +87,11 @@ class Cave extends Module {
   // A write-only memory interface is used to connect the CPU to the EEPROM
   val eepromMem = Wire(WriteMemIO(CPU.ADDR_WIDTH, CPU.DATA_WIDTH))
 
-  // GPU
-  val gpu = Module(new GPU)
-  gpu.io.video <> io.video
-  gpu.io.frameReady := Util.rising(ShiftRegister(frameStart, 2))
+  // The GPU runs in the video clock domain
+  val gpu = withClockAndReset(io.videoClock, io.videoReset) { Module(new GPU) }
   gpu.io.gameConfig <> io.gameConfig
-  gpu.io.options <> io.options
-  gpu.io.tileRom <> io.tileRom
+  gpu.io.video <> io.video
+  gpu.io.tileRom0 <> io.tileRom0
   gpu.io.rgb <> io.rgb
 
   // The CPU and registers run in the CPU clock domain
@@ -137,7 +135,7 @@ class Cave extends Module {
       dataWidthB = Config.SPRITE_RAM_GPU_DATA_WIDTH,
       maskEnable = true
     ))
-    spriteRam.io.clockB := clock
+    spriteRam.io.clockB := io.videoClock
 
     // Layer 0 VRAM
     val layerRam0 = Module(new TrueDualPortRam(
@@ -147,7 +145,7 @@ class Cave extends Module {
       dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH,
       maskEnable = true
     ))
-    layerRam0.io.clockB := clock
+    layerRam0.io.clockB := io.videoClock
 
     // Layer 1 VRAM
     val layerRam1 = Module(new TrueDualPortRam(
@@ -157,7 +155,7 @@ class Cave extends Module {
       dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH,
       maskEnable = true
     ))
-    layerRam1.io.clockB := clock
+    layerRam1.io.clockB := io.videoClock
 
     // Layer 2 VRAM
     val layerRam2 = Module(new TrueDualPortRam(
@@ -167,7 +165,7 @@ class Cave extends Module {
       dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH,
       maskEnable = true
     ))
-    layerRam2.io.clockB := clock
+    layerRam2.io.clockB := io.videoClock
 
     // Palette RAM
     val paletteRam = Module(new TrueDualPortRam(
@@ -177,7 +175,7 @@ class Cave extends Module {
       dataWidthB = Config.PALETTE_RAM_GPU_DATA_WIDTH,
       maskEnable = true
     ))
-    paletteRam.io.clockB := clock
+    paletteRam.io.clockB := io.videoClock
 
     // Layer registers
     val layer0Regs = Module(new RegisterFile(Config.LAYER_REGS_COUNT))
@@ -188,14 +186,13 @@ class Cave extends Module {
     val videoRegs = Module(new RegisterFile(Config.VIDEO_REGS_COUNT))
 
     // GPU
-    gpu.io.videoRegs := videoRegs.io.regs.asUInt
-    gpu.io.layer0 := Layer.decode(layer0Regs.io.regs.asUInt)
-    gpu.io.layer1 := Layer.decode(layer1Regs.io.regs.asUInt)
-    gpu.io.layer2 := Layer.decode(layer2Regs.io.regs.asUInt)
-    gpu.io.spriteRam <> spriteRam.io.portB
+    gpu.io.layer0 := Layer.decode(0.U, io.gameConfig.layer0Format, layer0Regs.io.regs.asUInt)
+    gpu.io.layer1 := Layer.decode(1.U, io.gameConfig.layer1Format, layer1Regs.io.regs.asUInt)
+    gpu.io.layer2 := Layer.decode(2.U, io.gameConfig.layer2Format, layer2Regs.io.regs.asUInt)
     gpu.io.layerRam0 <> layerRam0.io.portB
     gpu.io.layerRam1 <> layerRam1.io.portB
     gpu.io.layerRam2 <> layerRam2.io.portB
+    gpu.io.spriteRam <> spriteRam.io.portB
     gpu.io.paletteRam <> paletteRam.io.portB
 
     // YMZ280B

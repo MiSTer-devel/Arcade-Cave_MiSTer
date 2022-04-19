@@ -50,8 +50,6 @@ class MemSys extends Module {
   val io = IO(new Bundle {
     /** Game config port */
     val gameConfig = Input(GameConfig())
-    /** Options port */
-    val options = OptionsIO()
     /** IOCTL port */
     val ioctl = IOCTL()
     /** Program ROM port */
@@ -60,16 +58,16 @@ class MemSys extends Module {
     val soundRom = Flipped(new SoundRomIO)
     /** EEPROM port */
     val eeprom = Flipped(new EEPROMIO)
-    /** Tile ROM port */
-    val tileRom = Flipped(new TileRomIO)
+    /** Tile ROM 0 port */
+    val tileRom0 = Flipped(new LayerRomIO)
     /** DDR port */
     val ddr = BurstReadWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
     /** SDRAM port */
     val sdram = BurstReadWriteMemIO(Config.sdramConfig.addrWidth, Config.sdramConfig.dataWidth)
   })
 
-  // The DDR download cache is used to buffer download data, so that a complete word can be written
-  // to memory.
+  // The DDR download cache is used to buffer IOCTL data, so that complete words can be written to
+  // memory.
   val ddrDownloadCache = Module(new Cache(CacheConfig(
     inAddrWidth = IOCTL.ADDR_WIDTH,
     inDataWidth = IOCTL.DATA_WIDTH,
@@ -81,8 +79,8 @@ class MemSys extends Module {
   ddrDownloadCache.io.offset := Config.DDR_DOWNLOAD_OFFSET.U
   ddrDownloadCache.io.in <> io.ioctl.asAsyncReadWriteMemIO(IOCTL.ROM_INDEX)
 
-  // The SDRAM download cache is used to buffer download data, so that a complete word can be
-  // written to memory.
+  // The SDRAM download cache is used to buffer IOCTL data, so that complete words can be written
+  // to memory.
   val sdramDownloadCache = Module(new Cache(CacheConfig(
     inAddrWidth = IOCTL.ADDR_WIDTH,
     inDataWidth = IOCTL.DATA_WIDTH,
@@ -96,7 +94,7 @@ class MemSys extends Module {
   sdramDownloadCache.io.in <> io.ioctl.asAsyncReadWriteMemIO(IOCTL.ROM_INDEX)
 
   // Program ROM cache
-  val progRomCache1 = Module(new Cache(CacheConfig(
+  val progRomCache = Module(new Cache(CacheConfig(
     inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
     inDataWidth = Config.PROG_ROM_DATA_WIDTH,
     outAddrWidth = Config.ddrConfig.addrWidth,
@@ -104,20 +102,11 @@ class MemSys extends Module {
     lineWidth = 4,
     depth = 256
   )))
-  progRomCache1.io.offset := io.gameConfig.progRomOffset + Config.DDR_DOWNLOAD_OFFSET.U
-  val progRomCache2 = Module(new Cache(CacheConfig(
-    inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
-    inDataWidth = Config.PROG_ROM_DATA_WIDTH,
-    outAddrWidth = Config.sdramConfig.addrWidth,
-    outDataWidth = Config.sdramConfig.dataWidth,
-    lineWidth = Config.sdramConfig.burstLength,
-    depth = 256,
-    wrapping = true
-  )))
-  progRomCache2.io.offset := io.gameConfig.progRomOffset
+  progRomCache.io.offset := io.gameConfig.progRomOffset + Config.DDR_DOWNLOAD_OFFSET.U
+  progRomCache.io.in.asAsyncReadMemIO <> io.progRom
 
   // Sound ROM cache
-  val soundRomCache1 = Module(new Cache(CacheConfig(
+  val soundRomCache = Module(new Cache(CacheConfig(
     inAddrWidth = Config.SOUND_ROM_ADDR_WIDTH,
     inDataWidth = Config.SOUND_ROM_DATA_WIDTH,
     outAddrWidth = Config.ddrConfig.addrWidth,
@@ -126,17 +115,8 @@ class MemSys extends Module {
     depth = 256,
     wrapping = true
   )))
-  soundRomCache1.io.offset := io.gameConfig.soundRomOffset + Config.DDR_DOWNLOAD_OFFSET.U
-  val soundRomCache2 = Module(new Cache(CacheConfig(
-    inAddrWidth = Config.SOUND_ROM_ADDR_WIDTH,
-    inDataWidth = Config.SOUND_ROM_DATA_WIDTH,
-    outAddrWidth = Config.sdramConfig.addrWidth,
-    outDataWidth = Config.sdramConfig.dataWidth,
-    lineWidth = Config.sdramConfig.burstLength,
-    depth = 256,
-    wrapping = true
-  )))
-  soundRomCache2.io.offset := io.gameConfig.soundRomOffset
+  soundRomCache.io.in.asAsyncReadMemIO <> io.soundRom
+  soundRomCache.io.offset := io.gameConfig.soundRomOffset + Config.DDR_DOWNLOAD_OFFSET.U
 
   // EEPROM cache
   val eepromCache = Module(new Cache(CacheConfig(
@@ -147,37 +127,36 @@ class MemSys extends Module {
     lineWidth = 4,
     depth = 4
   )))
+  eepromCache.io.in <> io.eeprom
   eepromCache.io.offset := io.gameConfig.eepromOffset + Config.DDR_DOWNLOAD_OFFSET.U
 
+  // Tile ROM (layer 0) cache
+  val tileRom0Cache = Module(new Cache(CacheConfig(
+    inAddrWidth = Config.TILE_ROM_ADDR_WIDTH,
+    inDataWidth = Config.TILE_ROM_DATA_WIDTH,
+    outAddrWidth = Config.sdramConfig.addrWidth,
+    outDataWidth = Config.sdramConfig.dataWidth,
+    lineWidth = Config.sdramConfig.burstLength,
+    depth = 256,
+    wrapping = true
+  )))
+  tileRom0Cache.io.in.asAsyncReadMemIO <> io.tileRom0
+  tileRom0Cache.io.offset := io.gameConfig.layer0RomOffset
+
   // DDR arbiter
-  val ddrArbiter = Module(new MemArbiter(5, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
+  val ddrArbiter = Module(new MemArbiter(4, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
   ddrArbiter.io.in(0) <> ddrDownloadCache.io.out
-  ddrArbiter.io.in(1) <> progRomCache1.io.out
-  ddrArbiter.io.in(2) <> soundRomCache1.io.out
+  ddrArbiter.io.in(1) <> progRomCache.io.out
+  ddrArbiter.io.in(2) <> soundRomCache.io.out
   ddrArbiter.io.in(3) <> eepromCache.io.out
-  ddrArbiter.io.in(4).asBurstReadMemIO <> io.tileRom
-  ddrArbiter.io.in(4).addr := io.tileRom.addr + Config.DDR_DOWNLOAD_OFFSET.U // override tile ROM address
   ddrArbiter.io.out <> io.ddr
 
   // SDRAM arbiter
-  val sdramArbiter = Module(new MemArbiter(3, Config.sdramConfig.addrWidth, Config.sdramConfig.dataWidth))
+  val sdramArbiter = Module(new MemArbiter(2, Config.sdramConfig.addrWidth, Config.sdramConfig.dataWidth))
   sdramArbiter.io.in(0) <> sdramDownloadCache.io.out
-  sdramArbiter.io.in(1) <> soundRomCache2.io.out
-  sdramArbiter.io.in(2) <> progRomCache2.io.out
+  sdramArbiter.io.in(1) <> tileRom0Cache.io.out
   sdramArbiter.io.out <> io.sdram
 
-  io.progRom <> AsyncReadWriteMemIO.demux(io.options.sdram, Seq(
-    false.B -> progRomCache1.io.in,
-    true.B -> progRomCache2.io.in
-  )).asAsyncReadMemIO
-
-  io.soundRom <> AsyncReadWriteMemIO.demux(io.options.sdram, Seq(
-    false.B -> soundRomCache1.io.in,
-    true.B -> soundRomCache2.io.in
-  )).asAsyncReadMemIO
-
-  io.eeprom <> eepromCache.io.in
-
   // Wait until both DDR and SDRAM are ready
-  io.ioctl.waitReq := ddrDownloadCache.io.in.waitReq || (io.options.sdram && sdramDownloadCache.io.in.waitReq)
+  io.ioctl.waitReq := ddrDownloadCache.io.in.waitReq || sdramDownloadCache.io.in.waitReq
 }

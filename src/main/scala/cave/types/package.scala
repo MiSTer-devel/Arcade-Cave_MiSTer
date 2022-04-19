@@ -59,6 +59,9 @@ package object types {
   /** Tile ROM IO */
   class TileRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH)
 
+  /** Layer ROM IO */
+  class LayerRomIO extends AsyncReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH)
+
   /** Layer RAM IO (GPU-side) */
   class LayerRamIO extends ReadMemIO(Config.LAYER_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
 

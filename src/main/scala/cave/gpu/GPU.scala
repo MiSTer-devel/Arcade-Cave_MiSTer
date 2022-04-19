@@ -47,14 +47,6 @@ class GPU extends Module {
   val io = IO(new Bundle {
     /** Game config port */
     val gameConfig = Input(GameConfig())
-    /** Options port */
-    val options = OptionsIO()
-    /** Video port */
-    val video = Flipped(VideoIO())
-    /** Asserted when the program is ready for a new frame */
-    val frameReady = Input(Bool())
-    /** Video registers port */
-    val videoRegs = Input(Bits(Config.VIDEO_REGS_GPU_DATA_WIDTH.W))
     /** Layer 0 port */
     val layer0 = Input(new Layer)
     /** Layer 1 port */
@@ -71,8 +63,10 @@ class GPU extends Module {
     val spriteRam = new SpriteRamIO
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
-    /** Tile ROM port */
-    val tileRom = new TileRomIO
+    /** Tile ROM 0 port */
+    val tileRom0 = new LayerRomIO
+    /** Video port */
+    val video = Flipped(VideoIO())
     /** RGB output */
     val rgb = Output(new RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL))
   })
@@ -81,12 +75,17 @@ class GPU extends Module {
   io.layerRam1.default()
   io.layerRam2.default()
 
+  // Layer 0 tilemap processor
   val tilemapProcessor = Module(new TilemapProcessor)
   tilemapProcessor.io.layer <> io.layer0
   tilemapProcessor.io.layerRam <> io.layerRam0
-  tilemapProcessor.io.paletteRam <> io.paletteRam
-  tilemapProcessor.io.tileRom <> io.tileRom
-  tilemapProcessor.io.rgb <> io.rgb
+  tilemapProcessor.io.tileRom <> io.tileRom0
+  tilemapProcessor.io.video <> io.video
+
+  // Outputs
+  io.paletteRam.rd := true.B // read-only
+  io.paletteRam.addr := tilemapProcessor.io.pen.toAddr(io.gameConfig.numColors)
+  io.rgb := RegNext(GPU.decodeRGB(io.paletteRam.dout))
 }
 
 object GPU {
@@ -146,6 +145,18 @@ object GPU {
     mem.mask := 0.U
     mem.din := data
     mem
+  }
+
+  /**
+   * Decodes a RGB color from a 16-bit word.
+   *
+   * @param data The color data.
+   */
+  def decodeRGB(data: UInt): RGB = {
+    val b = data(4, 0) ## data(4, 2)
+    val r = data(9, 5) ## data(9, 7)
+    val g = data(14, 10) ## data(14, 12)
+    RGB(r, g, b)
   }
 
   /**
