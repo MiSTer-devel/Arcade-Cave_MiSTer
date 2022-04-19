@@ -63,6 +63,8 @@ class MemSys extends Module {
     val layer1Rom = Flipped(new LayerRomIO)
     /** Layer 2 tile ROM port */
     val layer2Rom = Flipped(new LayerRomIO)
+    /** Sprite tile ROM port */
+    val spriteRom = Flipped(new SpriteRomIO)
     /** DDR port */
     val ddr = BurstReadWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
     /** SDRAM port */
@@ -173,11 +175,13 @@ class MemSys extends Module {
   layer2RomCache.io.offset := io.gameConfig.layer2RomOffset
 
   // DDR arbiter
-  val ddrArbiter = Module(new MemArbiter(4, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
+  val ddrArbiter = Module(new MemArbiter(5, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
   ddrArbiter.io.in(0) <> ddrDownloadCache.io.out
   ddrArbiter.io.in(1) <> progRomCache.io.out
   ddrArbiter.io.in(2) <> soundRomCache.io.out
   ddrArbiter.io.in(3) <> eepromCache.io.out
+  ddrArbiter.io.in(4).asBurstReadMemIO <> io.spriteRom
+  ddrArbiter.io.in(4).addr := io.spriteRom.addr + io.gameConfig.spriteRomOffset + Config.DDR_DOWNLOAD_OFFSET.U // override tile ROM address
   ddrArbiter.io.out <> io.ddr
 
   // SDRAM arbiter

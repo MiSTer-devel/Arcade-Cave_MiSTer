@@ -65,6 +65,8 @@ class GPU extends Module {
     val layer1Rom = new LayerRomIO
     /** Layer 2 tile ROM port */
     val layer2Rom = new LayerRomIO
+    /** Sprite tile ROM port */
+    val spriteRom = new SpriteRomIO
     /** Sprite RAM port */
     val spriteRam = new SpriteRamIO
     /** Palette RAM port */
@@ -76,6 +78,7 @@ class GPU extends Module {
   })
 
   io.spriteRam.default()
+  io.spriteRom.default()
 
   // Layer 0 processor
   val layer0Processor = Module(new TilemapProcessor)
