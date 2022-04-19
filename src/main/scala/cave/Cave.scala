@@ -50,6 +50,10 @@ import chisel3.util._
  */
 class Cave extends Module {
   val io = IO(new Bundle {
+    /** Video clock domain */
+    val videoClock = Input(Clock())
+    /** Video reset */
+    val videoReset = Input(Bool())
     /** CPU clock domain */
     val cpuClock = Input(Clock())
     /** CPU reset */
