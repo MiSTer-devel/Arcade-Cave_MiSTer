@@ -77,9 +77,9 @@ class ColorMixer extends Module {
 
   // Mux the layers
   val paletteRamAddr = MuxLookup(layer, 0.U, Seq(
-    ColorMixer.LAYER2.U -> calculatePaletteRamAddr(io.layer2Pen),
-    ColorMixer.LAYER1.U -> calculatePaletteRamAddr(io.layer1Pen),
-    ColorMixer.LAYER0.U -> calculatePaletteRamAddr(io.layer0Pen)
+    ColorMixer.LAYER2.U -> 1.U ## calculatePaletteRamAddr(io.layer2Pen),
+    ColorMixer.LAYER1.U -> 1.U ## calculatePaletteRamAddr(io.layer1Pen),
+    ColorMixer.LAYER0.U -> 1.U ## calculatePaletteRamAddr(io.layer0Pen)
   ))
 
   // Outputs

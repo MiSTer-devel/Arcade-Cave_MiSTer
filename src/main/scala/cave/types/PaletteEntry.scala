@@ -62,9 +62,9 @@ class PaletteEntry extends Bundle {
 }
 
 object PaletteEntry {
-  /** The width of a palette index (max. 128 palettes) */
-  val PALETTE_WIDTH = 7
-  /** The width of a color index (max. 256 colors) */
+  /** The width of a palette index (64 palettes) */
+  val PALETTE_WIDTH = 6
+  /** The width of a color index (256 colors) */
   val COLOR_WIDTH = 8
 
   /**

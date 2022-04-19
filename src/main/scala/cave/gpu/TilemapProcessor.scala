@@ -121,7 +121,7 @@ class TilemapProcessor extends Module {
   io.layerRam.addr := layerRamAddrReg
   io.tileRom.rd := true.B // read-only
   io.tileRom.addr := calculateTileRomAddr(tileReg.code, offset)
-  io.pen := PaletteEntry(1.U ## colorReg, pixReg(offset.x(2, 0)))
+  io.pen := PaletteEntry(colorReg, pixReg(offset.x(2, 0)))
 }
 
 object TilemapProcessor {
