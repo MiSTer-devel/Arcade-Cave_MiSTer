@@ -130,16 +130,6 @@ class Cave extends Module {
       maskEnable = true
     ))
 
-    // Sprite RAM
-    val spriteRam = Module(new TrueDualPortRam(
-      addrWidthA = Config.SPRITE_RAM_ADDR_WIDTH,
-      dataWidthA = Config.SPRITE_RAM_DATA_WIDTH,
-      addrWidthB = Config.SPRITE_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.SPRITE_RAM_GPU_DATA_WIDTH,
-      maskEnable = true
-    ))
-    spriteRam.io.clockB := io.videoClock
-
     // Layer 0 VRAM
     val layer0Ram = Module(new TrueDualPortRam(
       addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
@@ -169,6 +159,16 @@ class Cave extends Module {
       maskEnable = true
     ))
     layer2Ram.io.clockB := io.videoClock
+
+    // Sprite RAM
+    val spriteRam = Module(new TrueDualPortRam(
+      addrWidthA = Config.SPRITE_RAM_ADDR_WIDTH,
+      dataWidthA = Config.SPRITE_RAM_DATA_WIDTH,
+      addrWidthB = Config.SPRITE_RAM_GPU_ADDR_WIDTH,
+      dataWidthB = Config.SPRITE_RAM_GPU_DATA_WIDTH,
+      maskEnable = true
+    ))
+    spriteRam.io.clockB := io.videoClock
 
     // Palette RAM
     val paletteRam = Module(new TrueDualPortRam(
@@ -216,14 +216,14 @@ class Cave extends Module {
     // Set memory interface defaults, the actual values are assigned in the memory map
     io.progRom.default()
     mainRam.io.default()
-    paletteRam.io.portA.default()
-    spriteRam.io.portA.default()
     layer0Ram.io.portA.default()
     layer1Ram.io.portA.default()
     layer2Ram.io.portA.default()
     layer0Regs.io.mem.default()
     layer1Regs.io.mem.default()
     layer2Regs.io.mem.default()
+    spriteRam.io.portA.default()
+    paletteRam.io.portA.default()
     videoRegs.io.mem.default()
     ymz.io.cpu.default()
     eepromMem.default()

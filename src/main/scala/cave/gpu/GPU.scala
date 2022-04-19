@@ -59,14 +59,14 @@ class GPU extends Module {
     val layer1Ram = new LayerRamIO
     /** Layer 2 VRAM port */
     val layer2Ram = new LayerRamIO
-    /** Sprite RAM port */
-    val spriteRam = new SpriteRamIO
-    /** Palette RAM port */
-    val paletteRam = new PaletteRamIO
     /** Layer 0 tile ROM port */
     val layer0Rom = new LayerRomIO
     /** Layer 1 tile ROM port */
     val layer1Rom = new LayerRomIO
+    /** Sprite RAM port */
+    val spriteRam = new SpriteRamIO
+    /** Palette RAM port */
+    val paletteRam = new PaletteRamIO
     /** Video port */
     val video = Flipped(VideoIO())
     /** RGB output */
