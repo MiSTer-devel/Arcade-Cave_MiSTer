@@ -87,10 +87,6 @@ object UVec2 {
     pos
   }
 
-  /**
-   * Creates a zero vector.
-   *
-   * @param width The data width.
-   */
-  def zero(width: Int) = UVec2(0.U(width.W), 0.U(width.W))
+  /** Creates a zero vector. */
+  def zero = UVec2(0.U, 0.U)
 }
