@@ -84,7 +84,7 @@ object PaletteEntry {
    * @param palette The palette index.
    * @param color   The color index.
    */
-  def apply(palette: UInt, color: UInt): PaletteEntry = {
+  def apply(palette: Bits, color: Bits): PaletteEntry = {
     val wire = Wire(new PaletteEntry)
     wire.palette := palette
     wire.color := color
