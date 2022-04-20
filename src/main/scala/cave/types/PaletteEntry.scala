@@ -32,15 +32,17 @@
 
 package cave.types
 
+import cave.Config
 import chisel3._
-import chisel3.util._
 
-/** Represent an entry in a color palette. */
+/** Represent an entry in a color palette and a priority. */
 class PaletteEntry extends Bundle {
+  /** Priority */
+  val priority = UInt(Config.PRIO_WIDTH.W)
   /** Palette index */
-  val palette = UInt(PaletteEntry.PALETTE_WIDTH.W)
+  val palette = UInt(Config.PALETTE_WIDTH.W)
   /** Color index */
-  val color = UInt(PaletteEntry.COLOR_WIDTH.W)
+  val color = UInt(Config.COLOR_WIDTH.W)
 
   /**
    * Asserted when the palette entry is transparent.
@@ -62,21 +64,21 @@ class PaletteEntry extends Bundle {
 }
 
 object PaletteEntry {
-  /** The width of a palette index (64 palettes) */
-  val PALETTE_WIDTH = 6
-  /** The width of a color index (256 colors) */
-  val COLOR_WIDTH = 8
-
   /**
    * Constructs a new palette entry.
    *
-   * @param palette The palette index.
-   * @param color   The color index.
+   * @param priority The priority value.
+   * @param palette  The palette index.
+   * @param color    The color index.
    */
-  def apply(palette: Bits, color: Bits): PaletteEntry = {
+  def apply(priority: Bits, palette: Bits, color: Bits): PaletteEntry = {
     val wire = Wire(new PaletteEntry)
+    wire.priority := priority
     wire.palette := palette
     wire.color := color
     wire
   }
+
+  /** Returns an empty palette entry. */
+  def zero: PaletteEntry = apply(0.U, 0.U, 0.U)
 }
