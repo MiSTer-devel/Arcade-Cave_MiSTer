@@ -36,7 +36,6 @@ import axon.Util
 import axon.gfx._
 import axon.mem._
 import axon.types._
-import axon.util.Counter
 import cave._
 import cave.types._
 import chisel3._
@@ -73,10 +72,10 @@ class GPU extends Module {
     val layer1Rom = new LayerRomIO
     /** Layer 2 tile ROM port */
     val layer2Rom = new LayerRomIO
-    /** Sprite tile ROM port */
-    val spriteRom = new SpriteRomIO
     /** Sprite RAM port */
     val spriteRam = new SpriteRamIO
+    /** Sprite tile ROM port */
+    val spriteRom = new SpriteRomIO
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
     /** RGB output */
@@ -88,24 +87,24 @@ class GPU extends Module {
 
   // Layer 0 processor
   val layer0Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
+  layer0Processor.io.video <> io.video
   layer0Processor.io.layer <> io.layer0
   layer0Processor.io.layerRam <> io.layer0Ram
   layer0Processor.io.tileRom <> io.layer0Rom
-  layer0Processor.io.video <> io.video
 
   // Layer 1 processor
   val layer1Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
+  layer1Processor.io.video <> io.video
   layer1Processor.io.layer <> io.layer1
   layer1Processor.io.layerRam <> io.layer1Ram
   layer1Processor.io.tileRom <> io.layer1Rom
-  layer1Processor.io.video <> io.video
 
   // Layer 2 processor
   val layer2Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
+  layer2Processor.io.video <> io.video
   layer2Processor.io.layer <> io.layer2
   layer2Processor.io.layerRam <> io.layer2Ram
   layer2Processor.io.tileRom <> io.layer2Rom
-  layer2Processor.io.video <> io.video
 
   // Color mixer
   val colorMixer = withClockAndReset(io.videoClock, io.videoReset) { Module(new ColorMixer) }
@@ -133,7 +132,7 @@ object GPU {
    * Transforms a frame buffer pixel position to a memory address, applying the optional flip and
    * rotate transforms.
    *
-   * @param pos    The pixel position.
+   * @param pos    The pixel position vector.
    * @param flip   Flips the image.
    * @param rotate Rotates the image 90 degrees.
    * @return An address value.
@@ -149,6 +148,15 @@ object GPU {
     )
   }
 
+  /**
+   * Transforms a frame buffer pixel position to a memory address, applying the optional flip and
+   * rotate transforms.
+   *
+   * @param pos    The pixel position vector.
+   * @param flip   Flips the image.
+   * @param rotate Rotates the image 90 degrees.
+   * @return An address value.
+   */
   def transformAddr(pos: SVec2, flip: Bool, rotate: Bool): UInt = {
     val x = pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0)
     val y = pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
@@ -199,13 +207,20 @@ object GPU {
   /**
    * Calculates the visibility of a pixel.
    *
-   * @param pos The pixel position.
+   * @param pos The pixel position vector.
    * @return A boolean value indicating whether the pixel is visible.
    */
   def isVisible(pos: UVec2): Bool =
     Util.between(pos.x, 0 until Config.SCREEN_WIDTH) &&
       Util.between(pos.y, 0 until Config.SCREEN_HEIGHT)
 
+
+  /**
+   * Calculates the visibility of a pixel.
+   *
+   * @param pos The pixel position vector.
+   * @return A boolean value indicating whether the pixel is visible.
+   */
   def isVisible(pos: SVec2): Bool =
     Util.between(pos.x, 0 until Config.SCREEN_WIDTH) &&
       Util.between(pos.y, 0 until Config.SCREEN_HEIGHT)
