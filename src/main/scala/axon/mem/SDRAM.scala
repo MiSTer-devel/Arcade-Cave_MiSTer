@@ -218,8 +218,8 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   val requestReg = RegEnable(request, latch)
 
   // Bank and address registers
-  val bankReg = RegInit(0.U)
-  val addrReg = RegInit(0.U)
+  val bankReg = Reg(UInt())
+  val addrReg = Reg(UInt())
 
   // Data I/O registers
   //
