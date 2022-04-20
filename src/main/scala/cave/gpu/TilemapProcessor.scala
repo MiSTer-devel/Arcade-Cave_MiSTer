@@ -48,6 +48,10 @@ import chisel3.util._
  */
 class TilemapProcessor extends Module {
   val io = IO(new Bundle {
+    /** Graphics format */
+    val format = Input(UInt(2.W))
+    /** Layer scroll offset */
+    val offset = Input(new UVec2(Config.LAYER_SCROLL_WIDTH))
     /** Video port */
     val video = Input(new VideoIO)
     /** Layer port */
@@ -66,32 +70,25 @@ class TilemapProcessor extends Module {
    * @param code   The tile code.
    * @param offset The pixel offset.
    */
-  def calculateTileRomAddr(code: UInt, offset: UVec2): UInt =
-    MuxCase(0.U, Seq(
-      io.layer.format_8x8x4 -> code ## offset.y(2, 1) ## 0.U(3.W),
-      io.layer.format_8x8x8 -> code ## offset.y(2, 0) ## 0.U(3.W),
-      io.layer.format_16x16x4 -> code ## offset.y(3) ## ~offset.x(3) ## offset.y(2, 1) ## 0.U(3.W),
-      io.layer.format_16x16x8 -> code ## offset.y(3) ## ~offset.x(3) ## offset.y(2, 0) ## 0.U(3.W)
-    ))
+  def calculateTileRomAddr(code: UInt, offset: UVec2): UInt = {
+    val format_8x8x4 = !io.layer.tileSize && io.format === Config.GFX_FORMAT_4BPP.U
+    val format_8x8x8 = !io.layer.tileSize && io.format === Config.GFX_FORMAT_8BPP.U
+    val format_16x16x4 = io.layer.tileSize && io.format === Config.GFX_FORMAT_4BPP.U
+    val format_16x16x8 = io.layer.tileSize && io.format === Config.GFX_FORMAT_8BPP.U
 
-  /**
-   * Decodes a row of pixels from the given tile ROM data.
-   *
-   * @param data   The 64-bit tile ROM data.
-   * @param offset The pixel offset.
-   */
-  def decodePixels(data: Bits, offset: UVec2): Vec[Bits] = {
-    val word = offset.y(0) // toggle the word bit on alternate scanlines
-    val pixels_4BPP = VecInit(TilemapProcessor.decode4BPP(data, word))
-    val pixels_8BPP = VecInit(TilemapProcessor.decode8BPP(data))
-    Mux(io.layer.format === Config.GFX_FORMAT_8BPP.U, pixels_8BPP, pixels_4BPP)
+    MuxCase(0.U, Seq(
+      format_8x8x4 -> code ## offset.y(2, 1) ## 0.U(3.W),
+      format_8x8x8 -> code ## offset.y(2, 0) ## 0.U(3.W),
+      format_16x16x4 -> code ## offset.y(3) ## ~offset.x(3) ## offset.y(2, 1) ## 0.U(3.W),
+      format_16x16x8 -> code ## offset.y(3) ## ~offset.x(3) ## offset.y(2, 0) ## 0.U(3.W)
+    ))
   }
 
   // Assert the disable flag if the layer is disabled
-  val disable = io.layer.format === Config.GFX_FORMAT_UNKNOWN.U || io.layer.disable
+  val disable = io.format === Config.GFX_FORMAT_UNKNOWN.U || io.layer.disable
 
   // Pixel position
-  val pos = io.video.pos + io.layer.adjustedScroll
+  val pos = io.video.pos + io.layer.scroll + io.offset
 
   // Pixel offset
   val offset = {
@@ -118,7 +115,7 @@ class TilemapProcessor extends Module {
   val tileReg = RegEnable(Tile.decode(io.layerRam.dout, io.layer.tileSize), latchTile)
   val priorityReg = RegEnable(tileReg.priority, latchColor)
   val colorReg = RegEnable(tileReg.colorCode, latchColor)
-  val pixReg = RegEnable(decodePixels(io.tileRom.dout, offset), latchPix)
+  val pixReg = RegEnable(TilemapProcessor.decodePixels(io.tileRom.dout, io.format, offset), latchPix)
 
   // Palette entry
   val pen = PaletteEntry(priorityReg, colorReg, pixReg(offset.x(2, 0)))
@@ -132,6 +129,20 @@ class TilemapProcessor extends Module {
 }
 
 object TilemapProcessor {
+  /**
+   * Decodes a row of pixels from the given tile ROM data.
+   *
+   * @param data   The 64-bit tile ROM data.
+   * @param format The graphics format.
+   * @param offset The pixel offset.
+   */
+  private def decodePixels(data: Bits, format: UInt, offset: UVec2): Vec[Bits] = {
+    val word = offset.y(0) // toggle the word bit on alternate scanlines
+    val pixels_4BPP = VecInit(TilemapProcessor.decode4BPP(data, word))
+    val pixels_8BPP = VecInit(TilemapProcessor.decode8BPP(data))
+    Mux(format === Config.GFX_FORMAT_8BPP.U, pixels_8BPP, pixels_4BPP)
+  }
+
   /**
    * Decodes a row of pixels for a 8x8x4BPP tile.
    *

@@ -111,6 +111,8 @@ class GPU extends Module {
 
   // Layer 0 processor
   val layer0Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
+  layer0Processor.io.format := io.gameConfig.layer0Format
+  layer0Processor.io.offset := UVec2(0x6b.U, 0x11.U)
   layer0Processor.io.video <> io.video
   layer0Processor.io.layer <> io.layer0
   layer0Processor.io.layerRam <> io.layer0Ram
@@ -118,6 +120,8 @@ class GPU extends Module {
 
   // Layer 1 processor
   val layer1Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
+  layer1Processor.io.format := io.gameConfig.layer1Format
+  layer1Processor.io.offset := UVec2(0x6c.U, 0x11.U)
   layer1Processor.io.video <> io.video
   layer1Processor.io.layer <> io.layer1
   layer1Processor.io.layerRam <> io.layer1Ram
@@ -125,6 +129,8 @@ class GPU extends Module {
 
   // Layer 2 processor
   val layer2Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
+  layer2Processor.io.format := io.gameConfig.layer2Format
+  layer2Processor.io.offset := UVec2(Mux(io.layer2.tileSize, 0x6d.U, 0x75.U), 0x11.U)
   layer2Processor.io.video <> io.video
   layer2Processor.io.layer <> io.layer2
   layer2Processor.io.layerRam <> io.layer2Ram

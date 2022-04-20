@@ -200,9 +200,9 @@ class Cave extends Module {
 
     // GPU
     gpu.io.videoRegs := videoRegs.io.regs.asUInt
-    gpu.io.layer0 := Layer.decode(0.U, Mux(io.options.layer.layer0, io.gameConfig.layer0Format, Config.GFX_FORMAT_UNKNOWN.U), layer0Regs.io.regs.asUInt)
-    gpu.io.layer1 := Layer.decode(1.U, Mux(io.options.layer.layer1, io.gameConfig.layer1Format, Config.GFX_FORMAT_UNKNOWN.U), layer1Regs.io.regs.asUInt)
-    gpu.io.layer2 := Layer.decode(2.U, Mux(io.options.layer.layer2, io.gameConfig.layer2Format, Config.GFX_FORMAT_UNKNOWN.U), layer2Regs.io.regs.asUInt)
+    gpu.io.layer0 := Layer.decode(layer0Regs.io.regs.asUInt)
+    gpu.io.layer1 := Layer.decode(layer1Regs.io.regs.asUInt)
+    gpu.io.layer2 := Layer.decode(layer2Regs.io.regs.asUInt)
     gpu.io.layer0Ram <> layer0Ram.io.portB
     gpu.io.layer1Ram <> layer1Ram.io.portB
     gpu.io.layer2Ram <> layer2Ram.io.portB
