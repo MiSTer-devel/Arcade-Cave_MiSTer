@@ -170,7 +170,7 @@ object Config {
   /** The width of the frame buffer address bus */
   val FRAME_BUFFER_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DEPTH)
   /** The width of the frame buffer data bus */
-  val FRAME_BUFFER_DATA_WIDTH = 15
+  val FRAME_BUFFER_DATA_WIDTH = 16
 
   /** The bit depth of a frame buffer DMA pixel */
   val FRAME_BUFFER_DMA_BPP = 24
@@ -190,15 +190,12 @@ object Config {
   /** The depth of the layer FIFOs */
   val FIFO_DEPTH = 64
 
-  /** The width of the priority buffer address bus */
-  val PRIO_BUFFER_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DEPTH)
-  /** The width of the priority buffer data bus */
-  val PRIO_BUFFER_DATA_WIDTH = 2
-
   /** The width of a priority value */
   val PRIO_WIDTH = 2
   /** The width of a color code value */
-  val COLOR_CODE_WIDTH = 6
+  val PALETTE_WIDTH = 6
+  /** The width of palette index (256 colors) */
+  val COLOR_WIDTH = 8
   /** The width of the layer index value */
   val LAYER_INDEX_WIDTH = 2
   /** The width of the layer scroll value */

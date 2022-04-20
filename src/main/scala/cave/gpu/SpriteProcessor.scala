@@ -59,17 +59,14 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
     val spriteBank = Input(Bool())
     /** Sprite RAM port */
     val spriteRam = new SpriteRamIO
-    /** Palette RAM port */
-    val paletteRam = new PaletteRamIO
     /** Tile ROM port */
-    val tileRom = new TileRomIO
-    /** Priority port */
-    val priority = new PriorityIO
+    val tileRom = new SpriteRomIO
     /** Frame buffer port */
     val frameBuffer = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH)
     /** Debug port */
     val debug = Output(new Bundle {
       val idle = Bool()
+      val clear = Bool()
       val load = Bool()
       val latch = Bool()
       val check = Bool()
@@ -82,7 +79,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
 
   // States
   object State {
-    val idle :: load :: latch :: check :: ready :: pending :: next :: done :: Nil = Enum(8)
+    val idle :: clear :: load :: latch :: check :: ready :: pending :: next :: done :: Nil = Enum(9)
   }
 
   // Set 8BPP flag
@@ -107,14 +104,12 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), Config.FIFO_DEPTH, flow = true))
 
   // Counters
+  val (clearAddr, clearDone) = Counter.static(Config.SCREEN_WIDTH * Config.SCREEN_HEIGHT, enable = stateReg === State.clear)
   val (spriteCounter, spriteCounterWrap) = Counter.static(maxSprites, stateReg === State.next)
   val (tileCounter, tileCounterWrap) = Counter.dynamic(numTilesReg, effectiveRead)
 
   // Sprite blitter
   val blitter = Module(new SpriteBlitter)
-  blitter.io.paletteRam <> io.paletteRam
-  blitter.io.priority <> io.priority
-  blitter.io.frameBuffer <> io.frameBuffer
 
   // Sprite decoder
   val decoder = Module(new SpriteDecoder)
@@ -148,7 +143,6 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   when(stateReg === State.ready) {
     val config = Wire(new SpriteBlitterConfig)
     config.sprite := spriteReg
-    config.numColors := io.gameConfig.numColors
     config.rotate := io.options.rotate
     config.flip := io.options.flip
     blitter.io.config.enq(config)
@@ -167,7 +161,12 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   switch(stateReg) {
     // Wait for the start signal
     is(State.idle) {
-      when(io.start) { stateReg := State.load }
+      when(io.start) { stateReg := State.clear }
+    }
+
+    // Clears the frame buffer
+    is(State.clear) {
+      when(clearDone) { stateReg := State.load }
     }
 
     // Load the sprite
@@ -207,7 +206,9 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   io.tileRom.rd := tileRomRead
   io.tileRom.addr := tileRomAddr
   io.tileRom.burstLength := tileRomBurstLength
+  io.frameBuffer <> Mux(stateReg === State.clear, GPU.clearMem(clearAddr), blitter.io.frameBuffer)
   io.debug.idle := stateReg === State.idle
+  io.debug.clear := stateReg === State.clear
   io.debug.load := stateReg === State.load
   io.debug.latch := stateReg === State.latch
   io.debug.check := stateReg === State.check

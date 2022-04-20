@@ -43,7 +43,7 @@ class Sprite extends Bundle {
   /** Priority */
   val priority = UInt(Config.PRIO_WIDTH.W)
   /** Color code */
-  val colorCode = UInt(Config.COLOR_CODE_WIDTH.W)
+  val colorCode = UInt(Config.PALETTE_WIDTH.W)
   /** Sprite code */
   val code = UInt(Sprite.CODE_WIDTH.W)
   /** Horizontal flip */

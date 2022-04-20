@@ -43,8 +43,6 @@ import chisel3.util._
 class SpriteBlitterConfig extends Bundle {
   /** Sprite */
   val sprite = new Sprite
-  /** Number of colors per palette */
-  val numColors = UInt(9.W)
   /** Asserted when screen rotation is enabled */
   val rotate = Bool()
   /** Asserted when screen flipping is enabled */
@@ -56,22 +54,17 @@ class SpriteBlitter extends Module {
   val io = IO(new Bundle {
     /** Config port */
     val config = DeqIO(new SpriteBlitterConfig)
-    /** Pixel data port */
-    val pixelData = DeqIO(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
-    /** Palette RAM port */
-    val paletteRam = new PaletteRamIO
-    /** Priority port */
-    val priority = new PriorityIO
-    /** Frame buffer port */
-    val frameBuffer = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH)
     /** Busy flag */
     val busy = Output(Bool())
+    /** Pixel data port */
+    val pixelData = DeqIO(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
+    /** Frame buffer port */
+    val frameBuffer = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH)
   })
 
   // Registers
   val busyReg = RegInit(false.B)
   val configReg = RegEnable(io.config.bits, io.config.fire)
-  val paletteEntryReg = Reg(new PaletteEntry)
 
   // The PISO is used to buffer a single row of pixels to be copied to the frame buffer
   val piso = Module(new PISO(Config.SPRITE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
@@ -106,34 +99,23 @@ class SpriteBlitter extends Module {
   val configReady = io.config.valid && (!busyReg || blitDone)
 
   // Decode the palette entry for the current pixel
-  paletteEntryReg := PaletteEntry(configReg.sprite.colorCode, piso.io.dout)
-  val paletteRamAddr = paletteEntryReg.toAddr(configReg.numColors)
+  val paletteEntryReg = RegNext(PaletteEntry(configReg.sprite.priority, configReg.sprite.colorCode, piso.io.dout))
 
   // Set delayed shift registers
   val validReg = ShiftRegister(!pisoEmpty, 2, false.B, true.B)
   val delayedBusyReg = ShiftRegister(busyReg, 2, false.B, true.B)
-  val delayedPriorityReg = ShiftRegister(configReg.sprite.priority, 2)
 
-  // The transparency flag must be delayed by one cycle, since the colors come from the palette RAM
-  // they arrive one cycle later
-  val visible = GPU.isVisible(stage2Pos) && !RegNext(paletteEntryReg.isTransparent)
+  // Set visible flag
+  val visible = GPU.isVisible(stage1Pos) && !paletteEntryReg.isTransparent
 
   // Set frame buffer signals
   val frameBufferWrite = RegNext(validReg && visible)
-  val frameBufferAddr = RegNext(GPU.transformAddr(stage2Pos, configReg.flip, configReg.rotate))
-  val frameBufferData = RegNext(io.paletteRam.dout)
+  val frameBufferAddr = RegNext(GPU.transformAddr(stage1Pos, configReg.flip, configReg.rotate))
+  val frameBufferData = RegNext(paletteEntryReg.asUInt)
 
   // Outputs
   io.config.ready := configReady
   io.pixelData.ready := pixelDataReady
-  io.paletteRam.rd := true.B
-  io.paletteRam.addr := paletteRamAddr
-  io.priority.read.rd := false.B
-  io.priority.read.addr := 0.U
-  io.priority.write.wr := frameBufferWrite
-  io.priority.write.addr := frameBufferAddr
-  io.priority.write.mask := 0.U
-  io.priority.write.din := delayedPriorityReg
   io.frameBuffer.wr := frameBufferWrite
   io.frameBuffer.addr := frameBufferAddr
   io.frameBuffer.mask := 0.U

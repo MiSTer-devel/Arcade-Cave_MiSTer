@@ -52,6 +52,10 @@ class GPU extends Module {
     val video = Flipped(VideoIO())
     /** Game config port */
     val gameConfig = Input(GameConfig())
+    /** Options port */
+    val options = OptionsIO()
+    /** Asserted when the program is ready for a new frame */
+    val frameReady = Input(Bool())
     /** Video registers port */
     val videoRegs = Input(Bits(Config.VIDEO_REGS_GPU_DATA_WIDTH.W))
     /** Layer 0 port */
@@ -82,8 +86,28 @@ class GPU extends Module {
     val rgb = Output(new RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL))
   })
 
-  io.spriteRam.default()
-  io.spriteRom.default()
+  // Frame buffer
+  val frameBuffer = Module(new TrueDualPortRam(
+    addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
+    dataWidthA = Config.FRAME_BUFFER_DATA_WIDTH,
+    depthA = Some(Config.FRAME_BUFFER_DEPTH),
+    addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH,
+    dataWidthB = Config.FRAME_BUFFER_DATA_WIDTH,
+    depthB = Some(Config.FRAME_BUFFER_DEPTH)
+  ))
+  frameBuffer.io.clockB := io.videoClock
+  frameBuffer.io.portB.rd := io.video.enable && io.options.layer.sprites
+  frameBuffer.io.portB.addr := GPU.transformAddr(io.video.pos, io.options.flip, io.options.rotate)
+
+  // Sprite processor
+  val spriteProcessor = Module(new SpriteProcessor)
+  spriteProcessor.io.gameConfig <> io.gameConfig
+  spriteProcessor.io.options <> io.options
+  spriteProcessor.io.start := io.frameReady
+  spriteProcessor.io.spriteBank := io.videoRegs(64)
+  spriteProcessor.io.spriteRam <> io.spriteRam
+  spriteProcessor.io.tileRom <> io.spriteRom
+  spriteProcessor.io.frameBuffer <> frameBuffer.io.portA.asWriteMemIO
 
   // Layer 0 processor
   val layer0Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
@@ -108,7 +132,8 @@ class GPU extends Module {
 
   // Color mixer
   val colorMixer = withClockAndReset(io.videoClock, io.videoReset) { Module(new ColorMixer) }
-  colorMixer.io.numColors := io.gameConfig.numColors
+  colorMixer.io.gameConfig <> io.gameConfig
+  colorMixer.io.spritePen := frameBuffer.io.portB.dout.asTypeOf(new PaletteEntry)
   colorMixer.io.layer0Pen := layer0Processor.io.pen
   colorMixer.io.layer1Pen := layer1Processor.io.pen
   colorMixer.io.layer2Pen := layer2Processor.io.pen
@@ -117,17 +142,6 @@ class GPU extends Module {
 }
 
 object GPU {
-  /**
-   * Returns the palette entry used to clear the frame buffer for the given game index.
-   *
-   * @param index The game index.
-   * @return A palette entry.
-   */
-  def backgroundPen(index: UInt): PaletteEntry =
-    MuxLookup(index, PaletteEntry(0x7f.U, 0.U), Seq(
-      GameConfig.DFEVERON.U -> PaletteEntry(0x3f.U, 0.U)
-    ))
-
   /**
    * Transforms a frame buffer pixel position to a memory address, applying the optional flip and
    * rotate transforms.
