@@ -53,6 +53,8 @@ class GPU extends Module {
     val video = Flipped(VideoIO())
     /** Game config port */
     val gameConfig = Input(GameConfig())
+    /** Video registers port */
+    val videoRegs = Input(Bits(Config.VIDEO_REGS_GPU_DATA_WIDTH.W))
     /** Layer 0 port */
     val layer0 = Input(new Layer)
     /** Layer 1 port */
