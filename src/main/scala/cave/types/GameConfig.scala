@@ -116,7 +116,7 @@ object GameConfig {
     wire.spriteFormat := Config.GFX_FORMAT_4BPP.U
     wire.layer0Format := Config.GFX_FORMAT_4BPP.U
     wire.layer1Format := Config.GFX_FORMAT_4BPP.U
-    wire.layer2Format := Config.GFX_FORMAT_UNKNOWN.U
+    wire.layer2Format := Config.GFX_FORMAT_DISABLE.U
     wire
   }
 
@@ -195,8 +195,8 @@ object GameConfig {
     wire.spriteZoom := true.B
     wire.spriteFormat := Config.GFX_FORMAT_4BPP.U
     wire.layer0Format := Config.GFX_FORMAT_8BPP.U
-    wire.layer1Format := Config.GFX_FORMAT_UNKNOWN.U
-    wire.layer2Format := Config.GFX_FORMAT_UNKNOWN.U
+    wire.layer1Format := Config.GFX_FORMAT_DISABLE.U
+    wire.layer2Format := Config.GFX_FORMAT_DISABLE.U
     wire
   }
 }
