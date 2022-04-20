@@ -203,8 +203,8 @@ object Config {
 
   /** The width of the graphics format value */
   val GFX_FORMAT_WIDTH = 2
-  /** Disabled graphics format (i.e. the layer will not be rendered) */
-  val GFX_FORMAT_DISABLE = 0
+  /** Unknown graphics format */
+  val GFX_FORMAT_UNKNOWN = 0
   /** 4BPP graphics format */
   val GFX_FORMAT_4BPP = 1
   /** 4BPP MSB graphics format */

@@ -87,8 +87,8 @@ class TilemapProcessor extends Module {
     Mux(io.layer.format === Config.GFX_FORMAT_8BPP.U, pixels_8BPP, pixels_4BPP)
   }
 
-  // Assert the enable flag if the graphics format isn't disabled
-  val enable = io.layer.format =/= Config.GFX_FORMAT_DISABLE.U
+  // Assert the disable flag if the layer is disabled
+  val disable = io.layer.format === Config.GFX_FORMAT_UNKNOWN.U || io.layer.disable
 
   // Pixel position
   val pos = io.video.pos + io.layer.adjustedScroll
@@ -128,7 +128,7 @@ class TilemapProcessor extends Module {
   io.layerRam.addr := layerRamAddrReg
   io.tileRom.rd := true.B // read-only
   io.tileRom.addr := calculateTileRomAddr(tileReg.code, offset)
-  io.pen := Mux(enable, pen, PaletteEntry.zero)
+  io.pen := Mux(!disable, pen, PaletteEntry.zero)
 }
 
 object TilemapProcessor {
