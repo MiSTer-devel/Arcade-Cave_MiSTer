@@ -66,16 +66,19 @@ class ColorMixer extends Module {
     val rgb = Output(new RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL))
   })
 
+  // Background pen
+  val backgroundPen = ColorMixer.backgroundPen(io.gameConfig.index)
+
   // Mux the layers
   val index = ColorMixer.muxLayers(io.spritePen, io.layer0Pen, io.layer1Pen, io.layer2Pen)
 
   // Calculate the palette RAM address
   val paletteRamAddr = MuxLookup(index, 0.U, Seq(
-    Priority.FILL.U -> 0.U ## ColorMixer.calculatePaletteRamAddr(io.gameConfig.numColors, ColorMixer.backgroundPen(io.gameConfig.index)),
-    Priority.SPRITE.U -> 0.U ## ColorMixer.calculatePaletteRamAddr(io.gameConfig.numColors, io.spritePen),
-    Priority.LAYER0.U -> 1.U ## ColorMixer.calculatePaletteRamAddr(io.gameConfig.numColors, io.layer0Pen),
-    Priority.LAYER1.U -> 1.U ## ColorMixer.calculatePaletteRamAddr(io.gameConfig.numColors, io.layer1Pen),
-    Priority.LAYER2.U -> 1.U ## ColorMixer.calculatePaletteRamAddr(io.gameConfig.numColors, io.layer2Pen)
+    Priority.FILL.U -> ColorMixer.calculatePaletteRamAddr(io.gameConfig.numColors, 0.U, backgroundPen),
+    Priority.SPRITE.U -> ColorMixer.calculatePaletteRamAddr(io.gameConfig.numColors, 0.U, io.spritePen),
+    Priority.LAYER0.U -> ColorMixer.calculatePaletteRamAddr(io.gameConfig.numColors, 1.U, io.layer0Pen),
+    Priority.LAYER1.U -> ColorMixer.calculatePaletteRamAddr(io.gameConfig.numColors, 1.U, io.layer1Pen),
+    Priority.LAYER2.U -> ColorMixer.calculatePaletteRamAddr(io.gameConfig.numColors, 1.U, io.layer2Pen)
   ))
 
   // Outputs
@@ -104,10 +107,10 @@ object ColorMixer {
    * @param numColors The maximum number of colors per palette.
    * @param pen       The palette entry.
    */
-  private def calculatePaletteRamAddr(numColors: UInt, pen: PaletteEntry): UInt =
-    MuxLookup(numColors, pen.palette ## pen.color, Seq(
-      16.U -> pen.palette ## pen.color(3, 0),
-      64.U -> pen.palette ## pen.color(5, 0)
+  private def calculatePaletteRamAddr(numColors: UInt, bank: UInt, pen: PaletteEntry): UInt =
+    MuxLookup(numColors, bank ## pen.palette ## pen.color, Seq(
+      16.U -> bank ## pen.palette ## pen.color(3, 0),
+      64.U -> bank ## pen.palette ## pen.color(5, 0)
     ))
 
   /**
