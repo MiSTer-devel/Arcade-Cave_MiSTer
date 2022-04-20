@@ -84,8 +84,8 @@ class TilemapProcessor extends Module {
     ))
   }
 
-  // Assert the disable flag if the layer is disabled
-  val disable = io.format === Config.GFX_FORMAT_UNKNOWN.U || io.layer.disable
+  // Set enable flag
+  val enable = io.format =/= Config.GFX_FORMAT_UNKNOWN.U && !io.layer.disable
 
   // Pixel position
   val pos = io.video.pos + io.layer.scroll + io.offset
@@ -123,9 +123,9 @@ class TilemapProcessor extends Module {
   // Outputs
   io.layerRam.rd := true.B // read-only
   io.layerRam.addr := layerRamAddrReg
-  io.tileRom.rd := true.B // read-only
+  io.tileRom.rd := enable
   io.tileRom.addr := calculateTileRomAddr(tileReg.code, offset)
-  io.pen := Mux(!disable, pen, PaletteEntry.zero)
+  io.pen := Mux(enable, pen, PaletteEntry.zero)
 }
 
 object TilemapProcessor {
