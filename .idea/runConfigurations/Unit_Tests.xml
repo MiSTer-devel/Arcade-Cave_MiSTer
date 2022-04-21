@@ -15,8 +15,6 @@
         <option value="cave.gpu.RegisterFileTest" />
         <option value="cave.gpu.SpriteBlitterTest" />
         <option value="cave.gpu.SpriteDecoderTest" />
-        <option value="cave.gpu.TilemapBlitterTest" />
-        <option value="cave.gpu.TilemapDecoderTest" />
         <option value="cave.gpu.SpriteProcessorTest" />
         <option value="cave.gpu.TilemapProcessorTest" />
         <option value="axon.UtilTest" />
