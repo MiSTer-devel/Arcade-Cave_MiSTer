@@ -39,7 +39,10 @@ import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
 trait SpriteProcessorTestHelpers {
-  def mkProcessor(maxSprites: Int = 2) = new SpriteProcessor(maxSprites)
+  def mkProcessor(maxSprites: Int = 2) = new SpriteProcessor(
+    maxSprites = maxSprites,
+    clearFrameBuffer = false
+  )
 
   def waitForIdle(dut: SpriteProcessor) =
     while (!dut.io.debug.idle.peekBoolean()) { dut.clock.step() }
@@ -154,7 +157,7 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
       dut.io.sprite.rom.burstDone.poke(true)
       waitForDone(dut)
       dut.io.busy.expect(true)
-      dut.clock.step(245)
+      dut.clock.step(244)
       dut.io.busy.expect(false)
     }
   }

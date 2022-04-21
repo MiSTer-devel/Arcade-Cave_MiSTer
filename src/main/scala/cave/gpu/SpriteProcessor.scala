@@ -33,7 +33,6 @@
 package cave.gpu
 
 import axon.mem._
-import axon.types._
 import axon.util.Counter
 import cave.Config
 import cave.types._
@@ -43,9 +42,11 @@ import chisel3.util._
 /**
  * The sprite processor handles rendering sprites.
  *
- * @param maxSprites The maximum number of sprites to render.
+ * @param maxSprites       The maximum number of sprites to render.
+ * @param clearFrameBuffer Asserted when the frame buffer should be cleared before the sprites are
+ *                         rendered.
  */
-class SpriteProcessor(maxSprites: Int = 1024) extends Module {
+class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) extends Module {
   val io = IO(new Bundle {
     /** When the start flag is asserted, the sprites are rendered to the frame buffer */
     val start = Input(Bool())
@@ -153,7 +154,9 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   switch(stateReg) {
     // Wait for the start signal
     is(State.idle) {
-      when(io.start) { stateReg := State.clear }
+      when(io.start) {
+        stateReg := (if (clearFrameBuffer) State.clear else State.load)
+      }
     }
 
     // Clears the frame buffer
