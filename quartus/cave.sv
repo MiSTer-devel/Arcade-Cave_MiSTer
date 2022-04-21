@@ -170,7 +170,6 @@ localparam CONF_STR = {
   "P1,Advanced;",
   "P1-;",
   "P1O7,Refresh Rate,57Hz,60Hz;",
-  "d1P1O8,ROM Storage,SDRAM,DDR3;",
   "P2,Debug;",
   "P2-;",
   "P2OA,Sprites,On,Off;",
@@ -452,7 +451,7 @@ Main main (
   .io_cpuClock(clk_cpu),
   .io_cpuReset(rst_cpu),
   // Options
-  .io_options_sdram(sdram_available & ~status[8]),
+  .io_options_sdram(sdram_available),
   .io_options_offset_x(status[27:24]),
   .io_options_offset_y(status[31:28]),
   .io_options_rotate(status[2]),

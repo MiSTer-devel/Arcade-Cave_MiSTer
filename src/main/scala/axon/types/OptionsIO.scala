@@ -36,7 +36,7 @@ import chisel3._
 
 /** An interface that contains the user options. */
 class OptionsIO extends Bundle {
-  /** Asserted when SDRAM is enabled */
+  /** Asserted when SDRAM is available */
   val sdram = Input(Bool())
   /** CRT offset */
   val offset = Input(SVec2(OptionsIO.SCREEN_OFFSET_WIDTH.W))
