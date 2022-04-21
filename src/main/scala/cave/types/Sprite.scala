@@ -51,13 +51,13 @@ class Sprite extends Bundle {
   /** Vertical flip */
   val flipY = Bool()
   /** Position */
-  val pos = new SVec2(Sprite.POS_WIDTH)
+  val pos = SVec2(Sprite.POS_WIDTH.W)
   /** The number of sprite tile columns */
   val cols = UInt(Sprite.COLS_WIDTH.W)
   /** The number of sprite tile rows */
   val rows = UInt(Sprite.ROWS_WIDTH.W)
   /** Zoom */
-  val zoom = new UVec2(Sprite.ZOOM_WIDTH)
+  val zoom = UVec2(Sprite.ZOOM_WIDTH.W)
 
   /** Sprite size in pixels */
   def size: UVec2 = UVec2(cols, rows) << log2Ceil(Sprite.TILE_SIZE).U

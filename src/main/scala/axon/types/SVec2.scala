@@ -33,6 +33,7 @@
 package axon.types
 
 import chisel3._
+import chisel3.internal.firrtl.Width
 
 /**
  * Represents a signed 2D vector.
@@ -40,13 +41,11 @@ import chisel3._
  * @param xWidth The X data width.
  * @param yWidth The Y data width.
  */
-class SVec2(xWidth: Int, yWidth: Int) extends Bundle {
+class SVec2(xWidth: Width, yWidth: Width) extends Bundle {
   /** Horizontal position */
-  val x = SInt(xWidth.W)
+  val x = SInt(xWidth)
   /** Vertical position */
-  val y = SInt(yWidth.W)
-
-  def this(n: Int) = this(n, n)
+  val y = SInt(yWidth)
 
   /** Addition operator. */
   def +(that: SVec2) = SVec2(this.x + that.x, this.y + that.y)
@@ -75,18 +74,31 @@ class SVec2(xWidth: Int, yWidth: Int) extends Bundle {
 
 object SVec2 {
   /**
+   * Creates a signed vector bundle.
+   *
+   * @param width The data width.
+   * @return A bundle.
+   */
+  def apply(width: Width): SVec2 = new SVec2(width, width)
+
+  /**
    * Creates a signed vector from X and Y bitvector values.
    *
    * @param x The horizontal position.
    * @param y The vertical position.
+   * @return A signed vector.
    */
   def apply(x: Bits, y: Bits): SVec2 = {
-    val pos = Wire(new SVec2(x.getWidth, y.getWidth))
+    val pos = Wire(new SVec2(x.getWidth.W, y.getWidth.W))
     pos.x := x.asSInt
     pos.y := y.asSInt
     pos
   }
 
-  /** Creates a zero vector. */
+  /**
+   * Creates a zero vector.
+   *
+   * @return A signed vector.
+   */
   def zero = SVec2(0.U, 0.U)
 }

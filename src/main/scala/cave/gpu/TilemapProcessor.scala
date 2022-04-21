@@ -53,7 +53,7 @@ class TilemapProcessor extends Module {
     /** Layer port */
     val layer = LayerIO()
     /** Manual offset */
-    val offset = Input(new UVec2(Config.LAYER_SCROLL_WIDTH))
+    val offset = Input(UVec2(Config.LAYER_SCROLL_WIDTH.W))
     /** Palette entry output */
     val pen = Output(new PaletteEntry)
   })

@@ -55,7 +55,7 @@ class Layer extends Bundle {
   /** Row select enable */
   val rowSelectEnable = Bool()
   /** Scroll position */
-  val scroll = new UVec2(Config.LAYER_SCROLL_WIDTH)
+  val scroll = UVec2(Config.LAYER_SCROLL_WIDTH.W)
 }
 
 object Layer {

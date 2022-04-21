@@ -39,7 +39,7 @@ class OptionsIO extends Bundle {
   /** Asserted when SDRAM is enabled */
   val sdram = Input(Bool())
   /** CRT offset */
-  val offset = Input(new SVec2(OptionsIO.SCREEN_OFFSET_WIDTH))
+  val offset = Input(SVec2(OptionsIO.SCREEN_OFFSET_WIDTH.W))
   /** Asserted when screen rotation is enabled */
   val rotate = Input(Bool())
   /** Asserted when screen flipping is enabled */

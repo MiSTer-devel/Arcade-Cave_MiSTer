@@ -41,7 +41,7 @@ class VideoIO extends Bundle {
   /** Asserted when the pixel clock is enabled */
   val pixelClockEnable = Output(Bool())
   /** Beam position */
-  val pos = Output(new UVec2(9))
+  val pos = Output(UVec2(9.W))
   /** Horizontal sync */
   val hSync = Output(Bool())
   /** Vertical sync */
@@ -110,7 +110,7 @@ case class VideoTimingConfig(clockFreq: Double,
 class VideoTiming(config: VideoTimingConfig) extends Module {
   val io = IO(new Bundle {
     /** CRT offset */
-    val offset = Input(new SVec2(OptionsIO.SCREEN_OFFSET_WIDTH))
+    val offset = Input(SVec2(OptionsIO.SCREEN_OFFSET_WIDTH.W))
     /** Video port */
     val video = Output(VideoIO())
   })
