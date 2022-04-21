@@ -212,11 +212,6 @@ object Config {
   /** 8BPP graphics format */
   val GFX_FORMAT_8BPP = 3
 
-  /** Tile sizes (in bytes) */
-  val TILE_SIZE_8x8x8 = 64
-  val TILE_SIZE_16x16x4 = 128
-  val TILE_SIZE_16x16x8 = 256
-
   /** The maximum bit depth of a tile */
   val TILE_MAX_BPP = 8
 
