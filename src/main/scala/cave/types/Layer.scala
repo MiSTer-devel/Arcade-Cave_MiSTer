@@ -44,8 +44,8 @@ class Layer extends Bundle {
   val priority = UInt(Config.PRIO_WIDTH.W)
   /** Tile size (8x8 or 16x16) */
   val tileSize = Bool()
-  /** Disable flag */
-  val disable = Bool()
+  /** Enable flag */
+  val enable = Bool()
   /** Horizontal flip */
   val flipX = Bool()
   /** Vertical flip */
@@ -72,7 +72,7 @@ object Layer {
    *      | -x-- ---- ---- ---- | row select enable
    *      | --x- ---- ---- ---- | tile size
    *      | ---- ---x xxxx xxxx | scroll y
-   *    2 | ---- ---- ---x ---- | disable
+   *    2 | ---- ---- ---x ---- | enable
    *      | ---- ---- ---- --xx | priority
    * }}}
    *
@@ -83,7 +83,7 @@ object Layer {
     val layer = Wire(new Layer)
     layer.priority := words(2)(1, 0)
     layer.tileSize := words(1)(13)
-    layer.disable := words(2)(4)
+    layer.enable := !words(2)(4)
     layer.flipX := !words(0)(15)
     layer.flipY := !words(1)(15)
     layer.rowScrollEnable := words(0)(14)

@@ -59,7 +59,7 @@ class TilemapProcessor extends Module {
   })
 
   // Set enable flag
-  val enable = io.layer.format =/= Config.GFX_FORMAT_UNKNOWN.U && io.layer.enable && !io.layer.regs.disable
+  val enable = io.layer.format =/= Config.GFX_FORMAT_UNKNOWN.U && io.layer.enable && io.layer.regs.enable
 
   // Pixel position
   val pos = io.video.pos + io.layer.regs.scroll + io.offset
