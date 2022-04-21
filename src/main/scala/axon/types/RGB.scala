@@ -33,6 +33,7 @@
 package axon.types
 
 import chisel3._
+import chisel3.internal.firrtl.Width
 
 /**
  * Represents a RGB color.
@@ -41,15 +42,13 @@ import chisel3._
  * @param greenWidth The green channel width.
  * @param blueWidth  The blue channel width.
  */
-class RGB(redWidth: Int, greenWidth: Int, blueWidth: Int) extends Bundle {
-  /** Red */
-  val r = UInt(redWidth.W)
-  /** Green */
-  val g = UInt(greenWidth.W)
-  /** Blue */
-  val b = UInt(blueWidth.W)
-
-  def this(n: Int) = this(n, n, n)
+class RGB(redWidth: Width, greenWidth: Width, blueWidth: Width) extends Bundle {
+  /** Red channel */
+  val r = UInt(redWidth)
+  /** Green channel */
+  val g = UInt(greenWidth)
+  /** Blue channel */
+  val b = UInt(blueWidth)
 
   /** Bitwise AND operator. */
   def &(that: RGB): RGB = {
@@ -69,9 +68,18 @@ class RGB(redWidth: Int, greenWidth: Int, blueWidth: Int) extends Bundle {
 
 object RGB {
   /**
+   * Creates a RGB bundle.
+   *
+   * @param width The channel width.
+   * @return A bundle.
+   */
+  def apply(width: Width): RGB = new RGB(width, width, width)
+
+  /**
    * Constructs a RGB color from a single value.
    *
    * @param value The value of the red, green, and blue channels.
+   * @return A RGB color.
    */
   def apply(value: Bits): RGB = RGB(value, value, value)
 
@@ -79,6 +87,7 @@ object RGB {
    * Constructs a RGB color from a list.
    *
    * @param value An list containing the values of the red, green, and blue channels.
+   * @return A RGB color.
    */
   def apply(value: Seq[Bits]): RGB = RGB(value(0), value(1), value(2))
 
@@ -88,12 +97,20 @@ object RGB {
    * @param r The red channel value.
    * @param g The green channel value.
    * @param b The blue channel value.
+   * @return A RGB color.
    */
   def apply(r: Bits, g: Bits, b: Bits): RGB = {
-    val rgb = Wire(new RGB(r.getWidth, g.getWidth, b.getWidth))
+    val rgb = Wire(new RGB(r.getWidth.W, g.getWidth.W, b.getWidth.W))
     rgb.r := r
     rgb.g := g
     rgb.b := b
     rgb
   }
+
+  /**
+   * Creates a zero RGB color.
+   *
+   * @return A RGB color.
+   */
+  def zero = RGB(0.U, 0.U, 0.U)
 }

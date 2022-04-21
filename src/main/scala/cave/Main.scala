@@ -63,7 +63,7 @@ class Main extends Module {
     /** Video port */
     val video = VideoIO()
     /** RGB output */
-    val rgb = Output(new RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL))
+    val rgb = Output(RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL.W))
     /** Joystick port */
     val joystick = JoystickIO()
     /** IOCTL port */
