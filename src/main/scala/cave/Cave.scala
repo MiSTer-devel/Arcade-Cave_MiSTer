@@ -200,15 +200,15 @@ class Cave extends Module {
     // GPU
     gpu.io.layer(0).format := io.gameConfig.layer0Format
     gpu.io.layer(0).enable := io.options.layer.layer0
-    gpu.io.layer(0).regs := Layer.decode(layer0Regs.io.regs.asUInt)
+    gpu.io.layer(0).regs := withClock(io.videoClock) { ShiftRegister(Layer.decode(layer0Regs.io.regs.asUInt), 2) }
     gpu.io.layer(0).ram <> layer0Ram.io.portB
     gpu.io.layer(1).format := io.gameConfig.layer1Format
     gpu.io.layer(1).enable := io.options.layer.layer1
-    gpu.io.layer(1).regs := Layer.decode(layer1Regs.io.regs.asUInt)
+    gpu.io.layer(1).regs := withClock(io.videoClock) { ShiftRegister(Layer.decode(layer1Regs.io.regs.asUInt), 2) }
     gpu.io.layer(1).ram <> layer1Ram.io.portB
     gpu.io.layer(2).format := io.gameConfig.layer2Format
     gpu.io.layer(2).enable := io.options.layer.layer2
-    gpu.io.layer(2).regs := Layer.decode(layer2Regs.io.regs.asUInt)
+    gpu.io.layer(2).regs := withClock(io.videoClock) { ShiftRegister(Layer.decode(layer2Regs.io.regs.asUInt), 2) }
     gpu.io.layer(2).ram <> layer2Ram.io.portB
     gpu.io.sprite.format := io.gameConfig.spriteFormat
     gpu.io.sprite.enable := io.options.layer.sprites
