@@ -36,7 +36,6 @@ import axon.Util
 import axon.types.UVec2
 import cave.Config
 import chisel3._
-import chisel3.util._
 
 /** Represents a layer descriptor. */
 class Layer extends Bundle {
