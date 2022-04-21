@@ -99,12 +99,11 @@ class Cave extends Module {
   gpu.io.videoReset := io.videoReset
   gpu.io.video <> io.video
   gpu.io.gameConfig <> io.gameConfig
-  gpu.io.options <> io.options
   gpu.io.frameReady := Util.rising(ShiftRegister(frameStart, 2))
-  gpu.io.layer0Rom <> io.layer0Rom
-  gpu.io.layer1Rom <> io.layer1Rom
-  gpu.io.layer2Rom <> io.layer2Rom
-  gpu.io.spriteRom <> io.spriteRom
+  gpu.io.layer(0).rom <> io.layer0Rom
+  gpu.io.layer(1).rom <> io.layer1Rom
+  gpu.io.layer(2).rom <> io.layer2Rom
+  gpu.io.sprite.rom <> io.spriteRom
   gpu.io.rgb <> io.rgb
 
   // The CPU and registers run in the CPU clock domain
@@ -140,7 +139,7 @@ class Cave extends Module {
       maskEnable = true
     ))
 
-    // Sprite RAM
+    // Sprite VRAM
     val spriteRam = Module(new TrueDualPortRam(
       addrWidthA = Config.SPRITE_RAM_ADDR_WIDTH,
       dataWidthA = Config.SPRITE_RAM_DATA_WIDTH,
@@ -199,14 +198,25 @@ class Cave extends Module {
     val videoRegs = Module(new RegisterFile(Config.VIDEO_REGS_COUNT))
 
     // GPU
-    gpu.io.videoRegs := videoRegs.io.regs.asUInt
-    gpu.io.layer0 := Layer.decode(layer0Regs.io.regs.asUInt)
-    gpu.io.layer1 := Layer.decode(layer1Regs.io.regs.asUInt)
-    gpu.io.layer2 := Layer.decode(layer2Regs.io.regs.asUInt)
-    gpu.io.layer0Ram <> layer0Ram.io.portB
-    gpu.io.layer1Ram <> layer1Ram.io.portB
-    gpu.io.layer2Ram <> layer2Ram.io.portB
-    gpu.io.spriteRam <> spriteRam.io.portB
+    gpu.io.layer(0).format := io.gameConfig.layer0Format
+    gpu.io.layer(0).enable := io.options.layer.layer0
+    gpu.io.layer(0).regs := Layer.decode(layer0Regs.io.regs.asUInt)
+    gpu.io.layer(0).ram <> layer0Ram.io.portB
+    gpu.io.layer(1).format := io.gameConfig.layer1Format
+    gpu.io.layer(1).enable := io.options.layer.layer1
+    gpu.io.layer(1).regs := Layer.decode(layer1Regs.io.regs.asUInt)
+    gpu.io.layer(1).ram <> layer1Ram.io.portB
+    gpu.io.layer(2).format := io.gameConfig.layer2Format
+    gpu.io.layer(2).enable := io.options.layer.layer2
+    gpu.io.layer(2).regs := Layer.decode(layer2Regs.io.regs.asUInt)
+    gpu.io.layer(2).ram <> layer2Ram.io.portB
+    gpu.io.sprite.format := io.gameConfig.spriteFormat
+    gpu.io.sprite.enable := io.options.layer.sprites
+    gpu.io.sprite.flip := io.options.flip
+    gpu.io.sprite.rotate := io.options.rotate
+    gpu.io.sprite.zoom := io.gameConfig.spriteZoom
+    gpu.io.sprite.bank := videoRegs.io.regs.asUInt(64)
+    gpu.io.sprite.ram <> spriteRam.io.portB
     gpu.io.paletteRam <> paletteRam.io.portB
 
     // YMZ280B

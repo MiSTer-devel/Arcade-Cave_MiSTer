@@ -52,34 +52,12 @@ class GPU extends Module {
     val video = Flipped(VideoIO())
     /** Game config port */
     val gameConfig = Input(GameConfig())
-    /** Options port */
-    val options = OptionsIO()
     /** Asserted when the program is ready for a new frame */
     val frameReady = Input(Bool())
-    /** Video registers port */
-    val videoRegs = Input(Bits(Config.VIDEO_REGS_GPU_DATA_WIDTH.W))
-    /** Layer 0 port */
-    val layer0 = Input(new Layer)
-    /** Layer 1 port */
-    val layer1 = Input(new Layer)
-    /** Layer 2 port */
-    val layer2 = Input(new Layer)
-    /** Layer 0 VRAM port */
-    val layer0Ram = new LayerRamIO
-    /** Layer 1 VRAM port */
-    val layer1Ram = new LayerRamIO
-    /** Layer 2 VRAM port */
-    val layer2Ram = new LayerRamIO
-    /** Layer 0 tile ROM port */
-    val layer0Rom = new LayerRomIO
-    /** Layer 1 tile ROM port */
-    val layer1Rom = new LayerRomIO
-    /** Layer 2 tile ROM port */
-    val layer2Rom = new LayerRomIO
-    /** Sprite RAM port */
-    val spriteRam = new SpriteRamIO
-    /** Sprite tile ROM port */
-    val spriteRom = new SpriteRomIO
+    /** Layer ports */
+    val layer = Vec(3, LayerIO())
+    /** Sprite port */
+    val sprite = SpriteIO()
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
     /** RGB output */
@@ -96,45 +74,32 @@ class GPU extends Module {
     depthB = Some(Config.FRAME_BUFFER_DEPTH)
   ))
   frameBuffer.io.clockB := io.videoClock
-  frameBuffer.io.portB.rd := io.video.enable && io.options.layer.sprites
-  frameBuffer.io.portB.addr := GPU.transformAddr(io.video.pos, io.options.flip, io.options.rotate)
+  frameBuffer.io.portB.rd := io.video.enable
+  frameBuffer.io.portB.addr := GPU.transformAddr(io.video.pos)
 
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
-  spriteProcessor.io.gameConfig <> io.gameConfig
-  spriteProcessor.io.options <> io.options
   spriteProcessor.io.start := io.frameReady
-  spriteProcessor.io.spriteBank := io.videoRegs(64)
-  spriteProcessor.io.spriteRam <> io.spriteRam
-  spriteProcessor.io.tileRom <> io.spriteRom
+  spriteProcessor.io.sprite <> io.sprite
   spriteProcessor.io.frameBuffer <> frameBuffer.io.portA.asWriteMemIO
 
   // Layer 0 processor
   val layer0Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
-  layer0Processor.io.format := io.gameConfig.layer0Format
-  layer0Processor.io.offset := UVec2(0x6b.U, 0x11.U)
   layer0Processor.io.video <> io.video
-  layer0Processor.io.layer <> io.layer0
-  layer0Processor.io.layerRam <> io.layer0Ram
-  layer0Processor.io.tileRom <> io.layer0Rom
+  layer0Processor.io.layer <> io.layer(0)
+  layer0Processor.io.offset := UVec2(0x6b.U, 0x11.U)
 
   // Layer 1 processor
   val layer1Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
-  layer1Processor.io.format := io.gameConfig.layer1Format
-  layer1Processor.io.offset := UVec2(0x6c.U, 0x11.U)
   layer1Processor.io.video <> io.video
-  layer1Processor.io.layer <> io.layer1
-  layer1Processor.io.layerRam <> io.layer1Ram
-  layer1Processor.io.tileRom <> io.layer1Rom
+  layer1Processor.io.layer <> io.layer(1)
+  layer1Processor.io.offset := UVec2(0x6c.U, 0x11.U)
 
   // Layer 2 processor
   val layer2Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
-  layer2Processor.io.format := io.gameConfig.layer2Format
-  layer2Processor.io.offset := UVec2(Mux(io.layer2.tileSize, 0x6d.U, 0x75.U), 0x11.U)
   layer2Processor.io.video <> io.video
-  layer2Processor.io.layer <> io.layer2
-  layer2Processor.io.layerRam <> io.layer2Ram
-  layer2Processor.io.tileRom <> io.layer2Rom
+  layer2Processor.io.layer <> io.layer(2)
+  layer2Processor.io.offset := UVec2(Mux(io.layer(2).regs.tileSize, 0x6d.U, 0x75.U), 0x11.U)
 
   // Color mixer
   val colorMixer = withClockAndReset(io.videoClock, io.videoReset) { Module(new ColorMixer) }
@@ -149,23 +114,15 @@ class GPU extends Module {
 
 object GPU {
   /**
-   * Transforms a frame buffer pixel position to a memory address, applying the optional flip and
-   * rotate transforms.
+   * Transforms a frame buffer pixel position to a memory address.
    *
-   * @param pos    The pixel position vector.
-   * @param flip   Flips the image.
-   * @param rotate Rotates the image 90 degrees.
-   * @return An address value.
+   * @param pos The pixel position vector.
+   * @return A memory address.
    */
-  def transformAddr(pos: UVec2, flip: Bool, rotate: Bool): UInt = {
+  def transformAddr(pos: UVec2): UInt = {
     val x = pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0)
     val y = pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
-    val x_ = (Config.SCREEN_WIDTH - 1).U - x
-    val y_ = (Config.SCREEN_HEIGHT - 1).U - y
-    Mux(rotate,
-      Mux(flip, (x * Config.SCREEN_HEIGHT.U) + y_, (x_ * Config.SCREEN_HEIGHT.U) + y),
-      Mux(flip, (y_ * Config.SCREEN_WIDTH.U) + x_, (y * Config.SCREEN_WIDTH.U) + x)
-    )
+    (y * Config.SCREEN_WIDTH.U) + x
   }
 
   /**
@@ -175,7 +132,7 @@ object GPU {
    * @param pos    The pixel position vector.
    * @param flip   Flips the image.
    * @param rotate Rotates the image 90 degrees.
-   * @return An address value.
+   * @return A memory address.
    */
   def transformAddr(pos: SVec2, flip: Bool, rotate: Bool): UInt = {
     val x = pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0)

@@ -47,20 +47,12 @@ import chisel3.util._
  */
 class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val io = IO(new Bundle {
-    /** Game config port */
-    val gameConfig = Input(GameConfig())
-    /** Options port */
-    val options = OptionsIO()
     /** When the start flag is asserted, the sprites are rendered to the frame buffer */
     val start = Input(Bool())
-    /** The busy flag is asserted while the processor is rendering */
+    /** Asserted while the sprite processor is rendering */
     val busy = Output(Bool())
-    /** Sprite bank */
-    val spriteBank = Input(Bool())
-    /** Sprite RAM port */
-    val spriteRam = new SpriteRamIO
-    /** Tile ROM port */
-    val tileRom = new SpriteRomIO
+    /** Sprite port */
+    val sprite = SpriteIO()
     /** Frame buffer port */
     val frameBuffer = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH)
     /** Debug port */
@@ -83,10 +75,10 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   }
 
   // Set 8BPP flag
-  val is8BPP = io.gameConfig.spriteFormat === Config.GFX_FORMAT_8BPP.U
+  val is8BPP = io.sprite.format === Config.GFX_FORMAT_8BPP.U
 
   // Decode the sprite
-  val sprite = Sprite.decode(io.spriteRam.dout, io.gameConfig.spriteZoom)
+  val sprite = Sprite.decode(io.sprite.ram.dout, io.sprite.zoom)
 
   // Wires
   val effectiveRead = Wire(Bool())
@@ -113,7 +105,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
 
   // Sprite decoder
   val decoder = Module(new SpriteDecoder)
-  decoder.io.format := io.gameConfig.spriteFormat
+  decoder.io.format := io.sprite.format
   decoder.io.rom <> fifo.io.deq
   decoder.io.pixelData <> blitter.io.pixelData
 
@@ -121,10 +113,10 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val tileRomRead = stateReg === State.pending && !burstPendingReg && fifo.io.count <= (Config.FIFO_DEPTH / 2).U
 
   // Set effective read flag
-  effectiveRead := tileRomRead && !io.tileRom.waitReq
+  effectiveRead := tileRomRead && !io.sprite.rom.waitReq
 
   // Set sprite RAM address
-  val spriteRamAddr = io.spriteBank ## spriteCounter
+  val spriteRamAddr = io.sprite.bank ## spriteCounter
 
   // Set tile ROM address
   val tileRomAddr = (spriteReg.code + tileCounter) << Mux(is8BPP, 8.U, 7.U)
@@ -133,7 +125,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val tileRomBurstLength = Mux(is8BPP, 32.U, 16.U)
 
   // The burst pending register is asserted when there is a burst in progress
-  when(io.tileRom.burstDone) {
+  when(io.sprite.rom.burstDone) {
     burstPendingReg := false.B
   }.elsewhen(effectiveRead) {
     burstPendingReg := true.B
@@ -143,16 +135,16 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   when(stateReg === State.ready) {
     val config = Wire(new SpriteBlitterConfig)
     config.sprite := spriteReg
-    config.rotate := io.options.rotate
-    config.flip := io.options.flip
+    config.flip := io.sprite.flip
+    config.rotate := io.sprite.rotate
     blitter.io.config.enq(config)
   } otherwise {
     blitter.io.config.noenq()
   }
 
   // Enqueue tile ROM data in the FIFO when it is available
-  when(io.tileRom.valid) {
-    fifo.io.enq.enq(io.tileRom.dout)
+  when(io.sprite.rom.valid) {
+    fifo.io.enq.enq(io.sprite.rom.dout)
   } otherwise {
     fifo.io.enq.noenq()
   }
@@ -166,7 +158,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
 
     // Clears the frame buffer
     is(State.clear) {
-      when(clearDone) { stateReg := State.load }
+      when(clearDone) { stateReg := Mux(io.sprite.enable, State.load, State.idle) }
     }
 
     // Load the sprite
@@ -201,11 +193,11 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
 
   // Outputs
   io.busy := stateReg =/= State.idle
-  io.spriteRam.rd := stateReg === State.load
-  io.spriteRam.addr := spriteRamAddr
-  io.tileRom.rd := tileRomRead
-  io.tileRom.addr := tileRomAddr
-  io.tileRom.burstLength := tileRomBurstLength
+  io.sprite.ram.rd := stateReg === State.load
+  io.sprite.ram.addr := spriteRamAddr
+  io.sprite.rom.rd := tileRomRead
+  io.sprite.rom.addr := tileRomAddr
+  io.sprite.rom.burstLength := tileRomBurstLength
   io.frameBuffer <> Mux(stateReg === State.clear, GPU.clearMem(clearAddr), blitter.io.frameBuffer)
   io.debug.idle := stateReg === State.idle
   io.debug.clear := stateReg === State.clear

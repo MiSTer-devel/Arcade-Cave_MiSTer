@@ -118,7 +118,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.io.config.bits.sprite.zoom.y.poke(0x100)
       dut.io.pixelData.valid.poke(true)
       for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1) }
-      dut.io.paletteRam.dout.poke(1)
+//      dut.io.paletteRam.dout.poke(1)
       dut.clock.step(4)
 
       // Pixel 0
@@ -156,7 +156,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.io.config.bits.sprite.flipX.poke(true)
       dut.io.pixelData.valid.poke(true)
       for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1) }
-      dut.io.paletteRam.dout.poke(1)
+//      dut.io.paletteRam.dout.poke(1)
       dut.clock.step(4)
 
       // Pixel 0
@@ -191,7 +191,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.io.config.bits.sprite.flipY.poke(true)
       dut.io.pixelData.valid.poke(true)
       for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1) }
-      dut.io.paletteRam.dout.poke(1)
+//      dut.io.paletteRam.dout.poke(1)
       dut.clock.step(4)
 
       // Pixel 0
@@ -227,7 +227,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.io.config.bits.sprite.zoom.y.poke(0x100)
       dut.io.pixelData.valid.poke(true)
       for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1) }
-      dut.io.paletteRam.dout.poke(1)
+//      dut.io.paletteRam.dout.poke(1)
       dut.clock.step(4)
 
       // Pixel 0
@@ -265,7 +265,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.io.config.bits.sprite.flipX.poke(true)
       dut.io.pixelData.valid.poke(true)
       for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1) }
-      dut.io.paletteRam.dout.poke(1)
+//      dut.io.paletteRam.dout.poke(1)
       dut.clock.step(4)
 
       // Pixel 0
@@ -301,7 +301,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.io.config.bits.sprite.zoom.y.poke(0x100)
       dut.io.pixelData.valid.poke(true)
       for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1) }
-      dut.io.paletteRam.dout.poke(1)
+//      dut.io.paletteRam.dout.poke(1)
       dut.clock.step(4)
 
       // Pixel 0
@@ -339,7 +339,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.io.config.bits.sprite.flipX.poke(true)
       dut.io.pixelData.valid.poke(true)
       for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1) }
-      dut.io.paletteRam.dout.poke(1)
+//      dut.io.paletteRam.dout.poke(1)
       dut.clock.step(4)
 
       // Pixel 0

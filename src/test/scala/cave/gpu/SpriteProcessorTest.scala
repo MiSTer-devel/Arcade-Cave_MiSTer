@@ -107,7 +107,7 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
   it should "move to the ready state after checking a visible sprite" in {
     test(mkProcessor()) { dut =>
       dut.io.start.poke(true)
-      dut.io.spriteRam.dout.poke("h0101_0000_0000_0000_0000".U)
+      dut.io.sprite.ram.dout.poke("h0101_0000_0000_0000_0000".U)
       waitForCheck(dut)
       dut.clock.step()
       dut.io.debug.ready.expect(true)
@@ -146,12 +146,12 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
   it should "deassert the busy flag when the processor has finished" in {
     test(mkProcessor(1)) { dut =>
       dut.io.start.poke(true)
-      dut.io.spriteRam.dout.poke("h0101_0000_0000_0001_0000".U)
+      dut.io.sprite.ram.dout.poke("h0101_0000_0000_0001_0000".U)
       waitForPending(dut)
-      dut.io.tileRom.valid.poke(true)
+      dut.io.sprite.rom.valid.poke(true)
       dut.clock.step(16)
-      dut.io.tileRom.valid.poke(false)
-      dut.io.tileRom.burstDone.poke(true)
+      dut.io.sprite.rom.valid.poke(false)
+      dut.io.sprite.rom.burstDone.poke(true)
       waitForDone(dut)
       dut.io.busy.expect(true)
       dut.clock.step(245)
@@ -165,7 +165,7 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
     test(mkProcessor()) { dut =>
       dut.io.start.poke(true)
       waitForLoad(dut)
-      dut.io.spriteRam.rd.expect(true)
+      dut.io.sprite.ram.rd.expect(true)
     }
   }
 
@@ -174,14 +174,14 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
   it should "fetch pixel data from the tile ROM" in {
     test(mkProcessor()) { dut =>
       dut.io.start.poke(true)
-      dut.io.spriteRam.dout.poke("h0101_0000_0000_0001_0000".U)
+      dut.io.sprite.ram.dout.poke("h0101_0000_0000_0001_0000".U)
       waitForReady(dut)
       dut.clock.step()
-      dut.io.tileRom.rd.expect(true)
-      dut.io.tileRom.addr.expect(0x80.U)
-      dut.io.tileRom.burstLength.expect(16.U)
+      dut.io.sprite.rom.rd.expect(true)
+      dut.io.sprite.rom.addr.expect(0x80.U)
+      dut.io.sprite.rom.burstLength.expect(16.U)
       dut.clock.step()
-      dut.io.tileRom.rd.expect(false)
+      dut.io.sprite.rom.rd.expect(false)
     }
   }
 }

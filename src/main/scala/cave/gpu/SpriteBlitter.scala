@@ -43,10 +43,10 @@ import chisel3.util._
 class SpriteBlitterConfig extends Bundle {
   /** Sprite */
   val sprite = new Sprite
-  /** Asserted when screen rotation is enabled */
-  val rotate = Bool()
-  /** Asserted when screen flipping is enabled */
+  /** Asserted when the layer is flipped */
   val flip = Bool()
+  /** Asserted when the layer is rotated */
+  val rotate = Bool()
 }
 
 /** The sprite blitter copies a sprite to the frame buffer. */
