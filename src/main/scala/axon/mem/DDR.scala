@@ -32,7 +32,6 @@
 
 package axon.mem
 
-import axon.Util
 import axon.util.Counter
 import chisel3._
 import chisel3.util._
@@ -51,9 +50,7 @@ object DDRIO {
  * @param dataWidth The width of the data bus.
  * @param offset    The offset of the address.
  */
-case class DDRConfig(addrWidth: Int = 32,
-                     dataWidth: Int = 64,
-                     offset: Int = 0)
+case class DDRConfig(addrWidth: Int = 32, dataWidth: Int = 64, offset: Int = 0)
 
 /**
  * Handles reading/writing data to a DDR memory device.
@@ -78,7 +75,10 @@ class DDR(config: DDRConfig) extends Module {
 
   // Registers
   val stateReg = RegInit(State.idle)
-  val burstLength = Util.latchData(io.mem.burstLength, stateReg === State.idle, stateReg === State.idle)
+  val burstLength = Mux(stateReg === State.idle,
+    io.mem.burstLength,
+    RegEnable(io.mem.burstLength, stateReg === State.idle)
+  )
 
   // Read/write control signals
   val read = stateReg === State.idle && io.mem.rd && !io.ddr.waitReq
