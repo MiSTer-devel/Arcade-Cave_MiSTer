@@ -33,6 +33,7 @@
 package cave.gpu
 
 import axon.mem._
+import axon.types._
 import axon.util.{Counter, PISO}
 import cave.Config
 import cave.types._
@@ -79,10 +80,11 @@ class SpriteBlitter extends Module {
   val (x, xWrap) = Counter.dynamic(configReg.sprite.size.x, enable = busyReg && !pisoEmpty)
   val (y, yWrap) = Counter.dynamic(configReg.sprite.size.y, enable = xWrap)
 
-  // Pixel position pipeline
-  val stage0Pos = configReg.sprite.pixelPos(x, y)
-  val stage1Pos = RegNext(stage0Pos)
-  val stage2Pos = RegNext(stage1Pos)
+  // Pixel position
+  val posReg = RegNext(SpriteBlitter.pixelPos(configReg.sprite, UVec2(x, y)))
+
+  // Decode the palette entry for the current pixel
+  val penReg = RegNext(PaletteEntry(configReg.sprite.priority, configReg.sprite.colorCode, piso.io.dout))
 
   // The done flag is asserted when the sprite has finished blitting
   val blitDone = xWrap && yWrap
@@ -98,29 +100,44 @@ class SpriteBlitter extends Module {
   // the blitter is not busy, or a blit has just finished)
   val configReady = io.config.valid && (!busyReg || blitDone)
 
-  // Decode the palette entry for the current pixel
-  val paletteEntryReg = RegNext(PaletteEntry(configReg.sprite.priority, configReg.sprite.colorCode, piso.io.dout))
-
-  // Set delayed shift registers
-  val validReg = ShiftRegister(!pisoEmpty, 2, false.B, true.B)
-  val delayedBusyReg = ShiftRegister(busyReg, 2, false.B, true.B)
-
   // Set visible flag
-  val visible = GPU.isVisible(stage1Pos) && !paletteEntryReg.isTransparent
-
-  // Set frame buffer signals
-  val frameBufferWrite = RegNext(validReg && visible)
-  val frameBufferAddr = RegNext(GPU.transformAddr(stage1Pos, configReg.flip, configReg.rotate))
-  val frameBufferData = RegNext(paletteEntryReg.asUInt)
+  val visible = GPU.isVisible(posReg) && !penReg.isTransparent && RegNext(!pisoEmpty)
 
   // Outputs
   io.config.ready := configReady
   io.pixelData.ready := pixelDataReady
-  io.frameBuffer.wr := frameBufferWrite
-  io.frameBuffer.addr := frameBufferAddr
+  io.frameBuffer.wr := RegNext(visible)
+  io.frameBuffer.addr := RegNext(GPU.frameBufferAddr(posReg, configReg.flip))
   io.frameBuffer.mask := 0.U
-  io.frameBuffer.din := frameBufferData
-  io.busy := delayedBusyReg
+  io.frameBuffer.din := RegNext(penReg.asUInt)
+  io.busy := RegNext(busyReg) // delayed to align with the other signals
 
-  printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), ready: $configReady, busy: $busyReg, write: $frameBufferWrite, pixelDataReady: $pixelDataReady, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
+  printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), busy: $busyReg, configReady: $configReady, pixelDataReady: $pixelDataReady, write: ${ io.frameBuffer.wr }, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
+}
+
+object SpriteBlitter {
+  /**
+   * Calculates a sprite pixel position, applying the optional scale and flip transforms.
+   *
+   * @param sprite The sprite descriptor.
+   * @param pos    The pixel position.
+   */
+  def pixelPos(sprite: Sprite, pos: UVec2): SVec2 = {
+    // Convert sprite size to fixed-point value
+    val size = sprite.size << Sprite.ZOOM_PRECISION
+
+    // Scale x/y values
+    val x = pos.x * sprite.zoom.x
+    val y = pos.y * sprite.zoom.y
+
+    // Flip x/y values
+    val x_ = Mux(sprite.flipX, size.x - x - 0x80.U, x)
+    val y_ = Mux(sprite.flipY, size.y - y - 0x80.U, y)
+
+    // Adjusted sprite pixel position
+    val result = sprite.pos + SVec2(x_, y_)
+
+    // Truncate fractional bits
+    result >> Sprite.ZOOM_PRECISION
+  }
 }

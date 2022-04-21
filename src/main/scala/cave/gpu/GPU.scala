@@ -75,7 +75,7 @@ class GPU extends Module {
   ))
   frameBuffer.io.clockB := io.videoClock
   frameBuffer.io.portB.rd := io.video.enable
-  frameBuffer.io.portB.addr := GPU.transformAddr(io.video.pos)
+  frameBuffer.io.portB.addr := GPU.frameBufferAddr(io.video.pos)
 
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
@@ -114,35 +114,31 @@ class GPU extends Module {
 
 object GPU {
   /**
-   * Transforms a frame buffer pixel position to a memory address.
+   * Transforms a pixel position to a frame buffer memory address.
    *
-   * @param pos The pixel position vector.
+   * @param pos The pixel position.
    * @return A memory address.
    */
-  def transformAddr(pos: UVec2): UInt = {
+  def frameBufferAddr(pos: UVec2): UInt = {
     val x = pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0)
     val y = pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
     (y * Config.SCREEN_WIDTH.U) + x
   }
 
   /**
-   * Transforms a frame buffer pixel position to a memory address, applying the optional flip and
-   * rotate transforms.
+   * Transforms a pixel position to a frame buffer memory address, applying the optional flip
+   * transform.
    *
-   * @param pos    The pixel position vector.
-   * @param flip   Flips the image.
-   * @param rotate Rotates the image 90 degrees.
+   * @param pos  The pixel position.
+   * @param flip Flips the horizontal axis when asserted.
    * @return A memory address.
    */
-  def transformAddr(pos: SVec2, flip: Bool, rotate: Bool): UInt = {
+  def frameBufferAddr(pos: SVec2, flip: Bool): UInt = {
     val x = pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0)
     val y = pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
     val x_ = (Config.SCREEN_WIDTH - 1).U - x
     val y_ = (Config.SCREEN_HEIGHT - 1).U - y
-    Mux(rotate,
-      Mux(flip, (x * Config.SCREEN_HEIGHT.U) + y_, (x_ * Config.SCREEN_HEIGHT.U) + y),
-      Mux(flip, (y_ * Config.SCREEN_WIDTH.U) + x_, (y * Config.SCREEN_WIDTH.U) + x)
-    )
+    Mux(flip, (y_ * Config.SCREEN_WIDTH.U) + x_, (y * Config.SCREEN_WIDTH.U) + x)
   }
 
   /**
@@ -184,18 +180,7 @@ object GPU {
   /**
    * Calculates the visibility of a pixel.
    *
-   * @param pos The pixel position vector.
-   * @return A boolean value indicating whether the pixel is visible.
-   */
-  def isVisible(pos: UVec2): Bool =
-    Util.between(pos.x, 0 until Config.SCREEN_WIDTH) &&
-      Util.between(pos.y, 0 until Config.SCREEN_HEIGHT)
-
-
-  /**
-   * Calculates the visibility of a pixel.
-   *
-   * @param pos The pixel position vector.
+   * @param pos The pixel position.
    * @return A boolean value indicating whether the pixel is visible.
    */
   def isVisible(pos: SVec2): Bool =
