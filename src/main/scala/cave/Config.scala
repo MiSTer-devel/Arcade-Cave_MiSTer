@@ -150,6 +150,8 @@ object Config {
   /** The number of bits per color channel */
   val BITS_PER_CHANNEL = 5
 
+  /** The number of tilemap layers */
+  val LAYER_COUNT = 3
   val LAYER_REGS_COUNT = 3
   val LAYER_REGS_GPU_DATA_WIDTH = 48
 

@@ -55,7 +55,7 @@ class GPU extends Module {
     /** Asserted when the program is ready for a new frame */
     val frameReady = Input(Bool())
     /** Layer ports */
-    val layer = Vec(3, LayerIO())
+    val layer = Vec(Config.LAYER_COUNT, LayerIO())
     /** Sprite port */
     val sprite = SpriteIO()
     /** Palette RAM port */
