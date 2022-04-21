@@ -97,7 +97,7 @@ class TilemapProcessor extends Module {
   // Outputs
   io.layer.ram.rd := true.B // read-only
   io.layer.ram.addr := layerRamAddrReg
-  io.layer.rom.rd := enable
+  io.layer.rom.rd := io.layer.format =/= Config.GFX_FORMAT_UNKNOWN.U
   io.layer.rom.addr := TilemapProcessor.tileRomAddr(io.layer, tileReg.code, offset)
   io.pen := Mux(enable, pen, PaletteEntry.zero)
 }
