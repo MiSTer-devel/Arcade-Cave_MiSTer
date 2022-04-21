@@ -32,6 +32,7 @@
 
 package cave.types
 
+import axon.mem.ReadMemIO
 import cave.Config
 import chisel3._
 
@@ -50,7 +51,7 @@ class SpriteIO extends Bundle {
   /** Sprite bank */
   val bank = Input(Bool())
   /** VRAM port */
-  val ram = new SpriteRamIO
+  val ram = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
   /** Tile ROM port */
   val rom = new SpriteRomIO
 }
