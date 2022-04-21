@@ -38,15 +38,6 @@ import cave.types._
 import chisel3._
 import chisel3.util._
 
-// Color mixer priority
-object Priority {
-  val FILL = 0
-  val SPRITE = 1
-  val LAYER0 = 2
-  val LAYER1 = 4
-  val LAYER2 = 8
-}
-
 /** The color mixer combines the output from different layers to produce the final pixel. */
 class ColorMixer extends Module {
   val io = IO(new Bundle {
@@ -74,11 +65,11 @@ class ColorMixer extends Module {
 
   // Calculate the palette RAM address
   val paletteRamAddr = MuxLookup(index, 0.U, Seq(
-    Priority.FILL.U -> ColorMixer.calculatePaletteRamAddr(io.gameConfig.numColors, 0.U, backgroundPen),
-    Priority.SPRITE.U -> ColorMixer.calculatePaletteRamAddr(io.gameConfig.numColors, 0.U, io.spritePen),
-    Priority.LAYER0.U -> ColorMixer.calculatePaletteRamAddr(io.gameConfig.numColors, 1.U, io.layer0Pen),
-    Priority.LAYER1.U -> ColorMixer.calculatePaletteRamAddr(io.gameConfig.numColors, 1.U, io.layer1Pen),
-    Priority.LAYER2.U -> ColorMixer.calculatePaletteRamAddr(io.gameConfig.numColors, 1.U, io.layer2Pen)
+    ColorMixer.Priority.FILL.U -> ColorMixer.paletteRamAddr(io.gameConfig.numColors, 0.U, backgroundPen),
+    ColorMixer.Priority.SPRITE.U -> ColorMixer.paletteRamAddr(io.gameConfig.numColors, 0.U, io.spritePen),
+    ColorMixer.Priority.LAYER0.U -> ColorMixer.paletteRamAddr(io.gameConfig.numColors, 1.U, io.layer0Pen),
+    ColorMixer.Priority.LAYER1.U -> ColorMixer.paletteRamAddr(io.gameConfig.numColors, 1.U, io.layer1Pen),
+    ColorMixer.Priority.LAYER2.U -> ColorMixer.paletteRamAddr(io.gameConfig.numColors, 1.U, io.layer2Pen)
   ))
 
   // Outputs
@@ -88,6 +79,15 @@ class ColorMixer extends Module {
 }
 
 object ColorMixer {
+  /** Color mixer priority */
+  object Priority {
+    val FILL = 0
+    val SPRITE = 1
+    val LAYER0 = 2
+    val LAYER1 = 4
+    val LAYER2 = 8
+  }
+
   /**
    * Returns the palette entry used for the fill layer.
    *
@@ -106,8 +106,9 @@ object ColorMixer {
    *
    * @param numColors The maximum number of colors per palette.
    * @param pen       The palette entry.
+   * @return A memory address.
    */
-  private def calculatePaletteRamAddr(numColors: UInt, bank: UInt, pen: PaletteEntry): UInt =
+  private def paletteRamAddr(numColors: UInt, bank: UInt, pen: PaletteEntry): UInt =
     MuxLookup(numColors, bank ## pen.palette ## pen.color, Seq(
       16.U -> bank ## pen.palette ## pen.color(3, 0),
       64.U -> bank ## pen.palette ## pen.color(5, 0)
@@ -122,7 +123,7 @@ object ColorMixer {
    * @param layer2Pen The layer 2 palette entry.
    * @return The index of the layer with the highest priority.
    */
-  def muxLayers(spritePen: PaletteEntry, layer0Pen: PaletteEntry, layer1Pen: PaletteEntry, layer2Pen: PaletteEntry) = {
+  private def muxLayers(spritePen: PaletteEntry, layer0Pen: PaletteEntry, layer1Pen: PaletteEntry, layer2Pen: PaletteEntry) = {
     val sprite = List(
       (spritePen.color =/= 0.U && spritePen.priority === 0.U) -> Priority.SPRITE.U,
       (spritePen.color =/= 0.U && spritePen.priority === 1.U) -> Priority.SPRITE.U,
