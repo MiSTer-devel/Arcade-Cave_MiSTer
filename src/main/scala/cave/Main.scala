@@ -38,7 +38,6 @@ import axon.mem._
 import axon.mister._
 import axon.snd._
 import axon.types._
-import cave.dma._
 import cave.types._
 import chisel3._
 import chisel3.stage._
