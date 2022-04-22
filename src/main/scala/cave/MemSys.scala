@@ -57,12 +57,8 @@ class MemSys extends Module {
     val soundRom = Flipped(new SoundRomIO)
     /** EEPROM port */
     val eeprom = Flipped(new EEPROMIO)
-    /** Layer 0 tile ROM port */
-    val layer0Rom = Flipped(new LayerRomIO)
-    /** Layer 1 tile ROM port */
-    val layer1Rom = Flipped(new LayerRomIO)
-    /** Layer 2 tile ROM port */
-    val layer2Rom = Flipped(new LayerRomIO)
+    /** Layer tile ROM port */
+    val layerRom = Flipped(Vec(Config.LAYER_COUNT, new LayerRomIO))
     /** Sprite tile ROM port */
     val spriteRom = Flipped(new SpriteRomIO)
     /** DDR port */
@@ -145,7 +141,7 @@ class MemSys extends Module {
     depth = 256,
     wrapping = true
   )))
-  layer0RomCache.io.in.asAsyncReadMemIO <> io.layer0Rom
+  layer0RomCache.io.in.asAsyncReadMemIO <> io.layerRom(0)
   layer0RomCache.io.offset := io.gameConfig.layerRomOffset(0)
 
   // Layer 1 tile ROM cache
@@ -158,7 +154,7 @@ class MemSys extends Module {
     depth = 256,
     wrapping = true
   )))
-  layer1RomCache.io.in.asAsyncReadMemIO <> io.layer1Rom
+  layer1RomCache.io.in.asAsyncReadMemIO <> io.layerRom(1)
   layer1RomCache.io.offset := io.gameConfig.layerRomOffset(1)
 
   // Layer 2 tile ROM cache
@@ -171,7 +167,7 @@ class MemSys extends Module {
     depth = 256,
     wrapping = true
   )))
-  layer2RomCache.io.in.asAsyncReadMemIO <> io.layer2Rom
+  layer2RomCache.io.in.asAsyncReadMemIO <> io.layerRom(2)
   layer2RomCache.io.offset := io.gameConfig.layerRomOffset(2)
 
   // DDR arbiter
