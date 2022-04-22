@@ -146,7 +146,7 @@ class MemSys extends Module {
     wrapping = true
   )))
   layer0RomCache.io.in.asAsyncReadMemIO <> io.layer0Rom
-  layer0RomCache.io.offset := io.gameConfig.layer0RomOffset
+  layer0RomCache.io.offset := io.gameConfig.layerRomOffset(0)
 
   // Layer 1 tile ROM cache
   val layer1RomCache = Module(new Cache(CacheConfig(
@@ -159,7 +159,7 @@ class MemSys extends Module {
     wrapping = true
   )))
   layer1RomCache.io.in.asAsyncReadMemIO <> io.layer1Rom
-  layer1RomCache.io.offset := io.gameConfig.layer1RomOffset
+  layer1RomCache.io.offset := io.gameConfig.layerRomOffset(1)
 
   // Layer 2 tile ROM cache
   val layer2RomCache = Module(new Cache(CacheConfig(
@@ -172,7 +172,7 @@ class MemSys extends Module {
     wrapping = true
   )))
   layer2RomCache.io.in.asAsyncReadMemIO <> io.layer2Rom
-  layer2RomCache.io.offset := io.gameConfig.layer2RomOffset
+  layer2RomCache.io.offset := io.gameConfig.layerRomOffset(2)
 
   // DDR arbiter
   val ddrArbiter = Module(new MemArbiter(5, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
