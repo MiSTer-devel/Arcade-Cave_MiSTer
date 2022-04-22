@@ -55,7 +55,7 @@ class LayerIO extends Bundle {
   /** Line RAM port */
   val lineRam = ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
   /** Tile ROM port */
-  val rom = new LayerRomIO
+  val tileRom = new LayerRomIO
 }
 
 object LayerIO {

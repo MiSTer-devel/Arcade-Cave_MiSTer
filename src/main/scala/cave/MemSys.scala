@@ -58,7 +58,7 @@ class MemSys extends Module {
     /** EEPROM port */
     val eeprom = Flipped(new EEPROMIO)
     /** Layer tile ROM port */
-    val layerRom = Flipped(Vec(Config.LAYER_COUNT, new LayerRomIO))
+    val layerTileRom = Flipped(Vec(Config.LAYER_COUNT, new LayerRomIO))
     /** Sprite tile ROM port */
     val spriteRom = Flipped(new SpriteRomIO)
     /** DDR port */
@@ -142,7 +142,7 @@ class MemSys extends Module {
       depth = 256,
       wrapping = true
     )))
-    cache.io.in.asAsyncReadMemIO <> io.layerRom(i)
+    cache.io.in.asAsyncReadMemIO <> io.layerTileRom(i)
     cache.io.offset := io.gameConfig.layer(i).romOffset
     cache
   }

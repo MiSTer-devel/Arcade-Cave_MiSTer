@@ -73,7 +73,7 @@ class Cave extends Module {
     /** EEPROM port */
     val eeprom = new EEPROMIO
     /** Layer tile ROM port */
-    val layerRom = Vec(Config.LAYER_COUNT, new LayerRomIO)
+    val layerTileRom = Vec(Config.LAYER_COUNT, new LayerRomIO)
     /** Sprite tile ROM port */
     val spriteRom = new SpriteRomIO
     /** Audio port */
@@ -96,9 +96,9 @@ class Cave extends Module {
   gpu.io.video <> io.video
   gpu.io.gameConfig <> io.gameConfig
   gpu.io.frameReady := Util.rising(ShiftRegister(frameStart, 2))
-  gpu.io.layer(0).rom <> io.layerRom(0)
-  gpu.io.layer(1).rom <> io.layerRom(1)
-  gpu.io.layer(2).rom <> io.layerRom(2)
+  gpu.io.layer(0).tileRom <> io.layerTileRom(0)
+  gpu.io.layer(1).tileRom <> io.layerTileRom(1)
+  gpu.io.layer(2).tileRom <> io.layerTileRom(2)
   gpu.io.sprite.rom <> io.spriteRom
   gpu.io.rgb <> io.rgb
 

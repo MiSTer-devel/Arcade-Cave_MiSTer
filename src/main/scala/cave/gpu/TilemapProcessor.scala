@@ -97,7 +97,7 @@ class TilemapProcessor extends Module {
   val tileReg = RegEnable(tile, latchTile)
   val priorityReg = RegEnable(tileReg.priority, latchColor)
   val colorReg = RegEnable(tileReg.colorCode, latchColor)
-  val pixReg = RegEnable(TilemapProcessor.decodePixels(io.layer.rom.dout, io.layer.format, offset), latchPix)
+  val pixReg = RegEnable(TilemapProcessor.decodePixels(io.layer.tileRom.dout, io.layer.format, offset), latchPix)
 
   // Palette entry
   val pen = PaletteEntry(priorityReg, colorReg, pixReg(offset.x(2, 0)))
@@ -109,8 +109,8 @@ class TilemapProcessor extends Module {
   io.layer.vram8x8.addr := layerRamAddr
   io.layer.vram16x16.rd := true.B // read-only
   io.layer.vram16x16.addr := layerRamAddr
-  io.layer.rom.rd := io.layer.format =/= Config.GFX_FORMAT_UNKNOWN.U
-  io.layer.rom.addr := TilemapProcessor.tileRomAddr(io.layer, tileReg.code, offset)
+  io.layer.tileRom.rd := io.layer.format =/= Config.GFX_FORMAT_UNKNOWN.U
+  io.layer.tileRom.addr := TilemapProcessor.tileRomAddr(io.layer, tileReg.code, offset)
   io.pen := Mux(layerEnable, pen, PaletteEntry.zero)
 }
 
