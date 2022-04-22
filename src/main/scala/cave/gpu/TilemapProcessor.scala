@@ -82,8 +82,8 @@ class TilemapProcessor extends Module {
 
   // Decode tile
   val tile = Mux(io.layer.regs.tileSize,
-    Tile.decode_16x16(io.layer.ram_16x16.dout),
-    Tile.decode_8x8(io.layer.ram_8x8.dout)
+    Tile.decode_16x16(io.layer.vram16x16.dout),
+    Tile.decode_8x8(io.layer.vram8x8.dout)
   )
 
   // Latch signals
@@ -103,10 +103,10 @@ class TilemapProcessor extends Module {
   // Outputs
   io.layer.lineRam.rd := true.B // read-only
   io.layer.lineRam.addr := pos.y
-  io.layer.ram_8x8.rd := true.B // read-only
-  io.layer.ram_8x8.addr := layerRamAddr
-  io.layer.ram_16x16.rd := true.B // read-only
-  io.layer.ram_16x16.addr := layerRamAddr
+  io.layer.vram8x8.rd := true.B // read-only
+  io.layer.vram8x8.addr := layerRamAddr
+  io.layer.vram16x16.rd := true.B // read-only
+  io.layer.vram16x16.addr := layerRamAddr
   io.layer.rom.rd := io.layer.format =/= Config.GFX_FORMAT_UNKNOWN.U
   io.layer.rom.addr := TilemapProcessor.tileRomAddr(io.layer, tileReg.code, offset)
   io.pen := Mux(enable, pen, PaletteEntry.zero)
