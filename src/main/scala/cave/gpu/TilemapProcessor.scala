@@ -148,16 +148,16 @@ object TilemapProcessor {
    * @return A memory address.
    */
   private def tileRomAddr(layer: LayerIO, code: UInt, offset: UVec2): UInt = {
-    val format_8x8x4 = !layer.regs.tileSize && layer.format === Config.GFX_FORMAT_4BPP.U
-    val format_8x8x8 = !layer.regs.tileSize && layer.format === Config.GFX_FORMAT_8BPP.U
-    val format_16x16x4 = layer.regs.tileSize && layer.format === Config.GFX_FORMAT_4BPP.U
-    val format_16x16x8 = layer.regs.tileSize && layer.format === Config.GFX_FORMAT_8BPP.U
+    val format8x8x4 = !layer.regs.tileSize && layer.format === Config.GFX_FORMAT_4BPP.U
+    val format8x8x8 = !layer.regs.tileSize && layer.format === Config.GFX_FORMAT_8BPP.U
+    val format16x16x4 = layer.regs.tileSize && layer.format === Config.GFX_FORMAT_4BPP.U
+    val format16x16x8 = layer.regs.tileSize && layer.format === Config.GFX_FORMAT_8BPP.U
 
     MuxCase(0.U, Seq(
-      format_8x8x4 -> code ## offset.y(2, 1) ## 0.U(3.W),
-      format_8x8x8 -> code ## offset.y(2, 0) ## 0.U(3.W),
-      format_16x16x4 -> code ## offset.y(3) ## ~offset.x(3) ## offset.y(2, 1) ## 0.U(3.W),
-      format_16x16x8 -> code ## offset.y(3) ## ~offset.x(3) ## offset.y(2, 0) ## 0.U(3.W)
+      format8x8x4 -> code ## offset.y(2, 1) ## 0.U(3.W),
+      format8x8x8 -> code ## offset.y(2, 0) ## 0.U(3.W),
+      format16x16x4 -> code ## offset.y(3) ## ~offset.x(3) ## offset.y(2, 1) ## 0.U(3.W),
+      format16x16x8 -> code ## offset.y(3) ## ~offset.x(3) ## offset.y(2, 0) ## 0.U(3.W)
     ))
   }
 
