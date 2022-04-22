@@ -51,6 +51,10 @@ class MemSys extends Module {
     val gameConfig = Input(GameConfig())
     /** IOCTL port */
     val ioctl = IOCTL()
+    /** DDR port */
+    val ddr = BurstReadWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
+    /** SDRAM port */
+    val sdram = BurstReadWriteMemIO(Config.sdramConfig.addrWidth, Config.sdramConfig.dataWidth)
     /** Program ROM port */
     val progRom = Flipped(new ProgRomIO)
     /** Sound ROM port */
@@ -61,10 +65,6 @@ class MemSys extends Module {
     val layerTileRom = Flipped(Vec(Config.LAYER_COUNT, new LayerRomIO))
     /** Sprite tile ROM port */
     val spriteTileRom = Flipped(new SpriteRomIO)
-    /** DDR port */
-    val ddr = BurstReadWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
-    /** SDRAM port */
-    val sdram = BurstReadWriteMemIO(Config.sdramConfig.addrWidth, Config.sdramConfig.dataWidth)
   })
 
   // The DDR download cache is used to buffer IOCTL data, so that complete words can be written to
