@@ -110,7 +110,7 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
   it should "move to the ready state after checking a visible sprite" in {
     test(mkProcessor()) { dut =>
       dut.io.start.poke(true)
-      dut.io.sprite.ram.dout.poke("h0101_0000_0000_0000_0000".U)
+      dut.io.sprite.vram.dout.poke("h0101_0000_0000_0000_0000".U)
       waitForCheck(dut)
       dut.clock.step()
       dut.io.debug.ready.expect(true)
@@ -149,7 +149,7 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
   it should "deassert the busy flag when the processor has finished" in {
     test(mkProcessor(1)) { dut =>
       dut.io.start.poke(true)
-      dut.io.sprite.ram.dout.poke("h0101_0000_0000_0001_0000".U)
+      dut.io.sprite.vram.dout.poke("h0101_0000_0000_0001_0000".U)
       waitForPending(dut)
       dut.io.sprite.rom.valid.poke(true)
       dut.clock.step(16)
@@ -168,7 +168,7 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
     test(mkProcessor()) { dut =>
       dut.io.start.poke(true)
       waitForLoad(dut)
-      dut.io.sprite.ram.rd.expect(true)
+      dut.io.sprite.vram.rd.expect(true)
     }
   }
 
@@ -177,7 +177,7 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
   it should "fetch pixel data from the tile ROM" in {
     test(mkProcessor()) { dut =>
       dut.io.start.poke(true)
-      dut.io.sprite.ram.dout.poke("h0101_0000_0000_0001_0000".U)
+      dut.io.sprite.vram.dout.poke("h0101_0000_0000_0001_0000".U)
       waitForReady(dut)
       dut.clock.step()
       dut.io.sprite.rom.rd.expect(true)

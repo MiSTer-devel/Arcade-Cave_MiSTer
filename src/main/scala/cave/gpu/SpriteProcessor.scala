@@ -79,7 +79,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   val is8BPP = io.sprite.format === Config.GFX_FORMAT_8BPP.U
 
   // Decode the sprite
-  val sprite = Sprite.decode(io.sprite.ram.dout, io.sprite.zoom)
+  val sprite = Sprite.decode(io.sprite.vram.dout, io.sprite.zoom)
 
   // Wires
   val effectiveRead = Wire(Bool())
@@ -196,8 +196,8 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
 
   // Outputs
   io.busy := stateReg =/= State.idle
-  io.sprite.ram.rd := stateReg === State.load
-  io.sprite.ram.addr := spriteRamAddr
+  io.sprite.vram.rd := stateReg === State.load
+  io.sprite.vram.addr := spriteRamAddr
   io.sprite.rom.rd := tileRomRead
   io.sprite.rom.addr := tileRomAddr
   io.sprite.rom.burstLength := tileRomBurstLength

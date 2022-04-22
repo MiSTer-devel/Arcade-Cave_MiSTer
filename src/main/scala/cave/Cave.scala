@@ -239,7 +239,7 @@ class Cave extends Module {
     gpu.io.sprite.rotate := io.options.rotate
     gpu.io.sprite.zoom := io.gameConfig.sprite.zoom
     gpu.io.sprite.bank := videoRegs.io.regs.asUInt(64)
-    gpu.io.sprite.ram <> spriteRam.io.portB
+    gpu.io.sprite.vram <> spriteRam.io.portB
 
     gpu.io.paletteRam <> paletteRam.io.portB
 
