@@ -47,7 +47,7 @@ class OptionsIO extends Bundle {
   /** Asserted when video compatibility (60Hz) mode is enabled */
   val compatibility = Input(Bool())
   /** Layer enable flags */
-  val layer = Input(new Bundle {
+  val layerEnable = Input(new Bundle {
     val sprites = Bool()
     val layer0 = Bool()
     val layer1 = Bool()

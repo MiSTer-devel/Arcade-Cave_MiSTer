@@ -213,7 +213,7 @@ class Cave extends Module {
 
     // GPU
     gpu.io.layer(0).format := io.gameConfig.layer(0).format
-    gpu.io.layer(0).enable := io.options.layer.layer0
+    gpu.io.layer(0).enable := io.options.layerEnable.layer0
     gpu.io.layer(0).rowScrollEnable := io.options.rowScrollEnable
     gpu.io.layer(0).rowSelectEnable := io.options.rowSelectEnable
     gpu.io.layer(0).regs := withClock(io.videoClock) { ShiftRegister(Layer.decode(layerRegs(0).io.regs.asUInt), 2) }
@@ -222,7 +222,7 @@ class Cave extends Module {
     gpu.io.layer(0).lineRam <> lineRam(0).io.portB
 
     gpu.io.layer(1).format := io.gameConfig.layer(1).format
-    gpu.io.layer(1).enable := io.options.layer.layer1
+    gpu.io.layer(1).enable := io.options.layerEnable.layer1
     gpu.io.layer(1).rowScrollEnable := io.options.rowScrollEnable
     gpu.io.layer(1).rowSelectEnable := io.options.rowSelectEnable
     gpu.io.layer(1).regs := withClock(io.videoClock) { ShiftRegister(Layer.decode(layerRegs(1).io.regs.asUInt), 2) }
@@ -231,7 +231,7 @@ class Cave extends Module {
     gpu.io.layer(1).lineRam <> lineRam(1).io.portB
 
     gpu.io.layer(2).format := io.gameConfig.layer(2).format
-    gpu.io.layer(2).enable := io.options.layer.layer2
+    gpu.io.layer(2).enable := io.options.layerEnable.layer2
     gpu.io.layer(2).rowScrollEnable := io.options.rowScrollEnable
     gpu.io.layer(2).rowSelectEnable := io.options.rowSelectEnable
     gpu.io.layer(2).regs := withClock(io.videoClock) { ShiftRegister(Layer.decode(layerRegs(2).io.regs.asUInt), 2) }
@@ -240,7 +240,7 @@ class Cave extends Module {
     gpu.io.layer(2).lineRam <> lineRam(2).io.portB
 
     gpu.io.sprite.format := io.gameConfig.sprite.format
-    gpu.io.sprite.enable := io.options.layer.sprites
+    gpu.io.sprite.enable := io.options.layerEnable.sprites
     gpu.io.sprite.flip := io.options.flip
     gpu.io.sprite.rotate := io.options.rotate
     gpu.io.sprite.zoom := io.gameConfig.sprite.zoom
