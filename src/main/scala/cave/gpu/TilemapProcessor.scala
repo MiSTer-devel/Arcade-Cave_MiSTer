@@ -58,17 +58,27 @@ class TilemapProcessor extends Module {
     val pen = Output(new PaletteEntry)
   })
 
+  // Decode the line effect for the current scanline
+  val lineEffectReg = RegEnable(LineEffect.decode(io.layer.lineRam.dout), io.video.pixelClockEnable)
+
   // The enable flag is asserted when the layer should be rendered
   val enable = io.layer.format =/= Config.GFX_FORMAT_UNKNOWN.U && io.layer.enable && io.layer.regs.enable
 
   // Pixel position
   val pos = io.video.pos + io.layer.regs.scroll + io.offset
 
+  // Apply line effects
+  val pos_ = {
+    val x = Mux(io.layer.regs.rowScrollEnable, lineEffectReg.rowScroll, 0.U) + pos.x
+    val y = Mux(io.layer.regs.rowSelectEnable, lineEffectReg.rowSelect, pos.y)
+    UVec2(x, y)
+  }
+
   // Pixel offset
-  val offset = TilemapProcessor.tileOffset(io.layer, pos)
+  val offset = TilemapProcessor.tileOffset(io.layer, pos_)
 
   // Layer RAM address
-  val layerRamAddr = TilemapProcessor.layerRamAddr(io.layer, pos)
+  val layerRamAddr = TilemapProcessor.layerRamAddr(io.layer, pos_)
 
   // Decode tile
   val tile = Mux(io.layer.regs.tileSize,
