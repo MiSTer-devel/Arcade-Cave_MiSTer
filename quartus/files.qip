@@ -7,5 +7,5 @@ set_global_assignment -name QIP_FILE rtl/fx68k/fx68k.qip
 set_global_assignment -name QIP_FILE rtl/video_fifo/video_fifo.qip
 set_global_assignment -name SDC_FILE rtl/sdram.sdc
 set_global_assignment -name SYSTEMVERILOG_FILE cave.sv
-set_global_assignment -name VERILOG_FILE rtl/ChiselTop.v
+set_global_assignment -name VERILOG_FILE rtl/Main.v
 set_global_assignment -name VERILOG_FILE rtl/reset_ctrl.v

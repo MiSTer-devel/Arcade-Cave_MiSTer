@@ -9,7 +9,6 @@ quartus/greybox_tmp
 quartus/incremental_db
 quartus/jtag.cdf
 quartus/output_files
-quartus/rtl/ChiselTop.v
 quartus/rtl/Main.*
 target
 test_run_dir

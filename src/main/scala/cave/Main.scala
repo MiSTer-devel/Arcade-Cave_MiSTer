@@ -152,7 +152,7 @@ class Main extends Module {
 
 object Main extends App {
   (new ChiselStage).execute(
-    Array("--compiler", "verilog", "--target-dir", "quartus/rtl", "--output-file", "ChiselTop"),
+    Array("--compiler", "verilog", "--target-dir", "quartus/rtl"),
     Seq(ChiselGeneratorAnnotation(() => new Main))
   )
 }
