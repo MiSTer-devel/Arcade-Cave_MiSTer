@@ -143,7 +143,7 @@ class MemSys extends Module {
       wrapping = true
     )))
     cache.io.in.asAsyncReadMemIO <> io.layerRom(i)
-    cache.io.offset := io.gameConfig.layerRomOffset(i)
+    cache.io.offset := io.gameConfig.layer(i).romOffset
     cache
   }
 
