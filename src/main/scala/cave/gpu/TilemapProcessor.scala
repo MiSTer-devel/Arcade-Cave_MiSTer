@@ -58,35 +58,31 @@ class TilemapProcessor extends Module {
     val pen = Output(new PaletteEntry)
   })
 
-  // Set enable flag
+  // The enable flag is asserted when the layer should be rendered
   val enable = io.layer.format =/= Config.GFX_FORMAT_UNKNOWN.U && io.layer.enable && io.layer.regs.enable
 
   // Pixel position
   val pos = io.video.pos + io.layer.regs.scroll + io.offset
 
   // Pixel offset
-  val offset = {
-    val x = Mux(io.layer.regs.tileSize, pos.x(3, 0), pos.x(2, 0))
-    val y = Mux(io.layer.regs.tileSize, pos.y(3, 0), pos.y(2, 0))
-    UVec2(x, y)
-  }
+  val offset = TilemapProcessor.tileOffset(io.layer, pos)
 
   // Layer RAM address
-  val layerRamAddr = {
-    val large = pos.y(8, 4) ## (pos.x(8, 4) + 1.U)
-    val small = pos.y(8, 3) ## (pos.x(8, 3) + 1.U)
-    Mux(io.layer.regs.tileSize, large, small)
-  }
+  val layerRamAddr = TilemapProcessor.layerRamAddr(io.layer, pos)
+
+  // Decode tile
+  val tile = Mux(io.layer.regs.tileSize,
+    Tile.decode_16x16(io.layer.ram_16x16.dout),
+    Tile.decode_8x8(io.layer.ram_8x8.dout)
+  )
 
   // Latch signals
-  val latchLayerRamAddr = io.video.pixelClockEnable && Mux(io.layer.regs.tileSize, offset.x === 8.U, offset.x === 0.U)
   val latchTile = io.video.pixelClockEnable && Mux(io.layer.regs.tileSize, offset.x === 10.U, offset.x === 2.U)
-  val latchPix = io.video.pixelClockEnable && offset.x(2, 0) === 7.U
   val latchColor = io.video.pixelClockEnable && Mux(io.layer.regs.tileSize, offset.x === 15.U, offset.x === 7.U)
+  val latchPix = io.video.pixelClockEnable && offset.x(2, 0) === 7.U
 
-  // Registers
-  val layerRamAddrReg = RegEnable(layerRamAddr, latchLayerRamAddr)
-  val tileReg = RegEnable(Tile.decode(io.layer.ram.dout, io.layer.regs.tileSize), latchTile)
+  // Tile registers
+  val tileReg = RegEnable(tile, latchTile)
   val priorityReg = RegEnable(tileReg.priority, latchColor)
   val colorReg = RegEnable(tileReg.colorCode, latchColor)
   val pixReg = RegEnable(TilemapProcessor.decodePixels(io.layer.rom.dout, io.layer.format, offset), latchPix)
@@ -95,8 +91,12 @@ class TilemapProcessor extends Module {
   val pen = PaletteEntry(priorityReg, colorReg, pixReg(offset.x(2, 0)))
 
   // Outputs
-  io.layer.ram.rd := true.B // read-only
-  io.layer.ram.addr := layerRamAddrReg
+  io.layer.lineRam.rd := true.B // read-only
+  io.layer.lineRam.addr := pos.y
+  io.layer.ram_8x8.rd := true.B // read-only
+  io.layer.ram_8x8.addr := layerRamAddr
+  io.layer.ram_16x16.rd := true.B // read-only
+  io.layer.ram_16x16.addr := layerRamAddr
   io.layer.rom.rd := io.layer.format =/= Config.GFX_FORMAT_UNKNOWN.U
   io.layer.rom.addr := TilemapProcessor.tileRomAddr(io.layer, tileReg.code, offset)
   io.pen := Mux(enable, pen, PaletteEntry.zero)
@@ -104,8 +104,35 @@ class TilemapProcessor extends Module {
 
 object TilemapProcessor {
   /**
+   * Calculate the layer RAM address for a tile.
+   *
+   * @param layer The layer bundle.
+   * @param pos   The absolute position of the pixel in the tilemap.
+   * @return A memory address.
+   */
+  private def layerRamAddr(layer: LayerIO, pos: UVec2): UInt = {
+    val large = pos.y(8, 4) ## (pos.x(8, 4) + 1.U)
+    val small = pos.y(8, 3) ## (pos.x(8, 3) + 1.U)
+    Mux(layer.regs.tileSize, large, small)
+  }
+
+  /**
+   * Calculates the pixel offset for a tile.
+   *
+   * @param layer The layer bundle.
+   * @param pos   The absolute position of the pixel in the tilemap.
+   * @return A position relative to the tile.
+   */
+  private def tileOffset(layer: LayerIO, pos: UVec2): UVec2 = {
+    val x = Mux(layer.regs.tileSize, pos.x(3, 0), pos.x(2, 0))
+    val y = Mux(layer.regs.tileSize, pos.y(3, 0), pos.y(2, 0))
+    UVec2(x, y)
+  }
+
+  /**
    * Calculates the tile ROM byte address for the given tile code.
    *
+   * @param layer  The layer bundle.
    * @param code   The tile code.
    * @param offset The pixel offset.
    * @return A memory address.

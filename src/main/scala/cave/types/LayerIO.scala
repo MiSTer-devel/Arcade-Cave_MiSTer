@@ -32,6 +32,7 @@
 
 package cave.types
 
+import axon.mem.ReadMemIO
 import cave.Config
 import chisel3._
 
@@ -43,8 +44,12 @@ class LayerIO extends Bundle {
   val enable = Input(Bool())
   /** Layer registers port */
   val regs = Input(new Layer)
-  /** VRAM port */
-  val ram = new LayerRamIO
+  /** 8x8 VRAM port */
+  val ram_8x8 = ReadMemIO(Config.LAYER_8x8_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
+  /** 16x16 VRAM port */
+  val ram_16x16 = ReadMemIO(Config.LAYER_16x16_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
+  /** Line RAM port */
+  val lineRam = ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
   /** Tile ROM port */
   val rom = new LayerRomIO
 }
