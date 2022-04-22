@@ -114,7 +114,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   val tileRomRead = stateReg === State.pending && !burstPendingReg && fifo.io.count <= (Config.FIFO_DEPTH / 2).U
 
   // Set effective read flag
-  effectiveRead := tileRomRead && !io.sprite.rom.waitReq
+  effectiveRead := tileRomRead && !io.sprite.tileRom.waitReq
 
   // Set sprite RAM address
   val spriteRamAddr = io.sprite.bank ## spriteCounter
@@ -126,7 +126,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   val tileRomBurstLength = Mux(is8BPP, 32.U, 16.U)
 
   // The burst pending register is asserted when there is a burst in progress
-  when(io.sprite.rom.burstDone) {
+  when(io.sprite.tileRom.burstDone) {
     burstPendingReg := false.B
   }.elsewhen(effectiveRead) {
     burstPendingReg := true.B
@@ -144,8 +144,8 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   }
 
   // Enqueue tile ROM data in the FIFO when it is available
-  when(io.sprite.rom.valid) {
-    fifo.io.enq.enq(io.sprite.rom.dout)
+  when(io.sprite.tileRom.valid) {
+    fifo.io.enq.enq(io.sprite.tileRom.dout)
   } otherwise {
     fifo.io.enq.noenq()
   }
@@ -198,9 +198,9 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   io.busy := stateReg =/= State.idle
   io.sprite.vram.rd := stateReg === State.load
   io.sprite.vram.addr := spriteRamAddr
-  io.sprite.rom.rd := tileRomRead
-  io.sprite.rom.addr := tileRomAddr
-  io.sprite.rom.burstLength := tileRomBurstLength
+  io.sprite.tileRom.rd := tileRomRead
+  io.sprite.tileRom.addr := tileRomAddr
+  io.sprite.tileRom.burstLength := tileRomBurstLength
   io.frameBuffer <> Mux(stateReg === State.clear, GPU.clearMem(clearAddr), blitter.io.frameBuffer)
   io.debug.idle := stateReg === State.idle
   io.debug.clear := stateReg === State.clear

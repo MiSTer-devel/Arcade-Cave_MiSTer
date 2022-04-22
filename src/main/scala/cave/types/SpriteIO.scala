@@ -53,7 +53,7 @@ class SpriteIO extends Bundle {
   /** VRAM port */
   val vram = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
   /** Tile ROM port */
-  val rom = new SpriteRomIO
+  val tileRom = new SpriteRomIO
 }
 
 object SpriteIO {

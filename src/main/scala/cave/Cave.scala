@@ -75,7 +75,7 @@ class Cave extends Module {
     /** Layer tile ROM port */
     val layerTileRom = Vec(Config.LAYER_COUNT, new LayerRomIO)
     /** Sprite tile ROM port */
-    val spriteRom = new SpriteRomIO
+    val spriteTileRom = new SpriteRomIO
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** RGB output */
@@ -99,7 +99,7 @@ class Cave extends Module {
   gpu.io.layer(0).tileRom <> io.layerTileRom(0)
   gpu.io.layer(1).tileRom <> io.layerTileRom(1)
   gpu.io.layer(2).tileRom <> io.layerTileRom(2)
-  gpu.io.sprite.rom <> io.spriteRom
+  gpu.io.sprite.tileRom <> io.spriteTileRom
   gpu.io.rgb <> io.rgb
 
   // The CPU and registers run in the CPU clock domain

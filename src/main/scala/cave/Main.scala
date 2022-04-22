@@ -139,7 +139,7 @@ class Main extends Module {
   cave.io.layerTileRom(0) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(0))
   cave.io.layerTileRom(1) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(1))
   cave.io.layerTileRom(2) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(2))
-  cave.io.spriteRom <> memSys.io.spriteRom
+  cave.io.spriteTileRom <> memSys.io.spriteTileRom
   cave.io.audio <> io.audio
   cave.io.video <> video
   cave.io.rgb <> io.rgb

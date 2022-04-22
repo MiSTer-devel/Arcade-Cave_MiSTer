@@ -60,7 +60,7 @@ class MemSys extends Module {
     /** Layer tile ROM port */
     val layerTileRom = Flipped(Vec(Config.LAYER_COUNT, new LayerRomIO))
     /** Sprite tile ROM port */
-    val spriteRom = Flipped(new SpriteRomIO)
+    val spriteTileRom = Flipped(new SpriteRomIO)
     /** DDR port */
     val ddr = BurstReadWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
     /** SDRAM port */
@@ -153,8 +153,8 @@ class MemSys extends Module {
   ddrArbiter.io.in(1) <> progRomCache.io.out
   ddrArbiter.io.in(2) <> soundRomCache.io.out
   ddrArbiter.io.in(3) <> eepromCache.io.out
-  ddrArbiter.io.in(4).asBurstReadMemIO <> io.spriteRom
-  ddrArbiter.io.in(4).addr := io.spriteRom.addr + io.gameConfig.sprite.romOffset + Config.DDR_DOWNLOAD_OFFSET.U // override tile ROM address
+  ddrArbiter.io.in(4).asBurstReadMemIO <> io.spriteTileRom
+  ddrArbiter.io.in(4).addr := io.spriteTileRom.addr + io.gameConfig.sprite.romOffset + Config.DDR_DOWNLOAD_OFFSET.U // override tile ROM address
   ddrArbiter.io.out <> io.ddr
 
   // SDRAM arbiter
