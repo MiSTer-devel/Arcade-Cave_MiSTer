@@ -63,7 +63,7 @@ object Tile {
    *
    * @param data The tile data.
    */
-  def decode_16x16(data: Bits): Tile = {
+  def decode16x16(data: Bits): Tile = {
     val words = Util.decode(data, 2, 16)
     val tile = Wire(new Tile)
     tile.priority := words(0)(15, 14)
@@ -86,7 +86,7 @@ object Tile {
    *
    * @param data The tile data.
    */
-  def decode_8x8(data: Bits): Tile = {
+  def decode8x8(data: Bits): Tile = {
     val words = Util.decode(data, 2, 16)
     val tile = Wire(new Tile)
     tile.priority := words(0)(15, 14)

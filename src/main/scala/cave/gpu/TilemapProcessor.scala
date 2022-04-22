@@ -82,8 +82,8 @@ class TilemapProcessor extends Module {
 
   // Decode tile
   val tile = Mux(io.layer.regs.tileSize,
-    Tile.decode_16x16(io.layer.vram16x16.dout),
-    Tile.decode_8x8(io.layer.vram8x8.dout)
+    Tile.decode16x16(io.layer.vram16x16.dout),
+    Tile.decode8x8(io.layer.vram8x8.dout)
   )
 
   // Latch signals
