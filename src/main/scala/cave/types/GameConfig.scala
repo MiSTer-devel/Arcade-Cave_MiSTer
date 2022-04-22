@@ -62,12 +62,8 @@ class GameConfig extends Bundle {
   val spriteZoom = Bool()
   /** Sprite graphics format */
   val spriteFormat = UInt(Config.GFX_FORMAT_WIDTH.W)
-  /** Layer 0 graphics format */
-  val layer0Format = UInt(Config.GFX_FORMAT_WIDTH.W)
-  /** Layer 1 graphics format */
-  val layer1Format = UInt(Config.GFX_FORMAT_WIDTH.W)
-  /** Layer 2 graphics format */
-  val layer2Format = UInt(Config.GFX_FORMAT_WIDTH.W)
+  /** Layer graphics format */
+  val layerFormat = Vec(Config.LAYER_COUNT, UInt(Config.GFX_FORMAT_WIDTH.W))
 }
 
 object GameConfig {
@@ -114,9 +110,9 @@ object GameConfig {
     wire.numLayers := 2.U
     wire.spriteZoom := true.B
     wire.spriteFormat := Config.GFX_FORMAT_4BPP.U
-    wire.layer0Format := Config.GFX_FORMAT_4BPP.U
-    wire.layer1Format := Config.GFX_FORMAT_4BPP.U
-    wire.layer2Format := Config.GFX_FORMAT_UNKNOWN.U
+    wire.layerFormat(0) := Config.GFX_FORMAT_4BPP.U
+    wire.layerFormat(1) := Config.GFX_FORMAT_4BPP.U
+    wire.layerFormat(2) := Config.GFX_FORMAT_UNKNOWN.U
     wire
   }
 
@@ -134,9 +130,9 @@ object GameConfig {
     wire.numLayers := 3.U
     wire.spriteZoom := false.B
     wire.spriteFormat := Config.GFX_FORMAT_4BPP_MSB.U
-    wire.layer0Format := Config.GFX_FORMAT_4BPP.U
-    wire.layer1Format := Config.GFX_FORMAT_4BPP.U
-    wire.layer2Format := Config.GFX_FORMAT_8BPP.U
+    wire.layerFormat(0) := Config.GFX_FORMAT_4BPP.U
+    wire.layerFormat(1) := Config.GFX_FORMAT_4BPP.U
+    wire.layerFormat(2) := Config.GFX_FORMAT_8BPP.U
     wire
   }
 
@@ -154,9 +150,9 @@ object GameConfig {
     wire.numLayers := 3.U
     wire.spriteZoom := true.B
     wire.spriteFormat := Config.GFX_FORMAT_8BPP.U
-    wire.layer0Format := Config.GFX_FORMAT_8BPP.U
-    wire.layer1Format := Config.GFX_FORMAT_8BPP.U
-    wire.layer2Format := Config.GFX_FORMAT_8BPP.U
+    wire.layerFormat(0) := Config.GFX_FORMAT_8BPP.U
+    wire.layerFormat(1) := Config.GFX_FORMAT_8BPP.U
+    wire.layerFormat(2) := Config.GFX_FORMAT_8BPP.U
     wire
   }
 
@@ -174,9 +170,9 @@ object GameConfig {
     wire.numLayers := 3.U
     wire.spriteZoom := true.B
     wire.spriteFormat := Config.GFX_FORMAT_8BPP.U
-    wire.layer0Format := Config.GFX_FORMAT_8BPP.U
-    wire.layer1Format := Config.GFX_FORMAT_8BPP.U
-    wire.layer2Format := Config.GFX_FORMAT_8BPP.U
+    wire.layerFormat(0) := Config.GFX_FORMAT_8BPP.U
+    wire.layerFormat(1) := Config.GFX_FORMAT_8BPP.U
+    wire.layerFormat(2) := Config.GFX_FORMAT_8BPP.U
     wire
   }
 
@@ -194,9 +190,9 @@ object GameConfig {
     wire.numLayers := 1.U
     wire.spriteZoom := true.B
     wire.spriteFormat := Config.GFX_FORMAT_4BPP.U
-    wire.layer0Format := Config.GFX_FORMAT_8BPP.U
-    wire.layer1Format := Config.GFX_FORMAT_UNKNOWN.U
-    wire.layer2Format := Config.GFX_FORMAT_UNKNOWN.U
+    wire.layerFormat(0) := Config.GFX_FORMAT_8BPP.U
+    wire.layerFormat(1) := Config.GFX_FORMAT_UNKNOWN.U
+    wire.layerFormat(2) := Config.GFX_FORMAT_UNKNOWN.U
     wire
   }
 }

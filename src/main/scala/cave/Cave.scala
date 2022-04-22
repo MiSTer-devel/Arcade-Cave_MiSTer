@@ -216,21 +216,21 @@ class Cave extends Module {
     videoRegs.io.mem.default()
 
     // GPU
-    gpu.io.layer(0).format := io.gameConfig.layer0Format
+    gpu.io.layer(0).format := io.gameConfig.layerFormat(0)
     gpu.io.layer(0).enable := io.options.layer.layer0
     gpu.io.layer(0).regs := withClock(io.videoClock) { ShiftRegister(Layer.decode(layerRegs(0).io.regs.asUInt), 2) }
     gpu.io.layer(0).ram_8x8 <> layerRam_8x8(0).io.portB
     gpu.io.layer(0).ram_16x16 <> layerRam_16x16(0).io.portB
     gpu.io.layer(0).lineRam <> lineRam(0).io.portB
 
-    gpu.io.layer(1).format := io.gameConfig.layer1Format
+    gpu.io.layer(1).format := io.gameConfig.layerFormat(1)
     gpu.io.layer(1).enable := io.options.layer.layer1
     gpu.io.layer(1).regs := withClock(io.videoClock) { ShiftRegister(Layer.decode(layerRegs(1).io.regs.asUInt), 2) }
     gpu.io.layer(1).ram_8x8 <> layerRam_8x8(1).io.portB
     gpu.io.layer(1).ram_16x16 <> layerRam_16x16(1).io.portB
     gpu.io.layer(1).lineRam <> lineRam(1).io.portB
 
-    gpu.io.layer(2).format := io.gameConfig.layer2Format
+    gpu.io.layer(2).format := io.gameConfig.layerFormat(2)
     gpu.io.layer(2).enable := io.options.layer.layer2
     gpu.io.layer(2).regs := withClock(io.videoClock) { ShiftRegister(Layer.decode(layerRegs(2).io.regs.asUInt), 2) }
     gpu.io.layer(2).ram_8x8 <> layerRam_8x8(2).io.portB
