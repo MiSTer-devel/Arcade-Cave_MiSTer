@@ -36,12 +36,16 @@ import axon.mem.ReadMemIO
 import cave.Config
 import chisel3._
 
-/** An interface that contains all the signals for the layer processor. */
+/** An bundle that contains all the required signals for the layer processor. */
 class LayerIO extends Bundle {
   /** Graphics format */
   val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))
   /** Asserted when the layer is enabled */
   val enable = Input(Bool())
+  /** Asserted when row scroll is enabled */
+  val rowScrollEnable = Input(Bool())
+  /** Asserted when row select is enabled */
+  val rowSelectEnable = Input(Bool())
   /** Layer registers port */
   val regs = Input(new Layer)
   /** 8x8 VRAM port */

@@ -176,6 +176,8 @@ localparam CONF_STR = {
   "P2OB,Layer 0,On,Off;",
   "P2OC,Layer 1,On,Off;",
   "P2OD,Layer 2,On,Off;",
+  "P2OE,Row Scroll,On,Off;",
+  "P2OF,Row Select,On,Off;",
   "P2OGJ,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.,Puzzle Uo Poko,Guwange;",
   "-;",
   "R0,Reset;",
@@ -461,6 +463,8 @@ Main main (
   .io_options_layer_layer0(~status[11]),
   .io_options_layer_layer1(~status[12]),
   .io_options_layer_layer2(~status[13]),
+  .io_options_rowScrollEnable(~status[14]),
+  .io_options_rowSelectEnable(~status[15]),
   .io_options_gameIndex(status[19:16]),
   // Joystick signals
   .io_joystick_player1_up(player_1_up),

@@ -53,6 +53,10 @@ class OptionsIO extends Bundle {
     val layer1 = Bool()
     val layer2 = Bool()
   })
+  /** Asserted when row scroll is enabled */
+  val rowScrollEnable = Input(Bool())
+  /** Asserted when row select is enabled */
+  val rowSelectEnable = Input(Bool())
   /** Game index */
   val gameIndex = Input(UInt(OptionsIO.GAME_INDEX_WIDTH.W))
 }

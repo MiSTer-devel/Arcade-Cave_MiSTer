@@ -36,7 +36,7 @@ import axon.mem.ReadMemIO
 import cave.Config
 import chisel3._
 
-/** An interface that contains all the signals for the sprite processor. */
+/** An bundle that contains all the required signals for the sprite processor. */
 class SpriteIO extends Bundle {
   /** Graphics format */
   val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))

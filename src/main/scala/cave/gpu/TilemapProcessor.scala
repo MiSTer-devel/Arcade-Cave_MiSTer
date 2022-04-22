@@ -61,16 +61,18 @@ class TilemapProcessor extends Module {
   // Decode the line effect for the current scanline
   val lineEffectReg = RegEnable(LineEffect.decode(io.layer.lineRam.dout), io.video.pixelClockEnable)
 
-  // The enable flag is asserted when the layer should be rendered
-  val enable = io.layer.format =/= Config.GFX_FORMAT_UNKNOWN.U && io.layer.enable && io.layer.regs.enable
+  // Enable flags
+  val layerEnable = io.layer.enable && io.layer.format =/= Config.GFX_FORMAT_UNKNOWN.U && io.layer.regs.enable
+  val rowScrollEnable = io.layer.rowScrollEnable && io.layer.regs.rowScrollEnable
+  val rowSelectEnable = io.layer.rowSelectEnable && io.layer.regs.rowSelectEnable
 
   // Pixel position
   val pos = io.video.pos + io.layer.regs.scroll + io.offset
 
   // Apply line effects
   val pos_ = {
-    val x = Mux(io.layer.regs.rowScrollEnable, lineEffectReg.rowScroll, 0.U) + pos.x
-    val y = Mux(io.layer.regs.rowSelectEnable, lineEffectReg.rowSelect, pos.y)
+    val x = Mux(rowScrollEnable, lineEffectReg.rowScroll, 0.U) + pos.x
+    val y = Mux(rowSelectEnable, lineEffectReg.rowSelect, pos.y)
     UVec2(x, y)
   }
 
@@ -109,7 +111,7 @@ class TilemapProcessor extends Module {
   io.layer.vram16x16.addr := layerRamAddr
   io.layer.rom.rd := io.layer.format =/= Config.GFX_FORMAT_UNKNOWN.U
   io.layer.rom.addr := TilemapProcessor.tileRomAddr(io.layer, tileReg.code, offset)
-  io.pen := Mux(enable, pen, PaletteEntry.zero)
+  io.pen := Mux(layerEnable, pen, PaletteEntry.zero)
 }
 
 object TilemapProcessor {
