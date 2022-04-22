@@ -240,7 +240,7 @@ class Cave extends Module {
     gpu.io.layer(2).lineRam <> lineRam(2).io.portB
 
     gpu.io.sprite.format := io.gameConfig.sprite.format
-    gpu.io.sprite.enable := io.options.layerEnable.sprites
+    gpu.io.sprite.enable := io.options.layerEnable.sprite
     gpu.io.sprite.flip := io.options.flip
     gpu.io.sprite.rotate := io.options.rotate
     gpu.io.sprite.zoom := io.gameConfig.sprite.zoom

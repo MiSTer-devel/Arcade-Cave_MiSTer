@@ -459,7 +459,7 @@ Main main (
   .io_options_rotate(status[2]),
   .io_options_flip(status[3]),
   .io_options_compatibility(status[7]),
-  .io_options_layerEnable_sprites(~status[10]),
+  .io_options_layerEnable_sprite(~status[10]),
   .io_options_layerEnable_layer0(~status[11]),
   .io_options_layerEnable_layer1(~status[12]),
   .io_options_layerEnable_layer2(~status[13]),

@@ -48,9 +48,13 @@ class OptionsIO extends Bundle {
   val compatibility = Input(Bool())
   /** Layer enable flags */
   val layerEnable = Input(new Bundle {
-    val sprites = Bool()
+    /** Sprite layer */
+    val sprite = Bool()
+    /** Layer 0 */
     val layer0 = Bool()
+    /** Layer 1 */
     val layer1 = Bool()
+    /** Layer 2 */
     val layer2 = Bool()
   })
   /** Asserted when row scroll is enabled */
