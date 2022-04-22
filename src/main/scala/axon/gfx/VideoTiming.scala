@@ -112,7 +112,7 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
     /** CRT offset */
     val offset = Input(SVec2(OptionsIO.SCREEN_OFFSET_WIDTH.W))
     /** Video port */
-    val video = Output(VideoIO())
+    val video = VideoIO()
   })
 
   // Counters
