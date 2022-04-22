@@ -154,7 +154,7 @@ class MemSys extends Module {
   ddrArbiter.io.in(2) <> soundRomCache.io.out
   ddrArbiter.io.in(3) <> eepromCache.io.out
   ddrArbiter.io.in(4).asBurstReadMemIO <> io.spriteRom
-  ddrArbiter.io.in(4).addr := io.spriteRom.addr + io.gameConfig.spriteRomOffset + Config.DDR_DOWNLOAD_OFFSET.U // override tile ROM address
+  ddrArbiter.io.in(4).addr := io.spriteRom.addr + io.gameConfig.sprite.romOffset + Config.DDR_DOWNLOAD_OFFSET.U // override tile ROM address
   ddrArbiter.io.out <> io.ddr
 
   // SDRAM arbiter

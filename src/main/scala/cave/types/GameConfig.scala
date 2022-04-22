@@ -42,8 +42,15 @@ class GameConfig extends Bundle {
   val index = UInt(4.W)
   /** Program ROM offset */
   val progRomOffset = UInt(32.W)
-  /** Sprite ROM offset */
-  val spriteRomOffset = UInt(32.W)
+  /** Sprite configuration */
+  val sprite = new Bundle {
+    /** Sprite graphics format */
+    val format = UInt(Config.GFX_FORMAT_WIDTH.W)
+    /** Asserted when sprite scaling is enabled */
+    val zoom = Bool()
+    /** Sprite ROM offset */
+    val romOffset = UInt(32.W)
+  }
   /** Layer ROM offset */
   val layerRomOffset = Vec(Config.LAYER_COUNT, UInt(32.W))
   /** Sound ROM offset */
@@ -54,10 +61,6 @@ class GameConfig extends Bundle {
   val numColors = UInt(9.W)
   /** Number of tilemap layers */
   val numLayers = UInt(2.W)
-  /** Asserted when zoomed sprites are enabled */
-  val spriteZoom = Bool()
-  /** Sprite graphics format */
-  val spriteFormat = UInt(Config.GFX_FORMAT_WIDTH.W)
   /** Layer graphics format */
   val layerFormat = Vec(Config.LAYER_COUNT, UInt(Config.GFX_FORMAT_WIDTH.W))
 }
@@ -96,7 +99,7 @@ object GameConfig {
     val wire = Wire(new GameConfig)
     wire.index := DFEVERON.U
     wire.progRomOffset := 0x00000000.U
-    wire.spriteRomOffset := 0x00100000.U
+    wire.sprite.romOffset := 0x00100000.U
     wire.layerRomOffset(0) := 0x00900000.U
     wire.layerRomOffset(1) := 0x00b00000.U
     wire.layerRomOffset(2) := 0.U
@@ -104,8 +107,8 @@ object GameConfig {
     wire.eepromOffset := 0x01100000.U
     wire.numColors := 16.U
     wire.numLayers := 2.U
-    wire.spriteZoom := true.B
-    wire.spriteFormat := Config.GFX_FORMAT_4BPP.U
+    wire.sprite.zoom := true.B
+    wire.sprite.format := Config.GFX_FORMAT_4BPP.U
     wire.layerFormat(0) := Config.GFX_FORMAT_4BPP.U
     wire.layerFormat(1) := Config.GFX_FORMAT_4BPP.U
     wire.layerFormat(2) := Config.GFX_FORMAT_UNKNOWN.U
@@ -116,7 +119,7 @@ object GameConfig {
     val wire = Wire(new GameConfig)
     wire.index := DDONPACH.U
     wire.progRomOffset := 0x00000000.U
-    wire.spriteRomOffset := 0x00100000.U
+    wire.sprite.romOffset := 0x00100000.U
     wire.layerRomOffset(0) := 0x00900000.U
     wire.layerRomOffset(1) := 0x00b00000.U
     wire.layerRomOffset(2) := 0x00d00000.U
@@ -124,8 +127,8 @@ object GameConfig {
     wire.eepromOffset := 0x01300000.U
     wire.numColors := 256.U
     wire.numLayers := 3.U
-    wire.spriteZoom := false.B
-    wire.spriteFormat := Config.GFX_FORMAT_4BPP_MSB.U
+    wire.sprite.zoom := false.B
+    wire.sprite.format := Config.GFX_FORMAT_4BPP_MSB.U
     wire.layerFormat(0) := Config.GFX_FORMAT_4BPP.U
     wire.layerFormat(1) := Config.GFX_FORMAT_4BPP.U
     wire.layerFormat(2) := Config.GFX_FORMAT_8BPP.U
@@ -136,7 +139,7 @@ object GameConfig {
     val wire = Wire(new GameConfig)
     wire.index := ESPRADE.U
     wire.progRomOffset := 0x00000000.U
-    wire.spriteRomOffset := 0x00100000.U
+    wire.sprite.romOffset := 0x00100000.U
     wire.layerRomOffset(0) := 0x01100000.U
     wire.layerRomOffset(1) := 0x01900000.U
     wire.layerRomOffset(2) := 0x02100000.U
@@ -144,8 +147,8 @@ object GameConfig {
     wire.eepromOffset := 0x02900000.U
     wire.numColors := 256.U
     wire.numLayers := 3.U
-    wire.spriteZoom := true.B
-    wire.spriteFormat := Config.GFX_FORMAT_8BPP.U
+    wire.sprite.zoom := true.B
+    wire.sprite.format := Config.GFX_FORMAT_8BPP.U
     wire.layerFormat(0) := Config.GFX_FORMAT_8BPP.U
     wire.layerFormat(1) := Config.GFX_FORMAT_8BPP.U
     wire.layerFormat(2) := Config.GFX_FORMAT_8BPP.U
@@ -156,7 +159,7 @@ object GameConfig {
     val wire = Wire(new GameConfig)
     wire.index := GUWANGE.U
     wire.progRomOffset := 0x00000000.U
-    wire.spriteRomOffset := 0x00100000.U
+    wire.sprite.romOffset := 0x00100000.U
     wire.layerRomOffset(0) := 0x02100000.U
     wire.layerRomOffset(1) := 0x02900000.U
     wire.layerRomOffset(2) := 0x02d00000.U
@@ -164,8 +167,8 @@ object GameConfig {
     wire.eepromOffset := 0x03500000.U
     wire.numColors := 256.U
     wire.numLayers := 3.U
-    wire.spriteZoom := true.B
-    wire.spriteFormat := Config.GFX_FORMAT_8BPP.U
+    wire.sprite.zoom := true.B
+    wire.sprite.format := Config.GFX_FORMAT_8BPP.U
     wire.layerFormat(0) := Config.GFX_FORMAT_8BPP.U
     wire.layerFormat(1) := Config.GFX_FORMAT_8BPP.U
     wire.layerFormat(2) := Config.GFX_FORMAT_8BPP.U
@@ -176,7 +179,7 @@ object GameConfig {
     val wire = Wire(new GameConfig)
     wire.index := UOPOKO.U
     wire.progRomOffset := 0x00000000.U
-    wire.spriteRomOffset := 0x00100000.U
+    wire.sprite.romOffset := 0x00100000.U
     wire.layerRomOffset(0) := 0x00500000.U
     wire.layerRomOffset(1) := 0x00500000.U
     wire.layerRomOffset(2) := 0x00500000.U
@@ -184,8 +187,8 @@ object GameConfig {
     wire.eepromOffset := 0x00b00000.U
     wire.numColors := 256.U
     wire.numLayers := 1.U
-    wire.spriteZoom := true.B
-    wire.spriteFormat := Config.GFX_FORMAT_4BPP.U
+    wire.sprite.zoom := true.B
+    wire.sprite.format := Config.GFX_FORMAT_4BPP.U
     wire.layerFormat(0) := Config.GFX_FORMAT_8BPP.U
     wire.layerFormat(1) := Config.GFX_FORMAT_UNKNOWN.U
     wire.layerFormat(2) := Config.GFX_FORMAT_UNKNOWN.U
