@@ -32,6 +32,7 @@
 
 package axon.types
 
+import cave.Config
 import chisel3._
 
 /** An interface that contains the user options. */
@@ -50,12 +51,8 @@ class OptionsIO extends Bundle {
   val layerEnable = Input(new Bundle {
     /** Sprite layer */
     val sprite = Bool()
-    /** Layer 0 */
-    val layer0 = Bool()
-    /** Layer 1 */
-    val layer1 = Bool()
-    /** Layer 2 */
-    val layer2 = Bool()
+    /** Tilemap layers */
+    val layer = Vec(Config.LAYER_COUNT, Bool())
   })
   /** Asserted when row scroll is enabled */
   val rowScrollEnable = Input(Bool())

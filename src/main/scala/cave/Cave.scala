@@ -97,17 +97,17 @@ class Cave extends Module {
   gpu.io.gameConfig <> io.gameConfig
   gpu.io.frameReady := Util.rising(ShiftRegister(frameStart, 2))
   gpu.io.layer(0).format := io.gameConfig.layer(0).format
-  gpu.io.layer(0).enable := io.options.layerEnable.layer0
+  gpu.io.layer(0).enable := io.options.layerEnable.layer(0)
   gpu.io.layer(0).rowScrollEnable := io.options.rowScrollEnable
   gpu.io.layer(0).rowSelectEnable := io.options.rowSelectEnable
   gpu.io.layer(0).tileRom <> io.layerTileRom(0)
   gpu.io.layer(1).format := io.gameConfig.layer(1).format
-  gpu.io.layer(1).enable := io.options.layerEnable.layer1
+  gpu.io.layer(1).enable := io.options.layerEnable.layer(1)
   gpu.io.layer(1).rowScrollEnable := io.options.rowScrollEnable
   gpu.io.layer(1).rowSelectEnable := io.options.rowSelectEnable
   gpu.io.layer(1).tileRom <> io.layerTileRom(1)
   gpu.io.layer(2).format := io.gameConfig.layer(2).format
-  gpu.io.layer(2).enable := io.options.layerEnable.layer2
+  gpu.io.layer(2).enable := io.options.layerEnable.layer(2)
   gpu.io.layer(2).rowScrollEnable := io.options.rowScrollEnable
   gpu.io.layer(2).rowSelectEnable := io.options.rowSelectEnable
   gpu.io.layer(2).tileRom <> io.layerTileRom(2)
