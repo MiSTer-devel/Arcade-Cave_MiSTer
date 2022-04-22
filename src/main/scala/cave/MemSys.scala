@@ -37,14 +37,7 @@ import axon.mister._
 import cave.types._
 import chisel3._
 
-/**
- * The memory subsystem routes memory requests to either DDR or SDRAM.
- *
- * The program and sound ROMs are stored in SDRAM, because they require low-latency memory access.
- * ROM data is also cached to reduce the need to go to memory for every read request.
- *
- * Everything else is stored in DDR memory.
- */
+/** The memory subsystem routes memory requests to either DDR or SDRAM. */
 class MemSys extends Module {
   val io = IO(new Bundle {
     /** Game config port */
