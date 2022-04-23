@@ -74,7 +74,7 @@ class GPU extends Module {
     depthB = Some(Config.FRAME_BUFFER_DEPTH)
   ))
   frameBuffer.io.clockB := io.videoClock
-  frameBuffer.io.portB.rd := io.video.enable
+  frameBuffer.io.portB.rd := io.video.displayEnable
   frameBuffer.io.portB.addr := GPU.frameBufferAddr(io.video.pos)
 
   // Sprite processor

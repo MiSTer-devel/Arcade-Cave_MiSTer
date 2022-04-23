@@ -86,7 +86,7 @@ class VideoFIFO extends Module {
   val fifo = Module(new VideoFIFOBlackBox)
   fifo.io.aclr := io.videoReset
   fifo.io.rdclk := io.videoClock
-  fifo.io.rdreq := io.video.clockEnable && io.video.enable && fillReg
+  fifo.io.rdreq := io.video.clockEnable && io.video.displayEnable && fillReg
   fifo.io.wrclk := clock
   fifo.io.wrreq := io.pixelData.valid
   fifo.io.data := io.pixelData.bits

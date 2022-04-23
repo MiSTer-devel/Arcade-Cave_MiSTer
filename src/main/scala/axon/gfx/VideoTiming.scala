@@ -36,11 +36,13 @@ import axon.types._
 import axon.util.Counter
 import chisel3._
 
-/** Represents the analog video signals. */
+/** An interface that contains analog video timing signals. */
 class VideoIO extends Bundle {
-  /** Asserted when the pixel clock is enabled */
+  /** Asserted when the video clock is enabled */
   val clockEnable = Output(Bool())
-  /** Beam position */
+  /** Asserted when the video position is in the display region */
+  val displayEnable = Output(Bool())
+  /** Video position */
   val pos = Output(UVec2(9.W))
   /** Horizontal sync */
   val hSync = Output(Bool())
@@ -50,8 +52,6 @@ class VideoIO extends Bundle {
   val hBlank = Output(Bool())
   /** Vertical blank */
   val vBlank = Output(Bool())
-  /** Asserted when the beam is in the display region */
-  val enable = Output(Bool())
 }
 
 object VideoIO {
@@ -97,7 +97,7 @@ case class VideoTimingConfig(clockFreq: Double,
 }
 
 /**
- * Generates the video timing signals required for driving a 15kHz CRT.
+ * Generates the analog video timing signals required for driving a 15kHz CRT.
  *
  * The horizontal sync signal tells the CRT when to start a new scanline, and the vertical sync
  * signal tells it when to start a new field.
@@ -145,10 +145,10 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
 
   // Outputs
   io.video.clockEnable := clockDivWrap
+  io.video.displayEnable := !(hBlank || vBlank)
   io.video.pos := pos
   io.video.hSync := hSync
   io.video.vSync := vSync
   io.video.hBlank := hBlank
   io.video.vBlank := vBlank
-  io.video.enable := !(hBlank || vBlank)
 }
