@@ -55,8 +55,8 @@ class VideoSys extends Module {
     val forceBlank = Input(Bool())
     /** Frame buffer port */
     val frameBuffer = mister.FrameBufferIO()
-    /** Frame buffer DMA index */
-    val frameBufferDMAIndex = Output(UInt(2.W))
+    /** The index of the frame buffer write page */
+    val frameBufferWritePage = Output(UInt(2.W))
     /** Video port */
     val video = VideoIO()
   })
@@ -116,8 +116,9 @@ class VideoSys extends Module {
     io.frameBuffer.stride := Mux(io.options.rotate, (Config.SCREEN_HEIGHT * 4).U, (Config.SCREEN_WIDTH * 4).U)
     io.frameBuffer.forceBlank := io.forceBlank
 
-    // Set DMA frame buffer indices
-    io.frameBufferDMAIndex := withClock(sysClock) { ShiftRegister(writeIndexReg, 2) }
+    // Set frame buffer write page to the current write index. This value needs to be synchronized
+    // back into the system clock domain.
+    io.frameBufferWritePage := withClock(sysClock) { ShiftRegister(writeIndexReg, 2) }
   }
 }
 

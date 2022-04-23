@@ -133,7 +133,7 @@ class Main extends Module {
   ))
   frameBufferDMA.io.enable := downloadDoneReg
   frameBufferDMA.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // start of VBLANK
-  frameBufferDMA.io.page := videoSys.io.frameBufferDMAIndex
+  frameBufferDMA.io.page := videoSys.io.frameBufferWritePage
   frameBufferDMA.io.ddr <> memSys.io.frameBufferDMA
 
   // Cave
