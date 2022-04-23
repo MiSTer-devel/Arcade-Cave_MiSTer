@@ -114,15 +114,13 @@ class Main extends Module {
   memSys.io.ddr <> ddr.io.mem
   memSys.io.sdram <> sdram.io.mem
 
-  val video = Wire(VideoIO())
-
-  withClockAndReset(io.videoClock, io.videoReset) {
+  // Video timing
+  val video = withClockAndReset(io.videoClock, io.videoReset) {
     val videoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
     videoTiming.io.offset := RegEnable(io.options.offset, videoTiming.io.video.vSync)
-    videoTiming.io.video <> video
+    videoTiming.io.video <> io.video
+    videoTiming.io.video
   }
-
-  video <> io.video
 
   // Cave
   val cave = Module(new Cave)
@@ -144,7 +142,7 @@ class Main extends Module {
   cave.io.video <> video
   cave.io.rgb <> io.rgb
 
-  // Set LED outputs
+  // System LED outputs
   io.led.power := false.B
   io.led.disk := io.ioctl.waitReq
   io.led.user := io.ioctl.download
