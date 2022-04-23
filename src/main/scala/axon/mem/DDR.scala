@@ -80,8 +80,8 @@ class DDR(config: DDRConfig) extends Module {
   // Registers
   val stateReg = RegInit(State.idle)
   val burstLength = Mux(stateReg === State.idle,
-    io.mem.burstLength,
-    RegEnable(io.mem.burstLength, stateReg === State.idle)
+    io.mem.burstCount,
+    RegEnable(io.mem.burstCount, stateReg === State.idle)
   )
 
   // Read/write control signals
@@ -112,7 +112,7 @@ class DDR(config: DDRConfig) extends Module {
   io.ddr.rd := io.mem.rd && stateReg =/= State.readWait
   io.ddr.wr := io.mem.wr || stateReg === State.writeWait
   io.ddr.addr := io.mem.addr + config.offset.U
-  io.ddr.burstLength := burstLength
+  io.ddr.burstCount := burstLength
   io.debug.burstCounter := burstCounter
 
   printf(p"DDR(state: $stateReg, counter: $burstCounter ($burstCounterWrap)\n")

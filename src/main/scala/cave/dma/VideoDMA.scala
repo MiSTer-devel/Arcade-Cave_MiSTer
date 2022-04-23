@@ -88,7 +88,7 @@ class VideoDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
   io.pixelData.valid := io.ddr.valid
   io.ddr.rd := read
   io.ddr.addr := ddrAddr
-  io.ddr.burstLength := burstLength.U
+  io.ddr.burstCount := burstLength.U
 
   printf(p"VideoDMA(busy: $busyReg, burstCounter: $burstCounter ($burstCounterDone))\n")
 }

@@ -35,15 +35,16 @@ package axon.mem
 import chisel3._
 import chisel3.util._
 
+/** Defines signals required for a burst memory device. */
 trait BurstIO {
   /** The number of words to transfer during a burst. */
-  val burstLength = Output(UInt(8.W))
+  val burstCount = Output(UInt(8.W))
   /** A flag indicating whether a burst has finished. */
   val burstDone = Input(Bool())
 }
 
 /**
- * A flow control interface for reading from bursted memory.
+ * A flow control interface for reading from burst memory.
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
@@ -52,7 +53,7 @@ class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addr
   /** Sets default values for all the signals. */
   override def default() = {
     super.default()
-    burstLength := 0.U
+    burstCount := 0.U
   }
 }
 
@@ -68,7 +69,7 @@ object BurstReadMemIO {
   def mux(in: Seq[(Bool, BurstReadMemIO)]): BurstReadMemIO = {
     val mem = Wire(chiselTypeOf(in.head._2))
     mem.rd := MuxCase(false.B, in.map(a => a._1 -> a._2.rd))
-    mem.burstLength := MuxCase(0.U, in.map(a => a._1 -> a._2.burstLength))
+    mem.burstCount := MuxCase(0.U, in.map(a => a._1 -> a._2.burstCount))
     mem.addr := MuxCase(DontCare, in.map(a => a._1 -> a._2.addr))
     for ((selected, port) <- in) {
       port.waitReq := (selected && mem.waitReq) || (!selected && port.rd)
@@ -81,7 +82,7 @@ object BurstReadMemIO {
 }
 
 /**
- * A flow control interface for writing to bursted memory.
+ * A flow control interface for writing to burst memory.
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
@@ -90,7 +91,7 @@ class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(ad
   /** Sets default values for all the signals. */
   override def default() = {
     super.default()
-    burstLength := 0.U
+    burstCount := 0.U
   }
 }
 
@@ -99,7 +100,7 @@ object BurstWriteMemIO {
 }
 
 /**
- * A flow control interface for reading and writing to bursted memory.
+ * A flow control interface for reading and writing to burst memory.
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
@@ -110,7 +111,7 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
     val mem = Wire(Flipped(BurstReadMemIO(addrWidth, dataWidth)))
     rd := mem.rd
     wr := false.B
-    burstLength := mem.burstLength
+    burstCount := mem.burstCount
     mem.waitReq := waitReq
     mem.valid := valid
     mem.burstDone := burstDone
@@ -126,7 +127,7 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
     val mem = Wire(Flipped(BurstWriteMemIO(addrWidth, dataWidth)))
     rd := false.B
     wr := mem.wr
-    burstLength := mem.burstLength
+    burstCount := mem.burstCount
     mem.waitReq := waitReq
     mem.burstDone := burstDone
     addr := mem.addr
@@ -138,7 +139,7 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
   /** Sets default values for all the signals. */
   override def default() = {
     super.default()
-    burstLength := 0.U
+    burstCount := 0.U
   }
 }
 
@@ -155,7 +156,7 @@ object BurstReadWriteMemIO {
     val mem = Wire(chiselTypeOf(in.head._2))
     mem.rd := Mux1H(in.map(a => a._1 -> a._2.rd))
     mem.wr := Mux1H(in.map(a => a._1 -> a._2.wr))
-    mem.burstLength := Mux1H(in.map(a => a._1 -> a._2.burstLength))
+    mem.burstCount := Mux1H(in.map(a => a._1 -> a._2.burstCount))
     mem.addr := Mux1H(in.map(a => a._1 -> a._2.addr))
     mem.mask := Mux1H(in.map(a => a._1 -> a._2.mask))
     mem.din := Mux1H(in.map(a => a._1 -> a._2.din))

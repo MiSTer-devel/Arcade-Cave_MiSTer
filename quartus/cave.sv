@@ -500,7 +500,7 @@ Main main (
   .io_ddr_dout(DDRAM_DOUT),
   .io_ddr_waitReq(DDRAM_BUSY),
   .io_ddr_valid(DDRAM_DOUT_READY),
-  .io_ddr_burstLength(DDRAM_BURSTCNT),
+  .io_ddr_burstCount(DDRAM_BURSTCNT),
   // SDRAM
   .io_sdram_cke(SDRAM_CKE),
   .io_sdram_cs_n(SDRAM_nCS),
