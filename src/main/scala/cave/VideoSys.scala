@@ -56,7 +56,7 @@ class VideoSys extends Module {
     /** Frame buffer port */
     val frameBuffer = mister.FrameBufferIO()
     /** The index of the frame buffer write page */
-    val frameBufferWritePage = Output(UInt(2.W))
+    val frameBufferWritePage = Output(UInt(VideoSys.PAGE_WIDTH.W))
     /** Video port */
     val video = VideoIO()
   })
@@ -64,11 +64,10 @@ class VideoSys extends Module {
   // System clock alias
   val sysClock = clock
 
-  // Most of the video timing modules run in the video clock domain
   withClockAndReset(io.videoClock, io.videoReset) {
     // Registers
-    val readIndexReg = RegInit(0.U(2.W))
-    val writeIndexReg = RegInit(1.U(2.W))
+    val readIndexReg = RegInit(0.U(VideoSys.PAGE_WIDTH.W))
+    val writeIndexReg = RegInit(1.U(VideoSys.PAGE_WIDTH.W))
 
     // Video timings
     val originalVideoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
@@ -123,6 +122,9 @@ class VideoSys extends Module {
 }
 
 object VideoSys {
+  /** The width of the page index. */
+  val PAGE_WIDTH = 2
+
   /**
    * Returns the next frame buffer index for the given indices.
    *

@@ -65,7 +65,7 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
     /** Asserted when the DMA controller is ready */
     val ready = Output(Bool())
     /** The page of the frame buffer to write */
-    val page = Input(UInt(2.W))
+    val page = Input(UInt(VideoSys.PAGE_WIDTH.W))
     /** DMA port */
     val dma = FrameBufferDMAIO()
     /** DDR port */
