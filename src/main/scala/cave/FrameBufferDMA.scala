@@ -30,19 +30,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave.dma
+package cave
 
 import axon.Util
 import axon.mem.BurstWriteMemIO
 import axon.util.Counter
-import cave.Config
 import cave.types.FrameBufferDMAIO
 import chisel3._
 import chisel3.util._
 
 /**
- * A direct memory access (DMA) controller used to write pixel data to a frame buffer stored in DDR
- * memory.
+ * The frame buffer direct memory access (DMA) controller used to write pixel data to the MiSTer
+ * frame buffer, stored in DDR memory.
  *
  * @param addr        The start address of the transfer.
  * @param numWords    The number of words to transfer.
@@ -59,10 +58,10 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
     val start = Input(Bool())
     /** Asserted when the DMA controller is ready */
     val ready = Output(Bool())
-    /** The index of the frame buffer to write */
-    val frameBufferIndex = Input(UInt(2.W))
-    /** Frame buffer DMA port */
-    val frameBufferDMA = new FrameBufferDMAIO
+    /** The page of the frame buffer to write */
+    val page = Input(UInt(2.W))
+    /** DMA port */
+    val dma = new FrameBufferDMAIO
     /** DDR port */
     val ddr = BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
   })
@@ -81,13 +80,13 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
   // Calculate the DDR address
   val ddrAddr = {
     val mask = 0.U(log2Ceil(burstLength * 8).W)
-    val offset = io.frameBufferIndex ## burstCounter ## mask
+    val offset = io.page ## burstCounter ## mask
     addr.U + offset
   }
 
   // Pack pixel data in 64-bit words
   val pixelData = Util.padWords(
-    io.frameBufferDMA.dout,
+    io.dma.dout,
     Config.FRAME_BUFFER_DMA_PIXELS,
     Config.FRAME_BUFFER_DMA_BPP,
     Config.DDR_FRAME_BUFFER_BPP
@@ -98,8 +97,8 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
 
   // Outputs
   io.ready := !busyReg
-  io.frameBufferDMA.rd := true.B
-  io.frameBufferDMA.addr := Mux(effectiveWrite, totalCounter +& 1.U, totalCounter)
+  io.dma.rd := true.B // read-only
+  io.dma.addr := Mux(effectiveWrite, totalCounter +& 1.U, totalCounter)
   io.ddr.wr := write
   io.ddr.addr := ddrAddr
   io.ddr.mask := Fill(io.ddr.maskWidth, 1.U)

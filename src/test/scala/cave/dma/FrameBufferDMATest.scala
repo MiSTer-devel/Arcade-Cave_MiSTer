@@ -32,6 +32,7 @@
 
 package cave.dma
 
+import cave.FrameBufferDMA
 import chisel3._
 import chiseltest._
 import org.scalatest._
@@ -86,15 +87,15 @@ class FrameBufferDMATest extends AnyFlatSpec with ChiselScalatestTester with Mat
       dut.io.enable.poke(true)
       dut.io.start.poke(true)
       dut.io.ddr.waitReq.poke(true)
-      dut.io.frameBufferDMA.rd.expect(true)
-      dut.io.frameBufferDMA.addr.expect(0.U)
+      dut.io.dma.rd.expect(true)
+      dut.io.dma.addr.expect(0.U)
       dut.clock.step()
       dut.io.ddr.waitReq.poke(false)
-      dut.io.frameBufferDMA.rd.expect(true)
-      dut.io.frameBufferDMA.addr.expect(1.U)
+      dut.io.dma.rd.expect(true)
+      dut.io.dma.addr.expect(1.U)
       dut.clock.step()
-      dut.io.frameBufferDMA.rd.expect(true)
-      dut.io.frameBufferDMA.addr.expect(2.U)
+      dut.io.dma.rd.expect(true)
+      dut.io.dma.addr.expect(2.U)
     }
   }
 
@@ -103,7 +104,7 @@ class FrameBufferDMATest extends AnyFlatSpec with ChiselScalatestTester with Mat
       dut.io.enable.poke(true)
       dut.io.start.poke(true)
       dut.clock.step()
-      dut.io.frameBufferDMA.dout.poke(0x112233445566L)
+      dut.io.dma.dout.poke(0x112233445566L)
       dut.io.ddr.din.expect(0x0011223300445566L.U)
     }
   }
@@ -112,7 +113,7 @@ class FrameBufferDMATest extends AnyFlatSpec with ChiselScalatestTester with Mat
     test(mkDMA()) { dut =>
       dut.io.enable.poke(true)
       dut.io.ddr.addr.expect(0x01.U)
-      dut.io.frameBufferIndex.poke(1)
+      dut.io.page.poke(1)
       dut.io.ddr.addr.expect(0x41.U)
     }
   }
@@ -121,35 +122,35 @@ class FrameBufferDMATest extends AnyFlatSpec with ChiselScalatestTester with Mat
     test(mkDMA()) { dut =>
       dut.io.enable.poke(true)
       dut.io.start.poke(true)
-      dut.io.frameBufferDMA.rd.expect(true)
-      dut.io.frameBufferDMA.addr.expect(0.U)
+      dut.io.dma.rd.expect(true)
+      dut.io.dma.addr.expect(0.U)
       dut.io.ddr.wr.expect(false)
       dut.clock.step()
       dut.io.start.poke(false)
 
       // Burst 1
-      dut.io.frameBufferDMA.rd.expect(true)
+      dut.io.dma.rd.expect(true)
       dut.io.ddr.wr.expect(true)
       dut.io.ddr.addr.expect(0x01.U)
       dut.io.ddr.mask.expect(0xff.U)
       0.to(3).foreach { n =>
         if (n == 3) dut.io.ddr.burstDone.poke(true)
-        dut.io.frameBufferDMA.addr.expect((n + 1).U)
-        dut.io.frameBufferDMA.dout.poke(n)
+        dut.io.dma.addr.expect((n + 1).U)
+        dut.io.dma.dout.poke(n)
         dut.io.ddr.din.expect(n.U)
         dut.clock.step()
       }
       dut.io.ddr.burstDone.poke(false)
 
       // Burst 2
-      dut.io.frameBufferDMA.rd.expect(true)
+      dut.io.dma.rd.expect(true)
       dut.io.ddr.wr.expect(true)
       dut.io.ddr.addr.expect(0x21.U)
       dut.io.ddr.mask.expect(0xff.U)
       0.to(3).foreach { n =>
         if (n == 3) dut.io.ddr.burstDone.poke(true)
-        dut.io.frameBufferDMA.addr.expect((n + 5).U)
-        dut.io.frameBufferDMA.dout.poke(n)
+        dut.io.dma.addr.expect((n + 5).U)
+        dut.io.dma.dout.poke(n)
         dut.io.ddr.din.expect(n.U)
         dut.clock.step()
       }

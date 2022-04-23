@@ -38,7 +38,6 @@ import axon.mem._
 import axon.mister._
 import axon.snd._
 import axon.types._
-import cave.dma.FrameBufferDMA
 import cave.types._
 import chisel3._
 import chisel3.stage._
@@ -134,7 +133,7 @@ class Main extends Module {
   ))
   frameBufferDMA.io.enable := downloadDoneReg
   frameBufferDMA.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // start of VBLANK
-  frameBufferDMA.io.frameBufferIndex := videoSys.io.frameBufferDMAIndex
+  frameBufferDMA.io.page := videoSys.io.frameBufferDMAIndex
   frameBufferDMA.io.ddr <> memSys.io.frameBufferDMA
 
   // Cave
@@ -153,7 +152,7 @@ class Main extends Module {
   cave.io.layerTileRom(1) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(1))
   cave.io.layerTileRom(2) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(2))
   cave.io.spriteTileRom <> memSys.io.spriteTileRom
-  cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
+  cave.io.frameBufferDMA <> frameBufferDMA.io.dma
   cave.io.audio <> io.audio
   cave.io.video <> videoSys.io.video
   cave.io.rgb <> io.rgb
