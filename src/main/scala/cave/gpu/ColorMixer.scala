@@ -123,7 +123,7 @@ object ColorMixer {
    * @param layer2Pen The layer 2 palette entry.
    * @return The index of the layer with the highest priority.
    */
-  private def muxLayers(spritePen: PaletteEntry, layer0Pen: PaletteEntry, layer1Pen: PaletteEntry, layer2Pen: PaletteEntry) = {
+  private def muxLayers(spritePen: PaletteEntry, layer0Pen: PaletteEntry, layer1Pen: PaletteEntry, layer2Pen: PaletteEntry): UInt = {
     val sprite = List(
       (spritePen.color =/= 0.U && spritePen.priority === 0.U) -> Priority.SPRITE.U,
       (spritePen.color =/= 0.U && spritePen.priority === 1.U) -> Priority.SPRITE.U,

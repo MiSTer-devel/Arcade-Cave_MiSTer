@@ -49,9 +49,11 @@ class GPU extends Module {
     /** Video reset */
     val videoReset = Input(Bool())
     /** Video port */
-    val video = Flipped(VideoIO())
+    val video = VideoIO()
     /** Game config port */
     val gameConfig = Input(GameConfig())
+    /** Options port */
+    val options = OptionsIO()
     /** Asserted when the program is ready for a new frame */
     val frameReady = Input(Bool())
     /** Layer ports */
@@ -64,6 +66,14 @@ class GPU extends Module {
     val rgb = Output(RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL.W))
   })
 
+  // Video timing
+  val video = withClockAndReset(io.videoClock, io.videoReset) {
+    val videoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
+    videoTiming.io.offset := RegEnable(io.options.offset, videoTiming.io.video.vSync)
+    videoTiming.io.video <> io.video
+    videoTiming.io.video
+  }
+
   // Frame buffer
   val frameBuffer = Module(new TrueDualPortRam(
     addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
@@ -74,8 +84,8 @@ class GPU extends Module {
     depthB = Some(Config.FRAME_BUFFER_DEPTH)
   ))
   frameBuffer.io.clockB := io.videoClock
-  frameBuffer.io.portB.rd := io.video.displayEnable
-  frameBuffer.io.portB.addr := GPU.frameBufferAddr(io.video.pos)
+  frameBuffer.io.portB.rd := video.displayEnable
+  frameBuffer.io.portB.addr := GPU.frameBufferAddr(video.pos)
 
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
@@ -85,19 +95,19 @@ class GPU extends Module {
 
   // Layer 0 processor
   val layer0Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
-  layer0Processor.io.video <> io.video
+  layer0Processor.io.video <> video
   layer0Processor.io.layer <> io.layer(0)
   layer0Processor.io.offset := UVec2(0x6b.U, 0x11.U)
 
   // Layer 1 processor
   val layer1Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
-  layer1Processor.io.video <> io.video
+  layer1Processor.io.video <> video
   layer1Processor.io.layer <> io.layer(1)
   layer1Processor.io.offset := UVec2(0x6c.U, 0x11.U)
 
   // Layer 2 processor
   val layer2Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
-  layer2Processor.io.video <> io.video
+  layer2Processor.io.video <> video
   layer2Processor.io.layer <> io.layer(2)
   layer2Processor.io.offset := UVec2(Mux(io.layer(2).regs.tileSize, 0x6d.U, 0x75.U), 0x11.U)
 

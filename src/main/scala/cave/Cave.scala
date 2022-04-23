@@ -59,7 +59,7 @@ class Cave extends Module {
     /** CPU reset */
     val cpuReset = Input(Reset())
     /** Video port */
-    val video = Flipped(VideoIO())
+    val video = VideoIO()
     /** Game config port */
     val gameConfig = Input(GameConfig())
     /** Options port */
@@ -95,6 +95,7 @@ class Cave extends Module {
   gpu.io.videoReset := io.videoReset
   gpu.io.video <> io.video
   gpu.io.gameConfig <> io.gameConfig
+  gpu.io.options <> io.options
   gpu.io.frameReady := Util.rising(ShiftRegister(frameStart, 2))
   0.until(Config.LAYER_COUNT).foreach { i =>
     gpu.io.layer(i).format := io.gameConfig.layer(i).format
