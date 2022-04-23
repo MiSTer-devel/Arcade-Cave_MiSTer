@@ -50,6 +50,8 @@ class GPU extends Module {
     val videoReset = Input(Bool())
     /** Video port */
     val video = VideoIO()
+    /** Frame buffer DMA port */
+    val frameBufferDMA = Flipped(new FrameBufferDMAIO)
     /** Game config port */
     val gameConfig = Input(GameConfig())
     /** Options port */
@@ -74,24 +76,13 @@ class GPU extends Module {
     videoTiming.io.video
   }
 
-  // Frame buffer
-  val frameBuffer = Module(new TrueDualPortRam(
-    addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
-    dataWidthA = Config.FRAME_BUFFER_DATA_WIDTH,
-    depthA = Some(Config.FRAME_BUFFER_DEPTH),
-    addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH,
-    dataWidthB = Config.FRAME_BUFFER_DATA_WIDTH,
-    depthB = Some(Config.FRAME_BUFFER_DEPTH)
-  ))
-  frameBuffer.io.clockB := io.videoClock
-  frameBuffer.io.portB.rd := video.displayEnable
-  frameBuffer.io.portB.addr := GPU.frameBufferAddr(video.pos)
-
   // Sprite processor
-  val spriteProcessor = Module(new SpriteProcessor)
-  spriteProcessor.io.start := io.frameReady
-  spriteProcessor.io.sprite <> io.sprite
-  spriteProcessor.io.frameBuffer <> frameBuffer.io.portA.asWriteMemIO
+//  val spriteProcessor = Module(new SpriteProcessor)
+//  spriteProcessor.io.start := io.frameReady
+//  spriteProcessor.io.sprite <> io.sprite
+//  spriteProcessor.io.frameBuffer <> frameBuffer.io.portA.asWriteMemIO
+  io.sprite.vram.default()
+  io.sprite.tileRom.default()
 
   // Layer 0 processor
   val layer0Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
@@ -114,12 +105,39 @@ class GPU extends Module {
   // Color mixer
   val colorMixer = withClockAndReset(io.videoClock, io.videoReset) { Module(new ColorMixer) }
   colorMixer.io.gameConfig <> io.gameConfig
-  colorMixer.io.spritePen := frameBuffer.io.portB.dout.asTypeOf(new PaletteEntry)
+  //  colorMixer.io.spritePen := frameBuffer.io.portB.dout.asTypeOf(new PaletteEntry)
+  colorMixer.io.spritePen := PaletteEntry.zero
   colorMixer.io.layer0Pen := layer0Processor.io.pen
   colorMixer.io.layer1Pen := layer1Processor.io.pen
   colorMixer.io.layer2Pen := layer2Processor.io.pen
   colorMixer.io.paletteRam <> io.paletteRam
-  colorMixer.io.rgb <> io.rgb
+
+  // Frame buffer
+  val frameBuffer = withClockAndReset(io.videoClock, io.videoReset) {
+    val mem = Module(new TrueDualPortRam(
+      addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
+      dataWidthA = Config.FRAME_BUFFER_DATA_WIDTH,
+      depthA = Some(Config.FRAME_BUFFER_DEPTH),
+      addrWidthB = Config.FRAME_BUFFER_DMA_ADDR_WIDTH,
+      dataWidthB = Config.FRAME_BUFFER_DATA_WIDTH * Config.FRAME_BUFFER_DMA_PIXELS,
+      depthB = Some(Config.FRAME_BUFFER_DMA_DEPTH)
+    ))
+    mem.io.portA.rd := false.B
+    mem.io.portA.wr := RegNext(video.displayEnable)
+    mem.io.portA.addr := RegNext(GPU.frameBufferAddr(video.pos, io.options.flip, io.options.rotate))
+    mem.io.portA.mask := 0.U
+    mem.io.portA.din := RegNext(colorMixer.io.dout)
+    mem
+  }
+  frameBuffer.io.clockB := clock // frame buffer DMA runs in the system clock domain
+
+  // Decode the pixel data to 24-bit pixels
+  frameBuffer.io.portB <> io.frameBufferDMA.mapData(data =>
+    GPU.decodePixels(data, Config.FRAME_BUFFER_DMA_PIXELS).reduce(_ ## _).asUInt
+  )
+
+  // Decode RGB output from palette data
+  io.rgb := GPU.decodeRGB(colorMixer.io.dout)
 }
 
 object GPU {
@@ -152,6 +170,26 @@ object GPU {
   }
 
   /**
+   * Transforms a pixel position to a frame buffer memory address, applying the flip and rotate
+   * transforms.
+   *
+   * @param pos    The pixel position.
+   * @param flip   Flips the image.
+   * @param rotate Rotates the image 90 degrees.
+   * @return An address value.
+   */
+  def frameBufferAddr(pos: UVec2, flip: Bool, rotate: Bool): UInt = {
+    val x = pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0)
+    val y = pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
+    val x_ = (Config.SCREEN_WIDTH - 1).U - x
+    val y_ = (Config.SCREEN_HEIGHT - 1).U - y
+    Mux(rotate,
+      Mux(flip, (x * Config.SCREEN_HEIGHT.U) + y_, (x_ * Config.SCREEN_HEIGHT.U) + y),
+      Mux(flip, (y_ * Config.SCREEN_WIDTH.U) + x_, (y * Config.SCREEN_WIDTH.U) + x)
+    )
+  }
+
+  /**
    * Creates a virtual write-only memory interface that writes a constant value to the given
    * address.
    *
@@ -174,7 +212,7 @@ object GPU {
    * @param n    The number of pixels.
    * @return A list of 24-bit pixel values.
    */
-  def decodePixels(data: Bits, n: Int): Seq[Bits] =
+  private def decodePixels(data: Bits, n: Int): Seq[Bits] =
     Util
       // Decode channels
       .decode(data, n * 3, Config.BITS_PER_CHANNEL)
@@ -186,6 +224,18 @@ object GPU {
       .map { case Seq(b, r, g) => Cat(b, g, r) }
       // Swap pixels values
       .reverse
+
+  /**
+   * Decodes a RGB color from a 16-bit word.
+   *
+   * @param data The color data.
+   */
+  private def decodeRGB(data: UInt): RGB = {
+    val b = data(4, 0) ## data(4, 2)
+    val r = data(9, 5) ## data(9, 7)
+    val g = data(14, 10) ## data(14, 12)
+    RGB(r, g, b)
+  }
 
   /**
    * Calculates the visibility of a pixel.

@@ -179,7 +179,7 @@ object Config {
   /** The width of the frame buffer address bus */
   val FRAME_BUFFER_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DEPTH)
   /** The width of the frame buffer data bus */
-  val FRAME_BUFFER_DATA_WIDTH = 16
+  val FRAME_BUFFER_DATA_WIDTH = 15
 
   /** The bit depth of a frame buffer DMA pixel */
   val FRAME_BUFFER_DMA_BPP = 24

@@ -53,8 +53,8 @@ class ColorMixer extends Module {
     val layer2Pen = Input(new PaletteEntry)
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
-    /** RGB output */
-    val rgb = Output(RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL.W))
+    /** Pixel data */
+    val dout = Output(UInt(Config.PALETTE_RAM_GPU_DATA_WIDTH.W))
   })
 
   // Background pen
@@ -75,7 +75,7 @@ class ColorMixer extends Module {
   // Outputs
   io.paletteRam.rd := true.B // read-only
   io.paletteRam.addr := paletteRamAddr
-  io.rgb := RegNext(ColorMixer.decodeRGB(io.paletteRam.dout))
+  io.dout := RegNext(io.paletteRam.dout)
 }
 
 object ColorMixer {
@@ -158,17 +158,5 @@ object ColorMixer {
       layer2(1), layer1(1), layer0(1), sprite(1), // priority 1
       layer2(0), layer1(0), layer0(0), sprite(0), // priority 0 (lowest)
     ))
-  }
-
-  /**
-   * Decodes a RGB color from a 16-bit word.
-   *
-   * @param data The color data.
-   */
-  private def decodeRGB(data: UInt): RGB = {
-    val b = data(4, 0) ## data(4, 2)
-    val r = data(9, 5) ## data(9, 7)
-    val g = data(14, 10) ## data(14, 12)
-    RGB(r, g, b)
   }
 }

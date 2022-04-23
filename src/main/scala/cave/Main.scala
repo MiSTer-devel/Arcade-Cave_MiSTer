@@ -38,10 +38,11 @@ import axon.mem._
 import axon.mister._
 import axon.snd._
 import axon.types._
+import cave.dma.FrameBufferDMA
 import cave.types._
 import chisel3._
 import chisel3.stage._
-import chisel3.util.RegEnable
+import chisel3.util._
 
 /**
  * The top-level module.
@@ -59,22 +60,24 @@ class Main extends Module {
     val cpuClock = Input(Clock())
     /** CPU reset */
     val cpuReset = Input(Bool())
-    /** Video port */
-    val video = VideoIO()
-    /** RGB output */
-    val rgb = Output(RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL.W))
-    /** Joystick port */
-    val joystick = JoystickIO()
-    /** IOCTL port */
-    val ioctl = IOCTL()
-    /** Audio port */
-    val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** DDR port */
     val ddr = DDRIO(Config.ddrConfig)
     /** SDRAM port */
     val sdram = SDRAMIO(Config.sdramConfig)
     /** Options port */
     val options = OptionsIO()
+    /** Joystick port */
+    val joystick = JoystickIO()
+    /** IOCTL port */
+    val ioctl = IOCTL()
+    /** Frame buffer port */
+    val frameBuffer = mister.FrameBufferIO()
+    /** Audio port */
+    val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
+    /** Video port */
+    val video = VideoIO()
+    /** RGB output */
+    val rgb = Output(RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL.W))
     /** LED port */
     val led = mister.LEDIO()
   })
@@ -107,12 +110,31 @@ class Main extends Module {
   val sdram = Module(new SDRAM(Config.sdramConfig))
   sdram.io.sdram <> io.sdram
 
+  // Frame buffer DMA
+  val frameBufferDMA = Module(new FrameBufferDMA(
+    addr = Config.DDR_FRAME_BUFFER_OFFSET,
+    numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
+    burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
+  ))
+  frameBufferDMA.io.enable := downloadDoneReg
+  frameBufferDMA.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // rising edge of VBLANK
+  frameBufferDMA.io.frameBufferIndex := 0.U // FIXME: Use correct page
+
+  io.frameBuffer.enable := true.B
+  io.frameBuffer.hSize := Mux(io.options.rotate, Config.SCREEN_HEIGHT.U, Config.SCREEN_WIDTH.U)
+  io.frameBuffer.vSize := Mux(io.options.rotate, Config.SCREEN_WIDTH.U, Config.SCREEN_HEIGHT.U)
+  io.frameBuffer.format := mister.FrameBufferIO.FORMAT_32BPP.U
+  io.frameBuffer.base := Config.DDR_FRAME_BUFFER_OFFSET.U // FIXME: Use correct page
+  io.frameBuffer.stride := Mux(io.options.rotate, (Config.SCREEN_HEIGHT * 4).U, (Config.SCREEN_WIDTH * 4).U)
+  io.frameBuffer.forceBlank := io.cpuReset
+
   // Memory subsystem
   val memSys = Module(new MemSys)
   memSys.io.gameConfig <> gameConfigReg
   memSys.io.ioctl <> io.ioctl
   memSys.io.ddr <> ddr.io.mem
   memSys.io.sdram <> sdram.io.mem
+  memSys.io.frameBufferDMA <> frameBufferDMA.io.ddr
 
   // Cave
   val cave = Module(new Cave)
@@ -130,6 +152,7 @@ class Main extends Module {
   cave.io.layerTileRom(1) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(1))
   cave.io.layerTileRom(2) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(2))
   cave.io.spriteTileRom <> memSys.io.spriteTileRom
+  cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
   cave.io.audio <> io.audio
   cave.io.video <> io.video
   cave.io.rgb <> io.rgb

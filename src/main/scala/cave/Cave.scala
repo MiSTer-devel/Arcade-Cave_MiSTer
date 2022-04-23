@@ -76,6 +76,8 @@ class Cave extends Module {
     val layerTileRom = Vec(Config.LAYER_COUNT, new LayerRomIO)
     /** Sprite tile ROM port */
     val spriteTileRom = new SpriteRomIO
+    /** Frame buffer DMA port */
+    val frameBufferDMA = Flipped(new FrameBufferDMAIO)
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** RGB output */
@@ -94,6 +96,7 @@ class Cave extends Module {
   gpu.io.videoClock := io.videoClock
   gpu.io.videoReset := io.videoReset
   gpu.io.video <> io.video
+  gpu.io.frameBufferDMA <> io.frameBufferDMA
   gpu.io.gameConfig <> io.gameConfig
   gpu.io.options <> io.options
   gpu.io.frameReady := Util.rising(ShiftRegister(frameStart, 2))
