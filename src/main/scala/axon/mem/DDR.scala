@@ -36,8 +36,12 @@ import axon.util.Counter
 import chisel3._
 import chisel3.util._
 
-/** An interface for reading and writing to DDR memory. */
-class DDRIO(config: DDRConfig) extends AsyncReadWriteMemIO(config.addrWidth, config.dataWidth) with BurstIO
+/**
+ * An interface for reading and writing to DDR memory.
+ *
+ * @param config The DDR configuration.
+ */
+class DDRIO(config: DDRConfig) extends BurstReadWriteMemIO(config.addrWidth, config.dataWidth)
 
 object DDRIO {
   def apply(config: DDRConfig) = new DDRIO(config: DDRConfig)
