@@ -125,16 +125,16 @@ class Main extends Module {
   videoSys.io.frameBuffer <> io.frameBuffer
   videoSys.io.video <> io.video
 
-  // Frame buffer DMA
-  val frameBufferDMA = Module(new FrameBufferDMA(
+  // Frame buffer DMA controller
+  val frameBufferDma = Module(new FrameBufferDMA(
     addr = Config.DDR_FRAME_BUFFER_OFFSET,
     numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
-  frameBufferDMA.io.enable := downloadDoneReg
-  frameBufferDMA.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // start of VBLANK
-  frameBufferDMA.io.page := videoSys.io.frameBufferWritePage
-  frameBufferDMA.io.ddr <> memSys.io.frameBufferDMA
+  frameBufferDma.io.enable := downloadDoneReg
+  frameBufferDma.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // start of VBLANK
+  frameBufferDma.io.page := videoSys.io.frameBufferWritePage
+  frameBufferDma.io.ddr <> memSys.io.frameBuffer
 
   // Cave
   val cave = Module(new Cave)
@@ -152,7 +152,7 @@ class Main extends Module {
   cave.io.layerTileRom(1) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(1))
   cave.io.layerTileRom(2) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(2))
   cave.io.spriteTileRom <> memSys.io.spriteTileRom
-  cave.io.frameBufferDMA <> frameBufferDMA.io.dma
+  cave.io.frameBufferDma <> frameBufferDma.io.dma
   cave.io.audio <> io.audio
   cave.io.video <> videoSys.io.video
   cave.io.rgb <> io.rgb

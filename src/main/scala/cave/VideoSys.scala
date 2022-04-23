@@ -88,7 +88,7 @@ class VideoSys extends Module {
     val video = Mux(compatibilityReg, compatibilityVideoTiming.io.video, originalVideoTiming.io.video)
     video <> io.video
 
-    // Swap the buffers at the start of a VBLANK
+    // Swap the frame buffer pages at the start of a VBLANK
     val swap = Util.rising(io.video.vBlank)
 
     // Toggle write index

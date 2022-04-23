@@ -35,9 +35,6 @@ package cave
 import axon.mem._
 
 package object types {
-  /** Frame buffer DMA IO */
-  class FrameBufferDMAIO extends ReadMemIO(Config.FRAME_BUFFER_DMA_ADDR_WIDTH, Config.FRAME_BUFFER_DMA_DATA_WIDTH)
-
   /** Program ROM IO */
   class ProgRomIO extends AsyncReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH)
 

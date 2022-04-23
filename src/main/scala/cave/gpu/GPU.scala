@@ -61,7 +61,7 @@ class GPU extends Module {
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
     /** Frame buffer DMA port */
-    val frameBufferDMA = Flipped(new FrameBufferDMAIO)
+    val frameBufferDma = Flipped(FrameBufferDMAIO())
     /** Video port */
     val video = Flipped(VideoIO())
     /** RGB output */
@@ -128,7 +128,7 @@ class GPU extends Module {
   frameBuffer.io.clockB := clock // DMA runs in the system clock domain
 
   // Decode the pixel data to 24-bit pixels
-  frameBuffer.io.portB <> io.frameBufferDMA.mapData(data =>
+  frameBuffer.io.portB <> io.frameBufferDma.mapData(data =>
     GPU.decodePixels(data, Config.FRAME_BUFFER_DMA_PIXELS).reduce(_ ## _).asUInt
   )
 

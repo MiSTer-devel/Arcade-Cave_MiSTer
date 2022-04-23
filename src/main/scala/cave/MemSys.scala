@@ -45,7 +45,7 @@ class MemSys extends Module {
     /** IOCTL port */
     val ioctl = IOCTL()
     /** DDR port */
-    val ddr = BurstReadWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
+    val ddr = DDRIO(Config.ddrConfig)
     /** SDRAM port */
     val sdram = BurstReadWriteMemIO(Config.sdramConfig.addrWidth, Config.sdramConfig.dataWidth)
     /** Program ROM port */
@@ -58,8 +58,8 @@ class MemSys extends Module {
     val layerTileRom = Flipped(Vec(Config.LAYER_COUNT, new LayerRomIO))
     /** Sprite tile ROM port */
     val spriteTileRom = Flipped(new SpriteRomIO)
-    /** Frame buffer DMA port */
-    val frameBufferDMA = Flipped(BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
+    /** Frame buffer port */
+    val frameBuffer = Flipped(BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
   })
 
   // The DDR download cache is used to buffer IOCTL data, so that complete words can be written to
@@ -148,7 +148,7 @@ class MemSys extends Module {
   ddrArbiter.io.in(1) <> progRomCache.io.out
   ddrArbiter.io.in(2) <> soundRomCache.io.out
   ddrArbiter.io.in(3) <> eepromCache.io.out
-  ddrArbiter.io.in(4).asBurstWriteMemIO <> io.frameBufferDMA
+  ddrArbiter.io.in(4).asBurstWriteMemIO <> io.frameBuffer
   ddrArbiter.io.in(5).asBurstReadMemIO <> io.spriteTileRom
   ddrArbiter.io.in(5).addr := io.spriteTileRom.addr + io.gameConfig.sprite.romOffset + Config.DDR_DOWNLOAD_OFFSET.U // override tile ROM address
   ddrArbiter.io.out <> io.ddr
