@@ -72,7 +72,7 @@ class MemSys extends Module {
     lineWidth = 1,
     depth = 1
   )))
-  ddrDownloadCache.io.offset := Config.DDR_DOWNLOAD_OFFSET.U
+  ddrDownloadCache.io.offset := Config.IOCTL_DOWNLOAD_DDR_OFFSET.U
   ddrDownloadCache.io.in <> io.ioctl.asAsyncReadWriteMemIO(IOCTL.ROM_INDEX)
 
   // The SDRAM download cache is used to buffer IOCTL data, so that complete words can be written
@@ -98,7 +98,7 @@ class MemSys extends Module {
     lineWidth = 4,
     depth = 256
   )))
-  progRomCache.io.offset := io.gameConfig.progRomOffset + Config.DDR_DOWNLOAD_OFFSET.U
+  progRomCache.io.offset := io.gameConfig.progRomOffset + Config.IOCTL_DOWNLOAD_DDR_OFFSET.U
   progRomCache.io.in.asAsyncReadMemIO <> io.progRom
 
   // Sound ROM cache
@@ -112,7 +112,7 @@ class MemSys extends Module {
     wrapping = true
   )))
   soundRomCache.io.in.asAsyncReadMemIO <> io.soundRom
-  soundRomCache.io.offset := io.gameConfig.soundRomOffset + Config.DDR_DOWNLOAD_OFFSET.U
+  soundRomCache.io.offset := io.gameConfig.soundRomOffset + Config.IOCTL_DOWNLOAD_DDR_OFFSET.U
 
   // EEPROM cache
   val eepromCache = Module(new Cache(CacheConfig(
@@ -124,7 +124,7 @@ class MemSys extends Module {
     depth = 4
   )))
   eepromCache.io.in <> io.eeprom
-  eepromCache.io.offset := io.gameConfig.eepromOffset + Config.DDR_DOWNLOAD_OFFSET.U
+  eepromCache.io.offset := io.gameConfig.eepromOffset + Config.IOCTL_DOWNLOAD_DDR_OFFSET.U
 
   // Layer tile ROM cache
   val layerRomCache = 0.until(Config.LAYER_COUNT).map { i =>
@@ -150,7 +150,7 @@ class MemSys extends Module {
   ddrArbiter.io.in(3) <> eepromCache.io.out
   ddrArbiter.io.in(4).asBurstWriteMemIO <> io.frameBuffer
   ddrArbiter.io.in(5).asBurstReadMemIO <> io.spriteTileRom
-  ddrArbiter.io.in(5).addr := io.spriteTileRom.addr + io.gameConfig.sprite.romOffset + Config.DDR_DOWNLOAD_OFFSET.U // override tile ROM address
+  ddrArbiter.io.in(5).addr := io.spriteTileRom.addr + io.gameConfig.sprite.romOffset + Config.IOCTL_DOWNLOAD_DDR_OFFSET.U // override tile ROM address
   ddrArbiter.io.out <> io.ddr
 
   // SDRAM arbiter

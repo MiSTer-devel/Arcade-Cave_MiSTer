@@ -127,7 +127,7 @@ class Main extends Module {
 
   // Frame buffer DMA controller
   val frameBufferDma = Module(new FrameBufferDMA(
-    addr = Config.DDR_FRAME_BUFFER_OFFSET,
+    addr = Config.FRAME_BUFFER_DDR_OFFSET,
     numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
