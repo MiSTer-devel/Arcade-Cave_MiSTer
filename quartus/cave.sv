@@ -486,7 +486,7 @@ Main main (
   .io_joystick_service1(service_1),
   .io_joystick_service2(service_2),
   // Video signals
-  .io_video_pixelClockEnable(ce_pix),
+  .io_video_clockEnable(ce_pix),
   .io_video_hSync(hsync),
   .io_video_vSync(vsync),
   .io_video_hBlank(hblank),

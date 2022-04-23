@@ -39,7 +39,7 @@ import chisel3._
 /** Represents the analog video signals. */
 class VideoIO extends Bundle {
   /** Asserted when the pixel clock is enabled */
-  val pixelClockEnable = Output(Bool())
+  val clockEnable = Output(Bool())
   /** Beam position */
   val pos = Output(UVec2(9.W))
   /** Horizontal sync */
@@ -144,7 +144,7 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
   val vBlank = y < vBeginDisplay || y >= vEndDisplay
 
   // Outputs
-  io.video.pixelClockEnable := clockDivWrap
+  io.video.clockEnable := clockDivWrap
   io.video.pos := pos
   io.video.hSync := hSync
   io.video.vSync := vSync

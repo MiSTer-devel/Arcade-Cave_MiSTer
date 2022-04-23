@@ -59,7 +59,7 @@ class TilemapProcessor extends Module {
   })
 
   // Decode the line effect for the current scanline
-  val lineEffectReg = RegEnable(LineEffect.decode(io.layer.lineRam.dout), io.video.pixelClockEnable)
+  val lineEffectReg = RegEnable(LineEffect.decode(io.layer.lineRam.dout), io.video.clockEnable)
 
   // Enable flags
   val layerEnable = io.layer.enable && io.layer.format =/= Config.GFX_FORMAT_UNKNOWN.U && io.layer.regs.enable
@@ -89,9 +89,9 @@ class TilemapProcessor extends Module {
   )
 
   // Latch signals
-  val latchTile = io.video.pixelClockEnable && Mux(io.layer.regs.tileSize, offset.x === 10.U, offset.x === 2.U)
-  val latchColor = io.video.pixelClockEnable && Mux(io.layer.regs.tileSize, offset.x === 15.U, offset.x === 7.U)
-  val latchPix = io.video.pixelClockEnable && offset.x(2, 0) === 7.U
+  val latchTile = io.video.clockEnable && Mux(io.layer.regs.tileSize, offset.x === 10.U, offset.x === 2.U)
+  val latchColor = io.video.clockEnable && Mux(io.layer.regs.tileSize, offset.x === 15.U, offset.x === 7.U)
+  val latchPix = io.video.clockEnable && offset.x(2, 0) === 7.U
 
   // Tile registers
   val tileReg = RegEnable(tile, latchTile)
