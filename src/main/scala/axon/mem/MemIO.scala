@@ -60,6 +60,12 @@ class ReadMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWid
   /** Data bus */
   val dout = Input(UInt(dataWidth.W))
 
+  /** Sets default values for all the signals. */
+  def default(): Unit = {
+    rd := false.B
+    addr := DontCare
+  }
+
   /**
    * Maps the address using the given function.
    *
@@ -71,12 +77,6 @@ class ReadMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWid
     mem.addr := f(this.addr)
     this.dout := mem.dout
     mem
-  }
-
-  /** Sets default values for all the signals. */
-  def default() = {
-    rd := false.B
-    addr := DontCare
   }
 
   /**
@@ -169,6 +169,14 @@ class WriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWi
   /** Data bus */
   val din = Output(UInt(dataWidth.W))
 
+  /** Sets default values for all the signals. */
+  def default(): Unit = {
+    wr := false.B
+    addr := DontCare
+    mask := DontCare
+    din := DontCare
+  }
+
   /**
    * Maps the address using the given function.
    *
@@ -181,14 +189,6 @@ class WriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWi
     mem.mask := this.mask
     mem.din := this.din
     mem
-  }
-
-  /** Sets default values for all the signals. */
-  def default() = {
-    wr := false.B
-    addr := DontCare
-    mask := DontCare
-    din := DontCare
   }
 }
 
@@ -259,12 +259,27 @@ class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, da
   }
 
   /** Sets default values for all the signals. */
-  def default() = {
+  def default(): Unit = {
     rd := false.B
     wr := false.B
     addr := DontCare
     mask := DontCare
     din := DontCare
+  }
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  def mapAddr(f: UInt => UInt): ReadWriteMemIO = {
+    val mem = Wire(chiselTypeOf(this))
+    mem.rd := this.rd
+    mem.wr := this.wr
+    mem.addr := f(this.addr)
+    this.dout := mem.dout
+    mem.din := this.din
+    mem
   }
 }
 

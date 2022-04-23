@@ -178,7 +178,6 @@ object BurstReadWriteMemIO {
    */
   def mux1H(sel: Seq[Bool], in: Seq[BurstReadWriteMemIO]): BurstReadWriteMemIO = mux1H(sel zip in)
 
-
   /**
    * Multiplexes requests from multiple read-write memory interface to a single read-write memory
    * interfaces. The request is routed to indexed interface.
