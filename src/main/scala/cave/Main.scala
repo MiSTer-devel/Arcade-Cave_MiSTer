@@ -110,6 +110,22 @@ class Main extends Module {
   val sdram = Module(new SDRAM(Config.sdramConfig))
   sdram.io.sdram <> io.sdram
 
+  // Memory subsystem
+  val memSys = Module(new MemSys)
+  memSys.io.gameConfig <> gameConfigReg
+  memSys.io.ioctl <> io.ioctl
+  memSys.io.ddr <> ddr.io.mem
+  memSys.io.sdram <> sdram.io.mem
+
+  // Video subsystem
+  val videoSys = Module(new VideoSys)
+  videoSys.io.videoClock := io.videoClock
+  videoSys.io.videoReset := io.videoReset
+  videoSys.io.options <> io.options
+  videoSys.io.forceBlank := io.cpuReset
+  videoSys.io.frameBuffer <> io.frameBuffer
+  videoSys.io.video <> io.video
+
   // Frame buffer DMA
   val frameBufferDMA = Module(new FrameBufferDMA(
     addr = Config.DDR_FRAME_BUFFER_OFFSET,
@@ -117,24 +133,9 @@ class Main extends Module {
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
   frameBufferDMA.io.enable := downloadDoneReg
-  frameBufferDMA.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // rising edge of VBLANK
-  frameBufferDMA.io.frameBufferIndex := 0.U // FIXME: Use correct page
-
-  io.frameBuffer.enable := true.B
-  io.frameBuffer.hSize := Mux(io.options.rotate, Config.SCREEN_HEIGHT.U, Config.SCREEN_WIDTH.U)
-  io.frameBuffer.vSize := Mux(io.options.rotate, Config.SCREEN_WIDTH.U, Config.SCREEN_HEIGHT.U)
-  io.frameBuffer.format := mister.FrameBufferIO.FORMAT_32BPP.U
-  io.frameBuffer.base := Config.DDR_FRAME_BUFFER_OFFSET.U // FIXME: Use correct page
-  io.frameBuffer.stride := Mux(io.options.rotate, (Config.SCREEN_HEIGHT * 4).U, (Config.SCREEN_WIDTH * 4).U)
-  io.frameBuffer.forceBlank := io.cpuReset
-
-  // Memory subsystem
-  val memSys = Module(new MemSys)
-  memSys.io.gameConfig <> gameConfigReg
-  memSys.io.ioctl <> io.ioctl
-  memSys.io.ddr <> ddr.io.mem
-  memSys.io.sdram <> sdram.io.mem
-  memSys.io.frameBufferDMA <> frameBufferDMA.io.ddr
+  frameBufferDMA.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // start of VBLANK
+  frameBufferDMA.io.frameBufferIndex := videoSys.io.frameBufferDMAIndex
+  frameBufferDMA.io.ddr <> memSys.io.frameBufferDMA
 
   // Cave
   val cave = Module(new Cave)
@@ -154,7 +155,7 @@ class Main extends Module {
   cave.io.spriteTileRom <> memSys.io.spriteTileRom
   cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
   cave.io.audio <> io.audio
-  cave.io.video <> io.video
+  cave.io.video <> videoSys.io.video
   cave.io.rgb <> io.rgb
 
   // System LED outputs

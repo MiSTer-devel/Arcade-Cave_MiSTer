@@ -58,8 +58,6 @@ class Cave extends Module {
     val cpuClock = Input(Clock())
     /** CPU reset */
     val cpuReset = Input(Reset())
-    /** Video port */
-    val video = VideoIO()
     /** Game config port */
     val gameConfig = Input(GameConfig())
     /** Options port */
@@ -78,6 +76,8 @@ class Cave extends Module {
     val spriteTileRom = new SpriteRomIO
     /** Frame buffer DMA port */
     val frameBufferDMA = Flipped(new FrameBufferDMAIO)
+    /** Video port */
+    val video = Flipped(VideoIO())
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** RGB output */

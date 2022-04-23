@@ -48,10 +48,6 @@ class GPU extends Module {
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
-    /** Video port */
-    val video = VideoIO()
-    /** Frame buffer DMA port */
-    val frameBufferDMA = Flipped(new FrameBufferDMAIO)
     /** Game config port */
     val gameConfig = Input(GameConfig())
     /** Options port */
@@ -64,17 +60,13 @@ class GPU extends Module {
     val sprite = SpriteIO()
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
+    /** Frame buffer DMA port */
+    val frameBufferDMA = Flipped(new FrameBufferDMAIO)
+    /** Video port */
+    val video = Flipped(VideoIO())
     /** RGB output */
     val rgb = Output(RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL.W))
   })
-
-  // Video timing
-  val video = withClockAndReset(io.videoClock, io.videoReset) {
-    val videoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
-    videoTiming.io.offset := RegEnable(io.options.offset, videoTiming.io.video.vSync)
-    videoTiming.io.video <> io.video
-    videoTiming.io.video
-  }
 
   // Sprite processor
 //  val spriteProcessor = Module(new SpriteProcessor)
@@ -86,19 +78,19 @@ class GPU extends Module {
 
   // Layer 0 processor
   val layer0Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
-  layer0Processor.io.video <> video
+  layer0Processor.io.video <> io.video
   layer0Processor.io.layer <> io.layer(0)
   layer0Processor.io.offset := UVec2(0x6b.U, 0x11.U)
 
   // Layer 1 processor
   val layer1Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
-  layer1Processor.io.video <> video
+  layer1Processor.io.video <> io.video
   layer1Processor.io.layer <> io.layer(1)
   layer1Processor.io.offset := UVec2(0x6c.U, 0x11.U)
 
   // Layer 2 processor
   val layer2Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
-  layer2Processor.io.video <> video
+  layer2Processor.io.video <> io.video
   layer2Processor.io.layer <> io.layer(2)
   layer2Processor.io.offset := UVec2(Mux(io.layer(2).regs.tileSize, 0x6d.U, 0x75.U), 0x11.U)
 
@@ -112,7 +104,11 @@ class GPU extends Module {
   colorMixer.io.layer2Pen := layer2Processor.io.pen
   colorMixer.io.paletteRam <> io.paletteRam
 
-  // Frame buffer
+  // The frame buffer is required for digital output in MiSTer.
+  //
+  // The raw pixel data from the color mixer is written (port A) to the frame buffer as the frame is
+  // rasterized. After the frame is drawn, the completed frame is read (port B) by the frame buffer
+  // DMA controller.
   val frameBuffer = withClockAndReset(io.videoClock, io.videoReset) {
     val mem = Module(new TrueDualPortRam(
       addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
@@ -123,20 +119,20 @@ class GPU extends Module {
       depthB = Some(Config.FRAME_BUFFER_DMA_DEPTH)
     ))
     mem.io.portA.rd := false.B
-    mem.io.portA.wr := RegNext(video.displayEnable)
-    mem.io.portA.addr := RegNext(GPU.frameBufferAddr(video.pos, io.options.flip, io.options.rotate))
+    mem.io.portA.wr := RegNext(io.video.displayEnable)
+    mem.io.portA.addr := RegNext(GPU.frameBufferAddr(io.video.pos, io.options.flip, io.options.rotate))
     mem.io.portA.mask := 0.U
     mem.io.portA.din := RegNext(colorMixer.io.dout)
     mem
   }
-  frameBuffer.io.clockB := clock // frame buffer DMA runs in the system clock domain
+  frameBuffer.io.clockB := clock // DMA runs in the system clock domain
 
   // Decode the pixel data to 24-bit pixels
   frameBuffer.io.portB <> io.frameBufferDMA.mapData(data =>
     GPU.decodePixels(data, Config.FRAME_BUFFER_DMA_PIXELS).reduce(_ ## _).asUInt
   )
 
-  // Decode RGB output from palette data
+  // Decode the analog RGB output from color mixer data
   io.rgb := GPU.decodeRGB(colorMixer.io.dout)
 }
 
