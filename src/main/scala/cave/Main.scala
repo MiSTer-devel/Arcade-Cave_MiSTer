@@ -129,13 +129,13 @@ class Main extends Module {
   val frameBufferReadAddr = Config.MISTER_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.readPage(1, 0) ## 0.U(19.W)
   val frameBufferWriteAddr = Config.MISTER_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.writePage(1, 0) ## 0.U(19.W)
 
-  // The frame buffer DMA controller copies pixel data from the internal frame buffer to the
-  // MiSTer system frame buffer.
-  val frameBufferDma = Module(new DMA(Config.frameBufferDmaConfig))
-  frameBufferDma.io.enable := downloadDoneReg
-  frameBufferDma.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // start of VBLANK
-  frameBufferDma.io.baseAddr := frameBufferWriteAddr
-  frameBufferDma.io.ddr <> memSys.io.misterFrameBuffer
+  // The frame buffer DMA controller copies pixel data from the output frame buffer to the MiSTer
+  // system frame buffer.
+  val outputFrameBufferDma = Module(new DMA(Config.outputFrameBufferDmaConfig))
+  outputFrameBufferDma.io.enable := downloadDoneReg
+  outputFrameBufferDma.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // start of VBLANK
+  outputFrameBufferDma.io.baseAddr := frameBufferWriteAddr
+  outputFrameBufferDma.io.ddr <> memSys.io.misterFrameBuffer
 
   // Configure the MiSTer system frame buffer
   io.frameBuffer.config(
@@ -160,7 +160,7 @@ class Main extends Module {
   cave.io.layerTileRom(1) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(1))
   cave.io.layerTileRom(2) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(2))
   cave.io.spriteTileRom <> memSys.io.spriteTileRom
-  cave.io.frameBufferDma <> frameBufferDma.io.dma
+  cave.io.outputFrameBufferDma <> outputFrameBufferDma.io.dma
   cave.io.audio <> io.audio
   cave.io.video <> videoSys.io.video
   cave.io.rgb <> io.rgb

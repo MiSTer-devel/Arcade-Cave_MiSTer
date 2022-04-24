@@ -61,8 +61,8 @@ class GPU extends Module {
     val sprite = SpriteIO()
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
-    /** Frame buffer DMA port */
-    val frameBufferDma = Flipped(DMAIO(Config.frameBufferDmaConfig))
+    /** Output frame buffer DMA port */
+    val outputFrameBufferDma = Flipped(DMAIO(Config.outputFrameBufferDmaConfig))
     /** Video port */
     val video = Flipped(VideoIO())
     /** RGB output */
@@ -105,12 +105,12 @@ class GPU extends Module {
   colorMixer.io.layer2Pen := layer2Processor.io.pen
   colorMixer.io.paletteRam <> io.paletteRam
 
-  // The internal frame buffer is required to support HDMI output in MiSTer.
+  // The output frame buffer is required to support digital (HDMI) output in MiSTer.
   //
   // Pixel data from the color mixer is written to port A as each frame is rasterized. Port B is
   // used by the DMA controller to read pixel data.
-  val frameBuffer = withClockAndReset(io.videoClock, io.videoReset) {
-    val mem = Module(new FrameBuffer)
+  val outputFrameBuffer = withClockAndReset(io.videoClock, io.videoReset) {
+    val mem = Module(new OutputFrameBuffer)
     mem.io.portA.rd := false.B // write-only
     mem.io.portA.wr := RegNext(io.video.displayEnable)
     mem.io.portA.addr := RegNext(GPU.frameBufferAddr(io.video.pos, io.options.flip, io.options.rotate))
@@ -120,10 +120,10 @@ class GPU extends Module {
   }
 
   // The DMA controller runs in the system clock domain
-  frameBuffer.io.clockB := clock
+  outputFrameBuffer.io.clockB := clock
 
   // Pack pixel pairs into 64-bit words for the DMA controller to copy
-  frameBuffer.io.portB <> io.frameBufferDma.mapData(data =>
+  outputFrameBuffer.io.portB <> io.outputFrameBufferDma.mapData(data =>
     GPU.decodePixels(data, 2).reduce(_ ## _).asUInt
   )
 

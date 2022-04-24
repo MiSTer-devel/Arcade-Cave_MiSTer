@@ -110,8 +110,8 @@ object Config {
     vRetrace = 2,
   )
 
-  // Frame buffer DMA configuration
-  val frameBufferDmaConfig = DMAConfig(
+  /** Output frame buffer DMA configuration */
+  val outputFrameBufferDmaConfig = DMAConfig(
     numWords = SCREEN_WIDTH * SCREEN_HEIGHT * 32 / ddrConfig.dataWidth
   )
 

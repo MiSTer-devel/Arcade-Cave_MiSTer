@@ -76,7 +76,7 @@ class Cave extends Module {
     /** Sprite tile ROM port */
     val spriteTileRom = new SpriteRomIO
     /** Frame buffer DMA port */
-    val frameBufferDma = Flipped(DMAIO(Config.frameBufferDmaConfig))
+    val outputFrameBufferDma = Flipped(DMAIO(Config.outputFrameBufferDmaConfig))
     /** Video port */
     val video = Flipped(VideoIO())
     /** Audio port */
@@ -97,7 +97,7 @@ class Cave extends Module {
   gpu.io.videoClock := io.videoClock
   gpu.io.videoReset := io.videoReset
   gpu.io.video <> io.video
-  gpu.io.frameBufferDma <> io.frameBufferDma
+  gpu.io.outputFrameBufferDma <> io.outputFrameBufferDma
   gpu.io.gameConfig <> io.gameConfig
   gpu.io.options <> io.options
   gpu.io.frameReady := Util.rising(ShiftRegister(frameStart, 2))
