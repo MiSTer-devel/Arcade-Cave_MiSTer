@@ -30,13 +30,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave.gpu
+package cave.types
 
 import chisel3._
 import chiseltest._
 import org.scalatest._
-import flatspec.AnyFlatSpec
-import matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 class RegisterFileTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   it should "allow writing masked bytes" in {

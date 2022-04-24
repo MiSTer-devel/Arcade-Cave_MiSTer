@@ -30,7 +30,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave.gpu
+package cave.types
 
 import axon.cpu.m68k.CPU
 import axon.mem.ReadWriteMemIO
