@@ -129,6 +129,13 @@ class Main extends Module {
   val frameBufferReadAddr = Config.MISTER_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.readPage(1, 0) ## 0.U(19.W)
   val frameBufferWriteAddr = Config.MISTER_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.writePage(1, 0) ## 0.U(19.W)
 
+  // Configure the MiSTer system frame buffer
+  io.frameBuffer.config(
+    baseAddr = frameBufferReadAddr,
+    rotate = io.options.rotate,
+    forceBlank = io.cpuReset
+  )
+
   // The frame buffer DMA controller copies pixel data from the output frame buffer to the MiSTer
   // system frame buffer.
   val outputFrameBufferDma = Module(new DMA(Config.outputFrameBufferDmaConfig))
@@ -136,13 +143,6 @@ class Main extends Module {
   outputFrameBufferDma.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // start of VBLANK
   outputFrameBufferDma.io.baseAddr := frameBufferWriteAddr
   outputFrameBufferDma.io.ddr <> memSys.io.misterFrameBuffer
-
-  // Configure the MiSTer system frame buffer
-  io.frameBuffer.config(
-    baseAddr = frameBufferReadAddr,
-    rotate = io.options.rotate,
-    forceBlank = io.cpuReset
-  )
 
   // Cave
   val cave = Module(new Cave)
