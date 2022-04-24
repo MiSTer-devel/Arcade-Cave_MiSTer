@@ -165,8 +165,8 @@ object Config {
   val VIDEO_REGS_COUNT = 8
   val VIDEO_REGS_GPU_DATA_WIDTH = 128
 
-  /** The number of bits per color channel for the DDR frame buffer */
-  val DDR_FRAME_BUFFER_BITS_PER_CHANNEL = 8
+  /** The number of bits per color channel for the output RGB signal */
+  val RGB_OUTPUT_BPP = 8
   /** The bit depth of a DDR frame buffer pixel */
   val DDR_FRAME_BUFFER_BPP = 32
 

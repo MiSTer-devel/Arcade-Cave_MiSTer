@@ -65,7 +65,7 @@ class GPU extends Module {
     /** Video port */
     val video = Flipped(VideoIO())
     /** RGB output */
-    val rgb = Output(RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL.W))
+    val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
   })
 
   // Sprite processor

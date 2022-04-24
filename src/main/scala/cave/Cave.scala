@@ -81,7 +81,7 @@ class Cave extends Module {
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** RGB output */
-    val rgb = Output(RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL.W))
+    val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
   })
 
   // Wires

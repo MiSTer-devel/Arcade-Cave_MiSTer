@@ -76,7 +76,7 @@ class Main extends Module {
     /** Video port */
     val video = VideoIO()
     /** RGB output */
-    val rgb = Output(RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL.W))
+    val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
     /** LED port */
     val led = mister.LEDIO()
   })
