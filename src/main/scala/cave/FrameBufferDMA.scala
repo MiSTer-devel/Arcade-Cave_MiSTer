@@ -46,25 +46,25 @@ object FrameBufferDMAIO {
 }
 
 /**
- * The frame buffer direct memory access (DMA) controller reads pixel data from a frame buffer in
- * BRAM, and writes it to the MiSTer frame buffer in DDR memory.
+ * The frame buffer direct memory access (DMA) controller copies pixel data from an internal frame
+ * buffer to the MiSTer system frame buffer.
  *
- * @param addr        The start address of the transfer.
+ * @param baseAddr    The base address of the frame buffer in DDR memory.
  * @param numWords    The number of words to transfer.
  * @param burstLength The length of the DDR burst.
  */
-class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module {
+class FrameBufferDMA(baseAddr: Long, numWords: Int, burstLength: Int) extends Module {
   /** The number of bursts */
   private val NUM_BURSTS = numWords / burstLength
 
   val io = IO(new Bundle {
     /** Asserted when the DMA controller is enabled */
     val enable = Input(Bool())
-    /** Start the transfer */
+    /** Asserted when a DMA transfer should be started */
     val start = Input(Bool())
     /** Asserted when the DMA controller is ready */
     val ready = Output(Bool())
-    /** The page of the frame buffer to write */
+    /** The index of the frame buffer write page */
     val page = Input(UInt(VideoSys.PAGE_WIDTH.W))
     /** DMA port */
     val dma = FrameBufferDMAIO()
@@ -87,7 +87,7 @@ class FrameBufferDMA(addr: Long, numWords: Int, burstLength: Int) extends Module
   val ddrAddr = {
     val mask = 0.U(log2Ceil(burstLength * 8).W)
     val offset = io.page ## burstCounter ## mask
-    addr.U + offset
+    baseAddr.U + offset
   }
 
   // Pack pixel data in 64-bit words

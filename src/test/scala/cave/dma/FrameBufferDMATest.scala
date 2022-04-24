@@ -40,7 +40,7 @@ import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
 trait FrameBufferDMATestHelpers {
-  protected def mkDMA() = new FrameBufferDMA(addr = 1, numWords = 8, burstLength = 4)
+  protected def mkDMA() = new FrameBufferDMA(baseAddr = 1, numWords = 8, burstLength = 4)
 }
 
 class FrameBufferDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with FrameBufferDMATestHelpers {

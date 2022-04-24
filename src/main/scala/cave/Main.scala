@@ -70,7 +70,7 @@ class Main extends Module {
     /** IOCTL port */
     val ioctl = IOCTL()
     /** Frame buffer port */
-    val frameBuffer = mister.FrameBufferIO()
+    val frameBuffer = mister.FrameBufferIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** Video port */
@@ -120,21 +120,28 @@ class Main extends Module {
   val videoSys = Module(new VideoSys)
   videoSys.io.videoClock := io.videoClock
   videoSys.io.videoReset := io.videoReset
+  videoSys.io.lowLat := io.frameBuffer.lowLat
   videoSys.io.options <> io.options
-  videoSys.io.forceBlank := io.cpuReset
-  videoSys.io.frameBuffer <> io.frameBuffer
   videoSys.io.video <> io.video
 
   // Frame buffer DMA controller
   val frameBufferDma = Module(new FrameBufferDMA(
-    addr = Config.FRAME_BUFFER_DDR_OFFSET,
+    baseAddr = Config.FRAME_BUFFER_DDR_OFFSET,
     numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
     burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
   ))
   frameBufferDma.io.enable := downloadDoneReg
   frameBufferDma.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // start of VBLANK
-  frameBufferDma.io.page := videoSys.io.frameBufferWritePage
+  frameBufferDma.io.page := videoSys.io.writePage
   frameBufferDma.io.ddr <> memSys.io.frameBuffer
+
+  // Configure the MiSTer frame buffer
+  io.frameBuffer.config(
+    baseAddr = Config.FRAME_BUFFER_DDR_OFFSET,
+    page = videoSys.io.readPage,
+    rotate = io.options.rotate,
+    forceBlank = io.cpuReset
+  )
 
   // Cave
   val cave = Module(new Cave)

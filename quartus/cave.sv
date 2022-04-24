@@ -501,7 +501,7 @@ Main main (
   .io_frameBuffer_hSize(FB_WIDTH),
   .io_frameBuffer_vSize(FB_HEIGHT),
   .io_frameBuffer_format(FB_FORMAT),
-  .io_frameBuffer_base(FB_BASE),
+  .io_frameBuffer_baseAddr(FB_BASE),
   .io_frameBuffer_stride(FB_STRIDE),
   .io_frameBuffer_vBlank(FB_VBL),
   .io_frameBuffer_lowLat(FB_LL),

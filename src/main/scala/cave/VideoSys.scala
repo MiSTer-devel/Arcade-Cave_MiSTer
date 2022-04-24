@@ -35,13 +35,14 @@ package cave
 import axon._
 import axon.gfx._
 import axon.types._
-import cave.gpu._
 import chisel3._
 import chisel3.util._
 
 /**
- * The video subsystem generates the video timing signals and delivers pixel data to the RGB and
- * frame buffer (HDMI) outputs.
+ * The video subsystem handles video timing signals and frame buffer page swapping.
+ *
+ * If low latency mode is enabled, then double buffering is used. Otherwise, triple buffering will
+ * be used for butter-smooth HDMI output.
  */
 class VideoSys extends Module {
   val io = IO(new Bundle {
@@ -49,14 +50,14 @@ class VideoSys extends Module {
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
+    /** Asserted when low latency mode should be used for the frame buffer */
+    val lowLat = Input(Bool())
     /** Options port */
     val options = OptionsIO()
-    /** Asserted when video output should be disabled */
-    val forceBlank = Input(Bool())
-    /** Frame buffer port */
-    val frameBuffer = mister.FrameBufferIO()
+    /** The index of the frame buffer read page */
+    val readPage = Output(UInt(VideoSys.PAGE_WIDTH.W))
     /** The index of the frame buffer write page */
-    val frameBufferWritePage = Output(UInt(VideoSys.PAGE_WIDTH.W))
+    val writePage = Output(UInt(VideoSys.PAGE_WIDTH.W))
     /** Video port */
     val video = VideoIO()
   })
@@ -92,7 +93,7 @@ class VideoSys extends Module {
 
     // Toggle write index
     when(swap) {
-      writeIndexReg := Mux(io.frameBuffer.lowLat,
+      writeIndexReg := Mux(io.lowLat,
         ~writeIndexReg(0),
         VideoSys.nextIndex(writeIndexReg, readIndexReg)
       )
@@ -100,24 +101,16 @@ class VideoSys extends Module {
 
     // Toggle read index
     when(swap) {
-      readIndexReg := Mux(io.frameBuffer.lowLat,
+      readIndexReg := Mux(io.lowLat,
         ~writeIndexReg(0),
         VideoSys.nextIndex(readIndexReg, writeIndexReg)
       )
     }
 
-    // MiSTer frame buffer signals
-    io.frameBuffer.enable := true.B
-    io.frameBuffer.hSize := Mux(io.options.rotate, Config.SCREEN_HEIGHT.U, Config.SCREEN_WIDTH.U)
-    io.frameBuffer.vSize := Mux(io.options.rotate, Config.SCREEN_WIDTH.U, Config.SCREEN_HEIGHT.U)
-    io.frameBuffer.format := mister.FrameBufferIO.FORMAT_32BPP.U
-    io.frameBuffer.base := Config.FRAME_BUFFER_DDR_OFFSET.U + (readIndexReg ## 0.U(19.W))
-    io.frameBuffer.stride := Mux(io.options.rotate, (Config.SCREEN_HEIGHT * 4).U, (Config.SCREEN_WIDTH * 4).U)
-    io.frameBuffer.forceBlank := io.forceBlank
-
-    // Set frame buffer write page to the current write index. This value needs to be synchronized
-    // back into the system clock domain.
-    io.frameBufferWritePage := withClock(sysClock) { ShiftRegister(writeIndexReg, 2) }
+    // Set frame buffer page indexes. These values need to be synchronized back into the system
+    // clock domain.
+    io.readPage := withClock(sysClock) { ShiftRegister(readIndexReg, 2) }
+    io.writePage := withClock(sysClock) { ShiftRegister(writeIndexReg, 2) }
   }
 }
 

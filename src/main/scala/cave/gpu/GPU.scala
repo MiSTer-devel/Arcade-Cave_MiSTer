@@ -104,11 +104,11 @@ class GPU extends Module {
   colorMixer.io.layer2Pen := layer2Processor.io.pen
   colorMixer.io.paletteRam <> io.paletteRam
 
-  // The frame buffer is required for digital output in MiSTer.
+  // This internal frame buffer is required for digital output in MiSTer.
   //
-  // The raw pixel data from the color mixer is written (port A) to the frame buffer as the frame is
-  // rasterized. After the frame is drawn, the completed frame is read (port B) by the frame buffer
-  // DMA controller.
+  // Raw pixel data from the color mixer is written (port A) to the frame buffer as each frame is
+  // rasterized. After a frame is drawn, the completed frame is read (port B) by the frame buffer
+  // DMA controller and copied into the MiSTer system frame buffer.
   val frameBuffer = withClockAndReset(io.videoClock, io.videoReset) {
     val mem = Module(new TrueDualPortRam(
       addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
