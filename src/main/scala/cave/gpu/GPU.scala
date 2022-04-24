@@ -211,7 +211,7 @@ object GPU {
   private def decodePixels(data: Bits, n: Int): Seq[Bits] =
     Util
       // Decode channels
-      .decode(data, n * 3, Config.BITS_PER_CHANNEL)
+      .decode(data, n * 3, 5)
       // Convert channel values to 8BPP
       .map { c => c(4, 0) ## c(4, 2) }
       // Group channels
