@@ -30,33 +30,42 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave
+package axon.dma
 
-import axon.Util
-import axon.mem.{BurstWriteMemIO, ReadMemIO}
+import axon.mem._
 import axon.util.Counter
-import chisel3._
 import chisel3.util._
+import chisel3._
 
-/** Frame buffer DMA IO */
-class FrameBufferDMAIO extends ReadMemIO(Config.FRAME_BUFFER_DMA_ADDR_WIDTH, Config.FRAME_BUFFER_DMA_DATA_WIDTH)
+/** DMA IO */
+class DMAIO(config: DMAConfig) extends ReadMemIO(config.addrWidth, config.dataWidth)
 
-object FrameBufferDMAIO {
-  def apply() = new FrameBufferDMAIO()
+object DMAIO {
+  def apply(config: DMAConfig) = new DMAIO(config)
 }
 
 /**
- * The frame buffer direct memory access (DMA) controller copies pixel data from an internal frame
- * buffer to the MiSTer system frame buffer.
+ * Represents a DMA configuration.
  *
- * @param baseAddr    The base address of the frame buffer in DDR memory.
+ * @param addrWidth   The width of the DMA address bus.
+ * @param dataWidth   The width of the DMA data bus.
  * @param numWords    The number of words to transfer.
  * @param burstLength The length of the DDR burst.
  */
-class FrameBufferDMA(baseAddr: Long, numWords: Int, burstLength: Int) extends Module {
-  /** The number of bursts */
-  private val NUM_BURSTS = numWords / burstLength
+case class DMAConfig(addrWidth: Int = 32,
+                     dataWidth: Int = 64,
+                     numWords: Int,
+                     burstLength: Int = 128) {
+  /** The number of bursts. */
+  val numBursts = numWords / burstLength
+}
 
+/**
+ * The direct memory access (DMA) controller copies data from one memory device to another.
+ *
+ * @param config The DMA configuration.
+ */
+class DMA(config: DMAConfig) extends Module {
   val io = IO(new Bundle {
     /** Asserted when the DMA controller is enabled */
     val enable = Input(Bool())
@@ -64,12 +73,12 @@ class FrameBufferDMA(baseAddr: Long, numWords: Int, burstLength: Int) extends Mo
     val start = Input(Bool())
     /** Asserted when the DMA controller is ready */
     val ready = Output(Bool())
-    /** The index of the frame buffer write page */
-    val page = Input(UInt(VideoSys.PAGE_WIDTH.W))
+    /** The base address of the target memory device */
+    val baseAddr = Input(UInt(config.addrWidth.W))
     /** DMA port */
-    val dma = FrameBufferDMAIO()
+    val dma = DMAIO(config)
     /** DDR port */
-    val ddr = BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
+    val ddr = BurstWriteMemIO(config.addrWidth, config.dataWidth)
   })
 
   // Registers
@@ -80,23 +89,14 @@ class FrameBufferDMA(baseAddr: Long, numWords: Int, burstLength: Int) extends Mo
   val effectiveWrite = write && !io.ddr.waitReq
 
   // Counters
-  val (totalCounter, totalCounterDone) = Counter.static(numWords, enable = effectiveWrite)
-  val (burstCounter, burstCounterDone) = Counter.static(NUM_BURSTS, enable = io.ddr.burstDone)
+  val (wordCounter, wordCounterDone) = Counter.static(config.numWords, enable = effectiveWrite)
+  val (burstCounter, burstCounterDone) = Counter.static(config.numBursts, enable = io.ddr.burstDone)
 
-  // Calculate the DDR address
+  // Calculate the DDR memory address
   val ddrAddr = {
-    val mask = 0.U(log2Ceil(burstLength * 8).W)
-    val offset = io.page ## burstCounter ## mask
-    baseAddr.U + offset
+    val n = log2Ceil(config.burstLength * 8)
+    io.baseAddr + (burstCounter << n).asUInt
   }
-
-  // Pack pixel data in 64-bit words
-  val pixelData = Util.padWords(
-    io.dma.dout,
-    Config.FRAME_BUFFER_DMA_PIXELS,
-    Config.FRAME_BUFFER_DMA_BPP,
-    Config.DDR_FRAME_BUFFER_BPP
-  )
 
   // Toggle the busy register
   when(io.start) { busyReg := true.B }.elsewhen(burstCounterDone) { busyReg := false.B }
@@ -104,12 +104,12 @@ class FrameBufferDMA(baseAddr: Long, numWords: Int, burstLength: Int) extends Mo
   // Outputs
   io.ready := !busyReg
   io.dma.rd := true.B // read-only
-  io.dma.addr := Mux(effectiveWrite, totalCounter +& 1.U, totalCounter)
+  io.dma.addr := Mux(effectiveWrite, wordCounter +& 1.U, wordCounter)
   io.ddr.wr := write
   io.ddr.addr := ddrAddr
   io.ddr.mask := Fill(io.ddr.maskWidth, 1.U)
-  io.ddr.burstCount := burstLength.U
-  io.ddr.din := pixelData
+  io.ddr.burstCount := config.burstLength.U
+  io.ddr.din := io.dma.dout
 
-  printf(p"FrameBufferDMA(busy: $busyReg, burstCounter: $burstCounter ($burstCounterDone), totalCounter: $totalCounter ($totalCounterDone))\n")
+  printf(p"DMA(busy: $busyReg, burstCounter: $burstCounter ($burstCounterDone), wordCounter: $wordCounter ($wordCounterDone))\n")
 }

@@ -33,6 +33,7 @@
 package cave
 
 import axon._
+import axon.dma.DMA
 import axon.gfx._
 import axon.mem._
 import axon.mister._
@@ -125,19 +126,15 @@ class Main extends Module {
   videoSys.io.video <> io.video
 
   // Frame buffer DMA controller
-  val frameBufferDma = Module(new FrameBufferDMA(
-    baseAddr = Config.FRAME_BUFFER_DDR_OFFSET,
-    numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
-    burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
-  ))
+  val frameBufferDma = Module(new DMA(Config.frameBufferDmaConfig))
   frameBufferDma.io.enable := downloadDoneReg
   frameBufferDma.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // start of VBLANK
-  frameBufferDma.io.page := videoSys.io.writePage
+  frameBufferDma.io.baseAddr := Config.MISTER_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.writePage(1, 0) ## 0.U(19.W)
   frameBufferDma.io.ddr <> memSys.io.frameBuffer
 
   // Configure the MiSTer frame buffer
   io.frameBuffer.config(
-    baseAddr = Config.FRAME_BUFFER_DDR_OFFSET,
+    baseAddr = Config.MISTER_FRAME_BUFFER_DDR_OFFSET,
     page = videoSys.io.readPage,
     rotate = io.options.rotate,
     forceBlank = io.cpuReset

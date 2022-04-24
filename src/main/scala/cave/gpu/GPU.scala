@@ -33,6 +33,7 @@
 package cave.gpu
 
 import axon.Util
+import axon.dma.DMAIO
 import axon.gfx._
 import axon.mem._
 import axon.types._
@@ -61,7 +62,7 @@ class GPU extends Module {
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
     /** Frame buffer DMA port */
-    val frameBufferDma = Flipped(FrameBufferDMAIO())
+    val frameBufferDma = Flipped(DMAIO(Config.frameBufferDmaConfig))
     /** Video port */
     val video = Flipped(VideoIO())
     /** RGB output */
@@ -69,10 +70,10 @@ class GPU extends Module {
   })
 
   // Sprite processor
-//  val spriteProcessor = Module(new SpriteProcessor)
-//  spriteProcessor.io.start := io.frameReady
-//  spriteProcessor.io.sprite <> io.sprite
-//  spriteProcessor.io.frameBuffer <> frameBuffer.io.portA.asWriteMemIO
+  //  val spriteProcessor = Module(new SpriteProcessor)
+  //  spriteProcessor.io.start := io.frameReady
+  //  spriteProcessor.io.sprite <> io.sprite
+  //  spriteProcessor.io.frameBuffer <> frameBuffer.io.portA.asWriteMemIO
   io.sprite.vram.default()
   io.sprite.tileRom.default()
 
@@ -114,9 +115,9 @@ class GPU extends Module {
       addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
       dataWidthA = Config.FRAME_BUFFER_DATA_WIDTH,
       depthA = Some(Config.FRAME_BUFFER_DEPTH),
-      addrWidthB = Config.FRAME_BUFFER_DMA_ADDR_WIDTH,
-      dataWidthB = Config.FRAME_BUFFER_DATA_WIDTH * Config.FRAME_BUFFER_DMA_PIXELS,
-      depthB = Some(Config.FRAME_BUFFER_DMA_DEPTH)
+      addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH - 1,
+      dataWidthB = Config.FRAME_BUFFER_DATA_WIDTH * 2,
+      depthB = Some(Config.FRAME_BUFFER_DEPTH / 2)
     ))
     mem.io.portA.rd := false.B
     mem.io.portA.wr := RegNext(io.video.displayEnable)
@@ -127,9 +128,9 @@ class GPU extends Module {
   }
   frameBuffer.io.clockB := clock // DMA runs in the system clock domain
 
-  // Decode the pixel data to 24-bit pixels
+  // Decode the pixel data to 32-bit pixels
   frameBuffer.io.portB <> io.frameBufferDma.mapData(data =>
-    GPU.decodePixels(data, Config.FRAME_BUFFER_DMA_PIXELS).reduce(_ ## _).asUInt
+    GPU.decodePixels(data, 2).reduce(_ ## _).asUInt
   )
 
   // Decode the analog RGB output from color mixer data
@@ -202,11 +203,11 @@ object GPU {
   }
 
   /**
-   * Decodes a list of pixels.
+   * Decodes Cave pixel data into a list of 32-bit pixels.
    *
    * @param data The pixel data.
    * @param n    The number of pixels.
-   * @return A list of 24-bit pixel values.
+   * @return A list of 32-bit pixel values.
    */
   private def decodePixels(data: Bits, n: Int): Seq[Bits] =
     Util
@@ -216,13 +217,13 @@ object GPU {
       .map { c => c(4, 0) ## c(4, 2) }
       // Group channels
       .grouped(3).toSeq
-      // Reorder channels (BRG -> BGR)
-      .map { case Seq(b, r, g) => Cat(b, g, r) }
+      // Reorder channels (BRG -> ABGR)
+      .map { case Seq(b, r, g) => Cat(0.U(8.W), b, g, r) }
       // Swap pixels values
       .reverse
 
   /**
-   * Decodes a RGB color from a 16-bit word.
+   * Decodes Cave pixel data into a 24-bit RGB color value.
    *
    * @param data The color data.
    */

@@ -32,6 +32,7 @@
 
 package cave
 
+import axon.dma.DMAConfig
 import axon.gfx.VideoTimingConfig
 import axon.mem.{DDRConfig, SDRAMConfig}
 import axon.snd.YMZ280BConfig
@@ -109,13 +110,18 @@ object Config {
     vRetrace = 2,
   )
 
+  // Frame buffer DMA configuration
+  val frameBufferDmaConfig = DMAConfig(
+    numWords = SCREEN_WIDTH * SCREEN_HEIGHT * 32 / ddrConfig.dataWidth
+  )
+
   /** The width of the pulse generated when a player presses the coin button */
   val PLAYER_COIN_PULSE_WIDTH = (100000000 / CPU_CLOCK_PERIOD).ceil.toInt // 100ms
 
-  /** The byte offset of the framebuffer stored in DDR. */
-  val FRAME_BUFFER_DDR_OFFSET = 0x24000000
   /** The byte offset of the IOCTL data stored in DDR. */
   val IOCTL_DOWNLOAD_DDR_OFFSET = 0x30000000
+  /** The byte offset of the MiSTer system frame buffer in DDR. */
+  val MISTER_FRAME_BUFFER_DDR_OFFSET = 0x24000000
 
   val PROG_ROM_ADDR_WIDTH = 20 // 1MB
   val PROG_ROM_DATA_WIDTH = 16
@@ -164,8 +170,6 @@ object Config {
 
   /** The number of bits per color channel for the output RGB signal */
   val RGB_OUTPUT_BPP = 8
-  /** The bit depth of a DDR frame buffer pixel */
-  val DDR_FRAME_BUFFER_BPP = 32
 
   /** The depth of the frame buffer in words */
   val FRAME_BUFFER_DEPTH = SCREEN_WIDTH * SCREEN_HEIGHT
@@ -177,21 +181,6 @@ object Config {
   val FRAME_BUFFER_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DEPTH)
   /** The width of the frame buffer data bus */
   val FRAME_BUFFER_DATA_WIDTH = 15
-
-  /** The bit depth of a frame buffer DMA pixel */
-  val FRAME_BUFFER_DMA_BPP = 24
-  /** The number of pixels transferred per word during frame buffer DMA */
-  val FRAME_BUFFER_DMA_PIXELS = 2
-  /** The depth of the frame buffer DMA in words */
-  val FRAME_BUFFER_DMA_DEPTH = SCREEN_WIDTH * SCREEN_HEIGHT / FRAME_BUFFER_DMA_PIXELS
-  /** The width of the frame buffer DMA address bus */
-  val FRAME_BUFFER_DMA_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DMA_DEPTH)
-  /** The width of the frame buffer DMA data bus */
-  val FRAME_BUFFER_DMA_DATA_WIDTH = FRAME_BUFFER_DMA_BPP * FRAME_BUFFER_DMA_PIXELS
-  /** The number of words to transfer during frame buffer DMA */
-  val FRAME_BUFFER_DMA_NUM_WORDS = SCREEN_WIDTH * SCREEN_HEIGHT * DDR_FRAME_BUFFER_BPP / ddrConfig.dataWidth
-  /** The length of a burst during a frame buffer DMA transfer */
-  val FRAME_BUFFER_DMA_BURST_LENGTH = 128
 
   /** The depth of the layer FIFOs */
   val FIFO_DEPTH = 64

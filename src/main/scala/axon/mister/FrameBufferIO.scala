@@ -34,7 +34,6 @@ package axon.mister
 
 import chisel3._
 
-
 /**
  * A bundle that contains the MiSTer frame buffer signals.
  *

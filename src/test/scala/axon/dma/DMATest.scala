@@ -30,20 +30,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave.dma
+package axon.dma
 
-import cave.FrameBufferDMA
 import chisel3._
 import chiseltest._
-import org.scalatest._
-import flatspec.AnyFlatSpec
-import matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-trait FrameBufferDMATestHelpers {
-  protected def mkDMA() = new FrameBufferDMA(baseAddr = 1, numWords = 8, burstLength = 4)
+trait DMATestHelpers {
+  protected def mkDMA() = new DMA(DMAConfig(numWords = 8, burstLength = 4))
 }
 
-class FrameBufferDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with FrameBufferDMATestHelpers {
+class DMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with DMATestHelpers {
   it should "deassert the ready signal during a transfer" in {
     test(mkDMA()) { dut =>
       dut.io.enable.poke(true)
@@ -99,26 +97,16 @@ class FrameBufferDMATest extends AnyFlatSpec with ChiselScalatestTester with Mat
     }
   }
 
-  it should "pack the pixel data" in {
+  it should "add the base address to the DDR memory address" in {
     test(mkDMA()) { dut =>
       dut.io.enable.poke(true)
-      dut.io.start.poke(true)
-      dut.clock.step()
-      dut.io.dma.dout.poke(0x112233445566L)
-      dut.io.ddr.din.expect(0x0011223300445566L.U)
+      dut.io.ddr.addr.expect(0.U)
+      dut.io.baseAddr.poke(1)
+      dut.io.ddr.addr.expect(1.U)
     }
   }
 
-  it should "apply the frame buffer index to the DDR address offset" in {
-    test(mkDMA()) { dut =>
-      dut.io.enable.poke(true)
-      dut.io.ddr.addr.expect(0x01.U)
-      dut.io.page.poke(1)
-      dut.io.ddr.addr.expect(0x41.U)
-    }
-  }
-
-  it should "write frame buffer data to DDR memory" in {
+  it should "copy data to DDR memory" in {
     test(mkDMA()) { dut =>
       dut.io.enable.poke(true)
       dut.io.start.poke(true)
@@ -131,7 +119,7 @@ class FrameBufferDMATest extends AnyFlatSpec with ChiselScalatestTester with Mat
       // Burst 1
       dut.io.dma.rd.expect(true)
       dut.io.ddr.wr.expect(true)
-      dut.io.ddr.addr.expect(0x01.U)
+      dut.io.ddr.addr.expect(0.U)
       dut.io.ddr.mask.expect(0xff.U)
       0.to(3).foreach { n =>
         if (n == 3) dut.io.ddr.burstDone.poke(true)
@@ -145,7 +133,7 @@ class FrameBufferDMATest extends AnyFlatSpec with ChiselScalatestTester with Mat
       // Burst 2
       dut.io.dma.rd.expect(true)
       dut.io.ddr.wr.expect(true)
-      dut.io.ddr.addr.expect(0x21.U)
+      dut.io.ddr.addr.expect(0x20.U)
       dut.io.ddr.mask.expect(0xff.U)
       0.to(3).foreach { n =>
         if (n == 3) dut.io.ddr.burstDone.poke(true)
