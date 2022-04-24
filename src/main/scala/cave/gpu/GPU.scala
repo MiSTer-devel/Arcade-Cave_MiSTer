@@ -105,35 +105,29 @@ class GPU extends Module {
   colorMixer.io.layer2Pen := layer2Processor.io.pen
   colorMixer.io.paletteRam <> io.paletteRam
 
-  // This internal frame buffer is required for digital output in MiSTer.
+  // The internal frame buffer is required to support HDMI output in MiSTer.
   //
-  // Raw pixel data from the color mixer is written (port A) to the frame buffer as each frame is
-  // rasterized. After a frame is drawn, the completed frame is read (port B) by the frame buffer
-  // DMA controller and copied into the MiSTer system frame buffer.
+  // Pixel data from the color mixer is written to port A as each frame is rasterized. Port B is
+  // used by the DMA controller to read pixel data.
   val frameBuffer = withClockAndReset(io.videoClock, io.videoReset) {
-    val mem = Module(new TrueDualPortRam(
-      addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
-      dataWidthA = Config.FRAME_BUFFER_DATA_WIDTH,
-      depthA = Some(Config.FRAME_BUFFER_DEPTH),
-      addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH - 1,
-      dataWidthB = Config.FRAME_BUFFER_DATA_WIDTH * 2,
-      depthB = Some(Config.FRAME_BUFFER_DEPTH / 2)
-    ))
-    mem.io.portA.rd := false.B
+    val mem = Module(new FrameBuffer)
+    mem.io.portA.rd := false.B // write-only
     mem.io.portA.wr := RegNext(io.video.displayEnable)
     mem.io.portA.addr := RegNext(GPU.frameBufferAddr(io.video.pos, io.options.flip, io.options.rotate))
     mem.io.portA.mask := 0.U
     mem.io.portA.din := RegNext(colorMixer.io.dout)
     mem
   }
-  frameBuffer.io.clockB := clock // DMA runs in the system clock domain
 
-  // Decode the pixel data to 32-bit pixels
+  // The DMA controller runs in the system clock domain
+  frameBuffer.io.clockB := clock
+
+  // Pack pixel pairs into 64-bit words for the DMA controller to copy
   frameBuffer.io.portB <> io.frameBufferDma.mapData(data =>
     GPU.decodePixels(data, 2).reduce(_ ## _).asUInt
   )
 
-  // Decode the analog RGB output from color mixer data
+  // Decode analog RGB output from the color mixer data
   io.rgb := GPU.decodeRGB(colorMixer.io.dout)
 }
 

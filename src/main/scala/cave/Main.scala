@@ -125,7 +125,8 @@ class Main extends Module {
   videoSys.io.options <> io.options
   videoSys.io.video <> io.video
 
-  // Frame buffer DMA controller
+  // The frame buffer DMA controller copies pixel data from the internal frame buffer to the
+  // MiSTer system frame buffer.
   val frameBufferDma = Module(new DMA(Config.frameBufferDmaConfig))
   frameBufferDma.io.enable := downloadDoneReg
   frameBufferDma.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // start of VBLANK
