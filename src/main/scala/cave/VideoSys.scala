@@ -116,7 +116,7 @@ class VideoSys extends Module {
 
 object VideoSys {
   /** The width of the page index. */
-  val PAGE_WIDTH = 2
+  private val PAGE_WIDTH = 2
 
   /**
    * Returns the next frame buffer index for the given indices.

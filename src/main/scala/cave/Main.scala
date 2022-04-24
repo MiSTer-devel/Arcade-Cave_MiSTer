@@ -125,17 +125,21 @@ class Main extends Module {
   videoSys.io.options <> io.options
   videoSys.io.video <> io.video
 
+  // Frame buffer read/write addresses
+  val frameBufferReadAddr = Config.MISTER_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.readPage(1, 0) ## 0.U(19.W)
+  val frameBufferWriteAddr = Config.MISTER_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.writePage(1, 0) ## 0.U(19.W)
+
   // The frame buffer DMA controller copies pixel data from the internal frame buffer to the
   // MiSTer system frame buffer.
   val frameBufferDma = Module(new DMA(Config.frameBufferDmaConfig))
   frameBufferDma.io.enable := downloadDoneReg
   frameBufferDma.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // start of VBLANK
-  frameBufferDma.io.baseAddr := Config.MISTER_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.writePage(1, 0) ## 0.U(19.W)
+  frameBufferDma.io.baseAddr := frameBufferWriteAddr
   frameBufferDma.io.ddr <> memSys.io.frameBuffer
 
-  // Configure the MiSTer frame buffer
+  // Configure the MiSTer system frame buffer
   io.frameBuffer.config(
-    baseAddr = Config.MISTER_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.readPage(1, 0) ## 0.U(19.W),
+    baseAddr = frameBufferReadAddr,
     rotate = io.options.rotate,
     forceBlank = io.cpuReset
   )
