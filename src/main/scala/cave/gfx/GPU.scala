@@ -33,7 +33,7 @@
 package cave.gfx
 
 import axon.Util
-import axon.dma.DMAIO
+import axon.dma.ReadDMAIO
 import axon.gfx._
 import axon.mem._
 import axon.types._
@@ -62,7 +62,7 @@ class GPU extends Module {
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
     /** Output frame buffer DMA port */
-    val outputFrameBufferDma = Flipped(DMAIO(Config.outputFrameBufferDmaConfig))
+    val outputFrameBufferDma = Flipped(ReadDMAIO(Config.outputFrameBufferDmaConfig))
     /** Video port */
     val video = Flipped(VideoIO())
     /** RGB output */

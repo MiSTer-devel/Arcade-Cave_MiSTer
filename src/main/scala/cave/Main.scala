@@ -33,7 +33,7 @@
 package cave
 
 import axon._
-import axon.dma.DMA
+import axon.dma.ReadDMA
 import axon.gfx._
 import axon.mem._
 import axon.mister._
@@ -138,7 +138,7 @@ class Main extends Module {
 
   // The frame buffer DMA controller copies pixel data from the output frame buffer to the MiSTer
   // system frame buffer.
-  val outputFrameBufferDma = Module(new DMA(Config.outputFrameBufferDmaConfig))
+  val outputFrameBufferDma = Module(new ReadDMA(Config.outputFrameBufferDmaConfig))
   outputFrameBufferDma.io.enable := downloadDoneReg
   outputFrameBufferDma.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // start of VBLANK
   outputFrameBufferDma.io.baseAddr := frameBufferWriteAddr

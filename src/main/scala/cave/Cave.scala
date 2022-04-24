@@ -34,7 +34,7 @@ package cave
 
 import axon._
 import axon.cpu.m68k._
-import axon.dma.DMAIO
+import axon.dma.ReadDMAIO
 import axon.gfx._
 import axon.mem._
 import axon.snd._
@@ -76,7 +76,7 @@ class Cave extends Module {
     /** Sprite tile ROM port */
     val spriteTileRom = new SpriteRomIO
     /** Frame buffer DMA port */
-    val outputFrameBufferDma = Flipped(DMAIO(Config.outputFrameBufferDmaConfig))
+    val outputFrameBufferDma = Flipped(ReadDMAIO(Config.outputFrameBufferDmaConfig))
     /** Video port */
     val video = Flipped(VideoIO())
     /** Audio port */

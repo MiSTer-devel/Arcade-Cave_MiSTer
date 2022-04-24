@@ -37,35 +37,19 @@ import axon.util.Counter
 import chisel3.util._
 import chisel3._
 
-/** DMA IO */
-class DMAIO(config: DMAConfig) extends ReadMemIO(config.addrWidth, config.dataWidth)
+/** Read DMA IO */
+class ReadDMAIO(config: DMAConfig) extends ReadMemIO(config.addrWidth, config.dataWidth)
 
-object DMAIO {
-  def apply(config: DMAConfig) = new DMAIO(config)
+object ReadDMAIO {
+  def apply(config: DMAConfig) = new ReadDMAIO(config)
 }
 
 /**
- * Represents a DMA configuration.
- *
- * @param addrWidth   The width of the DMA address bus.
- * @param dataWidth   The width of the DMA data bus.
- * @param numWords    The number of words to transfer.
- * @param burstLength The length of the DDR burst.
- */
-case class DMAConfig(addrWidth: Int = 32,
-                     dataWidth: Int = 64,
-                     numWords: Int,
-                     burstLength: Int = 128) {
-  /** The number of bursts. */
-  val numBursts = numWords / burstLength
-}
-
-/**
- * The direct memory access (DMA) controller copies data from one memory device to another.
+ * The read direct memory access (DMA) controller copies data from a memory device to DDR memory.
  *
  * @param config The DMA configuration.
  */
-class DMA(config: DMAConfig) extends Module {
+class ReadDMA(config: DMAConfig) extends Module {
   val io = IO(new Bundle {
     /** Asserted when the DMA controller is enabled */
     val enable = Input(Bool())
@@ -76,7 +60,7 @@ class DMA(config: DMAConfig) extends Module {
     /** The base address of the target memory device */
     val baseAddr = Input(UInt(config.addrWidth.W))
     /** DMA port */
-    val dma = DMAIO(config)
+    val dma = ReadDMAIO(config)
     /** DDR port */
     val ddr = BurstWriteMemIO(config.addrWidth, config.dataWidth)
   })
@@ -111,5 +95,5 @@ class DMA(config: DMAConfig) extends Module {
   io.ddr.burstCount := config.burstLength.U
   io.ddr.din := io.dma.dout
 
-  printf(p"DMA(busy: $busyReg, burstCounter: $burstCounter ($burstCounterDone), wordCounter: $wordCounter ($wordCounterDone))\n")
+  printf(p"ReadDMA(busy: $busyReg, burstCounter: $burstCounter ($burstCounterDone), wordCounter: $wordCounter ($wordCounterDone))\n")
 }

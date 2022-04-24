@@ -37,11 +37,11 @@ import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-trait DMATestHelpers {
-  protected def mkDMA() = new DMA(DMAConfig(numWords = 8, burstLength = 4))
+trait ReadDMATestHelpers {
+  protected def mkDMA() = new ReadDMA(DMAConfig(numWords = 8, burstLength = 4))
 }
 
-class DMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with DMATestHelpers {
+class ReadDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with ReadDMATestHelpers {
   it should "deassert the ready signal during a transfer" in {
     test(mkDMA()) { dut =>
       dut.io.enable.poke(true)
@@ -106,7 +106,7 @@ class DMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
     }
   }
 
-  it should "copy data to DDR memory" in {
+  it should "copy data from the memory device to DDR memory" in {
     test(mkDMA()) { dut =>
       dut.io.enable.poke(true)
       dut.io.start.poke(true)
