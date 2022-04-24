@@ -134,8 +134,7 @@ class Main extends Module {
 
   // Configure the MiSTer frame buffer
   io.frameBuffer.config(
-    baseAddr = Config.MISTER_FRAME_BUFFER_DDR_OFFSET,
-    page = videoSys.io.readPage,
+    baseAddr = Config.MISTER_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.readPage(1, 0) ## 0.U(19.W),
     rotate = io.options.rotate,
     forceBlank = io.cpuReset
   )

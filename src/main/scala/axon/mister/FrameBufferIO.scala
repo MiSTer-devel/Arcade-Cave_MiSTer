@@ -64,16 +64,15 @@ class FrameBufferIO(width: Int, height: Int) extends Bundle {
    * Configures the frame buffer.
    *
    * @param baseAddr   The base address of the frame buffer in DDR memory.
-   * @param page       The read page index.
    * @param rotate     Asserted when the frame buffer is rotated 90 degrees.
    * @param forceBlank Asserted when the frame buffer output is disabled.
    */
-  def config(baseAddr: Int, page: UInt, rotate: Bool, forceBlank: Bool): Unit = {
+  def config(baseAddr: UInt, rotate: Bool, forceBlank: Bool): Unit = {
     enable := true.B
     hSize := Mux(rotate, height.U, width.U)
     vSize := Mux(rotate, width.U, height.U)
     format := FrameBufferIO.FORMAT_32BPP.U
-    this.baseAddr := baseAddr.U(31, 21) ## page(1, 0) ## 0.U(19.W)
+    this.baseAddr := baseAddr
     stride := Mux(rotate, (height * 4).U, (width * 4).U)
     this.forceBlank := forceBlank
   }
