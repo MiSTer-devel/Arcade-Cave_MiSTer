@@ -97,6 +97,7 @@ class AsyncReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends ReadWriteMemIO
     wr := wire.wr
     wire.waitReq := waitReq
     addr := wire.addr
+    mask := wire.mask
     din := wire.din
     wire
   }
