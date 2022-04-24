@@ -60,7 +60,7 @@ class SpriteBlitter extends Module {
     /** Pixel data port */
     val pixelData = DeqIO(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
     /** Frame buffer port */
-    val frameBuffer = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH)
+    val frameBuffer = WriteMemIO(Config.OUTPUT_FRAME_BUFFER_ADDR_WIDTH, Config.OUTPUT_FRAME_BUFFER_DATA_WIDTH)
   })
 
   // Registers

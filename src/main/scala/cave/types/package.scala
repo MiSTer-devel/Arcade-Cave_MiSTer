@@ -55,11 +55,11 @@ package object types {
 
   /** Output frame buffer */
   class OutputFrameBuffer extends TrueDualPortRam(
-    addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
-    dataWidthA = Config.FRAME_BUFFER_DATA_WIDTH,
+    addrWidthA = Config.OUTPUT_FRAME_BUFFER_ADDR_WIDTH,
+    dataWidthA = Config.OUTPUT_FRAME_BUFFER_DATA_WIDTH,
     depthA = Some(Config.FRAME_BUFFER_DEPTH),
-    addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH - 1,
-    dataWidthB = Config.FRAME_BUFFER_DATA_WIDTH * 2,
+    addrWidthB = Config.OUTPUT_FRAME_BUFFER_ADDR_WIDTH - 1,
+    dataWidthB = Config.OUTPUT_FRAME_BUFFER_DATA_WIDTH * 2,
     depthB = Some(Config.FRAME_BUFFER_DEPTH / 2)
   )
 }

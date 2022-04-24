@@ -188,7 +188,7 @@ object GPU {
    * @param data The constant value.
    */
   def clearMem(addr: UInt, data: Bits = 0.U): WriteMemIO = {
-    val mem = Wire(WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH))
+    val mem = Wire(WriteMemIO(Config.OUTPUT_FRAME_BUFFER_ADDR_WIDTH, Config.OUTPUT_FRAME_BUFFER_DATA_WIDTH))
     mem.wr := true.B
     mem.addr := addr
     mem.mask := 0.U

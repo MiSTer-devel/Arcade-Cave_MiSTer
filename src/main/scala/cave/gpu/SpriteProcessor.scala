@@ -55,7 +55,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
     /** Sprite port */
     val sprite = SpriteIO()
     /** Frame buffer port */
-    val frameBuffer = WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.FRAME_BUFFER_DATA_WIDTH)
+    val frameBuffer = WriteMemIO(Config.OUTPUT_FRAME_BUFFER_ADDR_WIDTH, Config.OUTPUT_FRAME_BUFFER_DATA_WIDTH)
     /** Debug port */
     val debug = Output(new Bundle {
       val idle = Bool()
