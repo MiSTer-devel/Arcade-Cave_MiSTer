@@ -58,8 +58,8 @@ class MemSys extends Module {
     val layerTileRom = Flipped(Vec(Config.LAYER_COUNT, new LayerRomIO))
     /** Sprite tile ROM port */
     val spriteTileRom = Flipped(new SpriteRomIO)
-    /** Frame buffer port */
-    val frameBuffer = Flipped(BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
+    /** MiSTer frame buffer port */
+    val misterFrameBuffer = Flipped(BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
   })
 
   // The DDR download cache is used to buffer IOCTL data, so that complete words can be written to
@@ -148,7 +148,7 @@ class MemSys extends Module {
   ddrArbiter.io.in(1) <> progRomCache.io.out
   ddrArbiter.io.in(2) <> soundRomCache.io.out
   ddrArbiter.io.in(3) <> eepromCache.io.out
-  ddrArbiter.io.in(4).asBurstWriteMemIO <> io.frameBuffer
+  ddrArbiter.io.in(4).asBurstWriteMemIO <> io.misterFrameBuffer
   ddrArbiter.io.in(5).asBurstReadMemIO <> io.spriteTileRom
   ddrArbiter.io.in(5).addr := io.spriteTileRom.addr + io.gameConfig.sprite.romOffset + Config.IOCTL_DOWNLOAD_DDR_OFFSET.U // override tile ROM address
   ddrArbiter.io.out <> io.ddr

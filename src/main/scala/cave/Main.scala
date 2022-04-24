@@ -135,7 +135,7 @@ class Main extends Module {
   frameBufferDma.io.enable := downloadDoneReg
   frameBufferDma.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // start of VBLANK
   frameBufferDma.io.baseAddr := frameBufferWriteAddr
-  frameBufferDma.io.ddr <> memSys.io.frameBuffer
+  frameBufferDma.io.ddr <> memSys.io.misterFrameBuffer
 
   // Configure the MiSTer system frame buffer
   io.frameBuffer.config(
