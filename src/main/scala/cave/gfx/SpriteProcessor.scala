@@ -30,7 +30,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave.gpu
+package cave.gfx
 
 import axon.mem._
 import axon.util.Counter

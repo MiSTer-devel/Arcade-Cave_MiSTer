@@ -39,7 +39,7 @@ import axon.gfx._
 import axon.mem._
 import axon.snd._
 import axon.types._
-import cave.gpu._
+import cave.gfx._
 import cave.types._
 import chisel3._
 import chisel3.util._
