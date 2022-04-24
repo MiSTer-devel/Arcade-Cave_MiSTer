@@ -112,7 +112,8 @@ object Config {
 
   /** Output frame buffer DMA configuration */
   val outputFrameBufferDmaConfig = DMAConfig(
-    numWords = SCREEN_WIDTH * SCREEN_HEIGHT * 32 / ddrConfig.dataWidth
+    numWords = SCREEN_WIDTH * SCREEN_HEIGHT * 32 / ddrConfig.dataWidth,
+    burstLength = 128
   )
 
   /** The width of the pulse generated when a player presses the coin button */

@@ -43,7 +43,7 @@ package axon.dma
 case class DMAConfig(addrWidth: Int = 32,
                      dataWidth: Int = 64,
                      numWords: Int,
-                     burstLength: Int = 128) {
+                     burstLength: Int) {
   /** The number of bursts. */
   val numBursts = numWords / burstLength
 }
