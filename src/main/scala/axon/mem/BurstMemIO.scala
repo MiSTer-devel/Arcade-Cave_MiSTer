@@ -79,13 +79,13 @@ class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addr
    */
   override def mapAddr(f: UInt => UInt): BurstReadMemIO = {
     val mem = Wire(chiselTypeOf(this))
-    mem.rd := this.rd
-    mem.burstCount := this.burstCount
-    this.waitReq := mem.waitReq
-    this.valid := mem.valid
-    this.burstDone := mem.burstDone
-    mem.addr := f(this.addr)
-    this.dout := mem.dout
+    mem.rd := rd
+    mem.burstCount := burstCount
+    waitReq := mem.waitReq
+    valid := mem.valid
+    burstDone := mem.burstDone
+    mem.addr := f(addr)
+    dout := mem.dout
     mem
   }
 }
@@ -130,8 +130,8 @@ class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(ad
     waitReq := mem.waitReq
     burstDone := mem.burstDone
     mem.addr := addr
-    mem.mask := DontCare
-    mem.din := DontCare
+    mem.mask := mask
+    mem.din := din
     mem
   }
 
@@ -148,13 +148,13 @@ class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(ad
    */
   override def mapAddr(f: UInt => UInt): BurstWriteMemIO = {
     val mem = Wire(chiselTypeOf(this))
-    mem.wr := this.wr
-    mem.burstCount := this.burstCount
-    this.waitReq := mem.waitReq
-    this.burstDone := mem.burstDone
-    mem.addr := f(this.addr)
-    mem.mask := this.mask
-    mem.din := this.din
+    mem.wr := wr
+    mem.burstCount := burstCount
+    waitReq := mem.waitReq
+    burstDone := mem.burstDone
+    mem.addr := f(addr)
+    mem.mask := mask
+    mem.din := din
     mem
   }
 }
@@ -213,16 +213,16 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
    */
   override def mapAddr(f: UInt => UInt): BurstReadWriteMemIO = {
     val mem = Wire(chiselTypeOf(this))
-    mem.rd := this.rd
-    mem.wr := this.wr
-    mem.burstCount := this.burstCount
-    this.waitReq := mem.waitReq
-    this.valid := mem.valid
-    this.burstDone := mem.burstDone
-    mem.addr := f(this.addr)
-    mem.mask := this.mask
-    mem.din := this.din
-    this.dout := mem.dout
+    mem.rd := rd
+    mem.wr := wr
+    mem.burstCount := burstCount
+    waitReq := mem.waitReq
+    valid := mem.valid
+    burstDone := mem.burstDone
+    mem.addr := f(addr)
+    mem.mask := mask
+    mem.din := din
+    dout := mem.dout
     mem
   }
 }
