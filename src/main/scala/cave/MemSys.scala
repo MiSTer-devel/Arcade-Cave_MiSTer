@@ -59,7 +59,7 @@ class MemSys extends Module {
     /** Sprite tile ROM port */
     val spriteTileRom = Flipped(new SpriteRomIO)
     /** System frame buffer port */
-    val systemFrameBuffer = Flipped(new SystemFrameBufferIO)
+    val systemFrameBuffer = Flipped(BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
   })
 
   // The DDR download cache is used to buffer IOCTL data, so that complete words can be written to

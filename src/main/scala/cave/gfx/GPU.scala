@@ -77,45 +77,44 @@ class GPU extends Module {
   io.sprite.vram.default()
   io.sprite.tileRom.default()
 
-  // Layer 0 processor
-  val layer0Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
-  layer0Processor.io.video <> io.video
-  layer0Processor.io.layer <> io.layer(0)
-  layer0Processor.io.offset := UVec2(0x6b.U, 0x11.U)
+  withClockAndReset(io.videoClock, io.videoReset) {
+    // Layer 0 processor
+    val layer0Processor = Module(new TilemapProcessor)
+    layer0Processor.io.video <> io.video
+    layer0Processor.io.layer <> io.layer(0)
+    layer0Processor.io.offset := UVec2(0x6b.U, 0x11.U)
 
-  // Layer 1 processor
-  val layer1Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
-  layer1Processor.io.video <> io.video
-  layer1Processor.io.layer <> io.layer(1)
-  layer1Processor.io.offset := UVec2(0x6c.U, 0x11.U)
+    // Layer 1 processor
+    val layer1Processor = Module(new TilemapProcessor)
+    layer1Processor.io.video <> io.video
+    layer1Processor.io.layer <> io.layer(1)
+    layer1Processor.io.offset := UVec2(0x6c.U, 0x11.U)
 
-  // Layer 2 processor
-  val layer2Processor = withClockAndReset(io.videoClock, io.videoReset) { Module(new TilemapProcessor) }
-  layer2Processor.io.video <> io.video
-  layer2Processor.io.layer <> io.layer(2)
-  layer2Processor.io.offset := UVec2(Mux(io.layer(2).regs.tileSize, 0x6d.U, 0x75.U), 0x11.U)
+    // Layer 2 processor
+    val layer2Processor = Module(new TilemapProcessor)
+    layer2Processor.io.video <> io.video
+    layer2Processor.io.layer <> io.layer(2)
+    layer2Processor.io.offset := UVec2(Mux(io.layer(2).regs.tileSize, 0x6d.U, 0x75.U), 0x11.U)
 
-  // Color mixer
-  val colorMixer = withClockAndReset(io.videoClock, io.videoReset) { Module(new ColorMixer) }
-  colorMixer.io.gameConfig <> io.gameConfig
-  //  colorMixer.io.spritePen := frameBuffer.io.portB.dout.asTypeOf(new PaletteEntry)
-  colorMixer.io.spritePen := PaletteEntry.zero
-  colorMixer.io.layer0Pen := layer0Processor.io.pen
-  colorMixer.io.layer1Pen := layer1Processor.io.pen
-  colorMixer.io.layer2Pen := layer2Processor.io.pen
-  colorMixer.io.paletteRam <> io.paletteRam
+    // Color mixer
+    val colorMixer = Module(new ColorMixer)
+    colorMixer.io.gameConfig <> io.gameConfig
+    //  colorMixer.io.spritePen := frameBuffer.io.portB.dout.asTypeOf(new PaletteEntry)
+    colorMixer.io.spritePen := PaletteEntry.zero
+    colorMixer.io.layer0Pen := layer0Processor.io.pen
+    colorMixer.io.layer1Pen := layer1Processor.io.pen
+    colorMixer.io.layer2Pen := layer2Processor.io.pen
+    colorMixer.io.paletteRam <> io.paletteRam
 
-  // Write color mixer output to system frame buffer
-  val addr = GPU.frameBufferAddr(io.video.pos, io.options.flip, io.options.rotate)
-  val data = GPU.decodePixel(colorMixer.io.dout)
-  io.systemFrameBuffer.wr := RegNext(io.video.displayEnable)
-  io.systemFrameBuffer.burstCount := 1.U
-  io.systemFrameBuffer.addr := RegNext(addr ## 0.U(2.W)) // FIXME
-  io.systemFrameBuffer.mask := RegNext(Mux(addr(0), 0xf0.U, 0x0f.U)) // FIXME
-  io.systemFrameBuffer.din := RegNext(data ## data) // FIXME
+    // Decode color mixer data and write it to the RGB output
+    io.rgb := GPU.decodeRGB(colorMixer.io.dout)
 
-  // Decode analog RGB output from the color mixer data
-  io.rgb := GPU.decodeRGB(colorMixer.io.dout)
+    // Decode color mixer data and write it to the system frame buffer
+    io.systemFrameBuffer.wr := RegNext(io.video.displayEnable)
+    io.systemFrameBuffer.addr := RegNext(GPU.frameBufferAddr(io.video.pos, io.options.flip, io.options.rotate))
+    io.systemFrameBuffer.mask := 0xf.U // 4 bytes
+    io.systemFrameBuffer.din := RegNext(GPU.decodeABGR(colorMixer.io.dout))
+  }
 }
 
 object GPU {
@@ -184,48 +183,26 @@ object GPU {
   }
 
   /**
-   * Decodes Cave pixel data into a 32-bit RGBA pixel.
-   *
-   * @param data The pixel data.
-   * @return A 32-bit pixel value.
-   */
-  private def decodePixel(data: Bits): Bits = {
-    val b = data(4, 0) ## data(4, 2)
-    val r = data(9, 5) ## data(9, 7)
-    val g = data(14, 10) ## data(14, 12)
-    Cat(b, g, r).pad(32)
-  }
-
-  /**
-   * Decodes Cave pixel data into a list of 32-bit RGBA pixels.
-   *
-   * @param data The pixel data.
-   * @param n    The number of pixels.
-   * @return A list of 32-bit pixel values.
-   */
-  private def decodePixels(data: Bits, n: Int): Seq[Bits] =
-    Util
-      // Decode channels
-      .decode(data, n * 3, 5)
-      // Convert channel values to 8BPP
-      .map { c => c(4, 0) ## c(4, 2) }
-      // Group channels
-      .grouped(3).toSeq
-      // Reorder channels (BRG -> ABGR)
-      .map { case Seq(b, r, g) => Cat(0.U(8.W), b, g, r) }
-      // Swap pixels values
-      .reverse
-
-  /**
    * Decodes Cave pixel data into a 24-bit RGB color value.
    *
    * @param data The color data.
    */
-  private def decodeRGB(data: UInt): RGB = {
+  private def decodeRGB(data: Bits): RGB = {
     val b = data(4, 0) ## data(4, 2)
     val r = data(9, 5) ## data(9, 7)
     val g = data(14, 10) ## data(14, 12)
     RGB(r, g, b)
+  }
+
+  /**
+   * Decodes Cave pixel data into a 32-bit ABGR pixel.
+   *
+   * @param data The pixel data.
+   * @return A 32-bit pixel value.
+   */
+  private def decodeABGR(data: Bits): Bits = {
+    val rgb = decodeRGB(data)
+    Cat(rgb.b, rgb.g, rgb.r).pad(32)
   }
 
   /**

@@ -33,26 +33,39 @@
 package cave
 
 import axon.mem._
+import cave.types.SystemFrameBufferIO
+import chisel3._
 
-package object types {
-  /** Program ROM IO */
-  class ProgRomIO extends AsyncReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH)
+/**
+ * Queues frame buffer write requests and ensures they are written to DDR memory.
+ *
+ * If the DDR memory is busy, then the request will remain in the queue.
+ */
+class FrameBufferRequestQueue(depth: Int) extends Module {
+  val io = IO(new Bundle {
+    /** Video clock domain */
+    val videoClock = Input(Clock())
+    /** Frame buffer port */
+    val frameBuffer = Flipped(new SystemFrameBufferIO)
+    /** DDR port */
+    val ddr = BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
+  })
 
-  /** Sound ROM IO */
-  class SoundRomIO extends AsyncReadMemIO(Config.SOUND_ROM_ADDR_WIDTH, Config.SOUND_ROM_DATA_WIDTH)
+  // FIFO
+  val fifo = withClock(io.videoClock) { Module(new DualClockFIFO(io.frameBuffer.getWidth, depth)) }
+  fifo.io.readClock := clock
 
-  /** EEPROM IO */
-  class EEPROMIO extends AsyncReadWriteMemIO(Config.EEPROM_ADDR_WIDTH, Config.EEPROM_DATA_WIDTH)
+  // frame buffer -> FIFO
+  fifo.io.enq.valid := io.frameBuffer.wr
+  fifo.io.enq.bits := io.frameBuffer.asUInt
 
-  /** Sprite ROM IO */
-  class SpriteRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH)
+  // FIFO -> DDR
+  io.ddr.wr := fifo.io.deq.valid
+  fifo.io.deq.ready := !io.ddr.waitReq
+  val request = fifo.io.deq.bits.asTypeOf(new SystemFrameBufferIO)
 
-  /** Layer ROM IO */
-  class LayerRomIO extends AsyncReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH)
-
-  /** Palette RAM IO (GPU-side) */
-  class PaletteRamIO extends ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
-
-  /** System frame buffer IO */
-  class SystemFrameBufferIO extends WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SYSTEM_FRAME_BUFFER_DATA_WIDTH)
+  io.ddr.burstCount := 1.U
+  io.ddr.addr := request.addr ## 0.U(2.W)
+  io.ddr.mask := Mux(request.addr(0), request.mask ## 0.U(4.W), request.mask)
+  io.ddr.din := request.din ## request.din
 }

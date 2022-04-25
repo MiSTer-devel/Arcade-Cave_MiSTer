@@ -155,7 +155,12 @@ class Main extends Module {
   cave.io.audio <> io.audio
   cave.io.video <> videoSys.io.video
   cave.io.rgb <> io.rgb
-  cave.io.systemFrameBuffer.mapAddr(addr => addr + frameBufferWriteAddr) <> memSys.io.systemFrameBuffer
+
+  // MiSTer frame buffer request queue
+  val frameBufferRequestQueue = Module(new FrameBufferRequestQueue(depth = 64))
+  frameBufferRequestQueue.io.videoClock := io.videoClock
+  frameBufferRequestQueue.io.frameBuffer <> cave.io.systemFrameBuffer
+  frameBufferRequestQueue.io.ddr.mapAddr(addr => addr + frameBufferWriteAddr) <> memSys.io.systemFrameBuffer
 
   // System LED outputs
   io.led.power := false.B
