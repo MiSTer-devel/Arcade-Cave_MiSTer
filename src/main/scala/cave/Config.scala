@@ -66,56 +66,6 @@ object Config {
   /** The screen height in pixels */
   val SCREEN_HEIGHT = 240
 
-  /** YMZ280B configuration */
-  val ymzConfig = YMZ280BConfig(
-    clockFreq = CPU_CLOCK_FREQ,
-    sampleFreq = 88200
-  )
-
-  /** DDR configuration */
-  val ddrConfig = DDRConfig()
-
-  /** SDRAM configuration */
-  val sdramConfig = SDRAMConfig(
-    clockFreq = CLOCK_FREQ,
-    colWidth = 10,
-    burstLength = 4
-  )
-
-  /** Original (57Hz) video timing configuration */
-  val originalVideoTimingConfig = VideoTimingConfig(
-    clockFreq = VIDEO_CLOCK_FREQ,
-    clockDiv = VIDEO_CLOCK_DIV,
-    hFreq = 15625,
-    vFreq = 57.44,
-    hDisplay = SCREEN_WIDTH,
-    vDisplay = SCREEN_HEIGHT,
-    hFrontPorch = 36,
-    vFrontPorch = 12,
-    hRetrace = 20,
-    vRetrace = 2,
-  )
-
-  /** Compatibility (60Hz) video timing configuration */
-  val compatibilityVideoTimingConfig = VideoTimingConfig(
-    clockFreq = VIDEO_CLOCK_FREQ,
-    clockDiv = VIDEO_CLOCK_DIV,
-    hFreq = 15625,
-    vFreq = 60,
-    hDisplay = SCREEN_WIDTH,
-    vDisplay = SCREEN_HEIGHT,
-    hFrontPorch = 30,
-    vFrontPorch = 12,
-    hRetrace = 20,
-    vRetrace = 2,
-  )
-
-  /** Output frame buffer DMA configuration */
-  val outputFrameBufferDmaConfig = DMAConfig(
-    numWords = SCREEN_WIDTH * SCREEN_HEIGHT * 32 / ddrConfig.dataWidth,
-    burstLength = 128
-  )
-
   /** The width of the pulse generated when a player presses the coin button */
   val PLAYER_COIN_PULSE_WIDTH = (100000000 / CPU_CLOCK_PERIOD).ceil.toInt // 100ms
 
@@ -218,4 +168,54 @@ object Config {
   val LARGE_TILE_SIZE = 16
   /** The size of a sprite tile in pixels */
   val SPRITE_TILE_SIZE = 16
+
+  /** YMZ280B configuration */
+  val ymzConfig = YMZ280BConfig(
+    clockFreq = CPU_CLOCK_FREQ,
+    sampleFreq = 88200
+  )
+
+  /** DDR configuration */
+  val ddrConfig = DDRConfig()
+
+  /** SDRAM configuration */
+  val sdramConfig = SDRAMConfig(
+    clockFreq = CLOCK_FREQ,
+    colWidth = 10,
+    burstLength = 4
+  )
+
+  /** Original (57Hz) video timing configuration */
+  val originalVideoTimingConfig = VideoTimingConfig(
+    clockFreq = VIDEO_CLOCK_FREQ,
+    clockDiv = VIDEO_CLOCK_DIV,
+    hFreq = 15625,
+    vFreq = 57.44,
+    hDisplay = SCREEN_WIDTH,
+    vDisplay = SCREEN_HEIGHT,
+    hFrontPorch = 36,
+    vFrontPorch = 12,
+    hRetrace = 20,
+    vRetrace = 2,
+  )
+
+  /** Compatibility (60Hz) video timing configuration */
+  val compatibilityVideoTimingConfig = VideoTimingConfig(
+    clockFreq = VIDEO_CLOCK_FREQ,
+    clockDiv = VIDEO_CLOCK_DIV,
+    hFreq = 15625,
+    vFreq = 60,
+    hDisplay = SCREEN_WIDTH,
+    vDisplay = SCREEN_HEIGHT,
+    hFrontPorch = 30,
+    vFrontPorch = 12,
+    hRetrace = 20,
+    vRetrace = 2,
+  )
+
+  /** Output frame buffer DMA configuration */
+  val outputFrameBufferDmaConfig = DMAConfig(
+    numWords = SCREEN_WIDTH * SCREEN_HEIGHT * 32 / ddrConfig.dataWidth,
+    burstLength = 128
+  )
 }
