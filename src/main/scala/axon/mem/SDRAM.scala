@@ -36,11 +36,11 @@ import chisel3._
 import chisel3.util._
 
 /**
- * An interface for reading and writing to SDRAM.
+ * An interface for controlling a SDRAM chip.
  *
  * @param config The SDRAM configuration.
  */
-class SDRAMIO(config: SDRAMConfig) extends Bundle {
+class SDRAMControlIO(config: SDRAMConfig) extends Bundle {
   /** Clock enable */
   val cke = Output(Bool())
   /** Chip select (active-low) */
@@ -63,8 +63,19 @@ class SDRAMIO(config: SDRAMConfig) extends Bundle {
   val dout = Input(Bits(config.dataWidth.W))
 }
 
+object SDRAMControlIO {
+  def apply(config: SDRAMConfig) = new SDRAMControlIO(config)
+}
+
+/**
+ * An interface for reading and writing to SDRAM.
+ *
+ * @param config The SDRAM configuration.
+ */
+class SDRAMIO(config: SDRAMConfig) extends BurstReadWriteMemIO(config.addrWidth, config.dataWidth)
+
 object SDRAMIO {
-  def apply(config: SDRAMConfig) = new SDRAMIO(config)
+  def apply(config: SDRAMConfig) = new SDRAMIO(config: SDRAMConfig)
 }
 
 /**
@@ -177,9 +188,9 @@ class SDRAM(val config: SDRAMConfig) extends Module {
 
   val io = IO(new Bundle {
     /** Memory port */
-    val mem = Flipped(BurstReadWriteMemIO(config.addrWidth, config.dataWidth))
-    /** SDRAM port */
-    val sdram = SDRAMIO(config)
+    val mem = Flipped(SDRAMIO(config))
+    /** Control port */
+    val sdram = SDRAMControlIO(config)
     /** Debug port */
     val debug = Output(new Bundle {
       val init = Bool()

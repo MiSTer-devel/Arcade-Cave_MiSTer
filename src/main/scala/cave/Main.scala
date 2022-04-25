@@ -62,8 +62,8 @@ class Main extends Module {
     val cpuReset = Input(Bool())
     /** DDR port */
     val ddr = DDRIO(Config.ddrConfig)
-    /** SDRAM port */
-    val sdram = SDRAMIO(Config.sdramConfig)
+    /** SDRAM control port */
+    val sdram = SDRAMControlIO(Config.sdramConfig)
     /** Options port */
     val options = OptionsIO()
     /** Joystick port */

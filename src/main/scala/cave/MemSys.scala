@@ -47,7 +47,7 @@ class MemSys extends Module {
     /** DDR port */
     val ddr = DDRIO(Config.ddrConfig)
     /** SDRAM port */
-    val sdram = BurstReadWriteMemIO(Config.sdramConfig.addrWidth, Config.sdramConfig.dataWidth)
+    val sdram = SDRAMIO(Config.sdramConfig)
     /** Program ROM port */
     val progRom = Flipped(new ProgRomIO)
     /** Sound ROM port */
