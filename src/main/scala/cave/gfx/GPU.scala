@@ -33,7 +33,6 @@
 package cave.gfx
 
 import axon.Util
-import axon.dma.ReadDMAIO
 import axon.gfx._
 import axon.mem._
 import axon.types._
@@ -69,13 +68,24 @@ class GPU extends Module {
     val systemFrameBuffer = new SystemFrameBufferIO
   })
 
+  // Sprite frame buffer
+  val spriteFrameBuffer = Module(new TrueDualPortRam(
+    addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
+    dataWidthA = Config.SPRITE_FRAME_BUFFER_DATA_WIDTH,
+    depthA = Some(Config.FRAME_BUFFER_DEPTH),
+    addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH,
+    dataWidthB = Config.SPRITE_FRAME_BUFFER_DATA_WIDTH,
+    depthB = Some(Config.FRAME_BUFFER_DEPTH)
+  ))
+  spriteFrameBuffer.io.clockB := io.videoClock
+  spriteFrameBuffer.io.portB.rd := io.video.displayEnable
+  spriteFrameBuffer.io.portB.addr := GPU.frameBufferAddr(io.video.pos)
+
   // Sprite processor
-  //  val spriteProcessor = Module(new SpriteProcessor)
-  //  spriteProcessor.io.start := io.frameReady
-  //  spriteProcessor.io.sprite <> io.sprite
-  //  spriteProcessor.io.frameBuffer <> frameBuffer.io.portA.asWriteMemIO
-  io.sprite.vram.default()
-  io.sprite.tileRom.default()
+  val spriteProcessor = Module(new SpriteProcessor)
+  spriteProcessor.io.start := io.frameReady
+  spriteProcessor.io.sprite <> io.sprite
+  spriteProcessor.io.frameBuffer <> spriteFrameBuffer.io.portA.asWriteMemIO
 
   withClockAndReset(io.videoClock, io.videoReset) {
     // Layer 0 processor
@@ -99,8 +109,7 @@ class GPU extends Module {
     // Color mixer
     val colorMixer = Module(new ColorMixer)
     colorMixer.io.gameConfig <> io.gameConfig
-    //  colorMixer.io.spritePen := frameBuffer.io.portB.dout.asTypeOf(new PaletteEntry)
-    colorMixer.io.spritePen := PaletteEntry.zero
+    colorMixer.io.spritePen := spriteFrameBuffer.io.portB.dout.asTypeOf(new PaletteEntry)
     colorMixer.io.layer0Pen := layer0Processor.io.pen
     colorMixer.io.layer1Pen := layer1Processor.io.pen
     colorMixer.io.layer2Pen := layer2Processor.io.pen
@@ -164,22 +173,6 @@ object GPU {
       Mux(flip, (x * Config.SCREEN_HEIGHT.U) + y_, (x_ * Config.SCREEN_HEIGHT.U) + y),
       Mux(flip, (y_ * Config.SCREEN_WIDTH.U) + x_, (y * Config.SCREEN_WIDTH.U) + x)
     )
-  }
-
-  /**
-   * Creates a virtual write-only memory interface that writes a constant value to the given
-   * address.
-   *
-   * @param addr The address value.
-   * @param data The constant value.
-   */
-  def clearMem(addr: UInt, data: Bits = 0.U): WriteMemIO = {
-    val mem = Wire(WriteMemIO(Config.OUTPUT_FRAME_BUFFER_ADDR_WIDTH, Config.OUTPUT_FRAME_BUFFER_DATA_WIDTH))
-    mem.wr := true.B
-    mem.addr := addr
-    mem.mask := 0.U
-    mem.din := data
-    mem
   }
 
   /**

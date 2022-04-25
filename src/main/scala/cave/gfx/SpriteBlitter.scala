@@ -32,7 +32,6 @@
 
 package cave.gfx
 
-import axon.mem._
 import axon.types._
 import axon.util.{Counter, PISO}
 import cave.Config
@@ -60,7 +59,7 @@ class SpriteBlitter extends Module {
     /** Pixel data port */
     val pixelData = DeqIO(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
     /** Frame buffer port */
-    val frameBuffer = WriteMemIO(Config.OUTPUT_FRAME_BUFFER_ADDR_WIDTH, Config.OUTPUT_FRAME_BUFFER_DATA_WIDTH)
+    val frameBuffer = new SpriteFrameBufferIO
   })
 
   // Registers

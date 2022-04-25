@@ -130,14 +130,10 @@ object Config {
   val FRAME_BUFFER_ADDR_WIDTH_Y = log2Ceil(SCREEN_HEIGHT)
   /** The width of the frame buffer address bus */
   val FRAME_BUFFER_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DEPTH)
-
   /** The width of the system frame buffer data bus */
   val SYSTEM_FRAME_BUFFER_DATA_WIDTH = 32
-
-  /** The width of the output frame buffer address bus */
-  val OUTPUT_FRAME_BUFFER_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DEPTH)
   /** The width of the output frame buffer data bus */
-  val OUTPUT_FRAME_BUFFER_DATA_WIDTH = 15
+  val SPRITE_FRAME_BUFFER_DATA_WIDTH = 16
 
   /** The depth of the layer FIFOs */
   val FIFO_DEPTH = 64

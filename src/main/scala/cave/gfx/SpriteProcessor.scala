@@ -32,7 +32,6 @@
 
 package cave.gfx
 
-import axon.mem._
 import axon.util.Counter
 import cave.Config
 import cave.types._
@@ -55,7 +54,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
     /** Sprite port */
     val sprite = SpriteIO()
     /** Frame buffer port */
-    val frameBuffer = WriteMemIO(Config.OUTPUT_FRAME_BUFFER_ADDR_WIDTH, Config.OUTPUT_FRAME_BUFFER_DATA_WIDTH)
+    val frameBuffer = new SpriteFrameBufferIO
     /** Debug port */
     val debug = Output(new Bundle {
       val idle = Bool()
@@ -201,7 +200,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   io.sprite.tileRom.rd := tileRomRead
   io.sprite.tileRom.addr := tileRomAddr
   io.sprite.tileRom.burstCount := tileRomBurstLength
-  io.frameBuffer <> Mux(stateReg === State.clear, GPU.clearMem(clearAddr), blitter.io.frameBuffer)
+  io.frameBuffer <> Mux(stateReg === State.clear, SpriteProcessor.clearMem(clearAddr), blitter.io.frameBuffer)
   io.debug.idle := stateReg === State.idle
   io.debug.clear := stateReg === State.clear
   io.debug.load := stateReg === State.load
@@ -213,4 +212,22 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   io.debug.done := stateReg === State.done
 
   printf(p"SpriteProcessor(state: $stateReg, spriteCounter: $spriteCounter ($spriteCounterWrap))\n")
+}
+
+object SpriteProcessor {
+  /**
+   * Returns a virtual write-only memory interface that writes a constant value to the sprite frame
+   * buffer.
+   *
+   * @param addr The memory address.
+   * @param data The constant value.
+   */
+  def clearMem(addr: UInt, data: Bits = 0.U): SpriteFrameBufferIO = {
+    val mem = Wire(new SpriteFrameBufferIO)
+    mem.wr := true.B
+    mem.addr := addr
+    mem.mask := 0.U
+    mem.din := data
+    mem
+  }
 }
