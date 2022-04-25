@@ -35,12 +35,12 @@ package axon.mister
 import chisel3._
 
 /**
- * A bundle that contains the MiSTer frame buffer signals.
+ * A bundle that contains the MiSTer frame buffer control signals.
  *
  * @param width  The width of the frame buffer in pixels.
  * @param height The height of the frame buffer in pixels.
  */
-class FrameBufferIO(width: Int, height: Int) extends Bundle {
+class FrameBufferControlIO(width: Int, height: Int) extends Bundle {
   /** Asserted when the frame buffer is enabled */
   val enable = Output(Bool())
   /** The horizontal size of the frame buffer */
@@ -61,24 +61,24 @@ class FrameBufferIO(width: Int, height: Int) extends Bundle {
   val forceBlank = Output(Bool())
 
   /**
-   * Configures the frame buffer.
+   * Configures the MiSTer frame buffer.
    *
    * @param baseAddr   The base address of the frame buffer in DDR memory.
    * @param rotate     Asserted when the frame buffer is rotated 90 degrees.
    * @param forceBlank Asserted when the frame buffer output is disabled.
    */
-  def config(baseAddr: UInt, rotate: Bool, forceBlank: Bool): Unit = {
+  def configure(baseAddr: UInt, rotate: Bool, forceBlank: Bool): Unit = {
     enable := true.B
     hSize := Mux(rotate, height.U, width.U)
     vSize := Mux(rotate, width.U, height.U)
-    format := FrameBufferIO.FORMAT_32BPP.U
+    format := FrameBufferControlIO.FORMAT_32BPP.U
     this.baseAddr := baseAddr
     stride := Mux(rotate, (height * 4).U, (width * 4).U)
     this.forceBlank := forceBlank
   }
 }
 
-object FrameBufferIO {
+object FrameBufferControlIO {
   /** 8 bits per pixel */
   val FORMAT_8BPP = 0x3
   /** 16 bits per pixel */
@@ -90,5 +90,5 @@ object FrameBufferIO {
   /** BGR pixel format */
   val FORMAT_BGR = 0x10
 
-  def apply(width: Int, height: Int) = new FrameBufferIO(width, height)
+  def apply(width: Int, height: Int) = new FrameBufferControlIO(width, height)
 }

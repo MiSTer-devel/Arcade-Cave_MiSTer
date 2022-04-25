@@ -70,8 +70,8 @@ class Main extends Module {
     val joystick = JoystickIO()
     /** IOCTL port */
     val ioctl = IOCTL()
-    /** Frame buffer port */
-    val frameBuffer = mister.FrameBufferIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
+    /** Frame buffer control port */
+    val frameBufferControl = mister.FrameBufferControlIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** Video port */
@@ -121,7 +121,7 @@ class Main extends Module {
   val videoSys = Module(new VideoSys)
   videoSys.io.videoClock := io.videoClock
   videoSys.io.videoReset := io.videoReset
-  videoSys.io.lowLat := io.frameBuffer.lowLat
+  videoSys.io.lowLat := io.frameBufferControl.lowLat
   videoSys.io.options <> io.options
   videoSys.io.video <> io.video
 
@@ -130,7 +130,7 @@ class Main extends Module {
   val frameBufferWriteAddr = Config.SYSTEM_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.writePage(1, 0) ## 0.U(19.W)
 
   // Configure the MiSTer frame buffer
-  io.frameBuffer.config(
+  io.frameBufferControl.configure(
     baseAddr = frameBufferReadAddr,
     rotate = io.options.rotate,
     forceBlank = io.cpuReset
