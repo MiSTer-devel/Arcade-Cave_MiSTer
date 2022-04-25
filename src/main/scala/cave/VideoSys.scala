@@ -52,14 +52,16 @@ class VideoSys extends Module {
     val videoReset = Input(Bool())
     /** Asserted when low latency mode should be used for the frame buffer */
     val lowLat = Input(Bool())
+    /** Asserted when the frame buffer output is disabled */
+    val forceBlank = Input(Bool())
     /** Options port */
     val options = OptionsIO()
-    /** The index of the frame buffer read page */
-    val readPage = Output(UInt(VideoSys.PAGE_WIDTH.W))
-    /** The index of the frame buffer write page */
-    val writePage = Output(UInt(VideoSys.PAGE_WIDTH.W))
     /** Video port */
     val video = VideoIO()
+    /** Frame buffer control port */
+    val frameBufferControl = mister.FrameBufferControlIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
+    /** The index of the frame buffer write page */
+    val writePage = Output(UInt(VideoSys.PAGE_WIDTH.W))
   })
 
   // System clock alias
@@ -88,28 +90,30 @@ class VideoSys extends Module {
     val video = Mux(compatibilityReg, compatibilityVideoTiming.io.video, originalVideoTiming.io.video)
     video <> io.video
 
-    // Swap the frame buffer pages at the start of a VBLANK
-    val swap = Util.rising(io.video.vBlank)
-
-    // Toggle write index
-    when(swap) {
+    // Swap write index at the start of analog VBLANK
+    when(Util.rising(io.video.vBlank)) {
       writeIndexReg := Mux(io.lowLat,
         ~writeIndexReg(0),
         VideoSys.nextIndex(writeIndexReg, readIndexReg)
       )
     }
 
-    // Toggle read index
-    when(swap) {
+    // Swap read index at the start of frame buffer VBLANK
+    when(Util.rising(io.frameBufferControl.vBlank)) {
       readIndexReg := Mux(io.lowLat,
         ~writeIndexReg(0),
         VideoSys.nextIndex(readIndexReg, writeIndexReg)
       )
     }
 
-    // Set frame buffer page indexes. These values need to be synchronized back into the system
-    // clock domain.
-    io.readPage := withClock(sysClock) { ShiftRegister(readIndexReg, 2) }
+    // Configure the MiSTer frame buffer
+    io.frameBufferControl.configure(
+      baseAddr = Config.SYSTEM_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## readIndexReg(1, 0) ## 0.U(19.W),
+      rotate = io.options.rotate,
+      forceBlank = io.forceBlank
+    )
+
+    // Set frame buffer write page index
     io.writePage := withClock(sysClock) { ShiftRegister(writeIndexReg, 2) }
   }
 }

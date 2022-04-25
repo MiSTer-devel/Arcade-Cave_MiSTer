@@ -122,19 +122,10 @@ class Main extends Module {
   videoSys.io.videoClock := io.videoClock
   videoSys.io.videoReset := io.videoReset
   videoSys.io.lowLat := io.frameBufferControl.lowLat
+  videoSys.io.forceBlank := io.cpuReset
   videoSys.io.options <> io.options
   videoSys.io.video <> io.video
-
-  // Frame buffer read/write addresses
-  val frameBufferReadAddr = Config.SYSTEM_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.readPage(1, 0) ## 0.U(19.W)
-  val frameBufferWriteAddr = Config.SYSTEM_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.writePage(1, 0) ## 0.U(19.W)
-
-  // Configure the MiSTer frame buffer
-  io.frameBufferControl.configure(
-    baseAddr = frameBufferReadAddr,
-    rotate = io.options.rotate,
-    forceBlank = io.cpuReset
-  )
+  videoSys.io.frameBufferControl <> io.frameBufferControl
 
   // Cave
   val cave = Module(new Cave)
@@ -160,7 +151,9 @@ class Main extends Module {
   val frameBufferRequestQueue = Module(new FrameBufferRequestQueue(depth = 64))
   frameBufferRequestQueue.io.videoClock := io.videoClock
   frameBufferRequestQueue.io.frameBuffer <> cave.io.systemFrameBuffer
-  frameBufferRequestQueue.io.ddr.mapAddr(addr => addr + frameBufferWriteAddr) <> memSys.io.systemFrameBuffer
+  frameBufferRequestQueue.io.ddr.mapAddr(addr =>
+    addr + Config.SYSTEM_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.writePage(1, 0) ## 0.U(19.W)
+  ) <> memSys.io.systemFrameBuffer
 
   // System LED outputs
   io.led.power := false.B
