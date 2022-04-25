@@ -72,7 +72,6 @@ class MemSys extends Module {
     lineWidth = 1,
     depth = 1
   )))
-  ddrDownloadCache.io.offset := Config.IOCTL_DOWNLOAD_DDR_OFFSET.U
   ddrDownloadCache.io.in <> io.ioctl.asAsyncReadWriteMemIO(IOCTL.ROM_INDEX)
 
   // The SDRAM download cache is used to buffer IOCTL data, so that complete words can be written
@@ -86,7 +85,6 @@ class MemSys extends Module {
     depth = 1,
     wrapping = true
   )))
-  sdramDownloadCache.io.offset := 0.U
   sdramDownloadCache.io.in <> io.ioctl.asAsyncReadWriteMemIO(IOCTL.ROM_INDEX)
 
   // Program ROM cache
@@ -99,7 +97,6 @@ class MemSys extends Module {
     depth = 256,
     wrapping = true
   )))
-  progRomCache.io.offset := io.gameConfig.progRomOffset
   progRomCache.io.in.asAsyncReadMemIO <> io.progRom
 
   // Sound ROM cache
@@ -113,7 +110,6 @@ class MemSys extends Module {
     wrapping = true
   )))
   soundRomCache.io.in.asAsyncReadMemIO <> io.soundRom
-  soundRomCache.io.offset := io.gameConfig.soundRomOffset
 
   // EEPROM cache
   val eepromCache = Module(new Cache(CacheConfig(
@@ -125,7 +121,6 @@ class MemSys extends Module {
     depth = 4
   )))
   eepromCache.io.in <> io.eeprom
-  eepromCache.io.offset := io.gameConfig.eepromOffset + Config.IOCTL_DOWNLOAD_DDR_OFFSET.U
 
   // Layer tile ROM cache
   val layerRomCache = 0.until(Config.LAYER_COUNT).map { i =>
@@ -139,27 +134,25 @@ class MemSys extends Module {
       wrapping = true
     )))
     cache.io.in.asAsyncReadMemIO <> io.layerTileRom(i)
-    cache.io.offset := io.gameConfig.layer(i).romOffset
     cache
   }
 
   // DDR arbiter
   val ddrArbiter = Module(new MemArbiter(4, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
-  ddrArbiter.io.in(0) <> ddrDownloadCache.io.out
-  ddrArbiter.io.in(1) <> eepromCache.io.out
-  ddrArbiter.io.in(2).asBurstWriteMemIO <> io.systemFrameBuffer
-  ddrArbiter.io.in(3).asBurstReadMemIO <> io.spriteTileRom
-  ddrArbiter.io.in(3).addr := io.spriteTileRom.addr + io.gameConfig.sprite.romOffset + Config.IOCTL_DOWNLOAD_DDR_OFFSET.U // override tile ROM address
+  ddrArbiter.io.in(0) <> ddrDownloadCache.io.out.mapAddr(_ + Config.IOCTL_DOWNLOAD_DDR_OFFSET.U)
+  ddrArbiter.io.in(1) <> eepromCache.io.out.mapAddr(_ + io.gameConfig.eepromOffset + Config.IOCTL_DOWNLOAD_DDR_OFFSET.U)
+  ddrArbiter.io.in(2) <> io.systemFrameBuffer.asBurstReadWriteMemIO
+  ddrArbiter.io.in(3) <> io.spriteTileRom.mapAddr(_ + io.gameConfig.sprite.romOffset + Config.IOCTL_DOWNLOAD_DDR_OFFSET.U).asBurstReadWriteMemIO
   ddrArbiter.io.out <> io.ddr
 
   // SDRAM arbiter
   val sdramArbiter = Module(new MemArbiter(6, Config.sdramConfig.addrWidth, Config.sdramConfig.dataWidth))
   sdramArbiter.io.in(0) <> sdramDownloadCache.io.out
-  sdramArbiter.io.in(1) <> progRomCache.io.out
-  sdramArbiter.io.in(2) <> soundRomCache.io.out
-  sdramArbiter.io.in(3) <> layerRomCache(0).io.out
-  sdramArbiter.io.in(4) <> layerRomCache(1).io.out
-  sdramArbiter.io.in(5) <> layerRomCache(2).io.out
+  sdramArbiter.io.in(1) <> progRomCache.io.out.mapAddr(_ + io.gameConfig.progRomOffset)
+  sdramArbiter.io.in(2) <> soundRomCache.io.out.mapAddr(_ + io.gameConfig.soundRomOffset)
+  sdramArbiter.io.in(3) <> layerRomCache(0).io.out.mapAddr(_ + io.gameConfig.layer(0).romOffset)
+  sdramArbiter.io.in(4) <> layerRomCache(1).io.out.mapAddr(_ + io.gameConfig.layer(1).romOffset)
+  sdramArbiter.io.in(5) <> layerRomCache(2).io.out.mapAddr(_ + io.gameConfig.layer(2).romOffset)
   sdramArbiter.io.out <> io.sdram
 
   // Wait until both DDR and SDRAM are ready

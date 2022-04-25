@@ -194,8 +194,6 @@ class Cache(config: CacheConfig) extends Module {
     val in = Flipped(AsyncReadWriteMemIO(config.inAddrWidth, config.inDataWidth))
     /** Output port */
     val out = BurstReadWriteMemIO(config.outAddrWidth, config.outDataWidth)
-    /** Output address offset */
-    val offset = Input(UInt(config.outAddrWidth.W))
     /** Debug port */
     val debug = Output(new Bundle {
       val idle = Bool()
@@ -284,7 +282,7 @@ class Cache(config: CacheConfig) extends Module {
     }
     val evictAddr = CacheAddress(cacheEntryReg.tag, requestReg.addr.index, 0.U)(config)
     val addr = Mux(stateReg === State.fill, fillAddr, evictAddr).asUInt
-    (addr << log2Ceil(config.outBytes)).asUInt + io.offset
+    (addr << log2Ceil(config.outBytes)).asUInt
   }
 
   // Write cache entry
