@@ -64,7 +64,7 @@ case class DDRConfig(addrWidth: Int = 32, dataWidth: Int = 64, offset: Int = 0)
 class DDR(config: DDRConfig) extends Module {
   val io = IO(new Bundle {
     /** Memory port */
-    val mem = Flipped(BurstReadWriteMemIO(config.addrWidth, config.dataWidth))
+    val mem = Flipped(DDRIO(config))
     /** DDR port */
     val ddr = DDRIO(config)
     /** Debug port */
