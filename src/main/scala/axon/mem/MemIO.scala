@@ -78,19 +78,6 @@ class ReadMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWid
     this.dout := mem.dout
     mem
   }
-
-  /**
-   * Maps the output data using the given function.
-   *
-   * @param f The transform function.
-   */
-  def mapData(f: UInt => UInt): ReadMemIO = {
-    val mem = Wire(chiselTypeOf(this))
-    mem.rd := this.rd
-    mem.addr := this.addr
-    this.dout := f(mem.dout)
-    mem
-  }
 }
 
 object ReadMemIO {
