@@ -141,8 +141,8 @@ class MemSys extends Module {
   // DDR arbiter
   val ddrArbiter = Module(new MemArbiter(3, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
   ddrArbiter.io.in(0) <> ddrDownloadCache.io.out.mapAddr(_ + Config.IOCTL_DOWNLOAD_DDR_OFFSET.U)
-  ddrArbiter.io.in(1) <> io.systemFrameBuffer.asBurstReadWriteMemIO
-  ddrArbiter.io.in(2) <> io.spriteTileRom.mapAddr(_ + io.gameConfig.sprite.romOffset + Config.IOCTL_DOWNLOAD_DDR_OFFSET.U).asBurstReadWriteMemIO
+  ddrArbiter.io.in(1) <> io.spriteTileRom.mapAddr(_ + io.gameConfig.sprite.romOffset + Config.IOCTL_DOWNLOAD_DDR_OFFSET.U).asBurstReadWriteMemIO
+  ddrArbiter.io.in(2) <> io.systemFrameBuffer.asBurstReadWriteMemIO
   ddrArbiter.io.out <> io.ddr
 
   // SDRAM arbiter
