@@ -35,6 +35,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.math_real.all;
 
 library altera_mf;
 use altera_mf.altera_mf_components.all;
@@ -65,7 +66,7 @@ begin
     lpm_showahead          => "ON",
     lpm_type               => "dcfifo",
     lpm_width              => DATA_WIDTH,
-    lpm_widthu             => 2,
+    lpm_widthu             => positive(ceil(log2(real(DEPTH)))),
     overflow_checking      => "ON",
     rdsync_delaypipe       => 4,
     underflow_checking     => "ON",
