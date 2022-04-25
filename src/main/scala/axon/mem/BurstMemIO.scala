@@ -55,6 +55,23 @@ class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addr
     super.default()
     burstCount := 0.U
   }
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  override def mapAddr(f: UInt => UInt): BurstReadMemIO = {
+    val mem = Wire(chiselTypeOf(this))
+    mem.rd := this.rd
+    mem.burstCount := this.burstCount
+    this.waitReq := mem.waitReq
+    this.valid := mem.valid
+    this.burstDone := mem.burstDone
+    mem.addr := f(this.addr)
+    this.dout := mem.dout
+    mem
+  }
 }
 
 object BurstReadMemIO {
@@ -92,6 +109,23 @@ class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(ad
   override def default() = {
     super.default()
     burstCount := 0.U
+  }
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  override def mapAddr(f: UInt => UInt): BurstWriteMemIO = {
+    val mem = Wire(chiselTypeOf(this))
+    mem.wr := this.wr
+    mem.burstCount := this.burstCount
+    this.waitReq := mem.waitReq
+    this.burstDone := mem.burstDone
+    mem.addr := f(this.addr)
+    mem.mask := this.mask
+    mem.din := this.din
+    mem
   }
 }
 
@@ -140,6 +174,26 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
   override def default() = {
     super.default()
     burstCount := 0.U
+  }
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  override def mapAddr(f: UInt => UInt): BurstReadWriteMemIO = {
+    val mem = Wire(chiselTypeOf(this))
+    mem.rd := this.rd
+    mem.wr := this.wr
+    mem.burstCount := this.burstCount
+    this.waitReq := mem.waitReq
+    this.valid := mem.valid
+    this.burstDone := mem.burstDone
+    mem.addr := f(this.addr)
+    mem.mask := this.mask
+    mem.din := this.din
+    this.dout := mem.dout
+    mem
   }
 }
 
