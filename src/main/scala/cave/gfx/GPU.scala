@@ -61,12 +61,12 @@ class GPU extends Module {
     val sprite = SpriteIO()
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
-    /** Output frame buffer DMA port */
-    val outputFrameBufferDma = Flipped(ReadDMAIO(Config.outputFrameBufferDmaConfig))
     /** Video port */
     val video = Flipped(VideoIO())
     /** RGB output */
     val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
+    /** System frame buffer port */
+    val systemFrameBuffer = new SystemFrameBufferIO
   })
 
   // Sprite processor
@@ -105,27 +105,14 @@ class GPU extends Module {
   colorMixer.io.layer2Pen := layer2Processor.io.pen
   colorMixer.io.paletteRam <> io.paletteRam
 
-  // The output frame buffer is required to support digital (HDMI) output in MiSTer.
-  //
-  // Pixel data from the color mixer is written to port A as each frame is rasterized. Port B is
-  // used by the DMA controller to read pixel data.
-  val outputFrameBuffer = withClockAndReset(io.videoClock, io.videoReset) {
-    val mem = Module(new OutputFrameBuffer)
-    mem.io.portA.rd := false.B // write-only
-    mem.io.portA.wr := RegNext(io.video.displayEnable)
-    mem.io.portA.addr := RegNext(GPU.frameBufferAddr(io.video.pos, io.options.flip, io.options.rotate))
-    mem.io.portA.mask := 0.U
-    mem.io.portA.din := RegNext(colorMixer.io.dout)
-    mem
-  }
-
-  // The DMA controller runs in the system clock domain
-  outputFrameBuffer.io.clockB := clock
-
-  // Pack pixel pairs into 64-bit words for the DMA controller to copy
-  outputFrameBuffer.io.portB <> io.outputFrameBufferDma.mapData(data =>
-    GPU.decodePixels(data, 2).reduce(_ ## _).asUInt
-  )
+  // Write color mixer output to system frame buffer
+  val addr = GPU.frameBufferAddr(io.video.pos, io.options.flip, io.options.rotate)
+  val data = GPU.decodePixel(colorMixer.io.dout)
+  io.systemFrameBuffer.wr := RegNext(io.video.displayEnable)
+  io.systemFrameBuffer.burstCount := 1.U
+  io.systemFrameBuffer.addr := RegNext(addr ## 0.U(2.W)) // FIXME
+  io.systemFrameBuffer.mask := RegNext(Mux(addr(0), 0xf0.U, 0x0f.U)) // FIXME
+  io.systemFrameBuffer.din := RegNext(data ## data) // FIXME
 
   // Decode analog RGB output from the color mixer data
   io.rgb := GPU.decodeRGB(colorMixer.io.dout)
@@ -197,7 +184,20 @@ object GPU {
   }
 
   /**
-   * Decodes Cave pixel data into a list of 32-bit pixels.
+   * Decodes Cave pixel data into a 32-bit RGBA pixel.
+   *
+   * @param data The pixel data.
+   * @return A 32-bit pixel value.
+   */
+  private def decodePixel(data: Bits): Bits = {
+    val b = data(4, 0) ## data(4, 2)
+    val r = data(9, 5) ## data(9, 7)
+    val g = data(14, 10) ## data(14, 12)
+    Cat(b, g, r).pad(32)
+  }
+
+  /**
+   * Decodes Cave pixel data into a list of 32-bit RGBA pixels.
    *
    * @param data The pixel data.
    * @param n    The number of pixels.

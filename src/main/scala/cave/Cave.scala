@@ -75,14 +75,14 @@ class Cave extends Module {
     val layerTileRom = Vec(Config.LAYER_COUNT, new LayerRomIO)
     /** Sprite tile ROM port */
     val spriteTileRom = new SpriteRomIO
-    /** Frame buffer DMA port */
-    val outputFrameBufferDma = Flipped(ReadDMAIO(Config.outputFrameBufferDmaConfig))
     /** Video port */
     val video = Flipped(VideoIO())
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** RGB output */
     val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
+    /** System frame buffer port */
+    val systemFrameBuffer = new SystemFrameBufferIO
   })
 
   // Wires
@@ -97,7 +97,6 @@ class Cave extends Module {
   gpu.io.videoClock := io.videoClock
   gpu.io.videoReset := io.videoReset
   gpu.io.video <> io.video
-  gpu.io.outputFrameBufferDma <> io.outputFrameBufferDma
   gpu.io.gameConfig <> io.gameConfig
   gpu.io.options <> io.options
   gpu.io.frameReady := Util.rising(ShiftRegister(frameStart, 2))
@@ -115,6 +114,7 @@ class Cave extends Module {
   gpu.io.sprite.rotate := io.options.rotate
   gpu.io.sprite.zoom := io.gameConfig.sprite.zoom
   gpu.io.rgb <> io.rgb
+  gpu.io.systemFrameBuffer <> io.systemFrameBuffer
 
   // The CPU and registers run in the CPU clock domain
   withClockAndReset(io.cpuClock, io.cpuReset) {

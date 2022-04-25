@@ -136,14 +136,6 @@ class Main extends Module {
     forceBlank = io.cpuReset
   )
 
-  // The frame buffer DMA controller copies pixel data from the output frame buffer to the MiSTer
-  // system frame buffer.
-  val outputFrameBufferDma = Module(new ReadDMA(Config.outputFrameBufferDmaConfig))
-  outputFrameBufferDma.io.enable := downloadDoneReg
-  outputFrameBufferDma.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // start of VBLANK
-  outputFrameBufferDma.io.baseAddr := frameBufferWriteAddr
-  outputFrameBufferDma.io.ddr <> memSys.io.systemFrameBuffer
-
   // Cave
   val cave = Module(new Cave)
   cave.io.videoClock := io.videoClock
@@ -160,10 +152,10 @@ class Main extends Module {
   cave.io.layerTileRom(1) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(1))
   cave.io.layerTileRom(2) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(2))
   cave.io.spriteTileRom <> memSys.io.spriteTileRom
-  cave.io.outputFrameBufferDma <> outputFrameBufferDma.io.dma
   cave.io.audio <> io.audio
   cave.io.video <> videoSys.io.video
   cave.io.rgb <> io.rgb
+  cave.io.systemFrameBuffer.mapAddr(addr => addr + frameBufferWriteAddr) <> memSys.io.systemFrameBuffer
 
   // System LED outputs
   io.led.power := false.B

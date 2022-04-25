@@ -53,16 +53,6 @@ package object types {
   /** Palette RAM IO (GPU-side) */
   class PaletteRamIO extends ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
 
-  /** Output frame buffer */
-  class OutputFrameBuffer extends TrueDualPortRam(
-    addrWidthA = Config.OUTPUT_FRAME_BUFFER_ADDR_WIDTH,
-    dataWidthA = Config.OUTPUT_FRAME_BUFFER_DATA_WIDTH,
-    depthA = Some(Config.FRAME_BUFFER_DEPTH),
-    addrWidthB = Config.OUTPUT_FRAME_BUFFER_ADDR_WIDTH - 1,
-    dataWidthB = Config.OUTPUT_FRAME_BUFFER_DATA_WIDTH * 2,
-    depthB = Some(Config.FRAME_BUFFER_DEPTH / 2)
-  )
-
   /** System frame buffer IO */
   class SystemFrameBufferIO extends BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
 }
