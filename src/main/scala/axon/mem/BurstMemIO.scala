@@ -50,6 +50,22 @@ trait BurstIO {
  * @param dataWidth The width of the data bus.
  */
 class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addrWidth, dataWidth) with BurstIO {
+  /** Converts the interface to read-write. */
+  def asBurstReadWriteMemIO: BurstReadWriteMemIO = {
+    val mem = Wire(Flipped(BurstReadWriteMemIO(addrWidth, dataWidth)))
+    mem.rd := rd
+    mem.wr := false.B
+    mem.burstCount := burstCount
+    waitReq := mem.waitReq
+    valid := mem.valid
+    burstDone := mem.burstDone
+    mem.addr := addr
+    mem.mask := DontCare
+    mem.din := DontCare
+    dout := mem.dout
+    mem
+  }
+
   /** Sets default values for all the signals. */
   override def default() = {
     super.default()
