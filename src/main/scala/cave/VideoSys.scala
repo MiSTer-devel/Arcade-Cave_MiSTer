@@ -83,7 +83,7 @@ class VideoSys extends Module {
     compatibilityVideoTiming.io.offset := RegEnable(io.options.offset, compatibilityVideoTiming.io.video.vSync)
 
     // The compatibility option should only be latched during a VBLANK, to avoid any sudden changes
-    // in the video timing (and possible corruption of the video FIFO).
+    // in the video timing.
     val compatibilityReg = RegEnable(io.options.compatibility, originalVideoTiming.io.video.vBlank && compatibilityVideoTiming.io.video.vBlank)
 
     // Select between original or compatibility video timing

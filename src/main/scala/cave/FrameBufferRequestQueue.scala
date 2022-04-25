@@ -40,6 +40,8 @@ import chisel3._
  * Queues frame buffer write requests and ensures they are written to DDR memory.
  *
  * If the DDR memory is busy, then the request will remain in the queue.
+ *
+ * @param depth The depth of the queue.
  */
 class FrameBufferRequestQueue(depth: Int) extends Module {
   val io = IO(new Bundle {
@@ -53,9 +55,11 @@ class FrameBufferRequestQueue(depth: Int) extends Module {
 
   // FIFO
   val fifo = withClock(io.videoClock) { Module(new DualClockFIFO(io.frameBuffer.getWidth, depth)) }
+
+  // The FIFO is read in the system clock domain
   fifo.io.readClock := clock
 
-  // frame buffer -> FIFO
+  // Frame buffer -> FIFO
   fifo.io.enq.valid := io.frameBuffer.wr
   fifo.io.enq.bits := io.frameBuffer.asUInt
 
@@ -63,7 +67,6 @@ class FrameBufferRequestQueue(depth: Int) extends Module {
   io.ddr.wr := fifo.io.deq.valid
   fifo.io.deq.ready := !io.ddr.waitReq
   val request = fifo.io.deq.bits.asTypeOf(new SystemFrameBufferIO)
-
   io.ddr.burstCount := 1.U
   io.ddr.addr := request.addr ## 0.U(2.W)
   io.ddr.mask := Mux(request.addr(0), request.mask ## 0.U(4.W), request.mask)
