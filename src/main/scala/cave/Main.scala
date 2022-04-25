@@ -126,10 +126,10 @@ class Main extends Module {
   videoSys.io.video <> io.video
 
   // Frame buffer read/write addresses
-  val frameBufferReadAddr = Config.MISTER_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.readPage(1, 0) ## 0.U(19.W)
-  val frameBufferWriteAddr = Config.MISTER_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.writePage(1, 0) ## 0.U(19.W)
+  val frameBufferReadAddr = Config.SYSTEM_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.readPage(1, 0) ## 0.U(19.W)
+  val frameBufferWriteAddr = Config.SYSTEM_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.writePage(1, 0) ## 0.U(19.W)
 
-  // Configure the MiSTer system frame buffer
+  // Configure the MiSTer frame buffer
   io.frameBuffer.config(
     baseAddr = frameBufferReadAddr,
     rotate = io.options.rotate,
@@ -142,7 +142,7 @@ class Main extends Module {
   outputFrameBufferDma.io.enable := downloadDoneReg
   outputFrameBufferDma.io.start := Util.rising(ShiftRegister(io.video.vBlank, 2)) // start of VBLANK
   outputFrameBufferDma.io.baseAddr := frameBufferWriteAddr
-  outputFrameBufferDma.io.ddr <> memSys.io.misterFrameBuffer
+  outputFrameBufferDma.io.ddr <> memSys.io.systemFrameBuffer
 
   // Cave
   val cave = Module(new Cave)

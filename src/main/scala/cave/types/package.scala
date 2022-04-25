@@ -62,4 +62,7 @@ package object types {
     dataWidthB = Config.OUTPUT_FRAME_BUFFER_DATA_WIDTH * 2,
     depthB = Some(Config.FRAME_BUFFER_DEPTH / 2)
   )
+
+  /** System frame buffer IO */
+  class SystemFrameBufferIO extends BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
 }

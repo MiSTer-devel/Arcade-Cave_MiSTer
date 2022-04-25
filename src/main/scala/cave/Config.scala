@@ -72,7 +72,7 @@ object Config {
   /** The byte offset of the IOCTL data stored in DDR. */
   val IOCTL_DOWNLOAD_DDR_OFFSET = 0x30000000
   /** The byte offset of the MiSTer system frame buffer in DDR. */
-  val MISTER_FRAME_BUFFER_DDR_OFFSET = 0x24000000
+  val SYSTEM_FRAME_BUFFER_DDR_OFFSET = 0x24000000
 
   val PROG_ROM_ADDR_WIDTH = 20 // 1MB
   val PROG_ROM_DATA_WIDTH = 16
