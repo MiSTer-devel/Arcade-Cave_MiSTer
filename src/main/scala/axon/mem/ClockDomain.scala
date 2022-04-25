@@ -64,7 +64,7 @@ class ClockDomain(addrWidth: Int, dataWidth: Int) extends Module {
   addrFifo.io.enq.bits := io.in.addr
 
   // address FIFO -> output port
-  io.out.rd := addrFifo.io.deq.fire
+  io.out.rd := addrFifo.io.deq.valid
   addrFifo.io.deq.ready := !io.out.waitReq
   io.out.addr := addrFifo.io.deq.bits
 
@@ -73,7 +73,7 @@ class ClockDomain(addrWidth: Int, dataWidth: Int) extends Module {
   dataFifo.io.enq.bits := io.out.dout
 
   // data FIFO -> input port
-  io.in.valid := dataFifo.io.deq.fire
+  io.in.valid := dataFifo.io.deq.valid
   io.in.dout := dataFifo.io.deq.deq()
 }
 
