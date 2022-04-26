@@ -104,7 +104,7 @@ class Main extends Module {
 
   // DDR controller
   val ddr = Module(new DDR(Config.ddrConfig))
-  ddr.io.ddr <> io.ddr
+  ddr.io.ctrl <> io.ddr
 
   // SDRAM controller
   val sdram = Module(new SDRAM(Config.sdramConfig))
