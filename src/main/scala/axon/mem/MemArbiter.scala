@@ -36,7 +36,7 @@ import chisel3._
 import chisel3.util._
 
 /**
- * The memory arbiter routes memory requests from multiple input ports to a single output port.
+ * The memory arbiter routes requests from multiple input ports to a single output port.
  *
  * Priority is given to the first input port to make a request.
  *
@@ -46,11 +46,23 @@ import chisel3.util._
  */
 class MemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
   val io = IO(new Bundle {
-    /** Input port */
+    /** Input ports */
     val in = Flipped(Vec(n, BurstReadWriteMemIO(addrWidth, dataWidth)))
     /** Output port */
     val out = BurstReadWriteMemIO(addrWidth, dataWidth)
   })
+
+  /**
+   * Connects the given input ports to the output port.
+   *
+   * @param ins The list of input ports.
+   * @return The output port.
+   */
+  def connect(ins: BurstReadWriteMemIO*): BurstReadWriteMemIO = {
+    assert(ins.length == n, s"There must be exactly ${n} input ports")
+    ins.zipWithIndex.foreach { case (in, i) => in <> io.in(i) }
+    io.out
+  }
 
   // Registers
   val pending = RegInit(false.B)
