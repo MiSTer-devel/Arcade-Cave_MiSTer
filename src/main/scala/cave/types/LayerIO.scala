@@ -40,11 +40,11 @@ import chisel3._
 class LayerIO extends Bundle {
   /** Graphics format */
   val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))
-  /** Asserted when the layer is enabled */
+  /** Enable the layer output */
   val enable = Input(Bool())
-  /** Asserted when row scroll is enabled */
+  /** Enable the row scroll effect */
   val rowScrollEnable = Input(Bool())
-  /** Asserted when row select is enabled */
+  /** Enable the row select effect */
   val rowSelectEnable = Input(Bool())
   /** Layer registers port */
   val regs = Input(new Layer)

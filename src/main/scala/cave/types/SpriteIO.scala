@@ -40,13 +40,15 @@ import chisel3._
 class SpriteIO extends Bundle {
   /** Graphics format */
   val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))
-  /** Asserted when the layer is enabled */
+  /** Enable the layer output */
   val enable = Input(Bool())
-  /** Asserted when the layer flipped */
+  /** Start a new frame */
+  val start = Input(Bool())
+  /** Flip the layer */
   val flip = Input(Bool())
-  /** Asserted when the layer rotated */
+  /** Rotate the layer 90 degrees */
   val rotate = Input(Bool())
-  /** Asserted when sprite scaling is enabled */
+  /** Enable sprite scaling */
   val zoom = Input(Bool())
   /** Sprite bank */
   val bank = Input(Bool())

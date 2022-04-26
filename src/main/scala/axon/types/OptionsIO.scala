@@ -37,26 +37,26 @@ import chisel3._
 
 /** An interface that contains the user options. */
 class OptionsIO extends Bundle {
-  /** Asserted when SDRAM is available */
+  /** SDRAM is available */
   val sdram = Input(Bool())
   /** CRT offset */
   val offset = Input(SVec2(OptionsIO.SCREEN_OFFSET_WIDTH.W))
-  /** Asserted when screen rotation is enabled */
+  /** Rotate the video output 90 degrees */
   val rotate = Input(Bool())
-  /** Asserted when screen flipping is enabled */
+  /** Flip the video output */
   val flip = Input(Bool())
-  /** Asserted when video compatibility (60Hz) mode is enabled */
+  /** Video compatibility (60Hz) mode */
   val compatibility = Input(Bool())
   /** Layer enable flags */
   val layerEnable = Input(new Bundle {
-    /** Sprite layer */
+    /** Enable the sprite layer */
     val sprite = Bool()
-    /** Tilemap layers */
+    /** Enable the tilemap layers */
     val layer = Vec(Config.LAYER_COUNT, Bool())
   })
-  /** Asserted when row scroll is enabled */
+  /** Enable the row scroll effect */
   val rowScrollEnable = Input(Bool())
-  /** Asserted when row select is enabled */
+  /** Enable the row select effect */
   val rowSelectEnable = Input(Bool())
   /** Game index */
   val gameIndex = Input(UInt(OptionsIO.GAME_INDEX_WIDTH.W))

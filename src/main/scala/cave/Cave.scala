@@ -99,7 +99,6 @@ class Cave extends Module {
   gpu.io.video <> io.video
   gpu.io.gameConfig <> io.gameConfig
   gpu.io.options <> io.options
-  gpu.io.frameReady := Util.rising(ShiftRegister(frameStart, 2))
   0.until(Config.LAYER_COUNT).foreach { i =>
     gpu.io.layer(i).format := io.gameConfig.layer(i).format
     gpu.io.layer(i).enable := io.options.layerEnable.layer(i)
@@ -110,6 +109,7 @@ class Cave extends Module {
   gpu.io.sprite.tileRom <> io.spriteTileRom
   gpu.io.sprite.format := io.gameConfig.sprite.format
   gpu.io.sprite.enable := io.options.layerEnable.sprite
+  gpu.io.sprite.start := Util.rising(ShiftRegister(frameStart, 2))
   gpu.io.sprite.flip := io.options.flip
   gpu.io.sprite.rotate := io.options.rotate
   gpu.io.sprite.zoom := io.gameConfig.sprite.zoom

@@ -52,8 +52,6 @@ class GPU extends Module {
     val gameConfig = Input(GameConfig())
     /** Options port */
     val options = OptionsIO()
-    /** Asserted when the program is ready for a new frame */
-    val frameReady = Input(Bool())
     /** Layer ports */
     val layer = Vec(Config.LAYER_COUNT, LayerIO())
     /** Sprite port */
@@ -83,7 +81,6 @@ class GPU extends Module {
 
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
-  spriteProcessor.io.start := io.frameReady
   spriteProcessor.io.sprite <> io.sprite
   spriteProcessor.io.frameBuffer <> spriteFrameBuffer.io.portA.asWriteMemIO
 

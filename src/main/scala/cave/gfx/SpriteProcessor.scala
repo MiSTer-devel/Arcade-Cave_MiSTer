@@ -47,9 +47,7 @@ import chisel3.util._
  */
 class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) extends Module {
   val io = IO(new Bundle {
-    /** When the start flag is asserted, the sprites are rendered to the frame buffer */
-    val start = Input(Bool())
-    /** Asserted while the sprite processor is rendering */
+    /** Asserted while the sprite processor is busy */
     val busy = Output(Bool())
     /** Sprite port */
     val sprite = SpriteIO()
@@ -153,7 +151,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   switch(stateReg) {
     // Wait for the start signal
     is(State.idle) {
-      when(io.start) {
+      when(io.sprite.start) {
         stateReg := (if (clearFrameBuffer) State.clear else State.load)
       }
     }
