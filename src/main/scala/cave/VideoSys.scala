@@ -87,14 +87,14 @@ class VideoSys extends Module {
     video <> io.video
 
     // Frame buffer page flipper
-    val pageFlipper = Module(new PageFlipper)
+    val pageFlipper = Module(new PageFlipper(Config.SYSTEM_FRAME_BUFFER_DDR_OFFSET))
     pageFlipper.io.lowLat := io.lowLat
     pageFlipper.io.swapRead := Util.rising(io.frameBufferControl.vBlank)
     pageFlipper.io.swapWrite := Util.rising(io.video.vBlank)
 
     // Configure the MiSTer frame buffer
     io.frameBufferControl.configure(
-      baseAddr = pageFlipper.io.readBaseAddr,
+      baseAddr = pageFlipper.io.readPageAddr,
       enable = io.options.rotate, // only enable during screen rotation
       rotate = io.options.rotate,
       forceBlank = io.forceBlank
@@ -112,6 +112,6 @@ class VideoSys extends Module {
     val queue = Module(new FrameBufferRequestQueue(Config.SYSTEM_FRAME_BUFFER_REQUEST_QUEUE_DEPTH))
     queue.io.readClock := sysClock
     queue.io.frameBuffer <> io.systemFrameBuffer
-    queue.io.ddr.mapAddr(_ + pageFlipper.io.writeBaseAddr) <> io.ddr
+    queue.io.ddr.mapAddr(_ + pageFlipper.io.writePageAddr) <> io.ddr
   }
 }

@@ -32,17 +32,18 @@
 
 package cave.fb
 
-import cave.Config
 import chisel3._
 import chisel3.util._
 
 /**
- * Generates the base read/write memory addresses for the frame buffer.
+ * Generates the read/write page addresses for the frame buffer.
  *
- * When low latency mode is enabled, then double buffering is used. Otherwise, triple buffering will
- * be used for butter-smooth 60Hz HDMI output.
+ * Triple buffering is be used by default, for buttery-smooth 60Hz HDMI output. When low latency
+ * mode is enabled, then double buffering is used instead.
+ *
+ * @param baseAddr The base memory address of the frame buffer.
  */
-class PageFlipper extends Module {
+class PageFlipper(baseAddr: Int) extends Module {
   val io = IO(new Bundle {
     /** Low latency mode (double buffering) */
     val lowLat = Input(Bool())
@@ -50,10 +51,10 @@ class PageFlipper extends Module {
     val swapRead = Input(Bool())
     /** Swap the write page */
     val swapWrite = Input(Bool())
-    /** Read base address */
-    val readBaseAddr = Output(UInt(Config.ddrConfig.addrWidth.W))
-    /** Write base address */
-    val writeBaseAddr = Output(UInt(Config.ddrConfig.addrWidth.W))
+    /** Read page address */
+    val readPageAddr = Output(UInt(32.W))
+    /** Write page address */
+    val writePageAddr = Output(UInt(32.W))
   })
 
   // Registers
@@ -77,8 +78,8 @@ class PageFlipper extends Module {
   }
 
   // Outputs
-  io.readBaseAddr := Config.SYSTEM_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## readIndexReg(1, 0) ## 0.U(19.W)
-  io.writeBaseAddr := Config.SYSTEM_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## writeIndexReg(1, 0) ## 0.U(19.W)
+  io.readPageAddr := baseAddr.U(31, 21) ## readIndexReg(1, 0) ## 0.U(19.W)
+  io.writePageAddr := baseAddr.U(31, 21) ## writeIndexReg(1, 0) ## 0.U(19.W)
 }
 
 object PageFlipper {
