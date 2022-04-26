@@ -41,7 +41,7 @@ import chisel3._
  * @param height The height of the frame buffer in pixels.
  */
 class FrameBufferControlIO(width: Int, height: Int) extends Bundle {
-  /** Asserted when the frame buffer is enabled */
+  /** Enable the frame buffer */
   val enable = Output(Bool())
   /** The horizontal size of the frame buffer */
   val hSize = Output(UInt(12.W))
@@ -49,7 +49,7 @@ class FrameBufferControlIO(width: Int, height: Int) extends Bundle {
   val vSize = Output(UInt(12.W))
   /** The frame buffer format */
   val format = Output(Bits(5.W))
-  /** The base memory address */
+  /** The base memory address of the frame buffer in DDR memory */
   val baseAddr = Output(UInt(32.W))
   /** The horizontal width of the frame buffer in bytes */
   val stride = Output(UInt(14.W))
@@ -57,18 +57,19 @@ class FrameBufferControlIO(width: Int, height: Int) extends Bundle {
   val vBlank = Input(Bool())
   /** Asserted when the frame buffer is in low latency mode */
   val lowLat = Input(Bool())
-  /** Asserted when the frame buffer output is disabled */
+  /** Disable the frame buffer output */
   val forceBlank = Output(Bool())
 
   /**
    * Configures the MiSTer frame buffer.
    *
    * @param baseAddr   The base address of the frame buffer in DDR memory.
-   * @param rotate     Asserted when the frame buffer is rotated 90 degrees.
-   * @param forceBlank Asserted when the frame buffer output is disabled.
+   * @param enable     Enable the frame buffer.
+   * @param rotate     Rotate the frame buffer 90 degress.
+   * @param forceBlank Disable the frame buffer output.
    */
-  def configure(baseAddr: UInt, rotate: Bool, forceBlank: Bool): Unit = {
-    enable := true.B
+  def configure(baseAddr: UInt, enable: Bool, rotate: Bool, forceBlank: Bool): Unit = {
+    this.enable := enable
     hSize := Mux(rotate, height.U, width.U)
     vSize := Mux(rotate, width.U, height.U)
     format := FrameBufferControlIO.FORMAT_32BPP.U

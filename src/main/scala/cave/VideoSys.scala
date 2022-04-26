@@ -95,6 +95,7 @@ class VideoSys extends Module {
     // Configure the MiSTer frame buffer
     io.frameBufferControl.configure(
       baseAddr = pageFlipper.io.readBaseAddr,
+      enable = io.options.rotate, // only enable during screen rotation
       rotate = io.options.rotate,
       forceBlank = io.forceBlank
     )
