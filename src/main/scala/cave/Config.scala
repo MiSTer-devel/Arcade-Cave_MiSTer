@@ -132,6 +132,8 @@ object Config {
   val FRAME_BUFFER_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DEPTH)
   /** The width of the system frame buffer data bus */
   val SYSTEM_FRAME_BUFFER_DATA_WIDTH = 32
+  /** The depth of the system frame buffer request queue */
+  val SYSTEM_FRAME_BUFFER_REQUEST_QUEUE_DEPTH = 32
   /** The width of the output frame buffer data bus */
   val SPRITE_FRAME_BUFFER_DATA_WIDTH = 16
 

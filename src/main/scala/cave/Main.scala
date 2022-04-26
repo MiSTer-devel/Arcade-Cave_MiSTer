@@ -126,6 +126,7 @@ class Main extends Module {
   videoSys.io.options <> io.options
   videoSys.io.video <> io.video
   videoSys.io.frameBufferControl <> io.frameBufferControl
+  videoSys.io.ddr <> memSys.io.systemFrameBuffer
 
   // Cave
   val cave = Module(new Cave)
@@ -146,21 +147,7 @@ class Main extends Module {
   cave.io.audio <> io.audio
   cave.io.video <> videoSys.io.video
   cave.io.rgb <> io.rgb
-
-  // Write requests to the system frame buffer in DDR memory need to be buffered in a request queue.
-  //
-  // This is required because when the GPU tries to write a pixel to the frame buffer, the request
-  // could get held up waiting for another large burst to finish. If we queue the write requests
-  // while the DDR memory is busy, then we can finish writing them later.
-  //
-  // The added latency doesn't matter because the system frame buffer uses double (or triple)
-  // buffering.
-  val queue = Module(new FrameBufferRequestQueue(depth = 64))
-  queue.io.videoClock := io.videoClock
-  queue.io.frameBuffer <> cave.io.systemFrameBuffer
-  queue.io.ddr.mapAddr(addr =>
-    addr + Config.SYSTEM_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## videoSys.io.writePage(1, 0) ## 0.U(19.W)
-  ) <> memSys.io.systemFrameBuffer
+  cave.io.systemFrameBuffer <> videoSys.io.systemFrameBuffer
 
   // System LED outputs
   io.led.power := false.B

@@ -37,16 +37,16 @@ import cave.types.SystemFrameBufferIO
 import chisel3._
 
 /**
- * Queues frame buffer write requests and ensures they are written to DDR memory.
+ * Queues frame buffer write requests and ensures they are eventually written to DDR memory.
  *
- * If the DDR memory is busy, then the request will remain in the queue.
+ * If the DDR memory is busy, then requests will be queued until they can be completed.
  *
  * @param depth The depth of the queue.
  */
 class FrameBufferRequestQueue(depth: Int) extends Module {
   val io = IO(new Bundle {
-    /** Video clock domain */
-    val videoClock = Input(Clock())
+    /** The read clock domain */
+    val readClock = Input(Clock())
     /** Frame buffer port */
     val frameBuffer = Flipped(new SystemFrameBufferIO)
     /** DDR port */
@@ -54,10 +54,8 @@ class FrameBufferRequestQueue(depth: Int) extends Module {
   })
 
   // FIFO
-  val fifo = withClock(io.videoClock) { Module(new DualClockFIFO(io.frameBuffer.getWidth, depth)) }
-
-  // The FIFO is read in the system clock domain
-  fifo.io.readClock := clock
+  val fifo = Module(new DualClockFIFO(io.frameBuffer.getWidth, depth))
+  fifo.io.readClock := io.readClock
 
   // Frame buffer -> FIFO
   fifo.io.enq.valid := io.frameBuffer.wr

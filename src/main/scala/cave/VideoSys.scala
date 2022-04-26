@@ -34,25 +34,23 @@ package cave
 
 import axon._
 import axon.gfx._
+import axon.mem.BurstWriteMemIO
 import axon.types._
+import cave.fb.PageFlipper
+import cave.types.SystemFrameBufferIO
 import chisel3._
 import chisel3.util._
 
-/**
- * The video subsystem handles video timing signals and frame buffer page swapping.
- *
- * If low latency mode is enabled, then double buffering is used. Otherwise, triple buffering will
- * be used for butter-smooth HDMI output.
- */
+/** The video subsystem generate video timing signals and frame buffer page swapping. */
 class VideoSys extends Module {
   val io = IO(new Bundle {
     /** Video clock domain */
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
-    /** Asserted when low latency mode should be used for the frame buffer */
+    /** Low latency mode (double buffering) */
     val lowLat = Input(Bool())
-    /** Asserted when the frame buffer output is disabled */
+    /** Disable the frame buffer output */
     val forceBlank = Input(Bool())
     /** Options port */
     val options = OptionsIO()
@@ -60,18 +58,16 @@ class VideoSys extends Module {
     val video = VideoIO()
     /** Frame buffer control port */
     val frameBufferControl = mister.FrameBufferControlIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
-    /** The index of the frame buffer write page */
-    val writePage = Output(UInt(VideoSys.PAGE_WIDTH.W))
+    /** System frame buffer port */
+    val systemFrameBuffer = Flipped(new SystemFrameBufferIO)
+    /** DDR port */
+    val ddr = BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
   })
 
   // System clock alias
   val sysClock = clock
 
   withClockAndReset(io.videoClock, io.videoReset) {
-    // Registers
-    val readIndexReg = RegInit(0.U(VideoSys.PAGE_WIDTH.W))
-    val writeIndexReg = RegInit(1.U(VideoSys.PAGE_WIDTH.W))
-
     // Video timings
     val originalVideoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
     val compatibilityVideoTiming = Module(new VideoTiming(Config.compatibilityVideoTimingConfig))
@@ -86,52 +82,35 @@ class VideoSys extends Module {
     // in the video timing.
     val compatibilityReg = RegEnable(io.options.compatibility, originalVideoTiming.io.video.vBlank && compatibilityVideoTiming.io.video.vBlank)
 
-    // Select between original or compatibility video timing
+    // Select original or compatibility video timing
     val video = Mux(compatibilityReg, compatibilityVideoTiming.io.video, originalVideoTiming.io.video)
     video <> io.video
 
-    // Swap write index at the start of analog VBLANK
-    when(Util.rising(io.video.vBlank)) {
-      writeIndexReg := Mux(io.lowLat,
-        ~writeIndexReg(0),
-        VideoSys.nextIndex(writeIndexReg, readIndexReg)
-      )
-    }
-
-    // Swap read index at the start of frame buffer VBLANK
-    when(Util.rising(io.frameBufferControl.vBlank)) {
-      readIndexReg := Mux(io.lowLat,
-        ~writeIndexReg(0),
-        VideoSys.nextIndex(readIndexReg, writeIndexReg)
-      )
-    }
+    // Frame buffer page flipper
+    val pageFlipper = Module(new PageFlipper)
+    pageFlipper.io.lowLat := io.lowLat
+    pageFlipper.io.swapRead := Util.rising(io.frameBufferControl.vBlank)
+    pageFlipper.io.swapWrite := Util.rising(io.video.vBlank)
 
     // Configure the MiSTer frame buffer
     io.frameBufferControl.configure(
-      baseAddr = Config.SYSTEM_FRAME_BUFFER_DDR_OFFSET.U(31, 21) ## readIndexReg(1, 0) ## 0.U(19.W),
+      baseAddr = pageFlipper.io.readBaseAddr,
       rotate = io.options.rotate,
       forceBlank = io.forceBlank
     )
 
-    // Set frame buffer write page index
-    io.writePage := withClock(sysClock) { ShiftRegister(writeIndexReg, 2) }
+    // Write requests to the system frame buffer need to be buffered in a request queue.
+    //
+    // When the GPU writes a pixel to the frame buffer in DDR memory, the request could get held up
+    // waiting for another large burst to finish. This means that the pixel may not have been
+    // written to the frame buffer by the time it's time to write the next one.
+    //
+    // If we queue the write requests while the DDR memory is busy, then we can finish writing them
+    // later. The added latency doesn't matter because the system frame buffer uses double
+    // buffering.
+    val queue = Module(new FrameBufferRequestQueue(Config.SYSTEM_FRAME_BUFFER_REQUEST_QUEUE_DEPTH))
+    queue.io.readClock := sysClock
+    queue.io.frameBuffer <> io.systemFrameBuffer
+    queue.io.ddr.mapAddr(_ + pageFlipper.io.writeBaseAddr) <> io.ddr
   }
-}
-
-object VideoSys {
-  /** The width of the page index. */
-  private val PAGE_WIDTH = 2
-
-  /**
-   * Returns the next frame buffer index for the given indices.
-   *
-   * @param a The first index.
-   * @param b The second index.
-   * @return The next frame buffer index.
-   */
-  private def nextIndex(a: UInt, b: UInt) =
-    MuxCase(1.U, Seq(
-      ((a === 0.U && b === 1.U) || (a === 1.U && b === 0.U)) -> 2.U,
-      ((a === 1.U && b === 2.U) || (a === 2.U && b === 1.U)) -> 0.U
-    ))
 }
