@@ -36,7 +36,7 @@ import axon._
 import axon.gfx._
 import axon.mem.BurstWriteMemIO
 import axon.types._
-import cave.fb.PageFlipper
+import cave.fb._
 import cave.types.SystemFrameBufferIO
 import chisel3._
 import chisel3.util._
@@ -109,7 +109,7 @@ class VideoSys extends Module {
     // If we queue the write requests while the DDR memory is busy, then we can finish writing them
     // later. The added latency doesn't matter because the system frame buffer uses double
     // buffering.
-    val queue = Module(new FrameBufferRequestQueue(Config.SYSTEM_FRAME_BUFFER_REQUEST_QUEUE_DEPTH))
+    val queue = Module(new RequestQueue(Config.SYSTEM_FRAME_BUFFER_REQUEST_QUEUE_DEPTH))
     queue.io.readClock := sysClock
     queue.io.frameBuffer <> io.systemFrameBuffer
     queue.io.ddr.mapAddr(_ + pageFlipper.io.writePageAddr) <> io.ddr

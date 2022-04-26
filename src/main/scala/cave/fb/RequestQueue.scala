@@ -30,9 +30,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave
+package cave.fb
 
 import axon.mem._
+import cave.Config
 import cave.types.SystemFrameBufferIO
 import chisel3._
 
@@ -43,7 +44,7 @@ import chisel3._
  *
  * @param depth The depth of the queue.
  */
-class FrameBufferRequestQueue(depth: Int) extends Module {
+class RequestQueue(depth: Int) extends Module {
   val io = IO(new Bundle {
     /** The read clock domain */
     val readClock = Input(Clock())
