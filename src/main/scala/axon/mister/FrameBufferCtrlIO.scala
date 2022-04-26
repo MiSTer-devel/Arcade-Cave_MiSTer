@@ -40,7 +40,7 @@ import chisel3._
  * @param width  The width of the frame buffer in pixels.
  * @param height The height of the frame buffer in pixels.
  */
-class FrameBufferControlIO(width: Int, height: Int) extends Bundle {
+class FrameBufferCtrlIO(width: Int, height: Int) extends Bundle {
   /** Enable the frame buffer */
   val enable = Output(Bool())
   /** The horizontal size of the frame buffer */
@@ -72,14 +72,14 @@ class FrameBufferControlIO(width: Int, height: Int) extends Bundle {
     this.enable := enable
     hSize := Mux(rotate, height.U, width.U)
     vSize := Mux(rotate, width.U, height.U)
-    format := FrameBufferControlIO.FORMAT_32BPP.U
+    format := FrameBufferCtrlIO.FORMAT_32BPP.U
     this.baseAddr := baseAddr
     stride := Mux(rotate, (height * 4).U, (width * 4).U)
     this.forceBlank := forceBlank
   }
 }
 
-object FrameBufferControlIO {
+object FrameBufferCtrlIO {
   /** 8 bits per pixel */
   val FORMAT_8BPP = 0x3
   /** 16 bits per pixel */
@@ -91,5 +91,5 @@ object FrameBufferControlIO {
   /** BGR pixel format */
   val FORMAT_BGR = 0x10
 
-  def apply(width: Int, height: Int) = new FrameBufferControlIO(width, height)
+  def apply(width: Int, height: Int) = new FrameBufferCtrlIO(width, height)
 }

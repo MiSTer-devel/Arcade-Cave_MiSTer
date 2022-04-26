@@ -57,7 +57,7 @@ class VideoSys extends Module {
     /** Video port */
     val video = VideoIO()
     /** Frame buffer control port */
-    val frameBufferControl = mister.FrameBufferControlIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
+    val frameBufferCtrl = mister.FrameBufferCtrlIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
     /** System frame buffer port */
     val systemFrameBuffer = Flipped(new SystemFrameBufferIO)
     /** DDR port */
@@ -89,11 +89,11 @@ class VideoSys extends Module {
     // Frame buffer page flipper
     val pageFlipper = Module(new PageFlipper(Config.SYSTEM_FRAME_BUFFER_DDR_OFFSET))
     pageFlipper.io.lowLat := io.lowLat
-    pageFlipper.io.swapRead := Util.rising(io.frameBufferControl.vBlank)
+    pageFlipper.io.swapRead := Util.rising(io.frameBufferCtrl.vBlank)
     pageFlipper.io.swapWrite := Util.rising(io.video.vBlank)
 
     // Configure the MiSTer frame buffer
-    io.frameBufferControl.configure(
+    io.frameBufferCtrl.configure(
       baseAddr = pageFlipper.io.readPageAddr,
       enable = io.options.rotate, // only enable during screen rotation
       rotate = io.options.rotate,

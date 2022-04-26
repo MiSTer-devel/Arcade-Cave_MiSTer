@@ -71,7 +71,7 @@ class Main extends Module {
     /** IOCTL port */
     val ioctl = IOCTL()
     /** Frame buffer control port */
-    val frameBufferControl = mister.FrameBufferControlIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
+    val frameBufferCtrl = mister.FrameBufferCtrlIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** Video port */
@@ -121,11 +121,11 @@ class Main extends Module {
   val videoSys = Module(new VideoSys)
   videoSys.io.videoClock := io.videoClock
   videoSys.io.videoReset := io.videoReset
-  videoSys.io.lowLat := io.frameBufferControl.lowLat
+  videoSys.io.lowLat := io.frameBufferCtrl.lowLat
   videoSys.io.forceBlank := io.cpuReset
   videoSys.io.options <> io.options
   videoSys.io.video <> io.video
-  videoSys.io.frameBufferControl <> io.frameBufferControl
+  videoSys.io.frameBufferCtrl <> io.frameBufferCtrl
   videoSys.io.ddr <> memSys.io.systemFrameBuffer
 
   // Cave
