@@ -63,7 +63,7 @@ class Main extends Module {
     /** DDR port */
     val ddr = DDRIO(Config.ddrConfig)
     /** SDRAM control port */
-    val sdram = SDRAMCtrlIO(Config.sdramConfig)
+    val sdram = SDRAMControlIO(Config.sdramConfig)
     /** Options port */
     val options = OptionsIO()
     /** Joystick port */
@@ -108,7 +108,7 @@ class Main extends Module {
 
   // SDRAM controller
   val sdram = Module(new SDRAM(Config.sdramConfig))
-  sdram.io.ctrl <> io.sdram
+  sdram.io.sdram <> io.sdram
 
   // Memory subsystem
   val memSys = Module(new MemSys)

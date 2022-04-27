@@ -40,7 +40,7 @@ import chisel3.util._
  *
  * @param config The SDRAM configuration.
  */
-class SDRAMCtrlIO(config: SDRAMConfig) extends Bundle {
+class SDRAMControlIO(config: SDRAMConfig) extends Bundle {
   /** Clock enable */
   val cke = Output(Bool())
   /** Chip select (active-low) */
@@ -63,8 +63,8 @@ class SDRAMCtrlIO(config: SDRAMConfig) extends Bundle {
   val dout = Input(Bits(config.dataWidth.W))
 }
 
-object SDRAMCtrlIO {
-  def apply(config: SDRAMConfig) = new SDRAMCtrlIO(config)
+object SDRAMControlIO {
+  def apply(config: SDRAMConfig) = new SDRAMControlIO(config)
 }
 
 /**
@@ -190,7 +190,7 @@ class SDRAM(val config: SDRAMConfig) extends Module {
     /** Memory port */
     val mem = Flipped(SDRAMIO(config))
     /** Control port */
-    val ctrl = SDRAMCtrlIO(config)
+    val sdram = SDRAMControlIO(config)
     /** Debug port */
     val debug = Output(new Bundle {
       val init = Bool()
@@ -237,7 +237,7 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   // Using simple registers for data I/O allows better timings to be achieved, because they can be
   // optimized and moved physically closer to the FPGA pins during routing (i.e. fast registers).
   val dinReg = RegNext(io.mem.din)
-  val doutReg = RegNext(io.ctrl.dout)
+  val doutReg = RegNext(io.sdram.dout)
 
   // Counters
   val (waitCounter, _) = Counter(0 until config.waitCounterMax, reset = nextState =/= stateReg)
@@ -378,15 +378,15 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   io.mem.valid := valid
   io.mem.burstDone := memBurstDone
   io.mem.dout := doutReg
-  io.ctrl.cke := true.B
-  io.ctrl.cs_n := commandReg(3)
-  io.ctrl.ras_n := commandReg(2)
-  io.ctrl.cas_n := commandReg(1)
-  io.ctrl.we_n := commandReg(0)
-  io.ctrl.oe := stateReg === State.write
-  io.ctrl.bank := bankReg
-  io.ctrl.addr := addrReg
-  io.ctrl.din := dinReg
+  io.sdram.cke := true.B
+  io.sdram.cs_n := commandReg(3)
+  io.sdram.ras_n := commandReg(2)
+  io.sdram.cas_n := commandReg(1)
+  io.sdram.we_n := commandReg(0)
+  io.sdram.oe := stateReg === State.write
+  io.sdram.bank := bankReg
+  io.sdram.addr := addrReg
+  io.sdram.din := dinReg
   io.debug.init := stateReg === State.init
   io.debug.mode := stateReg === State.mode
   io.debug.idle := stateReg === State.idle

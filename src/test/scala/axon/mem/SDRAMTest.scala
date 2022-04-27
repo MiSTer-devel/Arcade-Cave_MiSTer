@@ -160,54 +160,54 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
 
   it should "assert clock enable" in {
     test(mkSDRAM()) { dut =>
-      dut.io.ctrl.cke.expect(true)
+      dut.io.sdram.cke.expect(true)
     }
   }
 
   it should "initialize the SDRAM" in {
     test(mkSDRAM()) { dut =>
       // NOP
-      dut.io.ctrl.cs_n.expect(false)
-      dut.io.ctrl.ras_n.expect(true)
-      dut.io.ctrl.cas_n.expect(true)
-      dut.io.ctrl.we_n.expect(true)
+      dut.io.sdram.cs_n.expect(false)
+      dut.io.sdram.ras_n.expect(true)
+      dut.io.sdram.cas_n.expect(true)
+      dut.io.sdram.we_n.expect(true)
       dut.clock.step()
 
       // Deselect
-      dut.io.ctrl.cs_n.expect(true)
-      dut.io.ctrl.ras_n.expect(false)
-      dut.io.ctrl.cas_n.expect(false)
-      dut.io.ctrl.we_n.expect(false)
+      dut.io.sdram.cs_n.expect(true)
+      dut.io.sdram.ras_n.expect(false)
+      dut.io.sdram.cas_n.expect(false)
+      dut.io.sdram.we_n.expect(false)
       dut.clock.step()
 
       // Precharge
-      dut.io.ctrl.cs_n.expect(false)
-      dut.io.ctrl.ras_n.expect(false)
-      dut.io.ctrl.cas_n.expect(true)
-      dut.io.ctrl.we_n.expect(false)
-      dut.io.ctrl.addr.expect(0x400.U)
+      dut.io.sdram.cs_n.expect(false)
+      dut.io.sdram.ras_n.expect(false)
+      dut.io.sdram.cas_n.expect(true)
+      dut.io.sdram.we_n.expect(false)
+      dut.io.sdram.addr.expect(0x400.U)
       dut.clock.step()
 
       // Refresh
-      dut.io.ctrl.cs_n.expect(false)
-      dut.io.ctrl.ras_n.expect(false)
-      dut.io.ctrl.cas_n.expect(false)
-      dut.io.ctrl.we_n.expect(true)
+      dut.io.sdram.cs_n.expect(false)
+      dut.io.sdram.ras_n.expect(false)
+      dut.io.sdram.cas_n.expect(false)
+      dut.io.sdram.we_n.expect(true)
       dut.clock.step(2)
 
       // Refresh
-      dut.io.ctrl.cs_n.expect(false)
-      dut.io.ctrl.ras_n.expect(false)
-      dut.io.ctrl.cas_n.expect(false)
-      dut.io.ctrl.we_n.expect(true)
+      dut.io.sdram.cs_n.expect(false)
+      dut.io.sdram.ras_n.expect(false)
+      dut.io.sdram.cas_n.expect(false)
+      dut.io.sdram.we_n.expect(true)
       dut.clock.step(2)
 
       // Mode
-      dut.io.ctrl.cs_n.expect(false)
-      dut.io.ctrl.ras_n.expect(false)
-      dut.io.ctrl.cas_n.expect(false)
-      dut.io.ctrl.we_n.expect(false)
-      dut.io.ctrl.addr.expect(0x020.U)
+      dut.io.sdram.cs_n.expect(false)
+      dut.io.sdram.ras_n.expect(false)
+      dut.io.sdram.cas_n.expect(false)
+      dut.io.sdram.we_n.expect(false)
+      dut.io.sdram.addr.expect(0x020.U)
     }
   }
 
@@ -216,9 +216,9 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "perform a NOP" in {
     test(mkSDRAM()) { dut =>
       waitForIdle(dut)
-      dut.io.ctrl.ras_n.expect(true)
-      dut.io.ctrl.cas_n.expect(true)
-      dut.io.ctrl.we_n.expect(true)
+      dut.io.sdram.ras_n.expect(true)
+      dut.io.sdram.cas_n.expect(true)
+      dut.io.sdram.we_n.expect(true)
     }
   }
 
@@ -238,18 +238,18 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       dut.io.mem.rd.poke(true)
       dut.io.mem.addr.poke(0x1802003)
       waitForActive(dut)
-      dut.io.ctrl.addr.expect(0x1004.U) // row
+      dut.io.sdram.addr.expect(0x1004.U) // row
       waitForRead(dut)
-      dut.io.ctrl.addr.expect(0x401.U) // col
-      dut.io.ctrl.bank.expect(1.U)
+      dut.io.sdram.addr.expect(0x401.U) // col
+      dut.io.sdram.bank.expect(1.U)
 
       dut.io.mem.rd.poke(true)
       dut.io.mem.addr.poke(0x3ffffff)
       waitForActive(dut)
-      dut.io.ctrl.addr.expect(0x1fff.U) // row
+      dut.io.sdram.addr.expect(0x1fff.U) // row
       waitForRead(dut)
-      dut.io.ctrl.addr.expect(0x7ff.U) // col
-      dut.io.ctrl.bank.expect(3.U)
+      dut.io.sdram.addr.expect(0x7ff.U) // col
+      dut.io.sdram.bank.expect(3.U)
     }
   }
 
@@ -263,15 +263,15 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       dut.io.mem.rd.poke(true)
       dut.io.mem.addr.poke(2)
       waitForActive(dut)
-      dut.io.ctrl.addr.expect(0.U)
+      dut.io.sdram.addr.expect(0.U)
       waitForRead(dut)
-      dut.io.ctrl.addr.expect(0x401.U)
+      dut.io.sdram.addr.expect(0x401.U)
 
       // CAS latency
       dut.clock.step(cycles = 2)
 
       // Read
-      dut.io.ctrl.dout.poke(1)
+      dut.io.sdram.dout.poke(1)
       dut.clock.step()
       dut.io.mem.valid.expect(true)
       dut.io.mem.burstDone.expect(true)
@@ -287,17 +287,17 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       dut.io.mem.rd.poke(true)
       dut.io.mem.addr.poke(2)
       waitForActive(dut)
-      dut.io.ctrl.addr.expect(0.U)
+      dut.io.sdram.addr.expect(0.U)
       waitForRead(dut)
-      dut.io.ctrl.addr.expect(0x401.U)
+      dut.io.sdram.addr.expect(0x401.U)
 
       // CAS latency
       dut.clock.step(cycles = 2)
 
       // Read
-      dut.io.ctrl.dout.poke(0x1234)
+      dut.io.sdram.dout.poke(0x1234)
       dut.clock.step()
-      dut.io.ctrl.dout.poke(0x5678)
+      dut.io.sdram.dout.poke(0x5678)
       dut.io.mem.valid.expect(true)
       dut.io.mem.dout.expect(0x1234.U)
       dut.clock.step()
@@ -315,25 +315,25 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       dut.io.mem.rd.poke(true)
       dut.io.mem.addr.poke(2)
       waitForActive(dut)
-      dut.io.ctrl.addr.expect(0.U)
+      dut.io.sdram.addr.expect(0.U)
       waitForRead(dut)
-      dut.io.ctrl.addr.expect(0x401.U)
+      dut.io.sdram.addr.expect(0x401.U)
 
       // CAS latency
       dut.clock.step(cycles = 2)
 
       // Read
-      dut.io.ctrl.dout.poke(0x1234)
+      dut.io.sdram.dout.poke(0x1234)
       dut.clock.step()
-      dut.io.ctrl.dout.poke(0x5678)
+      dut.io.sdram.dout.poke(0x5678)
       dut.io.mem.valid.expect(true)
       dut.io.mem.dout.expect(0x1234.U)
       dut.clock.step()
-      dut.io.ctrl.dout.poke(0x1234)
+      dut.io.sdram.dout.poke(0x1234)
       dut.io.mem.valid.expect(true)
       dut.io.mem.dout.expect(0x5678.U)
       dut.clock.step()
-      dut.io.ctrl.dout.poke(0x5678)
+      dut.io.sdram.dout.poke(0x5678)
       dut.io.mem.valid.expect(true)
       dut.io.mem.dout.expect(0x1234.U)
       dut.clock.step()
@@ -351,41 +351,41 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       dut.io.mem.rd.poke(true)
       dut.io.mem.addr.poke(2)
       waitForActive(dut)
-      dut.io.ctrl.addr.expect(0.U)
+      dut.io.sdram.addr.expect(0.U)
       waitForRead(dut)
-      dut.io.ctrl.addr.expect(0x401.U)
+      dut.io.sdram.addr.expect(0x401.U)
 
       // CAS latency
       dut.clock.step(cycles = 2)
 
       // Read
-      dut.io.ctrl.dout.poke(0x1234)
+      dut.io.sdram.dout.poke(0x1234)
       dut.clock.step()
-      dut.io.ctrl.dout.poke(0x5678)
+      dut.io.sdram.dout.poke(0x5678)
       dut.io.mem.valid.expect(true)
       dut.io.mem.dout.expect(0x1234.U)
       dut.clock.step()
-      dut.io.ctrl.dout.poke(0x1234)
+      dut.io.sdram.dout.poke(0x1234)
       dut.io.mem.valid.expect(true)
       dut.io.mem.dout.expect(0x5678.U)
       dut.clock.step()
-      dut.io.ctrl.dout.poke(0x5678)
+      dut.io.sdram.dout.poke(0x5678)
       dut.io.mem.valid.expect(true)
       dut.io.mem.dout.expect(0x1234.U)
       dut.clock.step()
-      dut.io.ctrl.dout.poke(0x1234)
+      dut.io.sdram.dout.poke(0x1234)
       dut.io.mem.valid.expect(true)
       dut.io.mem.dout.expect(0x5678.U)
       dut.clock.step()
-      dut.io.ctrl.dout.poke(0x5678)
+      dut.io.sdram.dout.poke(0x5678)
       dut.io.mem.valid.expect(true)
       dut.io.mem.dout.expect(0x1234.U)
       dut.clock.step()
-      dut.io.ctrl.dout.poke(0x1234)
+      dut.io.sdram.dout.poke(0x1234)
       dut.io.mem.valid.expect(true)
       dut.io.mem.dout.expect(0x5678.U)
       dut.clock.step()
-      dut.io.ctrl.dout.poke(0x5678)
+      dut.io.sdram.dout.poke(0x5678)
       dut.io.mem.valid.expect(true)
       dut.io.mem.dout.expect(0x1234.U)
       dut.clock.step()
@@ -471,15 +471,15 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       dut.io.mem.wr.poke(true)
       dut.io.mem.addr.poke(2)
       waitForActive(dut)
-      dut.io.ctrl.addr.expect(0.U)
+      dut.io.sdram.addr.expect(0.U)
       dut.clock.step()
       dut.io.mem.din.poke(0x1234)
       dut.clock.step()
 
       // Write
       dut.io.mem.burstDone.expect(true)
-      dut.io.ctrl.addr.expect(0x401.U)
-      dut.io.ctrl.din.expect(0x1234.U)
+      dut.io.sdram.addr.expect(0x401.U)
+      dut.io.sdram.din.expect(0x1234.U)
     }
   }
 
@@ -491,18 +491,18 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       dut.io.mem.wr.poke(true)
       dut.io.mem.addr.poke(2)
       waitForActive(dut)
-      dut.io.ctrl.addr.expect(0.U)
+      dut.io.sdram.addr.expect(0.U)
       dut.clock.step()
       dut.io.mem.din.poke(0x1234)
       dut.clock.step()
 
       // Write
       dut.io.mem.din.poke(0x5678)
-      dut.io.ctrl.addr.expect(0x401.U)
-      dut.io.ctrl.din.expect(0x1234.U)
+      dut.io.sdram.addr.expect(0x401.U)
+      dut.io.sdram.din.expect(0x1234.U)
       dut.clock.step()
       dut.io.mem.burstDone.expect(true)
-      dut.io.ctrl.din.expect(0x5678.U)
+      dut.io.sdram.din.expect(0x5678.U)
     }
   }
 
@@ -514,24 +514,24 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       dut.io.mem.wr.poke(true)
       dut.io.mem.addr.poke(2)
       waitForActive(dut)
-      dut.io.ctrl.addr.expect(0.U)
+      dut.io.sdram.addr.expect(0.U)
       dut.clock.step()
       dut.io.mem.din.poke(0x1234)
       dut.clock.step()
 
       // Write
       dut.io.mem.din.poke(0x5678)
-      dut.io.ctrl.addr.expect(0x401.U)
-      dut.io.ctrl.din.expect(0x1234.U)
+      dut.io.sdram.addr.expect(0x401.U)
+      dut.io.sdram.din.expect(0x1234.U)
       dut.clock.step()
       dut.io.mem.din.poke(0x1234)
-      dut.io.ctrl.din.expect(0x5678.U)
+      dut.io.sdram.din.expect(0x5678.U)
       dut.clock.step()
       dut.io.mem.din.poke(0x5678)
-      dut.io.ctrl.din.expect(0x1234.U)
+      dut.io.sdram.din.expect(0x1234.U)
       dut.clock.step()
       dut.io.mem.burstDone.expect(true)
-      dut.io.ctrl.din.expect(0x5678.U)
+      dut.io.sdram.din.expect(0x5678.U)
     }
   }
 
@@ -543,36 +543,36 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       dut.io.mem.wr.poke(true)
       dut.io.mem.addr.poke(2)
       waitForActive(dut)
-      dut.io.ctrl.addr.expect(0.U)
+      dut.io.sdram.addr.expect(0.U)
       dut.clock.step()
       dut.io.mem.din.poke(0x1234)
       dut.clock.step()
 
       // Write
       dut.io.mem.din.poke(0x5678)
-      dut.io.ctrl.addr.expect(0x401.U)
-      dut.io.ctrl.din.expect(0x1234.U)
+      dut.io.sdram.addr.expect(0x401.U)
+      dut.io.sdram.din.expect(0x1234.U)
       dut.clock.step()
       dut.io.mem.din.poke(0x1234)
-      dut.io.ctrl.din.expect(0x5678.U)
+      dut.io.sdram.din.expect(0x5678.U)
       dut.clock.step()
       dut.io.mem.din.poke(0x5678)
-      dut.io.ctrl.din.expect(0x1234.U)
+      dut.io.sdram.din.expect(0x1234.U)
       dut.clock.step()
       dut.io.mem.din.poke(0x1234)
-      dut.io.ctrl.din.expect(0x5678.U)
+      dut.io.sdram.din.expect(0x5678.U)
       dut.clock.step()
       dut.io.mem.din.poke(0x5678)
-      dut.io.ctrl.din.expect(0x1234.U)
+      dut.io.sdram.din.expect(0x1234.U)
       dut.clock.step()
       dut.io.mem.din.poke(0x1234)
-      dut.io.ctrl.din.expect(0x5678.U)
+      dut.io.sdram.din.expect(0x5678.U)
       dut.clock.step()
       dut.io.mem.din.poke(0x5678)
-      dut.io.ctrl.din.expect(0x1234.U)
+      dut.io.sdram.din.expect(0x1234.U)
       dut.clock.step()
       dut.io.mem.burstDone.expect(true)
-      dut.io.ctrl.din.expect(0x5678.U)
+      dut.io.sdram.din.expect(0x5678.U)
     }
   }
 
