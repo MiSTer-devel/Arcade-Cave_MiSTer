@@ -65,8 +65,8 @@ class DDR(config: DDRConfig) extends Module {
   val io = IO(new Bundle {
     /** Memory port */
     val mem = Flipped(DDRIO(config))
-    /** Control port */
-    val ctrl = DDRIO(config)
+    /** DDR port */
+    val ddr = DDRIO(config)
     /** Debug port */
     val debug = new Bundle {
       val burstCounter = Output(UInt())
@@ -85,14 +85,14 @@ class DDR(config: DDRConfig) extends Module {
   )
 
   // Read/write control signals
-  val read = stateReg === State.idle && io.mem.rd && !io.ctrl.waitReq
-  val write = stateReg === State.idle && io.mem.wr && !io.ctrl.waitReq
+  val read = stateReg === State.idle && io.mem.rd && !io.ddr.waitReq
+  val write = stateReg === State.idle && io.mem.wr && !io.ddr.waitReq
 
   // Burst counter enable flag
   val burstCounterEnable =
     write ||
-      (stateReg === State.writeWait && !io.ctrl.waitReq) ||
-      (stateReg === State.readWait && io.ctrl.valid)
+      (stateReg === State.writeWait && !io.ddr.waitReq) ||
+      (stateReg === State.readWait && io.ddr.valid)
 
   // Burst counter
   val (burstCounter, burstCounterWrap) = Counter.dynamic(burstLength, burstCounterEnable)
@@ -105,14 +105,14 @@ class DDR(config: DDRConfig) extends Module {
   ))
 
   // Connect I/O ports
-  io.mem <> io.ctrl
+  io.mem <> io.ddr
 
   // Outputs
   io.mem.burstDone := burstCounterWrap
-  io.ctrl.rd := io.mem.rd && stateReg =/= State.readWait
-  io.ctrl.wr := io.mem.wr || stateReg === State.writeWait
-  io.ctrl.addr := io.mem.addr + config.offset.U
-  io.ctrl.burstCount := burstLength
+  io.ddr.rd := io.mem.rd && stateReg =/= State.readWait
+  io.ddr.wr := io.mem.wr || stateReg === State.writeWait
+  io.ddr.addr := io.mem.addr + config.offset.U
+  io.ddr.burstCount := burstLength
   io.debug.burstCounter := burstCounter
 
   printf(p"DDR(state: $stateReg, counter: $burstCounter ($burstCounterWrap)\n")

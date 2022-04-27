@@ -53,22 +53,22 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
       dut.io.mem.burstCount.poke(1)
       dut.io.mem.rd.poke(true)
       dut.io.mem.addr.poke(1)
-      dut.io.ctrl.rd.expect(true)
-      dut.io.ctrl.addr.expect(1.U)
+      dut.io.ddr.rd.expect(true)
+      dut.io.ddr.addr.expect(1.U)
       dut.clock.step()
-      dut.io.ctrl.rd.expect(false)
+      dut.io.ddr.rd.expect(false)
 
       // Data
       dut.io.mem.rd.poke(false)
-      dut.io.ctrl.valid.poke(true)
-      dut.io.ctrl.dout.poke(0x1234)
+      dut.io.ddr.valid.poke(true)
+      dut.io.ddr.dout.poke(0x1234)
       dut.io.mem.burstDone.expect(true)
       dut.io.mem.valid.expect(true)
       dut.io.mem.dout.expect(0x1234.U)
       dut.clock.step()
 
       // Done
-      dut.io.ctrl.rd.expect(false)
+      dut.io.ddr.rd.expect(false)
       dut.io.mem.burstDone.expect(false)
     }
   }
@@ -79,26 +79,26 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
       dut.io.mem.burstCount.poke(2)
       dut.io.mem.rd.poke(true)
       dut.io.mem.addr.poke(1)
-      dut.io.ctrl.rd.expect(true)
-      dut.io.ctrl.addr.expect(1.U)
+      dut.io.ddr.rd.expect(true)
+      dut.io.ddr.addr.expect(1.U)
       dut.clock.step()
-      dut.io.ctrl.rd.expect(false)
+      dut.io.ddr.rd.expect(false)
 
       // Data
       dut.io.mem.rd.poke(false)
-      dut.io.ctrl.valid.poke(true)
-      dut.io.ctrl.dout.poke(0x1234)
+      dut.io.ddr.valid.poke(true)
+      dut.io.ddr.dout.poke(0x1234)
       dut.io.mem.valid.expect(true)
       dut.io.mem.dout.expect(0x1234.U)
       dut.clock.step()
-      dut.io.ctrl.dout.poke(0x5678)
+      dut.io.ddr.dout.poke(0x5678)
       dut.io.mem.burstDone.expect(true)
       dut.io.mem.valid.expect(true)
       dut.io.mem.dout.expect(0x5678.U)
       dut.clock.step()
 
       // Done
-      dut.io.ctrl.rd.expect(false)
+      dut.io.ddr.rd.expect(false)
       dut.io.mem.burstDone.expect(false)
     }
   }
@@ -107,13 +107,13 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
     test(mkDDR()) { dut =>
       dut.io.mem.burstCount.poke(2)
       dut.io.mem.rd.poke(true)
-      dut.io.ctrl.burstCount.expect(2.U)
+      dut.io.ddr.burstCount.expect(2.U)
       dut.clock.step()
       dut.io.mem.burstCount.poke(1)
-      dut.io.ctrl.valid.poke(true)
-      dut.io.ctrl.burstCount.expect(2.U)
+      dut.io.ddr.valid.poke(true)
+      dut.io.ddr.burstCount.expect(2.U)
       dut.clock.step(2)
-      dut.io.ctrl.burstCount.expect(1.U)
+      dut.io.ddr.burstCount.expect(1.U)
     }
   }
 
@@ -121,11 +121,11 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
     test(mkDDR()) { dut =>
       dut.io.mem.burstCount.poke(2)
       dut.io.mem.rd.poke(true)
-      dut.io.ctrl.waitReq.poke(true)
+      dut.io.ddr.waitReq.poke(true)
       dut.io.debug.burstCounter.expect(0.U)
       dut.clock.step()
-      dut.io.ctrl.waitReq.poke(false)
-      dut.io.ctrl.valid.poke(true)
+      dut.io.ddr.waitReq.poke(false)
+      dut.io.ddr.valid.poke(true)
       dut.io.debug.burstCounter.expect(0.U)
       dut.clock.step()
       dut.io.debug.burstCounter.expect(0.U)
@@ -145,14 +145,14 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
       dut.io.mem.wr.poke(true)
       dut.io.mem.addr.poke(1)
       dut.io.mem.din.poke(0x1234)
-      dut.io.ctrl.wr.expect(true)
-      dut.io.ctrl.addr.expect(1.U)
-      dut.io.ctrl.din.expect(0x1234.U)
+      dut.io.ddr.wr.expect(true)
+      dut.io.ddr.addr.expect(1.U)
+      dut.io.ddr.din.expect(0x1234.U)
       dut.clock.step()
       dut.io.mem.wr.poke(false)
 
       // Done
-      dut.io.ctrl.wr.expect(false)
+      dut.io.ddr.wr.expect(false)
       dut.io.mem.burstDone.expect(false)
     }
   }
@@ -164,21 +164,21 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
       dut.io.mem.wr.poke(true)
       dut.io.mem.addr.poke(1)
       dut.io.mem.din.poke(0x1234)
-      dut.io.ctrl.wr.expect(true)
-      dut.io.ctrl.addr.expect(1.U)
-      dut.io.ctrl.din.expect(0x1234.U)
+      dut.io.ddr.wr.expect(true)
+      dut.io.ddr.addr.expect(1.U)
+      dut.io.ddr.din.expect(0x1234.U)
       dut.clock.step()
 
       // Data
       dut.io.mem.wr.poke(false)
       dut.io.mem.din.poke(0x5678)
-      dut.io.ctrl.wr.expect(true)
-      dut.io.ctrl.din.expect(0x5678.U)
+      dut.io.ddr.wr.expect(true)
+      dut.io.ddr.din.expect(0x5678.U)
       dut.io.mem.burstDone.expect(true)
       dut.clock.step()
 
       // Done
-      dut.io.ctrl.wr.expect(false)
+      dut.io.ddr.wr.expect(false)
       dut.io.mem.burstDone.expect(false)
     }
   }
@@ -187,12 +187,12 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
     test(mkDDR()) { dut =>
       dut.io.mem.burstCount.poke(2)
       dut.io.mem.wr.poke(true)
-      dut.io.ctrl.burstCount.expect(2.U)
+      dut.io.ddr.burstCount.expect(2.U)
       dut.clock.step()
       dut.io.mem.burstCount.poke(1)
-      dut.io.ctrl.burstCount.expect(2.U)
+      dut.io.ddr.burstCount.expect(2.U)
       dut.clock.step(2)
-      dut.io.ctrl.burstCount.expect(1.U)
+      dut.io.ddr.burstCount.expect(1.U)
     }
   }
 
@@ -200,10 +200,10 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
     test(mkDDR()) { dut =>
       dut.io.mem.burstCount.poke(2)
       dut.io.mem.wr.poke(true)
-      dut.io.ctrl.waitReq.poke(true)
+      dut.io.ddr.waitReq.poke(true)
       dut.io.debug.burstCounter.expect(0.U)
       dut.clock.step()
-      dut.io.ctrl.waitReq.poke(false)
+      dut.io.ddr.waitReq.poke(false)
       dut.io.debug.burstCounter.expect(0.U)
       dut.clock.step()
       dut.io.debug.burstCounter.expect(1.U)
