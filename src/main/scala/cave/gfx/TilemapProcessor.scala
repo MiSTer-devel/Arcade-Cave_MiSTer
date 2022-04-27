@@ -50,8 +50,8 @@ class TilemapProcessor extends Module {
   val io = IO(new Bundle {
     /** Video port */
     val video = Input(new VideoIO)
-    /** Layer port */
-    val layer = LayerIO()
+    /** Layer control port */
+    val ctrl = LayerCtrlIO()
     /** Manual offset */
     val offset = Input(UVec2(Config.LAYER_SCROLL_WIDTH.W))
     /** Palette entry output */
@@ -59,15 +59,15 @@ class TilemapProcessor extends Module {
   })
 
   // Decode the line effect for the current scanline
-  val lineEffectReg = RegEnable(LineEffect.decode(io.layer.lineRam.dout), io.video.clockEnable)
+  val lineEffectReg = RegEnable(LineEffect.decode(io.ctrl.lineRam.dout), io.video.clockEnable)
 
   // Enable flags
-  val layerEnable = io.layer.enable && io.layer.format =/= Config.GFX_FORMAT_UNKNOWN.U && io.layer.regs.enable
-  val rowScrollEnable = io.layer.rowScrollEnable && io.layer.regs.rowScrollEnable
-  val rowSelectEnable = io.layer.rowSelectEnable && io.layer.regs.rowSelectEnable
+  val layerEnable = io.ctrl.enable && io.ctrl.format =/= Config.GFX_FORMAT_UNKNOWN.U && io.ctrl.regs.enable
+  val rowScrollEnable = io.ctrl.rowScrollEnable && io.ctrl.regs.rowScrollEnable
+  val rowSelectEnable = io.ctrl.rowSelectEnable && io.ctrl.regs.rowSelectEnable
 
   // Pixel position
-  val pos = io.video.pos + io.layer.regs.scroll + io.offset
+  val pos = io.video.pos + io.ctrl.regs.scroll + io.offset
 
   // Apply line effects
   val pos_ = {
@@ -77,40 +77,40 @@ class TilemapProcessor extends Module {
   }
 
   // Pixel offset
-  val offset = TilemapProcessor.tileOffset(io.layer, pos_)
+  val offset = TilemapProcessor.tileOffset(io.ctrl, pos_)
 
   // Layer RAM address
-  val layerRamAddr = TilemapProcessor.layerRamAddr(io.layer, pos_)
+  val layerRamAddr = TilemapProcessor.layerRamAddr(io.ctrl, pos_)
 
   // Decode tile
-  val tile = Mux(io.layer.regs.tileSize,
-    Tile.decode16x16(io.layer.vram16x16.dout),
-    Tile.decode8x8(io.layer.vram8x8.dout)
+  val tile = Mux(io.ctrl.regs.tileSize,
+    Tile.decode16x16(io.ctrl.vram16x16.dout),
+    Tile.decode8x8(io.ctrl.vram8x8.dout)
   )
 
   // Latch signals
-  val latchTile = io.video.clockEnable && Mux(io.layer.regs.tileSize, offset.x === 10.U, offset.x === 2.U)
-  val latchColor = io.video.clockEnable && Mux(io.layer.regs.tileSize, offset.x === 15.U, offset.x === 7.U)
+  val latchTile = io.video.clockEnable && Mux(io.ctrl.regs.tileSize, offset.x === 10.U, offset.x === 2.U)
+  val latchColor = io.video.clockEnable && Mux(io.ctrl.regs.tileSize, offset.x === 15.U, offset.x === 7.U)
   val latchPix = io.video.clockEnable && offset.x(2, 0) === 7.U
 
   // Tile registers
   val tileReg = RegEnable(tile, latchTile)
   val priorityReg = RegEnable(tileReg.priority, latchColor)
   val colorReg = RegEnable(tileReg.colorCode, latchColor)
-  val pixReg = RegEnable(TilemapProcessor.decodePixels(io.layer.tileRom.dout, io.layer.format, offset), latchPix)
+  val pixReg = RegEnable(TilemapProcessor.decodePixels(io.ctrl.tileRom.dout, io.ctrl.format, offset), latchPix)
 
   // Palette entry
   val pen = PaletteEntry(priorityReg, colorReg, pixReg(offset.x(2, 0)))
 
   // Outputs
-  io.layer.lineRam.rd := true.B // read-only
-  io.layer.lineRam.addr := pos.y
-  io.layer.vram8x8.rd := true.B // read-only
-  io.layer.vram8x8.addr := layerRamAddr
-  io.layer.vram16x16.rd := true.B // read-only
-  io.layer.vram16x16.addr := layerRamAddr
-  io.layer.tileRom.rd := io.layer.format =/= Config.GFX_FORMAT_UNKNOWN.U
-  io.layer.tileRom.addr := TilemapProcessor.tileRomAddr(io.layer, tileReg.code, offset)
+  io.ctrl.lineRam.rd := true.B // read-only
+  io.ctrl.lineRam.addr := pos.y
+  io.ctrl.vram8x8.rd := true.B // read-only
+  io.ctrl.vram8x8.addr := layerRamAddr
+  io.ctrl.vram16x16.rd := true.B // read-only
+  io.ctrl.vram16x16.addr := layerRamAddr
+  io.ctrl.tileRom.rd := io.ctrl.format =/= Config.GFX_FORMAT_UNKNOWN.U
+  io.ctrl.tileRom.addr := TilemapProcessor.tileRomAddr(io.ctrl, tileReg.code, offset)
   io.pen := Mux(layerEnable, pen, PaletteEntry.zero)
 }
 
@@ -118,42 +118,42 @@ object TilemapProcessor {
   /**
    * Calculate the layer RAM address for a tile.
    *
-   * @param layer The layer bundle.
-   * @param pos   The absolute position of the pixel in the tilemap.
+   * @param ctrl The layer control bundle.
+   * @param pos  The absolute position of the pixel in the tilemap.
    * @return A memory address.
    */
-  private def layerRamAddr(layer: LayerIO, pos: UVec2): UInt = {
+  private def layerRamAddr(ctrl: LayerCtrlIO, pos: UVec2): UInt = {
     val large = pos.y(8, 4) ## (pos.x(8, 4) + 1.U)
     val small = pos.y(8, 3) ## (pos.x(8, 3) + 1.U)
-    Mux(layer.regs.tileSize, large, small)
+    Mux(ctrl.regs.tileSize, large, small)
   }
 
   /**
    * Calculates the pixel offset for a tile.
    *
-   * @param layer The layer bundle.
-   * @param pos   The absolute position of the pixel in the tilemap.
+   * @param ctrl The layer control bundle.
+   * @param pos  The absolute position of the pixel in the tilemap.
    * @return A position relative to the tile.
    */
-  private def tileOffset(layer: LayerIO, pos: UVec2): UVec2 = {
-    val x = Mux(layer.regs.tileSize, pos.x(3, 0), pos.x(2, 0))
-    val y = Mux(layer.regs.tileSize, pos.y(3, 0), pos.y(2, 0))
+  private def tileOffset(ctrl: LayerCtrlIO, pos: UVec2): UVec2 = {
+    val x = Mux(ctrl.regs.tileSize, pos.x(3, 0), pos.x(2, 0))
+    val y = Mux(ctrl.regs.tileSize, pos.y(3, 0), pos.y(2, 0))
     UVec2(x, y)
   }
 
   /**
    * Calculates the tile ROM byte address for the given tile code.
    *
-   * @param layer  The layer bundle.
+   * @param ctrl   The layer control bundle.
    * @param code   The tile code.
    * @param offset The pixel offset.
    * @return A memory address.
    */
-  private def tileRomAddr(layer: LayerIO, code: UInt, offset: UVec2): UInt = {
-    val format8x8x4 = !layer.regs.tileSize && layer.format === Config.GFX_FORMAT_4BPP.U
-    val format8x8x8 = !layer.regs.tileSize && layer.format === Config.GFX_FORMAT_8BPP.U
-    val format16x16x4 = layer.regs.tileSize && layer.format === Config.GFX_FORMAT_4BPP.U
-    val format16x16x8 = layer.regs.tileSize && layer.format === Config.GFX_FORMAT_8BPP.U
+  private def tileRomAddr(ctrl: LayerCtrlIO, code: UInt, offset: UVec2): UInt = {
+    val format8x8x4 = !ctrl.regs.tileSize && ctrl.format === Config.GFX_FORMAT_4BPP.U
+    val format8x8x8 = !ctrl.regs.tileSize && ctrl.format === Config.GFX_FORMAT_8BPP.U
+    val format16x16x4 = ctrl.regs.tileSize && ctrl.format === Config.GFX_FORMAT_4BPP.U
+    val format16x16x8 = ctrl.regs.tileSize && ctrl.format === Config.GFX_FORMAT_8BPP.U
 
     MuxCase(0.U, Seq(
       format8x8x4 -> code ## offset.y(2, 1) ## 0.U(3.W),

@@ -100,11 +100,11 @@ class Cave extends Module {
   gpu.io.gameConfig <> io.gameConfig
   gpu.io.options <> io.options
   0.until(Config.LAYER_COUNT).foreach { i =>
-    gpu.io.layer(i).format := io.gameConfig.layer(i).format
-    gpu.io.layer(i).enable := io.options.layerEnable.layer(i)
-    gpu.io.layer(i).rowScrollEnable := io.options.rowScrollEnable
-    gpu.io.layer(i).rowSelectEnable := io.options.rowSelectEnable
-    gpu.io.layer(i).tileRom <> io.layerTileRom(i)
+    gpu.io.layerCtrl(i).format := io.gameConfig.layer(i).format
+    gpu.io.layerCtrl(i).enable := io.options.layerEnable.layer(i)
+    gpu.io.layerCtrl(i).rowScrollEnable := io.options.rowScrollEnable
+    gpu.io.layerCtrl(i).rowSelectEnable := io.options.rowSelectEnable
+    gpu.io.layerCtrl(i).tileRom <> io.layerTileRom(i)
   }
   gpu.io.spriteCtrl.tileRom <> io.spriteTileRom
   gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
@@ -227,10 +227,10 @@ class Cave extends Module {
 
     // GPU
     0.until(Config.LAYER_COUNT).foreach { i =>
-      gpu.io.layer(i).regs := withClock(io.videoClock) { ShiftRegister(Layer.decode(layerRegs(i).io.regs.asUInt), 2) }
-      gpu.io.layer(i).vram8x8 <> layerRam8x8(i).io.portB
-      gpu.io.layer(i).vram16x16 <> layerRam16x16(i).io.portB
-      gpu.io.layer(i).lineRam <> lineRam(i).io.portB
+      gpu.io.layerCtrl(i).regs := withClock(io.videoClock) { ShiftRegister(Layer.decode(layerRegs(i).io.regs.asUInt), 2) }
+      gpu.io.layerCtrl(i).vram8x8 <> layerRam8x8(i).io.portB
+      gpu.io.layerCtrl(i).vram16x16 <> layerRam16x16(i).io.portB
+      gpu.io.layerCtrl(i).lineRam <> lineRam(i).io.portB
     }
     gpu.io.spriteCtrl.bank := videoRegs.io.regs.asUInt(64)
     gpu.io.spriteCtrl.vram <> spriteRam.io.portB

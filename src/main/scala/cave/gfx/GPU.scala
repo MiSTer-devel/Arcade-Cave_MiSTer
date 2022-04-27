@@ -52,8 +52,8 @@ class GPU extends Module {
     val gameConfig = Input(GameConfig())
     /** Options port */
     val options = OptionsIO()
-    /** Layer ports */
-    val layer = Vec(Config.LAYER_COUNT, LayerIO())
+    /** Layer control ports */
+    val layerCtrl = Vec(Config.LAYER_COUNT, LayerCtrlIO())
     /** Sprite control port */
     val spriteCtrl = SpriteCtrlIO()
     /** Palette RAM port */
@@ -88,20 +88,20 @@ class GPU extends Module {
     // Layer 0 processor
     val layer0Processor = Module(new TilemapProcessor)
     layer0Processor.io.video <> io.video
-    layer0Processor.io.layer <> io.layer(0)
+    layer0Processor.io.ctrl <> io.layerCtrl(0)
     layer0Processor.io.offset := UVec2(0x6b.U, 0x11.U)
 
     // Layer 1 processor
     val layer1Processor = Module(new TilemapProcessor)
     layer1Processor.io.video <> io.video
-    layer1Processor.io.layer <> io.layer(1)
+    layer1Processor.io.ctrl <> io.layerCtrl(1)
     layer1Processor.io.offset := UVec2(0x6c.U, 0x11.U)
 
     // Layer 2 processor
     val layer2Processor = Module(new TilemapProcessor)
     layer2Processor.io.video <> io.video
-    layer2Processor.io.layer <> io.layer(2)
-    layer2Processor.io.offset := UVec2(Mux(io.layer(2).regs.tileSize, 0x6d.U, 0x75.U), 0x11.U)
+    layer2Processor.io.ctrl <> io.layerCtrl(2)
+    layer2Processor.io.offset := UVec2(Mux(io.layerCtrl(2).regs.tileSize, 0x6d.U, 0x75.U), 0x11.U)
 
     // Color mixer
     val colorMixer = Module(new ColorMixer)

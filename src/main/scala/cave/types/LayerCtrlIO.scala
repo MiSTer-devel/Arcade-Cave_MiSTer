@@ -36,8 +36,8 @@ import axon.mem.ReadMemIO
 import cave.Config
 import chisel3._
 
-/** An bundle that contains all the required signals for the layer processor. */
-class LayerIO extends Bundle {
+/** An bundle that contains control signals for the layer processor. */
+class LayerCtrlIO extends Bundle {
   /** Graphics format */
   val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))
   /** Enable the layer output */
@@ -58,6 +58,6 @@ class LayerIO extends Bundle {
   val tileRom = new LayerRomIO
 }
 
-object LayerIO {
-  def apply() = new LayerIO
+object LayerCtrlIO {
+  def apply() = new LayerCtrlIO
 }
