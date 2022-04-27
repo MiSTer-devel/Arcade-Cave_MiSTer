@@ -37,13 +37,6 @@ import axon.util.Counter
 import chisel3.util._
 import chisel3._
 
-/** Write DMA IO */
-class WriteDMAIO(config: DMAConfig) extends WriteMemIO(config.addrWidth, config.dataWidth)
-
-object WriteDMAIO {
-  def apply(config: DMAConfig) = new WriteDMAIO(config)
-}
-
 /**
  * The write direct memory access (DMA) controller copies data from DDR memory to a memory device.
  *
@@ -60,7 +53,7 @@ class WriteDMA(config: DMAConfig) extends Module {
     /** The base address of the target memory device */
     val baseAddr = Input(UInt(config.addrWidth.W))
     /** DMA port */
-    val dma = WriteDMAIO(config)
+    val dma = WriteMemIO(config.addrWidth, config.dataWidth)
     /** DDR port */
     val ddr = BurstReadMemIO(config.addrWidth, config.dataWidth)
   })

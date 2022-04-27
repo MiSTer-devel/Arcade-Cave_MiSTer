@@ -37,13 +37,6 @@ import axon.util.Counter
 import chisel3.util._
 import chisel3._
 
-/** Read DMA IO */
-class ReadDMAIO(config: DMAConfig) extends ReadMemIO(config.addrWidth, config.dataWidth)
-
-object ReadDMAIO {
-  def apply(config: DMAConfig) = new ReadDMAIO(config)
-}
-
 /**
  * The read direct memory access (DMA) controller copies data from a memory device to DDR memory.
  *
@@ -60,7 +53,7 @@ class ReadDMA(config: DMAConfig) extends Module {
     /** The base address of the target memory device */
     val baseAddr = Input(UInt(config.addrWidth.W))
     /** DMA port */
-    val dma = ReadDMAIO(config)
+    val dma = ReadMemIO(config.addrWidth, config.dataWidth)
     /** DDR port */
     val ddr = BurstWriteMemIO(config.addrWidth, config.dataWidth)
   })
