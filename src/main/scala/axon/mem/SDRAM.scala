@@ -116,7 +116,7 @@ case class SDRAMConfig(clockFreq: Double,
                        tRCD: Double = 18,
                        tRP: Double = 18,
                        tWR: Double = 12,
-                       tREFI: Double = 7800) {
+                       tREFI: Double = 7800) extends BusConfig {
   /** The width of the address bus (i.e. the byte width of all banks, rows, and columns). */
   val addrWidth = bankWidth + rowWidth + colWidth + 1
   /** The SDRAM clock period (ns). */

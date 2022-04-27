@@ -54,7 +54,7 @@ object DDRIO {
  * @param dataWidth The width of the data bus.
  * @param offset    The offset of the address.
  */
-case class DDRConfig(addrWidth: Int = 32, dataWidth: Int = 64, offset: Int = 0)
+case class DDRConfig(addrWidth: Int = 32, dataWidth: Int = 64, offset: Int = 0) extends BusConfig
 
 /**
  * Handles reading/writing data to a DDR memory device.

@@ -50,9 +50,11 @@ trait BurstIO {
  * @param dataWidth The width of the data bus.
  */
 class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addrWidth, dataWidth) with BurstIO {
+  def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
+
   /** Converts the interface to read-write. */
   def asBurstReadWriteMemIO: BurstReadWriteMemIO = {
-    val mem = Wire(Flipped(BurstReadWriteMemIO(addrWidth, dataWidth)))
+    val mem = Wire(Flipped(BurstReadWriteMemIO(this)))
     mem.rd := rd
     mem.wr := false.B
     mem.burstCount := burstCount
@@ -93,6 +95,8 @@ class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addr
 object BurstReadMemIO {
   def apply(addrWidth: Int, dataWidth: Int) = new BurstReadMemIO(addrWidth, dataWidth)
 
+  def apply(config: BusConfig) = new BurstReadMemIO(config)
+
   /**
    * Multiplexes requests from multiple write-only memory interface to a single write-only memory
    * interfaces. The request is routed to the first enabled interface.
@@ -121,9 +125,11 @@ object BurstReadMemIO {
  * @param dataWidth The width of the data bus.
  */
 class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(addrWidth, dataWidth) with BurstIO {
+  def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
+
   /** Converts the interface to read-write. */
   def asBurstReadWriteMemIO: BurstReadWriteMemIO = {
-    val mem = Wire(Flipped(BurstReadWriteMemIO(addrWidth, dataWidth)))
+    val mem = Wire(Flipped(BurstReadWriteMemIO(this)))
     mem.rd := false.B
     mem.wr := wr
     mem.burstCount := burstCount
@@ -161,6 +167,8 @@ class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(ad
 
 object BurstWriteMemIO {
   def apply(addrWidth: Int, dataWidth: Int) = new BurstWriteMemIO(addrWidth, dataWidth)
+
+  def apply(config: BusConfig) = new BurstWriteMemIO(config)
 }
 
 /**
@@ -170,9 +178,11 @@ object BurstWriteMemIO {
  * @param dataWidth The width of the data bus.
  */
 class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWriteMemIO(addrWidth, dataWidth) with BurstIO {
+  def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
+
   /** Converts the interface to read-only. */
   def asBurstReadMemIO: BurstReadMemIO = {
-    val mem = Wire(Flipped(BurstReadMemIO(addrWidth, dataWidth)))
+    val mem = Wire(Flipped(BurstReadMemIO(this)))
     rd := mem.rd
     wr := false.B
     burstCount := mem.burstCount
@@ -188,7 +198,7 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
 
   /** Converts the interface to write-only. */
   def asBurstWriteMemIO: BurstWriteMemIO = {
-    val mem = Wire(Flipped(BurstWriteMemIO(addrWidth, dataWidth)))
+    val mem = Wire(Flipped(BurstWriteMemIO(this)))
     rd := false.B
     wr := mem.wr
     burstCount := mem.burstCount
@@ -229,6 +239,8 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
 
 object BurstReadWriteMemIO {
   def apply(addrWidth: Int, dataWidth: Int) = new BurstReadWriteMemIO(addrWidth, dataWidth)
+
+  def apply(config: BusConfig) = new BurstReadWriteMemIO(config)
 
   /**
    * Multiplexes requests from multiple read-write memory interface to a single read-write memory
