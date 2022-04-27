@@ -97,15 +97,6 @@ class WriteDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers 
     }
   }
 
-  it should "add the base address to the DDR memory address" in {
-    test(mkDMA()) { dut =>
-      dut.io.enable.poke(true)
-      dut.io.ddr.addr.expect(0.U)
-      dut.io.baseAddr.poke(1)
-      dut.io.ddr.addr.expect(1.U)
-    }
-  }
-
   it should "copy data from DDR memory to the memory device" in {
     test(mkDMA()) { dut =>
       dut.io.enable.poke(true)

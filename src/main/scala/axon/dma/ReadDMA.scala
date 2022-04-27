@@ -50,8 +50,6 @@ class ReadDMA(config: DMAConfig) extends Module {
     val start = Input(Bool())
     /** Asserted when the DMA controller is ready */
     val ready = Output(Bool())
-    /** The base address of the target memory device */
-    val baseAddr = Input(UInt(config.addrWidth.W))
     /** DMA port */
     val dma = ReadMemIO(config)
     /** DDR port */
@@ -72,7 +70,7 @@ class ReadDMA(config: DMAConfig) extends Module {
   // Calculate the DDR memory address
   val ddrAddr = {
     val n = log2Ceil(config.burstLength * 8)
-    io.baseAddr + (burstCounter << n).asUInt
+    (burstCounter << n).asUInt
   }
 
   // Toggle the busy register
