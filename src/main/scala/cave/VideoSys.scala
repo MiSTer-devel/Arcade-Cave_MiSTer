@@ -87,7 +87,7 @@ class VideoSys extends Module {
     video <> io.video
 
     // Frame buffer page flipper
-    val pageFlipper = Module(new PageFlipper(Config.SYSTEM_FRAME_BUFFER_DDR_OFFSET))
+    val pageFlipper = Module(new PageFlipper(Config.SYSTEM_FRAME_BUFFER_BASE_ADDR))
     pageFlipper.io.lowLat := io.lowLat
     pageFlipper.io.swapRead := Util.rising(io.frameBufferCtrl.vBlank)
     pageFlipper.io.swapWrite := Util.rising(io.video.vBlank)

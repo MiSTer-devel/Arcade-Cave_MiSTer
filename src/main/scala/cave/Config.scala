@@ -69,10 +69,10 @@ object Config {
   /** The width of the pulse generated when a player presses the coin button */
   val PLAYER_COIN_PULSE_WIDTH = (100000000 / CPU_CLOCK_PERIOD).ceil.toInt // 100ms
 
-  /** The byte offset of the IOCTL data stored in DDR. */
-  val IOCTL_DOWNLOAD_DDR_OFFSET = 0x30000000
-  /** The byte offset of the MiSTer system frame buffer in DDR. */
-  val SYSTEM_FRAME_BUFFER_DDR_OFFSET = 0x24000000
+  /** The base address of the IOCTL data stored in DDR. */
+  val IOCTL_DOWNLOAD_BASE_ADDR = 0x30000000
+  /** The base address of the system frame buffer in DDR. */
+  val SYSTEM_FRAME_BUFFER_BASE_ADDR = 0x24000000
 
   val PROG_ROM_ADDR_WIDTH = 20 // 1MB
   val PROG_ROM_DATA_WIDTH = 16
