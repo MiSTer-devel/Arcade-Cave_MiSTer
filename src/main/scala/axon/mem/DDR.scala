@@ -37,17 +37,6 @@ import chisel3._
 import chisel3.util._
 
 /**
- * An interface for reading and writing to DDR memory.
- *
- * @param config The DDR configuration.
- */
-class DDRIO(config: DDRConfig) extends BurstReadWriteMemIO(config.addrWidth, config.dataWidth)
-
-object DDRIO {
-  def apply(config: DDRConfig) = new DDRIO(config: DDRConfig)
-}
-
-/**
  * Represents the DDR memory configuration.
  *
  * @param addrWidth The width of the address bus.
@@ -64,9 +53,9 @@ case class DDRConfig(addrWidth: Int = 32, dataWidth: Int = 64, offset: Int = 0) 
 class DDR(config: DDRConfig) extends Module {
   val io = IO(new Bundle {
     /** Memory port */
-    val mem = Flipped(DDRIO(config))
+    val mem = Flipped(BurstReadWriteMemIO(config))
     /** DDR port */
-    val ddr = DDRIO(config)
+    val ddr = BurstReadWriteMemIO(config)
     /** Debug port */
     val debug = new Bundle {
       val burstCounter = Output(UInt())

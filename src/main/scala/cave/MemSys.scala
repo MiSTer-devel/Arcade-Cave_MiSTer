@@ -45,9 +45,9 @@ class MemSys extends Module {
     /** IOCTL port */
     val ioctl = IOCTL()
     /** DDR port */
-    val ddr = DDRIO(Config.ddrConfig)
+    val ddr = BurstReadWriteMemIO(Config.ddrConfig)
     /** SDRAM port */
-    val sdram = SDRAMIO(Config.sdramConfig)
+    val sdram = BurstReadWriteMemIO(Config.sdramConfig)
     /** Program ROM port */
     val progRom = Flipped(new ProgRomIO)
     /** Sound ROM port */
@@ -59,7 +59,7 @@ class MemSys extends Module {
     /** Sprite tile ROM port */
     val spriteTileRom = Flipped(new SpriteRomIO)
     /** System frame buffer port */
-    val systemFrameBuffer = Flipped(BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
+    val systemFrameBuffer = Flipped(BurstWriteMemIO(Config.ddrConfig))
   })
 
   // The DDR download cache is used to buffer IOCTL data, so that complete words can be written to
