@@ -53,9 +53,9 @@ class ReadDMA(config: DMAConfig) extends Module {
     /** The base address of the target memory device */
     val baseAddr = Input(UInt(config.addrWidth.W))
     /** DMA port */
-    val dma = ReadMemIO(config.addrWidth, config.dataWidth)
+    val dma = ReadMemIO(config)
     /** DDR port */
-    val ddr = BurstWriteMemIO(config.addrWidth, config.dataWidth)
+    val ddr = BurstWriteMemIO(config)
   })
 
   // Registers

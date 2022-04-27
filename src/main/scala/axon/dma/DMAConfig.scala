@@ -32,6 +32,8 @@
 
 package axon.dma
 
+import axon.mem.BusConfig
+
 /**
  * Represents a DMA configuration.
  *
@@ -43,7 +45,7 @@ package axon.dma
 case class DMAConfig(addrWidth: Int = 32,
                      dataWidth: Int = 64,
                      numWords: Int,
-                     burstLength: Int) {
+                     burstLength: Int) extends BusConfig {
   /** The number of bursts. */
   val numBursts = numWords / burstLength
 }
