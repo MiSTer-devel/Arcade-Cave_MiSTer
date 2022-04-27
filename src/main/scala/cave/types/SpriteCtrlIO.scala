@@ -36,8 +36,8 @@ import axon.mem.ReadMemIO
 import cave.Config
 import chisel3._
 
-/** An bundle that contains all the required signals for the sprite processor. */
-class SpriteIO extends Bundle {
+/** An bundle that contains control signals for the sprite processor. */
+class SpriteCtrlIO extends Bundle {
   /** Graphics format */
   val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))
   /** Enable the layer output */
@@ -58,6 +58,6 @@ class SpriteIO extends Bundle {
   val tileRom = new SpriteRomIO
 }
 
-object SpriteIO {
-  def apply() = new SpriteIO
+object SpriteCtrlIO {
+  def apply() = new SpriteCtrlIO
 }

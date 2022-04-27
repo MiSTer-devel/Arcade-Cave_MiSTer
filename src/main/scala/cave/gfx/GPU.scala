@@ -54,8 +54,8 @@ class GPU extends Module {
     val options = OptionsIO()
     /** Layer ports */
     val layer = Vec(Config.LAYER_COUNT, LayerIO())
-    /** Sprite port */
-    val sprite = SpriteIO()
+    /** Sprite control port */
+    val spriteCtrl = SpriteCtrlIO()
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
     /** Video port */
@@ -81,7 +81,7 @@ class GPU extends Module {
 
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
-  spriteProcessor.io.sprite <> io.sprite
+  spriteProcessor.io.ctrl <> io.spriteCtrl
   spriteProcessor.io.frameBuffer <> spriteFrameBuffer.io.portA.asWriteMemIO
 
   withClockAndReset(io.videoClock, io.videoReset) {

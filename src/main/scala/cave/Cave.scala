@@ -106,13 +106,13 @@ class Cave extends Module {
     gpu.io.layer(i).rowSelectEnable := io.options.rowSelectEnable
     gpu.io.layer(i).tileRom <> io.layerTileRom(i)
   }
-  gpu.io.sprite.tileRom <> io.spriteTileRom
-  gpu.io.sprite.format := io.gameConfig.sprite.format
-  gpu.io.sprite.enable := io.options.layerEnable.sprite
-  gpu.io.sprite.start := Util.rising(ShiftRegister(frameStart, 2))
-  gpu.io.sprite.flip := io.options.flip
-  gpu.io.sprite.rotate := io.options.rotate
-  gpu.io.sprite.zoom := io.gameConfig.sprite.zoom
+  gpu.io.spriteCtrl.tileRom <> io.spriteTileRom
+  gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
+  gpu.io.spriteCtrl.enable := io.options.layerEnable.sprite
+  gpu.io.spriteCtrl.start := Util.rising(ShiftRegister(frameStart, 2))
+  gpu.io.spriteCtrl.flip := io.options.flip
+  gpu.io.spriteCtrl.rotate := io.options.rotate
+  gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
   gpu.io.rgb <> io.rgb
   gpu.io.systemFrameBuffer <> io.systemFrameBuffer
 
@@ -232,8 +232,8 @@ class Cave extends Module {
       gpu.io.layer(i).vram16x16 <> layerRam16x16(i).io.portB
       gpu.io.layer(i).lineRam <> lineRam(i).io.portB
     }
-    gpu.io.sprite.bank := videoRegs.io.regs.asUInt(64)
-    gpu.io.sprite.vram <> spriteRam.io.portB
+    gpu.io.spriteCtrl.bank := videoRegs.io.regs.asUInt(64)
+    gpu.io.spriteCtrl.vram <> spriteRam.io.portB
     gpu.io.paletteRam <> paletteRam.io.portB
 
     // YMZ280B
