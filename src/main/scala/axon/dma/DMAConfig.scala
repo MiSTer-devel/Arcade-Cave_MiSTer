@@ -37,15 +37,15 @@ import axon.mem.BusConfig
 /**
  * Represents a DMA configuration.
  *
- * @param addrWidth   The width of the DMA address bus.
- * @param dataWidth   The width of the DMA data bus.
- * @param numWords    The number of words to transfer.
- * @param burstLength The length of the DDR burst.
+ * @param addrWidth  The width of the DMA address bus.
+ * @param dataWidth  The width of the DMA data bus.
+ * @param depth      The total number of words to transfer.
+ * @param burstCount The number of words to transfer during a burst.
  */
 case class DMAConfig(addrWidth: Int = 32,
                      dataWidth: Int = 64,
-                     numWords: Int,
-                     burstLength: Int) extends BusConfig {
+                     depth: Int,
+                     burstCount: Int) extends BusConfig {
   /** The number of bursts. */
-  val numBursts = numWords / burstLength
+  val numBursts = depth / burstCount
 }

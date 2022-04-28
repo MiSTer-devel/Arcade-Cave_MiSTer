@@ -38,53 +38,72 @@ import chisel3.util._
 import chisel3._
 
 /**
- * The write direct memory access (DMA) controller copies data from DDR memory to a memory device.
+ * The read direct memory access (DMA) controller copies data from a bursted read-only memory to a
+ * write-only memory.
  *
  * @param config The DMA configuration.
  */
 class WriteDMA(config: DMAConfig) extends Module {
+  assert(config.depth % config.burstCount == 0, s"The number of words to transfer must be divisible by the burst count")
+
   val io = IO(new Bundle {
-    /** Asserted when the DMA controller is enabled */
+    /** Enable the DMA controller */
     val enable = Input(Bool())
-    /** Asserted when a DMA transfer should be started */
+    /** Start a DMA transfer */
     val start = Input(Bool())
-    /** Asserted when the DMA controller is ready */
-    val ready = Output(Bool())
-    /** DMA port */
-    val dma = WriteMemIO(config)
-    /** DDR port */
-    val ddr = BurstReadMemIO(config)
+    /** Asserted when the DMA controller is busy */
+    val busy = Output(Bool())
+    /** Read memory port */
+    val in = BurstReadMemIO(config)
+    /** Write memory port */
+    val out = WriteMemIO(config)
   })
 
   // Registers
-  val busyReg = RegInit(false.B)
+  val readWaitReg = RegInit(false.B)
+  val writeWaitReg = RegInit(false.B)
 
   // Control signals
-  val read = io.enable && busyReg
-  val effectiveRead = read && !io.ddr.waitReq
+  val busy = readWaitReg || writeWaitReg
+  val read = io.enable && readWaitReg
+  val write = io.enable && writeWaitReg && RegNext(io.in.valid)
+  val latch = io.in.valid
+  val effectiveRead = read && !io.in.waitReq
 
   // Counters
-  val (wordCounter, wordCounterDone) = Counter.static(config.numWords, enable = effectiveRead)
-  val (burstCounter, burstCounterDone) = Counter.static(config.numBursts, enable = io.ddr.burstDone)
+  val (writeAddr, writeAddrWrap) = Counter.static(config.depth, enable = write)
+  val (burstCounter, burstCounterWrap) = Counter.static(config.numBursts, enable = io.in.burstDone)
 
-  // Calculate the DDR memory address
-  val ddrAddr = {
-    val n = log2Ceil(config.burstLength * 8)
+  // Calculate read memory address
+  val readAddr = {
+    val n = log2Ceil(config.burstCount * 8)
     (burstCounter << n).asUInt
   }
 
-  // Toggle the busy register
-  when(io.start) { busyReg := true.B }.elsewhen(burstCounterDone) { busyReg := false.B }
+  // Toggle read wait register
+  when(burstCounterWrap && effectiveRead) {
+    readWaitReg := false.B
+  }.elsewhen(io.start && !busy) {
+    readWaitReg := true.B
+  }
+
+  // Toggle write wait register
+  when(writeAddrWrap) {
+    writeWaitReg := false.B
+  }.elsewhen(latch) {
+    writeWaitReg := true.B
+  }
 
   // Outputs
-  io.ready := !busyReg
-  io.dma.wr := true.B // write-only
-  io.dma.addr := Mux(effectiveRead, wordCounter +& 1.U, wordCounter)
-  io.dma.mask := Fill(io.dma.maskWidth, 1.U)
-  io.dma.din := io.ddr.dout
-  io.ddr.rd := read
-  io.ddr.addr := ddrAddr
-  io.ddr.burstCount := config.burstLength.U
+  io.busy := busy
+  io.in.rd := read
+  io.in.burstCount := config.burstCount.U
+  io.in.addr := readAddr
+  io.out.wr := write
+  io.out.addr := writeAddr
+  io.out.din := RegEnable(io.in.dout, latch)
+  io.out.mask := Fill(io.out.maskWidth, 1.U)
 
-  printf(p"WriteDMA(busy: $busyReg, burstCounter: $burstCounter ($burstCounterDone), wordCounter: $wordCounter ($wordCounterDone))\n")
+  printf(p"ReadDMA(start: ${ io.start }, readWait: $readWaitReg, writeWait: $writeWaitReg, busy: $busy, read: $read, write: $write, latch: $latch , inAddr: 0x${ Hexadecimal(io.in.addr) }, inData: 0x${ Hexadecimal(io.in.dout) }, outAddr: 0x${ Hexadecimal(io.out.addr) }, outData: 0x${ Hexadecimal(io.out.din) }, waitReq: ${io.in
+    .waitReq}, valid: ${ io.in.valid }, burst: $burstCounter ($burstCounterWrap))\n")
 }
