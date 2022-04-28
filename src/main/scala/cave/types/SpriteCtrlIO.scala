@@ -44,6 +44,8 @@ class SpriteCtrlIO extends Bundle {
   val enable = Input(Bool())
   /** Start a new frame */
   val start = Input(Bool())
+  /** Asserted while the sprite processor is busy */
+  val busy = Output(Bool())
   /** Flip the layer */
   val flip = Input(Bool())
   /** Rotate the layer 90 degrees */

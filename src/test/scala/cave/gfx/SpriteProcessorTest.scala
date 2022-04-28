@@ -139,10 +139,10 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
 
   it should "assert the busy flag when the processor has started" in {
     test(mkProcessor()) { dut =>
-      dut.io.busy.expect(false)
+      dut.io.ctrl.busy.expect(false)
       dut.io.ctrl.start.poke(true)
       dut.clock.step()
-      dut.io.busy.expect(true)
+      dut.io.ctrl.busy.expect(true)
     }
   }
 
@@ -156,9 +156,9 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
       dut.io.ctrl.tileRom.valid.poke(false)
       dut.io.ctrl.tileRom.burstDone.poke(true)
       waitForDone(dut)
-      dut.io.busy.expect(true)
+      dut.io.ctrl.busy.expect(true)
       dut.clock.step(244)
-      dut.io.busy.expect(false)
+      dut.io.ctrl.busy.expect(false)
     }
   }
 

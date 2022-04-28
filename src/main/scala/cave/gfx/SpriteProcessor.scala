@@ -47,8 +47,6 @@ import chisel3.util._
  */
 class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) extends Module {
   val io = IO(new Bundle {
-    /** Asserted while the sprite processor is busy */
-    val busy = Output(Bool())
     /** Control port */
     val ctrl = SpriteCtrlIO()
     /** Frame buffer port */
@@ -192,7 +190,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   }
 
   // Outputs
-  io.busy := stateReg =/= State.idle
+  io.ctrl.busy := stateReg =/= State.idle
   io.ctrl.vram.rd := stateReg === State.load
   io.ctrl.vram.addr := spriteRamAddr
   io.ctrl.tileRom.rd := tileRomRead

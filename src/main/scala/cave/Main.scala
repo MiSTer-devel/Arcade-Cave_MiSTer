@@ -33,12 +33,13 @@
 package cave
 
 import axon._
-import axon.dma.ReadDMA
+import axon.dma.{ReadDMA, WriteDMA}
 import axon.gfx._
 import axon.mem._
 import axon.mister._
 import axon.snd._
 import axon.types._
+import cave.fb.PageFlipper
 import cave.types._
 import chisel3._
 import chisel3.stage._
@@ -148,6 +149,28 @@ class Main extends Module {
   cave.io.video <> videoSys.io.video
   cave.io.rgb <> io.rgb
   cave.io.systemFrameBuffer <> videoSys.io.systemFrameBuffer
+
+//  val pageFlipper = Module(new PageFlipper(Config.SPRITE_FRAME_BUFFER_BASE_ADDR))
+//  pageFlipper.io.mode := true.B
+//  pageFlipper.io.addrA := Util.rising(io.video.vBlank)
+//  pageFlipper.io.addrB := Util.falling(cave.io.spriteProcessorBusy)
+
+  // Sprite frame buffer DMA controller
+  val spriteFrameBufferDma = Module(new ReadDMA(Config.spriteFrameBufferDmaConfig))
+  spriteFrameBufferDma.io.enable := downloadDoneReg
+  spriteFrameBufferDma.io.start := Util.falling(cave.io.spriteProcessorBusy) // sprite processor is done
+  spriteFrameBufferDma.io.in <> cave.io.spriteFrameBufferDma
+  spriteFrameBufferDma.io.out.mapAddr(_ + Config.SPRITE_FRAME_BUFFER_BASE_ADDR.U) <> memSys.io.spriteFrameBuffer
+
+  // The sprite line buffer DMA controller reads pixel data from the sprite frame buffer (in DDR
+  // memory) and writes it to the sprite line buffer.
+  val spriteLineBufferDma = Module(new WriteDMA(Config.spriteLineBufferDmaConfig))
+  spriteLineBufferDma.io.enable := downloadDoneReg
+  spriteLineBufferDma.io.start := Util.rising(ShiftRegister(io.video.hBlank, 2)) // start of HBLANK
+  spriteLineBufferDma.io.in.mapAddr(
+    _ + Config.SPRITE_FRAME_BUFFER_BASE_ADDR.U + ((io.video.pos.y + 1.U) * (Config.SCREEN_WIDTH * 2).U)
+  ) <> memSys.io.spriteLineBuffer // FIXME: Avoid expensive multiply
+  spriteLineBufferDma.io.out <> cave.io.spriteLineBufferDma
 
   // System LED outputs
   io.led.power := false.B

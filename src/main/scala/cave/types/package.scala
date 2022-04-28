@@ -58,4 +58,10 @@ package object types {
 
   /** System frame buffer IO */
   class SystemFrameBufferIO extends WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SYSTEM_FRAME_BUFFER_DATA_WIDTH)
+
+  /** Sprite frame buffer DMA IO */
+  class SpriteFrameBufferDmaIO extends ReadMemIO(Config.ddrConfig)
+
+  /** Sprite line buffer DMA IO */
+  class SpriteLineBufferDmaIO extends WriteMemIO(Config.ddrConfig)
 }

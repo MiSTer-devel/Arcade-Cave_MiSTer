@@ -34,7 +34,6 @@ package cave
 
 import axon._
 import axon.cpu.m68k._
-import axon.dma.ReadDMAIO
 import axon.gfx._
 import axon.mem._
 import axon.snd._
@@ -81,8 +80,14 @@ class Cave extends Module {
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** RGB output */
     val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
+    /** Sprite line buffer DMA port */
+    val spriteLineBufferDma = Flipped(new SpriteLineBufferDmaIO)
+    /** Sprite frame buffer DMA port */
+    val spriteFrameBufferDma = Flipped(new SpriteFrameBufferDmaIO)
     /** System frame buffer port */
     val systemFrameBuffer = new SystemFrameBufferIO
+    /** Asserted while the sprite processor is busy */
+    val spriteProcessorBusy = Output(Bool())
   })
 
   // Wires
@@ -114,7 +119,12 @@ class Cave extends Module {
   gpu.io.spriteCtrl.rotate := io.options.rotate
   gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
   gpu.io.rgb <> io.rgb
+  gpu.io.spriteFrameBufferDma <> io.spriteFrameBufferDma
+  gpu.io.spriteLineBufferDma <> io.spriteLineBufferDma
   gpu.io.systemFrameBuffer <> io.systemFrameBuffer
+
+  // Set sprite processor busy flag
+  io.spriteProcessorBusy := gpu.io.spriteCtrl.busy
 
   // The CPU and registers run in the CPU clock domain
   withClockAndReset(io.cpuClock, io.cpuReset) {

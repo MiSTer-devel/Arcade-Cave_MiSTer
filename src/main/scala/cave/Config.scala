@@ -73,6 +73,8 @@ object Config {
   val IOCTL_DOWNLOAD_BASE_ADDR = 0x30000000
   /** The base address of the system frame buffer in DDR. */
   val SYSTEM_FRAME_BUFFER_BASE_ADDR = 0x24000000
+  /** The base address of the sprite frame buffer in DDR. */
+  val SPRITE_FRAME_BUFFER_BASE_ADDR = 0x24200000
 
   val PROG_ROM_ADDR_WIDTH = 20 // 1MB
   val PROG_ROM_DATA_WIDTH = 16
@@ -214,5 +216,17 @@ object Config {
     vFrontPorch = 12,
     hRetrace = 20,
     vRetrace = 2,
+  )
+
+  /** Sprite frame buffer DMA configuration */
+  val spriteFrameBufferDmaConfig = DMAConfig(
+    depth = Config.SCREEN_WIDTH * Config.SCREEN_HEIGHT * SPRITE_FRAME_BUFFER_DATA_WIDTH / Config.ddrConfig.dataWidth,
+    burstCount = 64
+  )
+
+  /** Sprite line buffer DMA configuration */
+  val spriteLineBufferDmaConfig = DMAConfig(
+    depth = Config.SCREEN_WIDTH * SPRITE_FRAME_BUFFER_DATA_WIDTH / Config.ddrConfig.dataWidth,
+    burstCount = 16
   )
 }
