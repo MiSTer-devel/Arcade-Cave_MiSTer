@@ -36,50 +36,42 @@ import chisel3._
 import chisel3.util._
 
 /**
- * Generates the read/write page addresses for the frame buffer.
- *
- * Triple buffering is be used by default, for buttery-smooth 60Hz HDMI output. When low latency
- * mode is enabled, then double buffering is used instead.
+ * Generates the memory addresses for frame buffer page flipping, with either double or triple
+ * buffering.
  *
  * @param baseAddr The base memory address of the frame buffer.
  */
 class PageFlipper(baseAddr: Int) extends Module {
   val io = IO(new Bundle {
-    /** Low latency mode (double buffering) */
-    val lowLat = Input(Bool())
-    /** Swap the read page */
-    val swapRead = Input(Bool())
-    /** Swap the write page */
-    val swapWrite = Input(Bool())
-    /** Read page address */
-    val readPageAddr = Output(UInt(32.W))
-    /** Write page address */
-    val writePageAddr = Output(UInt(32.W))
+    /** Enables triple buffering when asserted, otherwise double buffering is enabled. */
+    val mode = Input(Bool())
+    /** Swap page A */
+    val swapA = Input(Bool())
+    /** Swap page B */
+    val swapB = Input(Bool())
+    /** Memory address for page A */
+    val addrA = Output(UInt(32.W))
+    /** Memory address for page B */
+    val addrB = Output(UInt(32.W))
   })
 
   // Registers
-  val readIndexReg = RegInit(0.U(2.W))
-  val writeIndexReg = RegInit(1.U(2.W))
+  val aIndexReg = RegInit(0.U(2.W))
+  val bIndexReg = RegInit(1.U(2.W))
 
-  // Swap read index
-  when(io.swapRead) {
-    readIndexReg := Mux(io.lowLat,
-      ~writeIndexReg(0),
-      PageFlipper.nextIndex(readIndexReg, writeIndexReg)
-    )
+  // Swap A index
+  when(io.swapA) {
+    aIndexReg := Mux(io.mode, PageFlipper.nextIndex(aIndexReg, bIndexReg), ~bIndexReg(0))
   }
 
-  // Swap write index
-  when(io.swapWrite) {
-    writeIndexReg := Mux(io.lowLat,
-      ~writeIndexReg(0),
-      PageFlipper.nextIndex(writeIndexReg, readIndexReg)
-    )
+  // Swap B index
+  when(io.swapB) {
+    bIndexReg := Mux(io.mode, PageFlipper.nextIndex(bIndexReg, aIndexReg), ~bIndexReg(0))
   }
 
   // Outputs
-  io.readPageAddr := baseAddr.U(31, 21) ## readIndexReg(1, 0) ## 0.U(19.W)
-  io.writePageAddr := baseAddr.U(31, 21) ## writeIndexReg(1, 0) ## 0.U(19.W)
+  io.addrA := baseAddr.U(31, 21) ## aIndexReg(1, 0) ## 0.U(19.W)
+  io.addrB := baseAddr.U(31, 21) ## bIndexReg(1, 0) ## 0.U(19.W)
 }
 
 object PageFlipper {
