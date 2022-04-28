@@ -80,13 +80,13 @@ class Cave extends Module {
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** RGB output */
     val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
-    /** Sprite line buffer DMA port */
-    val spriteLineBufferDma = Flipped(new SpriteLineBufferDmaIO)
-    /** Sprite frame buffer DMA port */
-    val spriteFrameBufferDma = Flipped(new SpriteFrameBufferDmaIO)
+    /** Sprite line buffer port */
+    val spriteLineBuffer = new SpriteLineBufferIO
+    /** Sprite frame buffer port */
+    val spriteFrameBuffer = new SpriteFrameBufferIO
     /** System frame buffer port */
     val systemFrameBuffer = new SystemFrameBufferIO
-    /** Asserted while the sprite processor is busy */
+    /** Asserted when the sprite processor is busy */
     val spriteProcessorBusy = Output(Bool())
   })
 
@@ -119,8 +119,8 @@ class Cave extends Module {
   gpu.io.spriteCtrl.rotate := io.options.rotate
   gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
   gpu.io.rgb <> io.rgb
-  gpu.io.spriteFrameBufferDma <> io.spriteFrameBufferDma
-  gpu.io.spriteLineBufferDma <> io.spriteLineBufferDma
+  gpu.io.spriteLineBuffer <> io.spriteLineBuffer
+  gpu.io.spriteFrameBuffer <> io.spriteFrameBuffer
   gpu.io.systemFrameBuffer <> io.systemFrameBuffer
 
   // Set sprite processor busy flag

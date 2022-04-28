@@ -56,12 +56,9 @@ package object types {
   /** Sprite frame buffer IO */
   class SpriteFrameBufferIO extends WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SPRITE_FRAME_BUFFER_DATA_WIDTH)
 
+  /** Sprite line buffer IO */
+  class SpriteLineBufferIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH_X, Config.SPRITE_FRAME_BUFFER_DATA_WIDTH)
+
   /** System frame buffer IO */
   class SystemFrameBufferIO extends WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SYSTEM_FRAME_BUFFER_DATA_WIDTH)
-
-  /** Sprite frame buffer DMA IO */
-  class SpriteFrameBufferDmaIO extends ReadMemIO(Config.ddrConfig)
-
-  /** Sprite line buffer DMA IO */
-  class SpriteLineBufferDmaIO extends WriteMemIO(Config.ddrConfig)
 }

@@ -62,43 +62,18 @@ class GPU extends Module {
     val video = Flipped(VideoIO())
     /** RGB output */
     val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
-    /** Sprite line buffer DMA port */
-    val spriteLineBufferDma = Flipped(new SpriteLineBufferDmaIO)
-    /** Sprite frame buffer DMA port */
-    val spriteFrameBufferDma = Flipped(new SpriteFrameBufferDmaIO)
+    /** Sprite line buffer port */
+    val spriteLineBuffer = new SpriteLineBufferIO
+    /** Sprite frame buffer port */
+    val spriteFrameBuffer = new SpriteFrameBufferIO
     /** System frame buffer port */
     val systemFrameBuffer = new SystemFrameBufferIO
   })
 
-  // Sprite frame buffer
-  val spriteFrameBuffer = Module(new DualPortRam(
-    addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
-    dataWidthA = Config.SPRITE_FRAME_BUFFER_DATA_WIDTH,
-    depthA = Some(Config.FRAME_BUFFER_DEPTH),
-    addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH - 2, // FIXME: use constants
-    dataWidthB = Config.SPRITE_FRAME_BUFFER_DATA_WIDTH * 4,
-    depthB = Some(Config.FRAME_BUFFER_DEPTH / 4)
-  ))
-  spriteFrameBuffer.io.portB <> io.spriteFrameBufferDma
-
-  // Sprite line buffer
-  val spriteLineBuffer = Module(new TrueDualPortRam(
-    addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH_X - 2,
-    dataWidthA = Config.SPRITE_FRAME_BUFFER_DATA_WIDTH * 4,
-    depthA = Some(Config.SCREEN_WIDTH / 4),
-    addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH_X, // FIXME: use constants
-    dataWidthB = Config.SPRITE_FRAME_BUFFER_DATA_WIDTH,
-    depthB = Some(Config.SCREEN_WIDTH)
-  ))
-  spriteLineBuffer.io.portA.asWriteMemIO <> io.spriteLineBufferDma
-  spriteLineBuffer.io.clockB := io.videoClock
-  spriteLineBuffer.io.portB.rd := io.video.displayEnable
-  spriteLineBuffer.io.portB.addr := io.video.pos.x
-
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
   spriteProcessor.io.ctrl <> io.spriteCtrl
-  spriteProcessor.io.frameBuffer <> spriteFrameBuffer.io.portA
+  spriteProcessor.io.frameBuffer <> io.spriteFrameBuffer
 
   withClockAndReset(io.videoClock, io.videoReset) {
     // Layer 0 processor
@@ -122,20 +97,24 @@ class GPU extends Module {
     // Color mixer
     val colorMixer = Module(new ColorMixer)
     colorMixer.io.gameConfig <> io.gameConfig
-    colorMixer.io.spritePen := spriteLineBuffer.io.portB.dout.asTypeOf(new PaletteEntry)
+    colorMixer.io.spritePen := io.spriteLineBuffer.dout.asTypeOf(new PaletteEntry)
     colorMixer.io.layer0Pen := layer0Processor.io.pen
     colorMixer.io.layer1Pen := layer1Processor.io.pen
     colorMixer.io.layer2Pen := layer2Processor.io.pen
     colorMixer.io.paletteRam <> io.paletteRam
 
-    // Decode color mixer data and write it to the RGB output
-    io.rgb := GPU.decodeRGB(colorMixer.io.dout)
+    // Set sprite line buffer signals
+    io.spriteLineBuffer.rd := io.video.displayEnable
+    io.spriteLineBuffer.addr := io.video.pos.x
 
     // Decode color mixer data and write it to the system frame buffer
     io.systemFrameBuffer.wr := RegNext(io.video.displayEnable)
     io.systemFrameBuffer.addr := RegNext(GPU.frameBufferAddr(io.video.pos, io.options.flip, io.options.rotate))
     io.systemFrameBuffer.mask := 0xf.U // 4 bytes
     io.systemFrameBuffer.din := RegNext(GPU.decodeABGR(colorMixer.io.dout))
+
+    // Decode color mixer data and write it to the RGB output
+    io.rgb := GPU.decodeRGB(colorMixer.io.dout)
   }
 }
 
