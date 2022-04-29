@@ -42,7 +42,7 @@ import chisel3._
 import chisel3.util._
 
 /**
- * A frame buffer used for rendering sprites.
+ * The sprite frame buffer used for buffering pixel data rendered by the sprite layer.
  *
  * On the original CAVE arcade hardware, there are two V53C16256H DRAM chips that provide dedicated
  * memory for the sprite frame buffer. There are two of them because double buffering is used.
@@ -64,7 +64,7 @@ class SpriteFrameBuffer extends Module {
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
-    /** Enables the sprite frame buffer  */
+    /** Enables the sprite frame buffer */
     val enable = Input(Bool())
     /** Asserted when the sprite processor has started rendering a frame */
     val frameStart = Input(Bool())
@@ -79,7 +79,7 @@ class SpriteFrameBuffer extends Module {
       /** Frame buffer port */
       val frameBuffer = Flipped(new SpriteFrameBufferIO)
     }
-    /** DDR-side  */
+    /** DDR-side */
     val ddr = new Bundle {
       /** Line buffer port */
       val lineBuffer = BurstReadMemIO(Config.ddrConfig)

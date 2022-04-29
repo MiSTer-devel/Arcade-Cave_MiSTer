@@ -41,7 +41,7 @@ class OptionsIO extends Bundle {
   val sdram = Input(Bool())
   /** CRT offset */
   val offset = Input(SVec2(OptionsIO.SCREEN_OFFSET_WIDTH.W))
-  /** Rotate the video output 90 degrees */
+  /** Rotate the HDMI output 90 degrees */
   val rotate = Input(Bool())
   /** Flip the video output */
   val flip = Input(Bool())

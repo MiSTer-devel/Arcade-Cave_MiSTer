@@ -38,7 +38,7 @@ import axon.mem._
 import axon.mister._
 import axon.snd._
 import axon.types._
-import cave.fb.SpriteFrameBuffer
+import cave.fb._
 import cave.types._
 import chisel3._
 import chisel3.experimental.FlatIO
@@ -71,7 +71,7 @@ class Main extends Module {
     /** IOCTL port */
     val ioctl = IOCTL()
     /** Frame buffer control port */
-    val frameBufferCtrl = mister.FrameBufferCtrlIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
+    val frameBufferCtrl = FrameBufferCtrlIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** Video port */
@@ -118,15 +118,9 @@ class Main extends Module {
   memSys.io.sdram <> sdram.io.mem
 
   // Video subsystem
-  val videoSys = Module(new VideoSys)
-  videoSys.io.videoClock := io.videoClock
-  videoSys.io.videoReset := io.videoReset
-  videoSys.io.lowLat := io.frameBufferCtrl.lowLat
-  videoSys.io.forceBlank := io.cpuReset
+  val videoSys = withClockAndReset(io.videoClock, io.videoReset) { Module(new VideoSys) }
   videoSys.io.options <> io.options
   videoSys.io.video <> io.video
-  videoSys.io.frameBufferCtrl <> io.frameBufferCtrl
-  videoSys.io.ddr <> memSys.io.systemFrameBuffer
 
   // Cave
   val cave = Module(new Cave)
@@ -147,7 +141,6 @@ class Main extends Module {
   cave.io.audio <> io.audio
   cave.io.video <> videoSys.io.video
   cave.io.rgb <> io.rgb
-  cave.io.systemFrameBuffer <> videoSys.io.systemFrameBuffer
 
   // Sprite frame buffer
   val spriteFrameBuffer = Module(new SpriteFrameBuffer)
@@ -161,6 +154,19 @@ class Main extends Module {
   spriteFrameBuffer.io.gpu.frameBuffer <> cave.io.spriteFrameBuffer
   spriteFrameBuffer.io.ddr.lineBuffer <> memSys.io.spriteLineBuffer
   spriteFrameBuffer.io.ddr.frameBuffer <> memSys.io.spriteFrameBuffer
+
+  // System frame buffer
+  val systemFrameBuffer = Module(new SystemFrameBuffer)
+  systemFrameBuffer.io.videoClock := io.videoClock
+  systemFrameBuffer.io.videoReset := io.videoReset
+  systemFrameBuffer.io.enable := io.options.rotate // enable only for rotated HDMI output
+  systemFrameBuffer.io.lowLat := io.frameBufferCtrl.lowLat
+  systemFrameBuffer.io.forceBlank := io.cpuReset
+  systemFrameBuffer.io.rotate := io.options.rotate
+  systemFrameBuffer.io.video <> videoSys.io.video
+  systemFrameBuffer.io.frameBufferCtrl <> io.frameBufferCtrl
+  systemFrameBuffer.io.frameBuffer <> cave.io.systemFrameBuffer
+  systemFrameBuffer.io.ddr <> memSys.io.systemFrameBuffer
 
   // System LED outputs
   io.led.power := false.B
