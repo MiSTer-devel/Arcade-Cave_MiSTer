@@ -41,6 +41,7 @@ import axon.types._
 import cave.fb.SpriteFrameBuffer
 import cave.types._
 import chisel3._
+import chisel3.experimental.FlatIO
 import chisel3.stage._
 
 /**
@@ -50,7 +51,7 @@ import chisel3.stage._
  * memory arbiter, frame buffer) that are not part of the original arcade hardware design.
  */
 class Main extends Module {
-  val io = IO(new Bundle {
+  val io = FlatIO(new Bundle {
     /** Video clock domain */
     val videoClock = Input(Clock())
     /** Video reset */
