@@ -281,7 +281,7 @@ class Cave extends Module {
 
     // Dangun Feveron
     when(io.gameConfig.index === GameConfig.DFEVERON.U) {
-      map(0x000000 to 0x0fffff).readMemT(io.progRom)(addr => addr ## 0.U)
+      map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
       map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
       map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
       map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
@@ -310,7 +310,7 @@ class Cave extends Module {
 
     // DoDonPachi
     when(io.gameConfig.index === GameConfig.DDONPACH.U) {
-      map(0x000000 to 0x0fffff).readMemT(io.progRom)(addr => addr ## 0.U)
+      map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
       map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
       map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
       map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
@@ -343,7 +343,7 @@ class Cave extends Module {
 
     // ESP Ra.De.
     when(io.gameConfig.index === GameConfig.ESPRADE.U) {
-      map(0x000000 to 0x0fffff).readMemT(io.progRom)(addr => addr ## 0.U)
+      map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
       map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
       map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
       map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
@@ -377,7 +377,7 @@ class Cave extends Module {
 
     // Guwange
     when(io.gameConfig.index === GameConfig.GUWANGE.U) {
-      map(0x000000 to 0x0fffff).readMemT(io.progRom)(addr => addr ## 0.U)
+      map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
       map(0x200000 to 0x20ffff).readWriteMem(mainRam.io)
       map(0x300000 to 0x30007f).writeMem(videoRegs.io.mem.asWriteMemIO)
       map(0x300000 to 0x300007).r { (_, offset) =>
@@ -412,7 +412,7 @@ class Cave extends Module {
 
     // Puzzle Uo Poko
     when(io.gameConfig.index === GameConfig.UOPOKO.U) {
-      map(0x000000 to 0x0fffff).readMemT(io.progRom)(addr => addr ## 0.U)
+      map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
       map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
       map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
       map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
