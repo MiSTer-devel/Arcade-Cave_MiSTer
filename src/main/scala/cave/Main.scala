@@ -154,7 +154,8 @@ class Main extends Module {
   spriteFrameBuffer.io.videoClock := io.videoClock
   spriteFrameBuffer.io.videoReset := io.videoReset
   spriteFrameBuffer.io.enable := downloadDoneReg
-  spriteFrameBuffer.io.spriteProcessorBusy := cave.io.spriteProcessorBusy
+  spriteFrameBuffer.io.frameStart := cave.io.frameStart
+  spriteFrameBuffer.io.frameFinish := cave.io.frameFinish
   spriteFrameBuffer.io.video <> videoSys.io.video
   spriteFrameBuffer.io.gpu.lineBuffer <> cave.io.spriteLineBuffer
   spriteFrameBuffer.io.gpu.frameBuffer <> cave.io.spriteFrameBuffer

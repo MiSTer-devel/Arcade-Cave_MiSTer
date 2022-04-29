@@ -42,7 +42,7 @@ import chisel3._
 import chisel3.util._
 
 /**
- * The sprite frame buffer with page flipping.
+ * A frame buffer used for rendering sprites.
  *
  * On the original CAVE arcade hardware, there are two V53C16256H DRAM chips that provide dedicated
  * memory for the sprite frame buffer. There are two of them because double buffering is used.
@@ -66,8 +66,10 @@ class SpriteFrameBuffer extends Module {
     val videoReset = Input(Bool())
     /** Enables the sprite frame buffer  */
     val enable = Input(Bool())
-    /** Asserted when the sprite processor is busy */
-    val spriteProcessorBusy = Input(Bool())
+    /** Asserted when the sprite processor has started rendering a frame */
+    val frameStart = Input(Bool())
+    /** Asserted when the sprite processor has finished rendering a frame */
+    val frameFinish = Input(Bool())
     /** Video port */
     val video = Flipped(VideoIO())
     /** GPU-side */
@@ -86,14 +88,11 @@ class SpriteFrameBuffer extends Module {
     }
   })
 
-  // Asserted when the sprite processor has completed a frame
-  val frameDone = Util.falling(io.spriteProcessorBusy)
-
   // Detect the beginning of the blanking signals
   val hBlankStart = Util.rising(ShiftRegister(io.video.hBlank, 2))
   val vBlankStart = Util.rising(ShiftRegister(io.video.vBlank, 2))
 
-  // Line buffer
+  // Line buffer (320x16BPP)
   val lineBuffer = Module(new TrueDualPortRam(
     addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH_X - 2,
     dataWidthA = Config.SPRITE_FRAME_BUFFER_DATA_WIDTH * 4,
@@ -105,7 +104,7 @@ class SpriteFrameBuffer extends Module {
   lineBuffer.io.clockB := io.videoClock
   lineBuffer.io.portB <> io.gpu.lineBuffer
 
-  // Frame buffer
+  // Frame buffer (320x240x16BPP)
   val frameBuffer = Module(new DualPortRam(
     addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
     dataWidthA = Config.SPRITE_FRAME_BUFFER_DATA_WIDTH,
@@ -118,9 +117,9 @@ class SpriteFrameBuffer extends Module {
 
   // Frame buffer page flipper
   val pageFlipper = Module(new PageFlipper(Config.SPRITE_FRAME_BUFFER_BASE_ADDR))
-  pageFlipper.io.mode := true.B
+  pageFlipper.io.mode := true.B // triple buffering
   pageFlipper.io.swapA := vBlankStart
-  pageFlipper.io.swapB := frameDone
+  pageFlipper.io.swapB := io.frameStart
 
   // Copy next scanline from DDR memory to the line buffer
   val lineBufferDma = Module(new WriteDMA(Config.spriteLineBufferDmaConfig))
@@ -134,7 +133,7 @@ class SpriteFrameBuffer extends Module {
   // Copy frame buffer to DDR memory
   val frameBufferDma = Module(new ReadDMA(Config.spriteFrameBufferDmaConfig))
   frameBufferDma.io.enable := io.enable
-  frameBufferDma.io.start := frameDone
+  frameBufferDma.io.start := io.frameFinish
   frameBufferDma.io.in <> frameBuffer.io.portB
   frameBufferDma.io.out.mapAddr(_ + pageFlipper.io.addrB) <> io.ddr.frameBuffer
 }

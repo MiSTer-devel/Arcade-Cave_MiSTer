@@ -86,8 +86,10 @@ class Cave extends Module {
     val spriteFrameBuffer = new SpriteFrameBufferIO
     /** System frame buffer port */
     val systemFrameBuffer = new SystemFrameBufferIO
-    /** Asserted when the sprite processor is busy */
-    val spriteProcessorBusy = Output(Bool())
+    /** Asserted when the sprite processor has started rendering a frame */
+    val frameStart = Output(Bool())
+    /** Asserted when the sprite processor has finished rendering a frame */
+    val frameFinish = Output(Bool())
   })
 
   // Wires
@@ -123,8 +125,9 @@ class Cave extends Module {
   gpu.io.spriteFrameBuffer <> io.spriteFrameBuffer
   gpu.io.systemFrameBuffer <> io.systemFrameBuffer
 
-  // Set sprite processor busy flag
-  io.spriteProcessorBusy := gpu.io.spriteCtrl.busy
+  // Set frame start/finish flags
+  io.frameStart := gpu.io.spriteCtrl.start
+  io.frameFinish := Util.falling(gpu.io.spriteCtrl.busy)
 
   // The CPU and registers run in the CPU clock domain
   withClockAndReset(io.cpuClock, io.cpuReset) {

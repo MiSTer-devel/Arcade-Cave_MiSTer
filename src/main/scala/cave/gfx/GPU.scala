@@ -103,7 +103,7 @@ class GPU extends Module {
     colorMixer.io.layer2Pen := layer2Processor.io.pen
     colorMixer.io.paletteRam <> io.paletteRam
 
-    // Set sprite line buffer signals
+    // Read next pixel from the sprite line buffer
     io.spriteLineBuffer.rd := io.video.displayEnable
     io.spriteLineBuffer.addr := io.video.pos.x
 
