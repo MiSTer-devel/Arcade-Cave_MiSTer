@@ -21,7 +21,7 @@
         <parameter value="-P:chiselplugin:genBundleElements" />
       </parameters>
       <plugins>
-        <plugin path="$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/edu/berkeley/cs/chisel3-plugin_2.13.8/3.5.1/chisel3-plugin_2.13.8-3.5.1.jar" />
+        <plugin path="$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/edu/berkeley/cs/chisel3-plugin_2.13.8/3.5.3/chisel3-plugin_2.13.8-3.5.3.jar" />
       </plugins>
     </profile>
   </component>

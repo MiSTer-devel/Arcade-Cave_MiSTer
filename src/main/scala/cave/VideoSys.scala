@@ -84,7 +84,7 @@ class VideoSys extends Module {
 
     // Select original or compatibility video timing
     val video = Mux(compatibilityReg, compatibilityVideoTiming.io.video, originalVideoTiming.io.video)
-    video <> io.video
+    io.video := video
 
     // Frame buffer page flipper
     val pageFlipper = Module(new PageFlipper(Config.SYSTEM_FRAME_BUFFER_BASE_ADDR))
