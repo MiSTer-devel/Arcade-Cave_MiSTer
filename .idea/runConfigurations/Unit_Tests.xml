@@ -10,6 +10,7 @@
     <option name="classBuf">
       <list>
         <option value="cave.MemSysTest" />
+        <option value="cave.fb.PageFlipperTest" />
         <option value="cave.types.RegisterFileTest" />
         <option value="cave.gfx.SpriteBlitterTest" />
         <option value="cave.gfx.SpriteDecoderTest" />
@@ -24,7 +25,8 @@
         <option value="axon.mem.MemArbiterTest" />
         <option value="axon.util.PISOTest" />
         <option value="axon.util.CounterTest" />
-        <option value="axon.dma.DMATest" />
+        <option value="axon.dma.WriteDMATest" />
+        <option value="axon.dma.ReadDMATest" />
         <option value="axon.snd.LERPTest" />
         <option value="axon.snd.ADPCMTest" />
         <option value="axon.snd.YMZ280BTest" />

@@ -59,22 +59,29 @@ class PageFlipper(baseAddr: Int) extends Module {
   val aIndexReg = RegInit(0.U(2.W))
   val bIndexReg = RegInit(1.U(2.W))
 
-  // Swap A index
-  when(io.swapA) {
-    aIndexReg := Mux(io.mode, PageFlipper.nextIndex(aIndexReg, bIndexReg), ~bIndexReg(0))
-  }
-
-  // Swap B index
-  when(io.swapB) {
+  // Swap indexes
+  when(io.swapA && io.swapB) {
+    bIndexReg := Mux(io.mode, PageFlipper.nextIndex(bIndexReg, aIndexReg), ~bIndexReg(0))
+    aIndexReg := Mux(io.mode, bIndexReg, ~aIndexReg(0))
+  }.elsewhen(io.swapA) {
+    aIndexReg := Mux(io.mode, PageFlipper.nextIndex(aIndexReg, bIndexReg), ~aIndexReg(0))
+  }.elsewhen(io.swapB) {
     bIndexReg := Mux(io.mode, PageFlipper.nextIndex(bIndexReg, aIndexReg), ~bIndexReg(0))
   }
 
   // Outputs
   io.addrA := baseAddr.U(31, 21) ## aIndexReg(1, 0) ## 0.U(19.W)
   io.addrB := baseAddr.U(31, 21) ## bIndexReg(1, 0) ## 0.U(19.W)
+
+  printf(p"PageFlipper(aIndex: $aIndexReg, bIndex: $bIndexReg)\n")
 }
 
 object PageFlipper {
+  object Mode {
+    val DOUBLE_BUFFER = 0
+    val TRIPLE_BUFFER = 1
+  }
+
   /**
    * Returns the next page index for the given pair of indices.
    *
