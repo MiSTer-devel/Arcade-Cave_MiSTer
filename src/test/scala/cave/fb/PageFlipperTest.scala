@@ -40,7 +40,7 @@ import matchers.should.Matchers
 class PageFlipperTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   it should "flip pages in double buffer mode" in {
     test(new PageFlipper(0x24000000)) { dut =>
-      dut.io.mode.poke(false)
+      dut.io.mode.poke(PageFlipper.DOUBLE_BUFFER)
       dut.io.addrA.expect(0x24000000)
       dut.io.addrB.expect(0x24080000)
 
@@ -68,7 +68,7 @@ class PageFlipperTest extends AnyFlatSpec with ChiselScalatestTester with Matche
 
   it should "flip pages in triple buffer mode" in {
     test(new PageFlipper(0x24000000)) { dut =>
-      dut.io.mode.poke(true)
+      dut.io.mode.poke(PageFlipper.TRIPLE_BUFFER)
       dut.io.addrA.expect(0x24000000)
       dut.io.addrB.expect(0x24080000)
 

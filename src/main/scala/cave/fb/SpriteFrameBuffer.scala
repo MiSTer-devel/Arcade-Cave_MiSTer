@@ -117,7 +117,7 @@ class SpriteFrameBuffer extends Module {
 
   // Frame buffer page flipper
   val pageFlipper = Module(new PageFlipper(Config.SPRITE_FRAME_BUFFER_BASE_ADDR))
-  pageFlipper.io.mode := false.B // double buffering
+  pageFlipper.io.mode := PageFlipper.DOUBLE_BUFFER.U
   pageFlipper.io.swapA := vBlankStart
   pageFlipper.io.swapB := io.frameStart
 

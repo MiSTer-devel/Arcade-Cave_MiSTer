@@ -82,7 +82,7 @@ class SystemFrameBuffer extends Module {
 
   // Frame buffer page flipper
   val pageFlipper = Module(new PageFlipper(Config.SYSTEM_FRAME_BUFFER_BASE_ADDR))
-  pageFlipper.io.mode := !io.lowLat // use double buffering when low latency mode is enabled
+  pageFlipper.io.mode := Mux(io.lowLat, PageFlipper.DOUBLE_BUFFER.U, PageFlipper.TRIPLE_BUFFER.U)
   pageFlipper.io.swapA := Util.rising(ShiftRegister(io.frameBufferCtrl.vBlank, 2))
   pageFlipper.io.swapB := Util.rising(ShiftRegister(io.video.vBlank, 2))
 
