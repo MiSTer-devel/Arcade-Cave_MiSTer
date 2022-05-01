@@ -66,7 +66,7 @@ class ReadMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWid
   /** Address bus */
   val addr = Output(UInt(addrWidth.W))
   /** Data bus */
-  val dout = Input(UInt(dataWidth.W))
+  val dout = Input(Bits(dataWidth.W))
 
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
@@ -166,7 +166,7 @@ class WriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWi
   /** Byte mask */
   val mask = Output(Bits(maskWidth.W))
   /** Data bus */
-  val din = Output(UInt(dataWidth.W))
+  val din = Output(Bits(dataWidth.W))
 
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
