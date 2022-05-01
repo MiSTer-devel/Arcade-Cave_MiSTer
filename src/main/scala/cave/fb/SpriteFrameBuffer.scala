@@ -116,8 +116,10 @@ class SpriteFrameBuffer extends Module {
   frameBuffer.io.portA <> io.gpu.frameBuffer
 
   // Frame buffer page flipper
-  val pageFlipper = Module(new PageFlipper(Config.SPRITE_FRAME_BUFFER_BASE_ADDR))
-  pageFlipper.io.mode := PageFlipper.DOUBLE_BUFFER.U
+  val pageFlipper = withReset(io.videoReset) {
+    Module(new PageFlipper(Config.SPRITE_FRAME_BUFFER_BASE_ADDR))
+  }
+  pageFlipper.io.mode := false.B // use double buffering for sprites
   pageFlipper.io.swapA := vBlankStart
   pageFlipper.io.swapB := io.frameStart
 

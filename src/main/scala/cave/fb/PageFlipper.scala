@@ -43,8 +43,8 @@ import chisel3.util._
  */
 class PageFlipper(baseAddr: Int) extends Module {
   val io = IO(new Bundle {
-    /** Buffer mode */
-    val mode = Input(UInt(1.W))
+    /** Use triple buffering when asserted, otherwise double buffering is used. */
+    val mode = Input(Bool())
     /** Swap page A */
     val swapA = Input(Bool())
     /** Swap page B */
@@ -59,10 +59,7 @@ class PageFlipper(baseAddr: Int) extends Module {
   val aIndexReg = RegInit(0.U(2.W))
   val bIndexReg = RegInit(1.U(2.W))
 
-  when(io.mode === PageFlipper.DOUBLE_BUFFER.U) {
-    when(io.swapA) { aIndexReg := ~aIndexReg(0) }
-    when(io.swapB) { bIndexReg := ~bIndexReg(0) }
-  }.elsewhen(io.mode === PageFlipper.TRIPLE_BUFFER.U) {
+  when(io.mode) {
     when(io.swapA && io.swapB) {
       bIndexReg := PageFlipper.nextIndex(bIndexReg, aIndexReg)
       aIndexReg := bIndexReg
@@ -71,6 +68,9 @@ class PageFlipper(baseAddr: Int) extends Module {
     }.elsewhen(io.swapB) {
       bIndexReg := PageFlipper.nextIndex(bIndexReg, aIndexReg)
     }
+  }.otherwise {
+    when(io.swapA) { aIndexReg := ~aIndexReg(0) }
+    when(io.swapB) { bIndexReg := ~bIndexReg(0) }
   }
 
   // Outputs
@@ -81,11 +81,6 @@ class PageFlipper(baseAddr: Int) extends Module {
 }
 
 object PageFlipper {
-  /** Double buffer mode */
-  val DOUBLE_BUFFER = 0
-  /** Triple buffer mode */
-  val TRIPLE_BUFFER = 1
-
   /**
    * Returns the next page index for the given pair of indices.
    *
