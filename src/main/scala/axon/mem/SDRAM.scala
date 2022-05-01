@@ -36,7 +36,7 @@ import chisel3._
 import chisel3.util._
 
 /**
- * An interface for reading and writing to SDRAM.
+ * An interface for controlling a SDRAM chip.
  *
  * @param config The SDRAM configuration.
  */
@@ -105,7 +105,7 @@ case class SDRAMConfig(clockFreq: Double,
                        tRCD: Double = 18,
                        tRP: Double = 18,
                        tWR: Double = 12,
-                       tREFI: Double = 7800) {
+                       tREFI: Double = 7800) extends BusConfig {
   /** The width of the address bus (i.e. the byte width of all banks, rows, and columns). */
   val addrWidth = bankWidth + rowWidth + colWidth + 1
   /** The SDRAM clock period (ns). */
@@ -177,8 +177,8 @@ class SDRAM(val config: SDRAMConfig) extends Module {
 
   val io = IO(new Bundle {
     /** Memory port */
-    val mem = Flipped(BurstReadWriteMemIO(config.addrWidth, config.dataWidth))
-    /** SDRAM port */
+    val mem = Flipped(BurstReadWriteMemIO(config))
+    /** Control port */
     val sdram = SDRAMIO(config)
     /** Debug port */
     val debug = Output(new Bundle {
@@ -218,8 +218,8 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   val requestReg = RegEnable(request, latch)
 
   // Bank and address registers
-  val bankReg = RegInit(0.U)
-  val addrReg = RegInit(0.U)
+  val bankReg = Reg(UInt())
+  val addrReg = Reg(UInt())
 
   // Data I/O registers
   //

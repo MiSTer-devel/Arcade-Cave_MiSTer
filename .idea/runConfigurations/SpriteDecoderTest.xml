@@ -8,7 +8,7 @@
     </option>
     <option name="testKind" value="Class" />
     <option name="shortenClasspath" value="NONE" />
-    <option name="testClassPath" value="cave.gpu.SpriteDecoderTest" />
+    <option name="testClassPath" value="cave.gfx.SpriteDecoderTest" />
     <option name="workingDirectory" value="$PROJECT_DIR$" />
     <method v="2">
       <option name="Make" enabled="true" />

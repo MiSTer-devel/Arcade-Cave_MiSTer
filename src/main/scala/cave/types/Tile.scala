@@ -41,7 +41,7 @@ class Tile extends Bundle {
   /** Priority */
   val priority = UInt(Config.PRIO_WIDTH.W)
   /** Color code */
-  val colorCode = UInt(Config.COLOR_CODE_WIDTH.W)
+  val colorCode = UInt(Config.PALETTE_WIDTH.W)
   /** Tile code */
   val code = UInt(Tile.CODE_WIDTH.W)
 }
@@ -51,7 +51,29 @@ object Tile {
   val CODE_WIDTH = 18
 
   /**
-   * Decodes a tile from the given data.
+   * Decodes a 16x16 tile from the given data.
+   *
+   * {{{
+   * word   bits                  description
+   * -----+-fedc-ba98-7654-3210-+----------------
+   *    0 | xx-- ---- ---- ---  | priority
+   *      | --xx xxxx ---- ---- | color
+   *    1 | xxxx xxxx xxxx xxxx | code
+   * }}}
+   *
+   * @param data The tile data.
+   */
+  def decode16x16(data: Bits): Tile = {
+    val words = Util.decode(data, 2, 16)
+    val tile = Wire(new Tile)
+    tile.priority := words(0)(15, 14)
+    tile.colorCode := words(0)(13, 8)
+    tile.code := words(1)(15, 0)
+    tile
+  }
+
+  /**
+   * Decodes a 8x8 tile from the given data.
    *
    * {{{
    * word   bits                  description
@@ -62,16 +84,14 @@ object Tile {
    *    1 | xxxx xxxx xxxx xxxx | code lo
    * }}}
    *
-   * @param data     The tile data.
-   * @param tileSize The tile size (8x8 or 16x16).
+   * @param data The tile data.
    */
-  def decode(data: Bits, tileSize: Bool): Tile = {
+  def decode8x8(data: Bits): Tile = {
     val words = Util.decode(data, 2, 16)
     val tile = Wire(new Tile)
     tile.priority := words(0)(15, 14)
     tile.colorCode := words(0)(13, 8)
-    // Small tiles use the high bits in the tile code
-    tile.code := Mux(tileSize, 0.U, words(0)(1, 0)) ## words(1)(15, 0)
+    tile.code := words(0)(1, 0) ## words(1)(15, 0)
     tile
   }
 }

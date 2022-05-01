@@ -32,27 +32,32 @@
 
 package axon.types
 
+import cave.Config
 import chisel3._
 
 /** An interface that contains the user options. */
 class OptionsIO extends Bundle {
-  /** Asserted when SDRAM is enabled */
+  /** SDRAM is available */
   val sdram = Input(Bool())
   /** CRT offset */
-  val offset = Input(new SVec2(OptionsIO.SCREEN_OFFSET_WIDTH))
-  /** Asserted when screen rotation is enabled */
+  val offset = Input(SVec2(OptionsIO.SCREEN_OFFSET_WIDTH.W))
+  /** Rotate the HDMI output 90 degrees */
   val rotate = Input(Bool())
-  /** Asserted when screen flipping is enabled */
+  /** Flip the video output */
   val flip = Input(Bool())
-  /** Asserted when video compatibility (60Hz) mode is enabled */
+  /** Video compatibility (60Hz) mode */
   val compatibility = Input(Bool())
   /** Layer enable flags */
-  val layer = Input(new Bundle {
-    val sprites = Bool()
-    val layer0 = Bool()
-    val layer1 = Bool()
-    val layer2 = Bool()
+  val layerEnable = Input(new Bundle {
+    /** Enable the sprite layer */
+    val sprite = Bool()
+    /** Enable the tilemap layers */
+    val layer = Vec(Config.LAYER_COUNT, Bool())
   })
+  /** Enable the row scroll effect */
+  val rowScrollEnable = Input(Bool())
+  /** Enable the row select effect */
+  val rowSelectEnable = Input(Bool())
   /** Game index */
   val gameIndex = Input(UInt(OptionsIO.GAME_INDEX_WIDTH.W))
 }

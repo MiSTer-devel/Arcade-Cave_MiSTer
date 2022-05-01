@@ -32,17 +32,9 @@
 
 package axon.mem
 
-import axon.Util
 import axon.util.Counter
 import chisel3._
 import chisel3.util._
-
-/** An interface for reading and writing to DDR memory. */
-class DDRIO(config: DDRConfig) extends AsyncReadWriteMemIO(config.addrWidth, config.dataWidth) with BurstIO
-
-object DDRIO {
-  def apply(config: DDRConfig) = new DDRIO(config: DDRConfig)
-}
 
 /**
  * Represents the DDR memory configuration.
@@ -51,9 +43,7 @@ object DDRIO {
  * @param dataWidth The width of the data bus.
  * @param offset    The offset of the address.
  */
-case class DDRConfig(addrWidth: Int = 32,
-                     dataWidth: Int = 64,
-                     offset: Int = 0)
+case class DDRConfig(addrWidth: Int = 32, dataWidth: Int = 64, offset: Int = 0) extends BusConfig
 
 /**
  * Handles reading/writing data to a DDR memory device.
@@ -63,9 +53,9 @@ case class DDRConfig(addrWidth: Int = 32,
 class DDR(config: DDRConfig) extends Module {
   val io = IO(new Bundle {
     /** Memory port */
-    val mem = Flipped(BurstReadWriteMemIO(config.addrWidth, config.dataWidth))
+    val mem = Flipped(BurstReadWriteMemIO(config))
     /** DDR port */
-    val ddr = DDRIO(config)
+    val ddr = BurstReadWriteMemIO(config)
     /** Debug port */
     val debug = new Bundle {
       val burstCounter = Output(UInt())
@@ -78,7 +68,10 @@ class DDR(config: DDRConfig) extends Module {
 
   // Registers
   val stateReg = RegInit(State.idle)
-  val burstLength = Util.latchData(io.mem.burstLength, stateReg === State.idle, stateReg === State.idle)
+  val burstLength = Mux(stateReg === State.idle,
+    io.mem.burstCount,
+    RegEnable(io.mem.burstCount, stateReg === State.idle)
+  )
 
   // Read/write control signals
   val read = stateReg === State.idle && io.mem.rd && !io.ddr.waitReq
@@ -108,7 +101,7 @@ class DDR(config: DDRConfig) extends Module {
   io.ddr.rd := io.mem.rd && stateReg =/= State.readWait
   io.ddr.wr := io.mem.wr || stateReg === State.writeWait
   io.ddr.addr := io.mem.addr + config.offset.U
-  io.ddr.burstLength := burstLength
+  io.ddr.burstCount := burstLength
   io.debug.burstCounter := burstCounter
 
   printf(p"DDR(state: $stateReg, counter: $burstCounter ($burstCounterWrap)\n")

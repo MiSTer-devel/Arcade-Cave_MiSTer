@@ -32,6 +32,7 @@
 
 package cave
 
+import axon.dma.DMAConfig
 import axon.gfx.VideoTimingConfig
 import axon.mem.{DDRConfig, SDRAMConfig}
 import axon.snd.YMZ280BConfig
@@ -64,6 +65,114 @@ object Config {
   val SCREEN_WIDTH = 320
   /** The screen height in pixels */
   val SCREEN_HEIGHT = 240
+
+  /** The width of the pulse generated when a player presses the coin button */
+  val PLAYER_COIN_PULSE_WIDTH = (100000000 / CPU_CLOCK_PERIOD).ceil.toInt // 100ms
+
+  /** The base address of the IOCTL data stored in DDR. */
+  val IOCTL_DOWNLOAD_BASE_ADDR = 0x30000000
+  /** The base address of the system frame buffer in DDR. */
+  val SYSTEM_FRAME_BUFFER_BASE_ADDR = 0x24000000
+  /** The base address of the sprite frame buffer in DDR. */
+  val SPRITE_FRAME_BUFFER_BASE_ADDR = 0x24200000
+
+  val PROG_ROM_ADDR_WIDTH = 20 // 1MB
+  val PROG_ROM_DATA_WIDTH = 16
+
+  val SOUND_ROM_ADDR_WIDTH = 25
+  val SOUND_ROM_DATA_WIDTH = 8
+
+  val EEPROM_ADDR_WIDTH = 7 // 256B
+  val EEPROM_DATA_WIDTH = 16
+
+  val TILE_ROM_ADDR_WIDTH = 32
+  val TILE_ROM_DATA_WIDTH = 64
+
+  val MAIN_RAM_ADDR_WIDTH = 15
+  val MAIN_RAM_DATA_WIDTH = 16
+
+  val SPRITE_RAM_ADDR_WIDTH = 15
+  val SPRITE_RAM_DATA_WIDTH = 16
+  val SPRITE_RAM_GPU_ADDR_WIDTH = 12
+  val SPRITE_RAM_GPU_DATA_WIDTH = 128
+
+  val LAYER_8x8_RAM_ADDR_WIDTH = 13
+  val LAYER_8x8_RAM_GPU_ADDR_WIDTH = 12
+  val LAYER_16x16_RAM_ADDR_WIDTH = 11
+  val LAYER_16x16_RAM_GPU_ADDR_WIDTH = 10
+  val LAYER_RAM_DATA_WIDTH = 16
+  val LAYER_RAM_GPU_DATA_WIDTH = 32
+
+  val LINE_RAM_ADDR_WIDTH = 10
+  val LINE_RAM_DATA_WIDTH = 16
+  val LINE_RAM_GPU_ADDR_WIDTH = 9
+  val LINE_RAM_GPU_DATA_WIDTH = 32
+
+  val PALETTE_RAM_ADDR_WIDTH = 15
+  val PALETTE_RAM_DATA_WIDTH = 16
+  val PALETTE_RAM_GPU_ADDR_WIDTH = 15
+  val PALETTE_RAM_GPU_DATA_WIDTH = 16
+
+  /** The number of tilemap layers */
+  val LAYER_COUNT = 3
+  val LAYER_REGS_COUNT = 3
+  val LAYER_REGS_GPU_DATA_WIDTH = 48
+
+  val VIDEO_REGS_COUNT = 8
+  val VIDEO_REGS_GPU_DATA_WIDTH = 128
+
+  /** The number of bits per color channel for the output RGB signal */
+  val RGB_OUTPUT_BPP = 8
+
+  /** The depth of the frame buffer in words */
+  val FRAME_BUFFER_DEPTH = SCREEN_WIDTH * SCREEN_HEIGHT
+  /** The width of the frame buffer X address */
+  val FRAME_BUFFER_ADDR_WIDTH_X = log2Ceil(SCREEN_WIDTH)
+  /** The width of the frame buffer Y address */
+  val FRAME_BUFFER_ADDR_WIDTH_Y = log2Ceil(SCREEN_HEIGHT)
+  /** The width of the frame buffer address bus */
+  val FRAME_BUFFER_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DEPTH)
+  /** The width of the system frame buffer data bus */
+  val SYSTEM_FRAME_BUFFER_DATA_WIDTH = 32
+  /** The depth of the system frame buffer request queue */
+  val SYSTEM_FRAME_BUFFER_REQUEST_QUEUE_DEPTH = 32
+  /** The width of the sprite frame buffer data bus */
+  val SPRITE_FRAME_BUFFER_DATA_WIDTH = 16
+
+  /** The depth of the layer FIFOs */
+  val FIFO_DEPTH = 64
+
+  /** The width of a priority value */
+  val PRIO_WIDTH = 2
+  /** The width of a color code value */
+  val PALETTE_WIDTH = 6
+  /** The width of palette index (256 colors) */
+  val COLOR_WIDTH = 8
+  /** The width of the layer index value */
+  val LAYER_INDEX_WIDTH = 2
+  /** The width of the layer scroll value */
+  val LAYER_SCROLL_WIDTH = 9
+
+  /** The width of the graphics format value */
+  val GFX_FORMAT_WIDTH = 2
+  /** Unknown graphics format */
+  val GFX_FORMAT_UNKNOWN = 0
+  /** 4BPP graphics format */
+  val GFX_FORMAT_4BPP = 1
+  /** 4BPP MSB graphics format */
+  val GFX_FORMAT_4BPP_MSB = 2
+  /** 8BPP graphics format */
+  val GFX_FORMAT_8BPP = 3
+
+  /** The maximum bit depth of a tile */
+  val TILE_MAX_BPP = 8
+
+  /** The size of a small tile in pixels */
+  val SMALL_TILE_SIZE = 8
+  /** The size of a large tile in pixels */
+  val LARGE_TILE_SIZE = 16
+  /** The size of a sprite tile in pixels */
+  val SPRITE_TILE_SIZE = 16
 
   /** YMZ280B configuration */
   val ymzConfig = YMZ280BConfig(
@@ -109,122 +218,15 @@ object Config {
     vRetrace = 2,
   )
 
-  /** The width of the pulse generated when a player presses the coin button */
-  val PLAYER_COIN_PULSE_WIDTH = (100000000 / CPU_CLOCK_PERIOD).ceil.toInt // 100ms
+  /** Sprite frame buffer DMA configuration */
+  val spriteFrameBufferDmaConfig = DMAConfig(
+    depth = Config.SCREEN_WIDTH * Config.SCREEN_HEIGHT * SPRITE_FRAME_BUFFER_DATA_WIDTH / Config.ddrConfig.dataWidth,
+    burstCount = 64
+  )
 
-  val FRAME_BUFFER_OFFSET = 0x24000000
-  val DDR_DOWNLOAD_OFFSET = 0x30000000
-
-  val PROG_ROM_ADDR_WIDTH = 20 // 1MB
-  val PROG_ROM_DATA_WIDTH = 16
-
-  val SOUND_ROM_ADDR_WIDTH = 25
-  val SOUND_ROM_DATA_WIDTH = 8
-
-  val EEPROM_ADDR_WIDTH = 7 // 256B
-  val EEPROM_DATA_WIDTH = 16
-
-  val TILE_ROM_ADDR_WIDTH = 32
-  val TILE_ROM_DATA_WIDTH = 64
-
-  val MAIN_RAM_ADDR_WIDTH = 15
-  val MAIN_RAM_DATA_WIDTH = 16
-
-  val SPRITE_RAM_ADDR_WIDTH = 15
-  val SPRITE_RAM_DATA_WIDTH = 16
-  val SPRITE_RAM_GPU_ADDR_WIDTH = 12
-  val SPRITE_RAM_GPU_DATA_WIDTH = 128
-
-  val LAYER_RAM_ADDR_WIDTH = 14
-  val LAYER_RAM_DATA_WIDTH = 16
-  val LAYER_RAM_GPU_ADDR_WIDTH = 13
-  val LAYER_RAM_GPU_DATA_WIDTH = 32
-
-  val PALETTE_RAM_ADDR_WIDTH = 15
-  val PALETTE_RAM_DATA_WIDTH = 16
-  val PALETTE_RAM_GPU_ADDR_WIDTH = 15
-  val PALETTE_RAM_GPU_DATA_WIDTH = 16
-
-  /** The number of bits per color channel */
-  val BITS_PER_CHANNEL = 5
-
-  val LAYER_REGS_COUNT = 3
-  val LAYER_REGS_GPU_DATA_WIDTH = 48
-
-  val VIDEO_REGS_COUNT = 8
-  val VIDEO_REGS_GPU_DATA_WIDTH = 128
-
-  /** The number of bits per color channel for the DDR frame buffer */
-  val DDR_FRAME_BUFFER_BITS_PER_CHANNEL = 8
-  /** The bit depth of a DDR frame buffer pixel */
-  val DDR_FRAME_BUFFER_BPP = 32
-
-  /** The depth of the frame buffer in words */
-  val FRAME_BUFFER_DEPTH = SCREEN_WIDTH * SCREEN_HEIGHT
-  /** The width of the frame buffer X address */
-  val FRAME_BUFFER_ADDR_WIDTH_X = log2Ceil(SCREEN_WIDTH)
-  /** The width of the frame buffer Y address */
-  val FRAME_BUFFER_ADDR_WIDTH_Y = log2Ceil(SCREEN_HEIGHT)
-  /** The width of the frame buffer address bus */
-  val FRAME_BUFFER_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DEPTH)
-  /** The width of the frame buffer data bus */
-  val FRAME_BUFFER_DATA_WIDTH = 15
-
-  /** The bit depth of a frame buffer DMA pixel */
-  val FRAME_BUFFER_DMA_BPP = 24
-  /** The number of pixels transferred per word during frame buffer DMA */
-  val FRAME_BUFFER_DMA_PIXELS = 2
-  /** The depth of the frame buffer DMA in words */
-  val FRAME_BUFFER_DMA_DEPTH = SCREEN_WIDTH * SCREEN_HEIGHT / FRAME_BUFFER_DMA_PIXELS
-  /** The width of the frame buffer DMA address bus */
-  val FRAME_BUFFER_DMA_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DMA_DEPTH)
-  /** The width of the frame buffer DMA data bus */
-  val FRAME_BUFFER_DMA_DATA_WIDTH = FRAME_BUFFER_DMA_BPP * FRAME_BUFFER_DMA_PIXELS
-  /** The number of words to transfer during frame buffer DMA */
-  val FRAME_BUFFER_DMA_NUM_WORDS = SCREEN_WIDTH * SCREEN_HEIGHT * DDR_FRAME_BUFFER_BPP / ddrConfig.dataWidth
-  /** The length of a burst during a frame buffer DMA transfer */
-  val FRAME_BUFFER_DMA_BURST_LENGTH = 128
-
-  /** The depth of the layer FIFOs */
-  val FIFO_DEPTH = 64
-
-  /** The width of the priority buffer address bus */
-  val PRIO_BUFFER_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DEPTH)
-  /** The width of the priority buffer data bus */
-  val PRIO_BUFFER_DATA_WIDTH = 2
-
-  /** The width of a priority value */
-  val PRIO_WIDTH = 2
-  /** The width of a color code value */
-  val COLOR_CODE_WIDTH = 6
-  /** The width of the layer index value */
-  val LAYER_INDEX_WIDTH = 2
-  /** The width of the layer scroll value */
-  val LAYER_SCROLL_WIDTH = 9
-
-  /** The width of the graphics format value */
-  val GFX_FORMAT_WIDTH = 2
-  /** Unknown graphics format */
-  val GFX_FORMAT_UNKNOWN = 0
-  /** 4BPP graphics format */
-  val GFX_FORMAT_4BPP = 1
-  /** 4BPP MSB graphics format */
-  val GFX_FORMAT_4BPP_MSB = 2
-  /** 8BPP graphics format */
-  val GFX_FORMAT_8BPP = 3
-
-  /** Tile sizes (in bytes) */
-  val TILE_SIZE_8x8x8 = 64
-  val TILE_SIZE_16x16x4 = 128
-  val TILE_SIZE_16x16x8 = 256
-
-  /** The maximum bit depth of a tile */
-  val TILE_MAX_BPP = 8
-
-  /** The size of a small tile in pixels */
-  val SMALL_TILE_SIZE = 8
-  /** The size of a large tile in pixels */
-  val LARGE_TILE_SIZE = 16
-  /** The size of a sprite tile in pixels */
-  val SPRITE_TILE_SIZE = 16
+  /** Sprite line buffer DMA configuration */
+  val spriteLineBufferDmaConfig = DMAConfig(
+    depth = Config.SCREEN_WIDTH * SPRITE_FRAME_BUFFER_DATA_WIDTH / Config.ddrConfig.dataWidth,
+    burstCount = 16
+  )
 }

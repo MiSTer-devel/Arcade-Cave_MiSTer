@@ -35,23 +35,67 @@ package axon.mem
 import chisel3._
 import chisel3.util._
 
+/** Defines signals required for a burst memory device. */
 trait BurstIO {
   /** The number of words to transfer during a burst. */
-  val burstLength = Output(UInt(8.W))
+  val burstCount = Output(UInt(8.W))
   /** A flag indicating whether a burst has finished. */
   val burstDone = Input(Bool())
 }
 
 /**
- * A flow control interface for reading from bursted memory.
+ * A flow control interface for reading from burst memory.
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addrWidth, dataWidth) with BurstIO
+class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addrWidth, dataWidth) with BurstIO {
+  def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
+
+  /** Converts the interface to read-write. */
+  def asBurstReadWriteMemIO: BurstReadWriteMemIO = {
+    val mem = Wire(Flipped(BurstReadWriteMemIO(this)))
+    mem.rd := rd
+    mem.wr := false.B
+    mem.burstCount := burstCount
+    waitReq := mem.waitReq
+    valid := mem.valid
+    burstDone := mem.burstDone
+    mem.addr := addr
+    mem.mask := DontCare
+    mem.din := DontCare
+    dout := mem.dout
+    mem
+  }
+
+  /** Sets default values for all the signals. */
+  override def default() = {
+    super.default()
+    burstCount := 0.U
+  }
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  override def mapAddr(f: UInt => UInt): BurstReadMemIO = {
+    val mem = Wire(chiselTypeOf(this))
+    mem.rd := rd
+    mem.burstCount := burstCount
+    waitReq := mem.waitReq
+    valid := mem.valid
+    burstDone := mem.burstDone
+    mem.addr := f(addr)
+    dout := mem.dout
+    mem
+  }
+}
 
 object BurstReadMemIO {
   def apply(addrWidth: Int, dataWidth: Int) = new BurstReadMemIO(addrWidth, dataWidth)
+
+  def apply(config: BusConfig) = new BurstReadMemIO(config)
 
   /**
    * Multiplexes requests from multiple write-only memory interface to a single write-only memory
@@ -62,7 +106,7 @@ object BurstReadMemIO {
   def mux(in: Seq[(Bool, BurstReadMemIO)]): BurstReadMemIO = {
     val mem = Wire(chiselTypeOf(in.head._2))
     mem.rd := MuxCase(false.B, in.map(a => a._1 -> a._2.rd))
-    mem.burstLength := MuxCase(0.U, in.map(a => a._1 -> a._2.burstLength))
+    mem.burstCount := MuxCase(0.U, in.map(a => a._1 -> a._2.burstCount))
     mem.addr := MuxCase(DontCare, in.map(a => a._1 -> a._2.addr))
     for ((selected, port) <- in) {
       port.waitReq := (selected && mem.waitReq) || (!selected && port.rd)
@@ -75,30 +119,73 @@ object BurstReadMemIO {
 }
 
 /**
- * A flow control interface for writing to bursted memory.
+ * A flow control interface for writing to burst memory.
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(addrWidth, dataWidth) with BurstIO
+class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(addrWidth, dataWidth) with BurstIO {
+  def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
+
+  /** Converts the interface to read-write. */
+  def asBurstReadWriteMemIO: BurstReadWriteMemIO = {
+    val mem = Wire(Flipped(BurstReadWriteMemIO(this)))
+    mem.rd := false.B
+    mem.wr := wr
+    mem.burstCount := burstCount
+    waitReq := mem.waitReq
+    burstDone := mem.burstDone
+    mem.addr := addr
+    mem.mask := mask
+    mem.din := din
+    mem
+  }
+
+  /** Sets default values for all the signals. */
+  override def default() = {
+    super.default()
+    burstCount := 0.U
+  }
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  override def mapAddr(f: UInt => UInt): BurstWriteMemIO = {
+    val mem = Wire(chiselTypeOf(this))
+    mem.wr := wr
+    mem.burstCount := burstCount
+    waitReq := mem.waitReq
+    burstDone := mem.burstDone
+    mem.addr := f(addr)
+    mem.mask := mask
+    mem.din := din
+    mem
+  }
+}
 
 object BurstWriteMemIO {
   def apply(addrWidth: Int, dataWidth: Int) = new BurstWriteMemIO(addrWidth, dataWidth)
+
+  def apply(config: BusConfig) = new BurstWriteMemIO(config)
 }
 
 /**
- * A flow control interface for reading and writing to bursted memory.
+ * A flow control interface for reading and writing to burst memory.
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
 class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWriteMemIO(addrWidth, dataWidth) with BurstIO {
+  def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
+
   /** Converts the interface to read-only. */
   def asBurstReadMemIO: BurstReadMemIO = {
-    val mem = Wire(Flipped(BurstReadMemIO(addrWidth, dataWidth)))
+    val mem = Wire(Flipped(BurstReadMemIO(this)))
     rd := mem.rd
     wr := false.B
-    burstLength := mem.burstLength
+    burstCount := mem.burstCount
     mem.waitReq := waitReq
     mem.valid := valid
     mem.burstDone := burstDone
@@ -111,10 +198,10 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
 
   /** Converts the interface to write-only. */
   def asBurstWriteMemIO: BurstWriteMemIO = {
-    val mem = Wire(Flipped(BurstWriteMemIO(addrWidth, dataWidth)))
+    val mem = Wire(Flipped(BurstWriteMemIO(this)))
     rd := false.B
     wr := mem.wr
-    burstLength := mem.burstLength
+    burstCount := mem.burstCount
     mem.waitReq := waitReq
     mem.burstDone := burstDone
     addr := mem.addr
@@ -122,10 +209,38 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
     din := mem.din
     mem
   }
+
+  /** Sets default values for all the signals. */
+  override def default() = {
+    super.default()
+    burstCount := 0.U
+  }
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  override def mapAddr(f: UInt => UInt): BurstReadWriteMemIO = {
+    val mem = Wire(chiselTypeOf(this))
+    mem.rd := rd
+    mem.wr := wr
+    mem.burstCount := burstCount
+    waitReq := mem.waitReq
+    valid := mem.valid
+    burstDone := mem.burstDone
+    mem.addr := f(addr)
+    mem.mask := mask
+    mem.din := din
+    dout := mem.dout
+    mem
+  }
 }
 
 object BurstReadWriteMemIO {
   def apply(addrWidth: Int, dataWidth: Int) = new BurstReadWriteMemIO(addrWidth, dataWidth)
+
+  def apply(config: BusConfig) = new BurstReadWriteMemIO(config)
 
   /**
    * Multiplexes requests from multiple read-write memory interface to a single read-write memory
@@ -137,7 +252,7 @@ object BurstReadWriteMemIO {
     val mem = Wire(chiselTypeOf(in.head._2))
     mem.rd := Mux1H(in.map(a => a._1 -> a._2.rd))
     mem.wr := Mux1H(in.map(a => a._1 -> a._2.wr))
-    mem.burstLength := Mux1H(in.map(a => a._1 -> a._2.burstLength))
+    mem.burstCount := Mux1H(in.map(a => a._1 -> a._2.burstCount))
     mem.addr := Mux1H(in.map(a => a._1 -> a._2.addr))
     mem.mask := Mux1H(in.map(a => a._1 -> a._2.mask))
     mem.din := Mux1H(in.map(a => a._1 -> a._2.din))
@@ -158,7 +273,6 @@ object BurstReadWriteMemIO {
    * @param in  A list of read-write memory interfaces.
    */
   def mux1H(sel: Seq[Bool], in: Seq[BurstReadWriteMemIO]): BurstReadWriteMemIO = mux1H(sel zip in)
-
 
   /**
    * Multiplexes requests from multiple read-write memory interface to a single read-write memory

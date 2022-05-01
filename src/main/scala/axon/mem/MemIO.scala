@@ -35,14 +35,22 @@ package axon.mem
 import chisel3._
 import chisel3.util._
 
+/** Defines the address and data width of a data bus. */
+trait BusConfig {
+  /** The width of the address bus. */
+  def addrWidth: Int
+  /** The width of the data bus. */
+  def dataWidth: Int
+}
+
 /**
  * An abstract interface for reading/writing from a memory device.
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-abstract class MemIO protected(val addrWidth: Int, val dataWidth: Int) extends Bundle {
-  /** The number of bytes to be masked when writing data. */
+abstract class MemIO protected(val addrWidth: Int, val dataWidth: Int) extends Bundle with BusConfig {
+  /** The width of the data mask (i.e. the number of bytes that can be masked when writing data). */
   def maskWidth = dataWidth / 8
 }
 
@@ -60,6 +68,14 @@ class ReadMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWid
   /** Data bus */
   val dout = Input(UInt(dataWidth.W))
 
+  def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
+
+  /** Sets default values for all the signals. */
+  def default(): Unit = {
+    rd := false.B
+    addr := DontCare
+  }
+
   /**
    * Maps the address using the given function.
    *
@@ -67,21 +83,17 @@ class ReadMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWid
    */
   def mapAddr(f: UInt => UInt): ReadMemIO = {
     val mem = Wire(chiselTypeOf(this))
-    mem.rd := this.rd
-    mem.addr := f(this.addr)
-    this.dout := mem.dout
+    mem.rd := rd
+    mem.addr := f(addr)
+    dout := mem.dout
     mem
-  }
-
-  /** Sets default values for all the signals. */
-  def default() = {
-    rd := false.B
-    addr := DontCare
   }
 }
 
 object ReadMemIO {
   def apply(addrWidth: Int, dataWidth: Int): ReadMemIO = new ReadMemIO(addrWidth, dataWidth)
+
+  def apply(config: BusConfig) = new ReadMemIO(config)
 
   /**
    * Multiplexes requests from two read-only memory interfaces to a single read-only memory
@@ -156,6 +168,16 @@ class WriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWi
   /** Data bus */
   val din = Output(UInt(dataWidth.W))
 
+  def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
+
+  /** Sets default values for all the signals. */
+  def default(): Unit = {
+    wr := false.B
+    addr := DontCare
+    mask := DontCare
+    din := DontCare
+  }
+
   /**
    * Maps the address using the given function.
    *
@@ -163,24 +185,18 @@ class WriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWi
    */
   def mapAddr(f: UInt => UInt): WriteMemIO = {
     val mem = Wire(chiselTypeOf(this))
-    mem.wr := this.wr
-    mem.addr := f(this.addr)
-    mem.mask := this.mask
-    mem.din := this.din
+    mem.wr := wr
+    mem.addr := f(addr)
+    mem.mask := mask
+    mem.din := din
     mem
-  }
-
-  /** Sets default values for all the signals. */
-  def default() = {
-    wr := false.B
-    addr := DontCare
-    mask := DontCare
-    din := DontCare
   }
 }
 
 object WriteMemIO {
   def apply(addrWidth: Int, dataWidth: Int): WriteMemIO = new WriteMemIO(addrWidth, dataWidth)
+
+  def apply(config: BusConfig) = new WriteMemIO(config)
 
   /**
    * Multiplexes requests from multiple write-only memory interface to a single write-only memory interfaces. The
@@ -222,9 +238,11 @@ class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, da
   /** Data output bus */
   val dout = Input(Bits(dataWidth.W))
 
+  def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
+
   /** Converts the interface to read-only. */
   def asReadMemIO: ReadMemIO = {
-    val mem = Wire(Flipped(ReadMemIO(addrWidth, dataWidth)))
+    val mem = Wire(Flipped(ReadMemIO(this)))
     rd := mem.rd
     wr := false.B
     addr := mem.addr
@@ -236,7 +254,7 @@ class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, da
 
   /** Converts the interface to write-only. */
   def asWriteMemIO: WriteMemIO = {
-    val mem = Wire(Flipped(WriteMemIO(addrWidth, dataWidth)))
+    val mem = Wire(Flipped(WriteMemIO(this)))
     rd := false.B
     wr := mem.wr
     addr := mem.addr
@@ -246,15 +264,32 @@ class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, da
   }
 
   /** Sets default values for all the signals. */
-  def default() = {
+  def default(): Unit = {
     rd := false.B
     wr := false.B
     addr := DontCare
     mask := DontCare
     din := DontCare
   }
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  def mapAddr(f: UInt => UInt): ReadWriteMemIO = {
+    val mem = Wire(chiselTypeOf(this))
+    mem.rd := rd
+    mem.wr := wr
+    mem.addr := f(addr)
+    dout := mem.dout
+    mem.din := din
+    mem
+  }
 }
 
 object ReadWriteMemIO {
   def apply(addrWidth: Int, dataWidth: Int): ReadWriteMemIO = new ReadWriteMemIO(addrWidth, dataWidth)
+
+  def apply(config: BusConfig) = new ReadWriteMemIO(config)
 }

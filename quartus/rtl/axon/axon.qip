@@ -1,0 +1,5 @@
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) dual_clock_fifo.vhd]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) dual_port_ram.vhd]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) single_port_ram.vhd]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) single_port_rom.vhd]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) true_dual_port_ram.vhd]

@@ -170,7 +170,7 @@ class EEPROM extends Module {
     is(State.write) {
       when(!io.mem.waitReq) {
         addrReg := addrReg + 1.U
-        when(!writeAllReg || addrReg.andR()) { stateReg := State.idle }
+        when(!writeAllReg || addrReg.andR) { stateReg := State.idle }
       }
     }
 

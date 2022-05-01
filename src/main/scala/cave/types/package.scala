@@ -33,20 +33,8 @@
 package cave
 
 import axon.mem._
-import chisel3._
 
 package object types {
-  /** Frame buffer DMA IO */
-  class FrameBufferDMAIO extends ReadMemIO(Config.FRAME_BUFFER_DMA_ADDR_WIDTH, Config.FRAME_BUFFER_DMA_DATA_WIDTH)
-
-  /** Priority IO */
-  class PriorityIO extends Bundle {
-    /** Write-only port */
-    val write = WriteMemIO(Config.PRIO_BUFFER_ADDR_WIDTH, Config.PRIO_BUFFER_DATA_WIDTH)
-    /** Read-only port */
-    val read = ReadMemIO(Config.PRIO_BUFFER_ADDR_WIDTH, Config.PRIO_BUFFER_DATA_WIDTH)
-  }
-
   /** Program ROM IO */
   class ProgRomIO extends AsyncReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH)
 
@@ -56,15 +44,21 @@ package object types {
   /** EEPROM IO */
   class EEPROMIO extends AsyncReadWriteMemIO(Config.EEPROM_ADDR_WIDTH, Config.EEPROM_DATA_WIDTH)
 
-  /** Tile ROM IO */
-  class TileRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH)
+  /** Sprite ROM IO */
+  class SpriteRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH)
 
-  /** Layer RAM IO (GPU-side) */
-  class LayerRamIO extends ReadMemIO(Config.LAYER_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
-
-  /** Sprite RAM IO (GPU-side) */
-  class SpriteRamIO extends ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
+  /** Layer ROM IO */
+  class LayerRomIO extends AsyncReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH)
 
   /** Palette RAM IO (GPU-side) */
   class PaletteRamIO extends ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
+
+  /** Sprite frame buffer IO */
+  class SpriteFrameBufferIO extends WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SPRITE_FRAME_BUFFER_DATA_WIDTH)
+
+  /** Sprite line buffer IO */
+  class SpriteLineBufferIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH_X, Config.SPRITE_FRAME_BUFFER_DATA_WIDTH)
+
+  /** System frame buffer IO */
+  class SystemFrameBufferIO extends WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SYSTEM_FRAME_BUFFER_DATA_WIDTH)
 }

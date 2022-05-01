@@ -194,8 +194,6 @@ class Cache(config: CacheConfig) extends Module {
     val in = Flipped(AsyncReadWriteMemIO(config.inAddrWidth, config.inDataWidth))
     /** Output port */
     val out = BurstReadWriteMemIO(config.outAddrWidth, config.outDataWidth)
-    /** Output address offset */
-    val offset = Input(UInt(config.outAddrWidth.W))
     /** Debug port */
     val debug = Output(new Bundle {
       val idle = Bool()
@@ -219,11 +217,13 @@ class Cache(config: CacheConfig) extends Module {
   val nextState = Wire(UInt())
   val stateReg = RegNext(nextState, State.init)
 
+  // Cache memory request
+  val request = MemRequest(io.in.rd, io.in.wr, CacheAddress(io.in.addr)(config))
+
   // Assert the latch signal when a request should be latched
-  val latch = nextState === State.latch
+  val latch = stateReg === State.idle && request.valid
 
   // Request register
-  val request = MemRequest(io.in.rd, io.in.wr, CacheAddress(io.in.addr)(config))
   val requestReg = RegEnable(request, latch)
 
   // Data register
@@ -256,7 +256,6 @@ class Cache(config: CacheConfig) extends Module {
   val dirty = cacheEntryReg.dirty && cacheEntryReg.tag =/= requestReg.addr.tag
   val hit = cacheEntryReg.valid && cacheEntryReg.tag === requestReg.addr.tag
   val miss = !hit
-  val waitReq = !(stateReg === State.idle || latch)
 
   // For a wrapping burst, the word done signal is asserted as soon as enough output words have
   // been bursted to fill an input word. Otherwise, for a non-wrapping burst we just wait until the
@@ -283,7 +282,7 @@ class Cache(config: CacheConfig) extends Module {
     }
     val evictAddr = CacheAddress(cacheEntryReg.tag, requestReg.addr.index, 0.U)(config)
     val addr = Mux(stateReg === State.fill, fillAddr, evictAddr).asUInt
-    (addr << log2Ceil(config.outBytes)).asUInt + io.offset
+    (addr << log2Ceil(config.outBytes)).asUInt
   }
 
   // Write cache entry
@@ -323,7 +322,7 @@ class Cache(config: CacheConfig) extends Module {
     // Check cache entry
     is(State.check) {
       when(hit && requestReg.rd) {
-        nextState := Mux(request.valid, State.latch, State.idle)
+        nextState := State.idle
       }.elsewhen(hit && requestReg.wr) {
         nextState := State.merge
       }.elsewhen(dirty) {
@@ -357,16 +356,16 @@ class Cache(config: CacheConfig) extends Module {
     is(State.merge) { nextState := State.write }
 
     // Write cache entry
-    is(State.write) { nextState := Mux(request.valid, State.latch, State.idle) }
+    is(State.write) { nextState := State.idle }
   }
 
   // Outputs
-  io.in.waitReq := waitReq
+  io.in.waitReq := stateReg =/= State.idle
   io.in.valid := valid
   io.in.dout := cacheEntryReg.inWord(offsetReg)
   io.out.rd := stateReg === State.fill
   io.out.wr := stateReg === State.evict || stateReg === State.evictWait
-  io.out.burstLength := config.lineWidth.U
+  io.out.burstCount := config.lineWidth.U
   io.out.addr := outAddr
   io.out.mask := Fill(config.outBytes, 1.U)
   io.out.din := cacheEntryReg.outWord(burstCounter)

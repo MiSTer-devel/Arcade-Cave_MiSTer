@@ -34,10 +34,11 @@ package cave
 
 import axon._
 import axon.cpu.m68k._
+import axon.gfx._
 import axon.mem._
 import axon.snd._
 import axon.types._
-import cave.gpu._
+import cave.gfx._
 import cave.types._
 import chisel3._
 import chisel3.util._
@@ -48,42 +49,15 @@ import chisel3.util._
  * This module contains the CPU, GPU, sound processor, RAM, ROM, and memory maps.
  */
 class Cave extends Module {
-  /**
-   * Encodes the joystick IO into bitvector values.
-   *
-   * @param gameIndex The game index.
-   * @param joystick  The joystick interface.
-   * @param eeprom    The eeprom interface.
-   * @return A pair of bitvectors representing the player inputs.
-   */
-  private def encodePlayers(gameIndex: UInt, joystick: JoystickIO, eeprom: EEPROM): (UInt, UInt) = {
-    val coin1 = Util.pulseSync(Config.PLAYER_COIN_PULSE_WIDTH, joystick.player1.coin)
-    val coin2 = Util.pulseSync(Config.PLAYER_COIN_PULSE_WIDTH, joystick.player2.coin)
-
-    val left = Mux(gameIndex === GameConfig.GUWANGE.U,
-      Cat(~joystick.player2.buttons, ~joystick.player2.right, ~joystick.player2.left, ~joystick.player2.down, ~joystick.player2.up, ~joystick.player2.start, ~joystick.player1.buttons, ~joystick.player1.right, ~joystick.player1.left, ~joystick.player1.down, ~joystick.player1.up, ~joystick.player1.start),
-      Cat("b111111".U, ~io.joystick.service1, ~coin1, ~joystick.player1.start, ~joystick.player1.buttons, ~joystick.player1.right, ~joystick.player1.left, ~joystick.player1.down, ~joystick.player1.up)
-    )
-
-    val right = Mux(gameIndex === GameConfig.GUWANGE.U,
-      Cat("b11111111".U, eeprom.io.serial.sdo, "b1111".U, ~io.joystick.service1, ~coin2, ~coin1),
-      Cat("b1111".U, eeprom.io.serial.sdo, "b11".U, ~coin2, ~joystick.player2.start, ~joystick.player2.buttons, ~joystick.player2.right, ~joystick.player2.left, ~joystick.player2.down, ~joystick.player2.up)
-    )
-
-    (left, right)
-  }
-
   val io = IO(new Bundle {
+    /** Video clock domain */
+    val videoClock = Input(Clock())
+    /** Video reset */
+    val videoReset = Input(Bool())
     /** CPU clock domain */
     val cpuClock = Input(Clock())
     /** CPU reset */
     val cpuReset = Input(Reset())
-    /** Vertical blank */
-    val vBlank = Input(Bool())
-    /** Asserted when a frame is valid */
-    val frameValid = Output(Bool())
-    /** Asserted when the DMA controller is ready */
-    val dmaReady = Input(Bool())
     /** Game config port */
     val gameConfig = Input(GameConfig())
     /** Options port */
@@ -96,12 +70,26 @@ class Cave extends Module {
     val soundRom = new SoundRomIO
     /** EEPROM port */
     val eeprom = new EEPROMIO
-    /** Tile ROM port */
-    val tileRom = new TileRomIO
+    /** Layer tile ROM port */
+    val layerTileRom = Vec(Config.LAYER_COUNT, new LayerRomIO)
+    /** Sprite tile ROM port */
+    val spriteTileRom = new SpriteRomIO
+    /** Video port */
+    val video = Flipped(VideoIO())
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
-    /** Frame buffer DMA port */
-    val frameBufferDMA = Flipped(new FrameBufferDMAIO)
+    /** RGB output */
+    val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
+    /** Sprite line buffer port */
+    val spriteLineBuffer = new SpriteLineBufferIO
+    /** Sprite frame buffer port */
+    val spriteFrameBuffer = new SpriteFrameBufferIO
+    /** System frame buffer port */
+    val systemFrameBuffer = new SystemFrameBufferIO
+    /** Asserted when the sprite processor has started rendering a frame */
+    val frameStart = Output(Bool())
+    /** Asserted when the sprite processor has finished rendering a frame */
+    val frameFinish = Output(Bool())
   })
 
   // Wires
@@ -111,20 +99,40 @@ class Cave extends Module {
   // A write-only memory interface is used to connect the CPU to the EEPROM
   val eepromMem = Wire(WriteMemIO(CPU.ADDR_WIDTH, CPU.DATA_WIDTH))
 
-  // GPU
+  // The GPU runs in the video clock domain
   val gpu = Module(new GPU)
-  gpu.io.frameReady := Util.rising(ShiftRegister(frameStart, 2))
-  io.frameValid := gpu.io.frameValid
-  gpu.io.dmaReady := io.dmaReady
+  gpu.io.videoClock := io.videoClock
+  gpu.io.videoReset := io.videoReset
+  gpu.io.video <> io.video
   gpu.io.gameConfig <> io.gameConfig
   gpu.io.options <> io.options
-  io.tileRom <> gpu.io.tileRom
-  io.frameBufferDMA <> gpu.io.frameBufferDMA
+  0.until(Config.LAYER_COUNT).foreach { i =>
+    gpu.io.layerCtrl(i).format := io.gameConfig.layer(i).format
+    gpu.io.layerCtrl(i).enable := io.options.layerEnable.layer(i)
+    gpu.io.layerCtrl(i).rowScrollEnable := io.options.rowScrollEnable
+    gpu.io.layerCtrl(i).rowSelectEnable := io.options.rowSelectEnable
+    gpu.io.layerCtrl(i).tileRom <> io.layerTileRom(i)
+  }
+  gpu.io.spriteCtrl.tileRom <> io.spriteTileRom
+  gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
+  gpu.io.spriteCtrl.enable := io.options.layerEnable.sprite
+  gpu.io.spriteCtrl.start := Util.rising(ShiftRegister(frameStart, 2))
+  gpu.io.spriteCtrl.flip := io.options.flip
+  gpu.io.spriteCtrl.rotate := io.options.rotate
+  gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
+  gpu.io.rgb <> io.rgb
+  gpu.io.spriteLineBuffer <> io.spriteLineBuffer
+  gpu.io.spriteFrameBuffer <> io.spriteFrameBuffer
+  gpu.io.systemFrameBuffer <> io.systemFrameBuffer
+
+  // Set frame start/finish flags
+  io.frameStart := gpu.io.spriteCtrl.start
+  io.frameFinish := Util.falling(gpu.io.spriteCtrl.busy)
 
   // The CPU and registers run in the CPU clock domain
   withClockAndReset(io.cpuClock, io.cpuReset) {
     // Registers
-    val vBlank = ShiftRegister(io.vBlank, 2)
+    val vBlank = ShiftRegister(io.video.vBlank, 2)
     val videoIRQ = RegInit(false.B)
     val iplReg = RegInit(0.U)
     val pauseReg = Util.toggle(Util.rising(io.joystick.player1.pause || io.joystick.player2.pause))
@@ -153,8 +161,9 @@ class Cave extends Module {
       dataWidth = Config.MAIN_RAM_DATA_WIDTH,
       maskEnable = true
     ))
+    mainRam.io.default()
 
-    // Sprite RAM
+    // Sprite VRAM
     val spriteRam = Module(new TrueDualPortRam(
       addrWidthA = Config.SPRITE_RAM_ADDR_WIDTH,
       dataWidthA = Config.SPRITE_RAM_DATA_WIDTH,
@@ -162,37 +171,50 @@ class Cave extends Module {
       dataWidthB = Config.SPRITE_RAM_GPU_DATA_WIDTH,
       maskEnable = true
     ))
-    spriteRam.io.clockB := clock
+    spriteRam.io.clockB := clock // system (i.e. fast) clock domain
+    spriteRam.io.portA.default()
 
-    // Layer 0 VRAM
-    val layerRam0 = Module(new TrueDualPortRam(
-      addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
-      dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
-      addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH,
-      maskEnable = true
-    ))
-    layerRam0.io.clockB := clock
+    // Layer VRAM (8x8)
+    val layerRam8x8 = 0.until(Config.LAYER_COUNT).map { _ =>
+      val ram = Module(new TrueDualPortRam(
+        addrWidthA = Config.LAYER_8x8_RAM_ADDR_WIDTH,
+        dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
+        addrWidthB = Config.LAYER_8x8_RAM_GPU_ADDR_WIDTH,
+        dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH,
+        maskEnable = true
+      ))
+      ram.io.clockB := io.videoClock
+      ram.io.portA.default()
+      ram
+    }
 
-    // Layer 1 VRAM
-    val layerRam1 = Module(new TrueDualPortRam(
-      addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
-      dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
-      addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH,
-      maskEnable = true
-    ))
-    layerRam1.io.clockB := clock
+    // Layer VRAM (16x16)
+    val layerRam16x16 = 0.until(Config.LAYER_COUNT).map { _ =>
+      val ram = Module(new TrueDualPortRam(
+        addrWidthA = Config.LAYER_16x16_RAM_ADDR_WIDTH,
+        dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
+        addrWidthB = Config.LAYER_16x16_RAM_GPU_ADDR_WIDTH,
+        dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH,
+        maskEnable = true
+      ))
+      ram.io.clockB := io.videoClock
+      ram.io.portA.default()
+      ram
+    }
 
-    // Layer 2 VRAM
-    val layerRam2 = Module(new TrueDualPortRam(
-      addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
-      dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
-      addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH,
-      maskEnable = true
-    ))
-    layerRam2.io.clockB := clock
+    // Line RAM
+    val lineRam = 0.until(Config.LAYER_COUNT).map { _ =>
+      val ram = Module(new TrueDualPortRam(
+        addrWidthA = Config.LINE_RAM_ADDR_WIDTH,
+        dataWidthA = Config.LINE_RAM_DATA_WIDTH,
+        addrWidthB = Config.LINE_RAM_GPU_ADDR_WIDTH,
+        dataWidthB = Config.LINE_RAM_GPU_DATA_WIDTH,
+        maskEnable = true
+      ))
+      ram.io.clockB := io.videoClock
+      ram.io.portA.default()
+      ram
+    }
 
     // Palette RAM
     val paletteRam = Module(new TrueDualPortRam(
@@ -202,29 +224,34 @@ class Cave extends Module {
       dataWidthB = Config.PALETTE_RAM_GPU_DATA_WIDTH,
       maskEnable = true
     ))
-    paletteRam.io.clockB := clock
+    paletteRam.io.clockB := io.videoClock
+    paletteRam.io.portA.default()
 
     // Layer registers
-    val layer0Regs = Module(new RegisterFile(Config.LAYER_REGS_COUNT))
-    val layer1Regs = Module(new RegisterFile(Config.LAYER_REGS_COUNT))
-    val layer2Regs = Module(new RegisterFile(Config.LAYER_REGS_COUNT))
+    val layerRegs = 0.until(Config.LAYER_COUNT).map { _ =>
+      val regs = Module(new RegisterFile(Config.LAYER_REGS_COUNT))
+      regs.io.mem.default()
+      regs
+    }
 
     // Video registers
     val videoRegs = Module(new RegisterFile(Config.VIDEO_REGS_COUNT))
+    videoRegs.io.mem.default()
 
     // GPU
-    gpu.io.videoRegs := videoRegs.io.regs.asUInt
-    gpu.io.layer0 := Layer.decode(layer0Regs.io.regs.asUInt)
-    gpu.io.layer1 := Layer.decode(layer1Regs.io.regs.asUInt)
-    gpu.io.layer2 := Layer.decode(layer2Regs.io.regs.asUInt)
-    gpu.io.spriteRam <> spriteRam.io.portB
-    gpu.io.layerRam0 <> layerRam0.io.portB
-    gpu.io.layerRam1 <> layerRam1.io.portB
-    gpu.io.layerRam2 <> layerRam2.io.portB
+    0.until(Config.LAYER_COUNT).foreach { i =>
+      gpu.io.layerCtrl(i).regs := withClock(io.videoClock) { ShiftRegister(Layer.decode(layerRegs(i).io.regs.asUInt), 2) }
+      gpu.io.layerCtrl(i).vram8x8 <> layerRam8x8(i).io.portB
+      gpu.io.layerCtrl(i).vram16x16 <> layerRam16x16(i).io.portB
+      gpu.io.layerCtrl(i).lineRam <> lineRam(i).io.portB
+    }
+    gpu.io.spriteCtrl.bank := videoRegs.io.regs.asUInt(64)
+    gpu.io.spriteCtrl.vram <> spriteRam.io.portB
     gpu.io.paletteRam <> paletteRam.io.portB
 
     // YMZ280B
     val ymz = Module(new YMZ280B(Config.ymzConfig))
+    ymz.io.cpu.default()
     ymz.io.mem <> io.soundRom
     io.audio <> RegEnable(ymz.io.audio.bits, ymz.io.audio.valid)
     val soundIRQ = ymz.io.irq
@@ -240,21 +267,10 @@ class Cave extends Module {
 
     // Set memory interface defaults, the actual values are assigned in the memory map
     io.progRom.default()
-    mainRam.io.default()
-    paletteRam.io.portA.default()
-    spriteRam.io.portA.default()
-    layerRam0.io.portA.default()
-    layerRam1.io.portA.default()
-    layerRam2.io.portA.default()
-    layer0Regs.io.mem.default()
-    layer1Regs.io.mem.default()
-    layer2Regs.io.mem.default()
-    videoRegs.io.mem.default()
-    ymz.io.cpu.default()
     eepromMem.default()
 
     // Set input ports
-    val (input0, input1) = encodePlayers(io.gameConfig.index, io.joystick, eeprom)
+    val (input0, input1) = Cave.encodePlayers(io.gameConfig.index, io.joystick, eeprom)
 
     // Memory map
     val map = new MemMap(cpu.io)
@@ -265,22 +281,28 @@ class Cave extends Module {
 
     // Dangun Feveron
     when(io.gameConfig.index === GameConfig.DFEVERON.U) {
-      map(0x000000 to 0x0fffff).readMemT(io.progRom)(addr => addr ## 0.U)
+      map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
       map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
       map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
       map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-      map(0x500000 to 0x507fff).readWriteMem(layerRam0.io.portA)
-      map(0x600000 to 0x607fff).readWriteMem(layerRam1.io.portA)
+      map(0x500000 to 0x500fff).readWriteMem(layerRam16x16(0).io.portA)
+      map(0x501000 to 0x5017ff).readWriteMem(lineRam(0).io.portA)
+      map(0x501800 to 0x507fff).ignore()
+      map(0x600000 to 0x600fff).readWriteMem(layerRam16x16(1).io.portA)
+      map(0x601000 to 0x6017ff).readWriteMem(lineRam(1).io.portA)
+      map(0x601800 to 0x607fff).ignore()
       map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
-      map(0x710000 to 0x717fff).readWriteMem(layerRam2.io.portA)
+      map(0x710000 to 0x710fff).readWriteMem(layerRam16x16(2).io.portA)
+      map(0x711000 to 0x7117ff).readWriteMem(lineRam(2).io.portA)
+      map(0x711800 to 0x717fff).ignore()
       map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
       map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
       map(0x800000 to 0x800007).r { (_, offset) =>
         when(offset === 4.U) { videoIRQ := false.B }
         "b001".U ## !videoIRQ
       }
-      map(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
-      map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
+      map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
+      map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
       map(0xb00000).r { (_, _) => input0 }
       map(0xb00002).r { (_, _) => input1 }
       map(0xc00000).writeMem(eepromMem)
@@ -288,12 +310,12 @@ class Cave extends Module {
 
     // DoDonPachi
     when(io.gameConfig.index === GameConfig.DDONPACH.U) {
-      map(0x000000 to 0x0fffff).readMemT(io.progRom)(addr => addr ## 0.U)
+      map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
       map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
       map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
       map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-      map(0x500000 to 0x507fff).readWriteMem(layerRam0.io.portA)
-      map(0x600000 to 0x607fff).readWriteMem(layerRam1.io.portA)
+      map(0x500000 to 0x507fff).readWriteMem(layerRam16x16(0).io.portA)
+      map(0x600000 to 0x607fff).readWriteMem(layerRam16x16(1).io.portA)
       // Access to address 0x5fxxxx occurs during the attract loop on the air stage at frame 9355
       // (i.e. after roughly 150 sec). The game is accessing data relative to a layer 1 address and
       // underflows. These accesses do nothing, but should be acknowledged in order not to block the
@@ -303,16 +325,16 @@ class Cave extends Module {
       // simpler to write (no need to handle edge cases). These accesses are simply ignored by the
       // hardware.
       map(0x5f0000 to 0x5fffff).ignore()
-      map(0x700000 to 0x70ffff).readWriteMemT(layerRam2.io.portA)(a => a(12, 0))
+      map(0x700000 to 0x70ffff).readWriteMemT(layerRam8x8(2).io.portA)(a => a(12, 0))
       map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
       map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
       map(0x800000 to 0x800007).r { (_, offset) =>
         when(offset === 0.U) { videoIRQ := false.B }
         "b011".U ## !videoIRQ
       }
-      map(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
-      map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
-      map(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
+      map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
+      map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
+      map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
       map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
       map(0xd00000).r { (_, _) => input0 }
       map(0xd00002).r { (_, _) => input1 }
@@ -321,13 +343,22 @@ class Cave extends Module {
 
     // ESP Ra.De.
     when(io.gameConfig.index === GameConfig.ESPRADE.U) {
-      map(0x000000 to 0x0fffff).readMemT(io.progRom)(addr => addr ## 0.U)
+      map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
       map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
       map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
       map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-      map(0x500000 to 0x507fff).readWriteMem(layerRam0.io.portA)
-      map(0x600000 to 0x607fff).readWriteMem(layerRam1.io.portA)
-      map(0x700000 to 0x707fff).readWriteMem(layerRam2.io.portA)
+      map(0x500000 to 0x500fff).readWriteMem(layerRam16x16(0).io.portA)
+      map(0x501000 to 0x5017ff).readWriteMem(lineRam(0).io.portA)
+      map(0x501800 to 0x503fff).ignore()
+      map(0x504000 to 0x507fff).readWriteMem(layerRam8x8(0).io.portA)
+      map(0x600000 to 0x600fff).readWriteMem(layerRam16x16(1).io.portA)
+      map(0x601000 to 0x6017ff).readWriteMem(lineRam(1).io.portA)
+      map(0x601800 to 0x603fff).ignore()
+      map(0x604000 to 0x607fff).readWriteMem(layerRam8x8(1).io.portA)
+      map(0x700000 to 0x700fff).readWriteMem(layerRam16x16(2).io.portA)
+      map(0x701000 to 0x7017ff).readWriteMem(lineRam(2).io.portA)
+      map(0x701800 to 0x703fff).ignore()
+      map(0x704000 to 0x707fff).readWriteMem(layerRam8x8(2).io.portA)
       map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
       map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
       map(0x800000 to 0x800007).r { (_, offset) =>
@@ -335,9 +366,9 @@ class Cave extends Module {
         "b001".U ## !videoIRQ
       }
       map(0x800008 to 0x800fff).ignore()
-      map(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
-      map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
-      map(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
+      map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
+      map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
+      map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
       map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
       map(0xd00000).r { (_, _) => input0 }
       map(0xd00002).r { (_, _) => input1 }
@@ -346,7 +377,7 @@ class Cave extends Module {
 
     // Guwange
     when(io.gameConfig.index === GameConfig.GUWANGE.U) {
-      map(0x000000 to 0x0fffff).readMemT(io.progRom)(addr => addr ## 0.U)
+      map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
       map(0x200000 to 0x20ffff).readWriteMem(mainRam.io)
       map(0x300000 to 0x30007f).writeMem(videoRegs.io.mem.asWriteMemIO)
       map(0x300000 to 0x300007).r { (_, offset) =>
@@ -356,13 +387,22 @@ class Cave extends Module {
       map(0x300008).w { (_, _, _) => frameStart := true.B }
       map(0x300009 to 0x300fff).ignore()
       map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-      map(0x500000 to 0x507fff).readWriteMem(layerRam0.io.portA)
-      map(0x600000 to 0x607fff).readWriteMem(layerRam1.io.portA)
-      map(0x700000 to 0x707fff).readWriteMem(layerRam2.io.portA)
+      map(0x500000 to 0x500fff).readWriteMem(layerRam16x16(0).io.portA)
+      map(0x501000 to 0x5017ff).readWriteMem(lineRam(0).io.portA)
+      map(0x501800 to 0x503fff).ignore()
+      map(0x504000 to 0x507fff).readWriteMem(layerRam8x8(0).io.portA)
+      map(0x600000 to 0x600fff).readWriteMem(layerRam16x16(1).io.portA)
+      map(0x601000 to 0x6017ff).readWriteMem(lineRam(1).io.portA)
+      map(0x601800 to 0x603fff).ignore()
+      map(0x604000 to 0x607fff).readWriteMem(layerRam8x8(1).io.portA)
+      map(0x700000 to 0x700fff).readWriteMem(layerRam16x16(2).io.portA)
+      map(0x701000 to 0x7017ff).readWriteMem(lineRam(2).io.portA)
+      map(0x701800 to 0x703fff).ignore()
+      map(0x704000 to 0x707fff).readWriteMem(layerRam8x8(2).io.portA)
       map(0x800000 to 0x800003).readWriteMem(ymz.io.cpu)
-      map(0x900000 to 0x900005).readWriteMem(layer0Regs.io.mem)
-      map(0xa00000 to 0xa00005).readWriteMem(layer1Regs.io.mem)
-      map(0xb00000 to 0xb00005).readWriteMem(layer2Regs.io.mem)
+      map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
+      map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
+      map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
       map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
       map(0xd00010 to 0xd00014).ignore()
       map(0xd00010).writeMem(eepromMem)
@@ -372,11 +412,14 @@ class Cave extends Module {
 
     // Puzzle Uo Poko
     when(io.gameConfig.index === GameConfig.UOPOKO.U) {
-      map(0x000000 to 0x0fffff).readMemT(io.progRom)(addr => addr ## 0.U)
+      map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
       map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
       map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
       map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-      map(0x500000 to 0x507fff).readWriteMem(layerRam0.io.portA)
+      map(0x500000 to 0x500fff).readWriteMem(layerRam16x16(0).io.portA)
+      map(0x501000 to 0x5017ff).readWriteMem(lineRam(0).io.portA)
+      map(0x501800 to 0x503fff).ignore()
+      map(0x504000 to 0x507fff).readWriteMem(layerRam8x8(0).io.portA)
       map(0x600000 to 0x60007f).writeMem(videoRegs.io.mem.asWriteMemIO)
       map(0x600000 to 0x600007).r { (_, offset) =>
         when(offset === 4.U) { videoIRQ := false.B }
@@ -384,7 +427,7 @@ class Cave extends Module {
       }
       map(0x600008).w { (_, _, _) => frameStart := true.B }
       map(0x600009 to 0x600fff).ignore()
-      map(0x700000 to 0x700005).readWriteMem(layer0Regs.io.mem)
+      map(0x700000 to 0x700005).readWriteMem(layerRegs(0).io.mem)
       map(0x800000 to 0x80ffff).readWriteMem(paletteRam.io.portA)
       map(0x900000).r { (_, _) => input0 }
       map(0x900002).r { (_, _) => input1 }
@@ -393,5 +436,32 @@ class Cave extends Module {
 
     // When the game is paused, request frames at the start of every vertical blank
     when(pauseReg) { frameStart := vBlank }
+  }
+}
+
+object Cave {
+  /**
+   * Encodes the joystick IO into bitvector values.
+   *
+   * @param gameIndex The game index.
+   * @param joystick  The joystick interface.
+   * @param eeprom    The eeprom interface.
+   * @return A pair of bitvectors representing the player inputs.
+   */
+  private def encodePlayers(gameIndex: UInt, joystick: JoystickIO, eeprom: EEPROM): (UInt, UInt) = {
+    val coin1 = Util.pulseSync(Config.PLAYER_COIN_PULSE_WIDTH, joystick.player1.coin)
+    val coin2 = Util.pulseSync(Config.PLAYER_COIN_PULSE_WIDTH, joystick.player2.coin)
+
+    val left = Mux(gameIndex === GameConfig.GUWANGE.U,
+      Cat(~joystick.player2.buttons, ~joystick.player2.right, ~joystick.player2.left, ~joystick.player2.down, ~joystick.player2.up, ~joystick.player2.start, ~joystick.player1.buttons, ~joystick.player1.right, ~joystick.player1.left, ~joystick.player1.down, ~joystick.player1.up, ~joystick.player1.start),
+      Cat("b111111".U, ~joystick.service1, ~coin1, ~joystick.player1.start, ~joystick.player1.buttons, ~joystick.player1.right, ~joystick.player1.left, ~joystick.player1.down, ~joystick.player1.up)
+    )
+
+    val right = Mux(gameIndex === GameConfig.GUWANGE.U,
+      Cat("b11111111".U, eeprom.io.serial.sdo, "b1111".U, ~joystick.service1, ~coin2, ~coin1),
+      Cat("b1111".U, eeprom.io.serial.sdo, "b11".U, ~coin2, ~joystick.player2.start, ~joystick.player2.buttons, ~joystick.player2.right, ~joystick.player2.left, ~joystick.player2.down, ~joystick.player2.up)
+    )
+
+    (left, right)
   }
 }

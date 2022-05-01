@@ -38,9 +38,10 @@ import axon.mem._
 import axon.mister._
 import axon.snd._
 import axon.types._
-import cave.dma._
+import cave.fb._
 import cave.types._
 import chisel3._
+import chisel3.experimental.FlatIO
 import chisel3.stage._
 
 /**
@@ -50,7 +51,7 @@ import chisel3.stage._
  * memory arbiter, frame buffer) that are not part of the original arcade hardware design.
  */
 class Main extends Module {
-  val io = IO(new Bundle {
+  val io = FlatIO(new Bundle {
     /** Video clock domain */
     val videoClock = Input(Clock())
     /** Video reset */
@@ -59,24 +60,24 @@ class Main extends Module {
     val cpuClock = Input(Clock())
     /** CPU reset */
     val cpuReset = Input(Bool())
-    /** Video port */
-    val video = VideoIO()
-    /** RGB output */
-    val rgb = Output(new RGB(Config.DDR_FRAME_BUFFER_BITS_PER_CHANNEL))
-    /** Frame buffer port */
-    val frameBuffer = mister.FrameBufferIO()
+    /** DDR port */
+    val ddr = BurstReadWriteMemIO(Config.ddrConfig)
+    /** SDRAM control port */
+    val sdram = SDRAMIO(Config.sdramConfig)
+    /** Options port */
+    val options = OptionsIO()
     /** Joystick port */
     val joystick = JoystickIO()
     /** IOCTL port */
     val ioctl = IOCTL()
+    /** Frame buffer control port */
+    val frameBufferCtrl = FrameBufferCtrlIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
-    /** DDR port */
-    val ddr = DDRIO(Config.ddrConfig)
-    /** SDRAM port */
-    val sdram = SDRAMIO(Config.sdramConfig)
-    /** Options port */
-    val options = OptionsIO()
+    /** Video port */
+    val video = VideoIO()
+    /** RGB output */
+    val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
     /** LED port */
     val led = mister.LEDIO()
   })
@@ -112,60 +113,62 @@ class Main extends Module {
   // Memory subsystem
   val memSys = Module(new MemSys)
   memSys.io.gameConfig <> gameConfigReg
-  memSys.io.options <> io.options
   memSys.io.ioctl <> io.ioctl
   memSys.io.ddr <> ddr.io.mem
   memSys.io.sdram <> sdram.io.mem
 
   // Video subsystem
-  val videoSys = Module(new VideoSys)
-  videoSys.io.videoClock := io.videoClock
-  videoSys.io.videoReset := io.videoReset
-  videoSys.io.forceBlank := io.cpuReset
+  val videoSys = withClockAndReset(io.videoClock, io.videoReset) { Module(new VideoSys) }
   videoSys.io.options <> io.options
   videoSys.io.video <> io.video
-  videoSys.io.rgb <> io.rgb
-  videoSys.io.frameBuffer <> io.frameBuffer
-
-  // Frame buffer DMA
-  val frameBufferDMA = Module(new FrameBufferDMA(
-    addr = Config.FRAME_BUFFER_OFFSET,
-    numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
-    burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
-  ))
-  frameBufferDMA.io.enable := downloadDoneReg
-  frameBufferDMA.io.frameBufferIndex := videoSys.io.frameBufferDMAIndex
-  frameBufferDMA.io.ddr <> memSys.io.frameBufferDMA
-
-  // Video DMA
-  val videoDMA = Module(new VideoDMA(
-    addr = Config.FRAME_BUFFER_OFFSET,
-    numWords = Config.FRAME_BUFFER_DMA_NUM_WORDS,
-    burstLength = Config.FRAME_BUFFER_DMA_BURST_LENGTH
-  ))
-  videoDMA.io.enable := downloadDoneReg
-  videoDMA.io.frameBufferIndex := videoSys.io.videoDMAIndex
-  videoDMA.io.pixelData <> videoSys.io.pixelData
-  videoDMA.io.ddr <> memSys.io.videoDMA
 
   // Cave
   val cave = Module(new Cave)
+  cave.io.videoClock := io.videoClock
+  cave.io.videoReset := io.videoReset
   cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
-  cave.io.vBlank := videoSys.io.video.vBlank
-  frameBufferDMA.io.start := cave.io.frameValid
-  cave.io.dmaReady := frameBufferDMA.io.ready
   cave.io.gameConfig <> gameConfigReg
   cave.io.options <> io.options
   cave.io.joystick <> io.joystick
   cave.io.progRom <> DataFreezer.freeze(io.cpuClock, memSys.io.progRom)
   cave.io.soundRom <> DataFreezer.freeze(io.cpuClock, memSys.io.soundRom)
   cave.io.eeprom <> DataFreezer.freeze(io.cpuClock, memSys.io.eeprom)
-  cave.io.tileRom <> memSys.io.tileRom
+  cave.io.layerTileRom(0) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(0))
+  cave.io.layerTileRom(1) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(1))
+  cave.io.layerTileRom(2) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(2))
+  cave.io.spriteTileRom <> memSys.io.spriteTileRom
   cave.io.audio <> io.audio
-  cave.io.frameBufferDMA <> frameBufferDMA.io.frameBufferDMA
+  cave.io.video <> videoSys.io.video
+  cave.io.rgb <> io.rgb
 
-  // Set LED outputs
+  // Sprite frame buffer
+  val spriteFrameBuffer = Module(new SpriteFrameBuffer)
+  spriteFrameBuffer.io.videoClock := io.videoClock
+  spriteFrameBuffer.io.videoReset := io.videoReset
+  spriteFrameBuffer.io.enable := downloadDoneReg
+  spriteFrameBuffer.io.frameStart := cave.io.frameStart
+  spriteFrameBuffer.io.frameFinish := cave.io.frameFinish
+  spriteFrameBuffer.io.video <> videoSys.io.video
+  spriteFrameBuffer.io.gpu.lineBuffer <> cave.io.spriteLineBuffer
+  spriteFrameBuffer.io.gpu.frameBuffer <> cave.io.spriteFrameBuffer
+  spriteFrameBuffer.io.ddr.lineBuffer <> memSys.io.spriteLineBuffer
+  spriteFrameBuffer.io.ddr.frameBuffer <> memSys.io.spriteFrameBuffer
+
+  // System frame buffer
+  val systemFrameBuffer = Module(new SystemFrameBuffer)
+  systemFrameBuffer.io.videoClock := io.videoClock
+  systemFrameBuffer.io.videoReset := io.videoReset
+  systemFrameBuffer.io.enable := io.options.rotate // enable only for rotated HDMI output
+  systemFrameBuffer.io.lowLat := io.frameBufferCtrl.lowLat
+  systemFrameBuffer.io.forceBlank := io.cpuReset
+  systemFrameBuffer.io.rotate := io.options.rotate
+  systemFrameBuffer.io.video <> videoSys.io.video
+  systemFrameBuffer.io.frameBufferCtrl <> io.frameBufferCtrl
+  systemFrameBuffer.io.frameBuffer <> cave.io.systemFrameBuffer
+  systemFrameBuffer.io.ddr <> memSys.io.systemFrameBuffer
+
+  // System LED outputs
   io.led.power := false.B
   io.led.disk := io.ioctl.waitReq
   io.led.user := io.ioctl.download
@@ -173,7 +176,7 @@ class Main extends Module {
 
 object Main extends App {
   (new ChiselStage).execute(
-    Array("--compiler", "verilog", "--target-dir", "quartus/rtl", "--output-file", "ChiselTop"),
+    Array("--compiler", "verilog", "--target-dir", "quartus/rtl"),
     Seq(ChiselGeneratorAnnotation(() => new Main))
   )
 }

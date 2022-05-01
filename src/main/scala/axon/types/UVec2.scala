@@ -33,6 +33,7 @@
 package axon.types
 
 import chisel3._
+import chisel3.internal.firrtl.Width
 
 /**
  * Represents an unsigned 2D vector.
@@ -40,13 +41,11 @@ import chisel3._
  * @param xWidth The X data width.
  * @param yWidth The Y data width.
  */
-class UVec2(xWidth: Int, yWidth: Int) extends Bundle {
+class UVec2(xWidth: Width, yWidth: Width) extends Bundle {
   /** Horizontal position */
-  val x = UInt(xWidth.W)
+  val x = UInt(xWidth)
   /** Vertical position */
-  val y = UInt(yWidth.W)
-
-  def this(n: Int) = this(n, n)
+  val y = UInt(yWidth)
 
   /** Addition operator. */
   def +(that: UVec2) = UVec2(this.x + that.x, this.y + that.y)
@@ -75,13 +74,22 @@ class UVec2(xWidth: Int, yWidth: Int) extends Bundle {
 
 object UVec2 {
   /**
+   * Creates a signed vector bundle.
+   *
+   * @param width The data width.
+   * @return A bundle.
+   */
+  def apply(width: Width): UVec2 = new UVec2(width, width)
+
+  /**
    * Creates an unsigned vector from X and Y values.
    *
    * @param x The horizontal position.
    * @param y The vertical position.
+   * @return A unsigned vector.
    */
   def apply(x: Bits, y: Bits): UVec2 = {
-    val pos = Wire(new UVec2(x.getWidth, y.getWidth))
+    val pos = Wire(new UVec2(x.getWidth.W, y.getWidth.W))
     pos.x := x.asUInt
     pos.y := y.asUInt
     pos
@@ -90,7 +98,7 @@ object UVec2 {
   /**
    * Creates a zero vector.
    *
-   * @param width The data width.
+   * @return A unsigned vector.
    */
-  def zero(width: Int) = UVec2(0.U(width.W), 0.U(width.W))
+  def zero = UVec2(0.U, 0.U)
 }

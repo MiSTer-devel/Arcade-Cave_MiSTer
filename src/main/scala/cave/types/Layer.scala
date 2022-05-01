@@ -36,7 +36,6 @@ import axon.Util
 import axon.types.UVec2
 import cave.Config
 import chisel3._
-import chisel3.util._
 
 /** Represents a layer descriptor. */
 class Layer extends Bundle {
@@ -44,8 +43,8 @@ class Layer extends Bundle {
   val priority = UInt(Config.PRIO_WIDTH.W)
   /** Tile size (8x8 or 16x16) */
   val tileSize = Bool()
-  /** Disable flag */
-  val disable = Bool()
+  /** Enable flag */
+  val enable = Bool()
   /** Horizontal flip */
   val flipX = Bool()
   /** Vertical flip */
@@ -55,29 +54,7 @@ class Layer extends Bundle {
   /** Row select enable */
   val rowSelectEnable = Bool()
   /** Scroll position */
-  val scroll = new UVec2(Config.LAYER_SCROLL_WIDTH)
-
-  /**
-   * Returns the magic offset value for the given layer index.
-   *
-   * The X offset in DDP is 0x195 for the first layer 0x195 = 405, 405 + 107 (0x6b) = 512.
-   *
-   * Due to pipeline pixel offsets, this must be incremented by 1 for each layer (and 8 once for
-   * small tiles).
-   *
-   * The Y offset in DDP is 0x1EF = 495, 495 + 17 = 512.
-   *
-   * @param index The layer index.
-   */
-  def magicOffset(index: UInt): UVec2 = {
-    val x = MuxLookup(index, 0.U, Seq(
-      0.U -> 0x6b.U,
-      1.U -> 0x6c.U,
-      2.U -> Mux(tileSize, 0x6d.U, 0x75.U)
-    ))
-    val y = 0x11.U
-    UVec2(x, y)
-  }
+  val scroll = UVec2(Config.LAYER_SCROLL_WIDTH.W)
 }
 
 object Layer {
@@ -94,7 +71,7 @@ object Layer {
    *      | -x-- ---- ---- ---- | row select enable
    *      | --x- ---- ---- ---- | tile size
    *      | ---- ---x xxxx xxxx | scroll y
-   *    2 | ---- ---- ---x ---- | disable
+   *    2 | ---- ---- ---x ---- | enable
    *      | ---- ---- ---- --xx | priority
    * }}}
    *
@@ -105,7 +82,7 @@ object Layer {
     val layer = Wire(new Layer)
     layer.priority := words(2)(1, 0)
     layer.tileSize := words(1)(13)
-    layer.disable := words(2)(4)
+    layer.enable := !words(2)(4)
     layer.flipX := !words(0)(15)
     layer.flipY := !words(1)(15)
     layer.rowScrollEnable := words(0)(14)

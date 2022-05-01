@@ -43,7 +43,7 @@ class Sprite extends Bundle {
   /** Priority */
   val priority = UInt(Config.PRIO_WIDTH.W)
   /** Color code */
-  val colorCode = UInt(Config.COLOR_CODE_WIDTH.W)
+  val colorCode = UInt(Config.PALETTE_WIDTH.W)
   /** Sprite code */
   val code = UInt(Sprite.CODE_WIDTH.W)
   /** Horizontal flip */
@@ -51,47 +51,19 @@ class Sprite extends Bundle {
   /** Vertical flip */
   val flipY = Bool()
   /** Position */
-  val pos = new SVec2(Sprite.POS_WIDTH)
+  val pos = SVec2(Sprite.POS_WIDTH.W)
   /** The number of sprite tile columns */
   val cols = UInt(Sprite.COLS_WIDTH.W)
   /** The number of sprite tile rows */
   val rows = UInt(Sprite.ROWS_WIDTH.W)
   /** Zoom */
-  val zoom = new UVec2(Sprite.ZOOM_WIDTH)
+  val zoom = UVec2(Sprite.ZOOM_WIDTH.W)
 
   /** Sprite size in pixels */
   def size: UVec2 = UVec2(cols, rows) << log2Ceil(Sprite.TILE_SIZE).U
 
   /** Asserted when the sprite is enabled */
   def isEnabled: Bool = cols =/= 0.U && rows =/= 0.U
-
-  /**
-   * Calculates the final position of the given sprite pixel, taking scaling and flipping into
-   * account.
-   *
-   * This is calculated using 8-bit fixed-point arithmetic.
-   *
-   * @param x The horizontal position.
-   * @param y The vertical position.
-   */
-  def pixelPos(x: UInt, y: UInt): SVec2 = {
-    // Convert size to fixed-point
-    val size_ = size << 8
-
-    // Scale x/y values
-    val x_ = x * zoom.x
-    val y_ = y * zoom.y
-
-    // Flip x/y values
-    val x__ = Mux(flipX, size_.x - x_ - 0x80.U, x_)
-    val y__ = Mux(flipY, size_.y - y_ - 0x80.U, y_)
-
-    // Calculate pixel position
-    val result = pos + SVec2(x__, y__)
-
-    // Truncate fractional bits
-    result >> 8
-  }
 }
 
 object Sprite {
@@ -107,6 +79,8 @@ object Sprite {
   val ROWS_WIDTH = 8
   /** The width of the sprite zoom */
   val ZOOM_WIDTH = 16
+  /** The number of fractional bits for sprite zoom values */
+  val ZOOM_PRECISION = 8
 
   /**
    * Decodes a sprite from the given data.
