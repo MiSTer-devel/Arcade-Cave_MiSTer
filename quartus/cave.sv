@@ -243,7 +243,7 @@ reset_ctrl reset_sys_ctrl (
 );
 
 reset_ctrl reset_cpu_ctrl (
-  .clk(clk_cpu),
+  .clk(clk_sys),
   .rst_i(RESET | status[0] | buttons[1] | ~pll_sys_locked),
   .rst_o(rst_cpu)
 );
@@ -455,7 +455,7 @@ Main main (
   .videoClock(clk_video),
   .videoReset(rst_video),
   // CPU clock domain
-  .cpuClock(clk_cpu),
+  .cpuClock(clk_sys),
   .cpuReset(rst_cpu),
   // Options
   .options_sdram(sdram_available),

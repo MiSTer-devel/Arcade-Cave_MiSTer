@@ -131,9 +131,9 @@ class Main extends Module {
   cave.io.gameConfig <> gameConfigReg
   cave.io.options <> io.options
   cave.io.joystick <> io.joystick
-  cave.io.progRom <> DataFreezer.freeze(io.cpuClock, memSys.io.progRom)
-  cave.io.soundRom <> DataFreezer.freeze(io.cpuClock, memSys.io.soundRom)
-  cave.io.eeprom <> DataFreezer.freeze(io.cpuClock, memSys.io.eeprom)
+  cave.io.progRom <> memSys.io.progRom
+  cave.io.soundRom <> memSys.io.soundRom
+  cave.io.eeprom <> memSys.io.eeprom
   cave.io.layerTileRom(0) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(0))
   cave.io.layerTileRom(1) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(1))
   cave.io.layerTileRom(2) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(2))
