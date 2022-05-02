@@ -3,7 +3,7 @@ set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
 
 set_global_assignment -name CDF_FILE jtag.cdf
 set_global_assignment -name QIP_FILE rtl/axon/axon.qip
-set_global_assignment -name QIP_FILE rtl/fx68k/fx68k.qip
+set_global_assignment -name QIP_FILE rtl/j68/j68.qip
 set_global_assignment -name SDC_FILE rtl/sdram.sdc
 set_global_assignment -name SYSTEMVERILOG_FILE cave.sv
 set_global_assignment -name VERILOG_FILE rtl/Main.v

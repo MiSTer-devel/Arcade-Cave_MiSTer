@@ -38,6 +38,7 @@ import axon.gfx._
 import axon.mem._
 import axon.snd._
 import axon.types._
+import axon.util.Counter
 import cave.gfx._
 import cave.types._
 import chisel3._
@@ -129,6 +130,8 @@ class Cave extends Module {
   io.frameStart := gpu.io.spriteCtrl.start
   io.frameFinish := Util.falling(gpu.io.spriteCtrl.busy)
 
+  val (_, cpuClockEnable) = Counter.static(2)
+
   // The CPU and registers run in the CPU clock domain
   withClockAndReset(io.cpuClock, io.cpuReset) {
     // Registers
@@ -139,6 +142,7 @@ class Cave extends Module {
 
     // M68K CPU
     val cpu = Module(new CPU)
+    cpu.io.clockEnable := cpuClockEnable
     cpu.io.halt := pauseReg
     cpu.io.dtack := false.B
     cpu.io.vpa := intAck // autovectored interrupts

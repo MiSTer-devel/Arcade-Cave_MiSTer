@@ -32,12 +32,12 @@
 
 package axon.cpu.m68k
 
-import axon.Util
 import chisel3._
-import chisel3.util._
 
 /** An interface for the M68000 CPU. */
 class CPUIO extends Bundle {
+  /** Clock enable */
+  val clockEnable = Input(Bool())
   /** Halt */
   val halt = Input(Bool())
   /** Address strobe */
@@ -68,95 +68,62 @@ class CPUIO extends Bundle {
 class CPU extends Module {
   val io = IO(new CPUIO)
 
-  class FX68K extends BlackBox {
+  class J68 extends BlackBox(Map(
+    "USE_CLK_ENA" -> 1
+  )) {
     val io = IO(new Bundle {
-      // System control
+      val rst = Input(Bool())
       val clk = Input(Bool())
-      val enPhi1 = Input(Bool())
-      val enPhi2 = Input(Bool())
-      val extReset = Input(Bool())
-      val pwrUp = Input(Bool())
-      val HALTn = Input(Bool())
-      // Asynchronous bus control
-      val ASn = Output(Bool())
-      val eRWn = Output(Bool())
-      val UDSn = Output(Bool())
-      val LDSn = Output(Bool())
-      val DTACKn = Input(Bool())
-      val BERRn = Input(Bool())
-      // Synchronous bus control
-      val E = Output(Bool())
-      val VPAn = Input(Bool())
-      val VMAn = Output(Bool())
-      // Bus arbitration control
-      val BRn = Input(Bool())
-      val BGn = Output(Bool())
-      val BGACKn = Input(Bool())
-      // Interrupt control
-      val IPL0n = Input(Bool())
-      val IPL1n = Input(Bool())
-      val IPL2n = Input(Bool())
-      // Function code
-      val FC0 = Output(Bool())
-      val FC1 = Output(Bool())
-      val FC2 = Output(Bool())
-      // Address bus
-      val eab = Output(UInt(CPU.ADDR_WIDTH.W))
-      // Data bus
-      val iEdb = Input(Bits(CPU.DATA_WIDTH.W))
-      val oEdb = Output(Bits(CPU.DATA_WIDTH.W))
+      val clk_ena = Input(Bool())
+      val rd_ena = Output(Bool())
+      val wr_ena = Output(Bool())
+      val data_ack = Input(Bool())
+      val byte_ena = Output(Bits(2.W))
+      val address = Output(UInt(32.W))
+      val rd_data = Input(Bits(16.W))
+      val wr_data = Output(Bits(16.W))
+      val fc = Output(UInt(3.W))
+      val ipl_n = Input(UInt(3.W))
     })
 
-    override def desiredName = "fx68k"
+    override def desiredName = "cpu_j68"
   }
 
-  // Clock enable signals
-  //
-  // The FX68K module requires an input clock that is twice the frequency of the desired clock
-  // speed. It has two clock enable signals (PHI1 and PHI2) that trigger the rising and falling
-  // edges of the CPU clock.
-  //
-  // To generate the PHI1 and PHI2 clock enable signals, we toggle a bit and use the normal and
-  // inverted values.
-  val phi1 = Util.toggle()
-  val phi2 = !phi1
+  val as = RegInit(false.B)
 
   // CPU
-  val cpu = Module(new FX68K)
+  val cpu = Module(new J68)
+  cpu.io.rst := reset.asBool
   cpu.io.clk := clock.asBool
-  cpu.io.enPhi1 := phi1
-  cpu.io.enPhi2 := phi2
-  cpu.io.extReset := reset.asBool
-  cpu.io.pwrUp := reset.asBool
-  cpu.io.HALTn := !io.halt
-  io.as := !cpu.io.ASn
-  io.rw := cpu.io.eRWn
-  io.uds := !cpu.io.UDSn
-  io.lds := !cpu.io.LDSn
-  cpu.io.DTACKn := !io.dtack
-  cpu.io.BERRn := true.B
-  cpu.io.BRn := true.B
-  cpu.io.BGACKn := true.B
-  cpu.io.VPAn := !io.vpa
-  cpu.io.IPL0n := !io.ipl(0)
-  cpu.io.IPL1n := !io.ipl(1)
-  cpu.io.IPL2n := !io.ipl(2)
-  io.fc := Cat(cpu.io.FC2, cpu.io.FC1, cpu.io.FC0)
-  io.addr := cpu.io.eab
-  cpu.io.iEdb := io.din
-  io.dout := cpu.io.oEdb
+  cpu.io.clk_ena := io.clockEnable && !io.halt
+  cpu.io.data_ack := io.dtack
+  io.addr := cpu.io.address(23, 1)
+  cpu.io.rd_data := io.din
+  io.dout := cpu.io.wr_data
+  io.fc := cpu.io.fc
+  cpu.io.ipl_n := ~io.ipl
+
+  // Toggle address strobe
+  when(cpu.io.rd_ena | cpu.io.wr_ena) {
+    as := true.B
+  }.elsewhen(io.dtack) {
+    as := false.B
+  }
+
+  // Outputs
+  io.as := as
+  io.rw := !cpu.io.wr_ena
+  io.uds := cpu.io.byte_ena(1)
+  io.lds := cpu.io.byte_ena(0)
 }
 
 object CPU {
   /** The width of the CPU address bus. */
   val ADDR_WIDTH = 23
-
   /** The width of the CPU data bus. */
   val DATA_WIDTH = 16
-
   /** The width of the CPU interrupt priority level value. */
   val IPL_WIDTH = 3
-
   /** The width of the function code value. */
   val FC_WIDTH = 3
 }
