@@ -45,16 +45,8 @@ object Config {
    * This is the clock domain used by the memory, GPU, etc.
    */
   val CLOCK_FREQ = 96000000D
-
-  /**
-   * CPU clock frequency (Hz)
-   *
-   * The CPU clock as measured on the PCB is 16MHz, but the M68k CPU module requires a clock that is
-   * twice the desired clock speed.
-   */
-  val CPU_CLOCK_FREQ = 32000000D
-  /** CPU clock period (ns) */
-  val CPU_CLOCK_PERIOD = 1 / CPU_CLOCK_FREQ * 1000000000
+  /** Clock period (ns) */
+  val CLOCK_PERIOD = 1 / CLOCK_FREQ * 1000000000
 
   /** Video clock frequency (Hz) */
   val VIDEO_CLOCK_FREQ = 28000000D
@@ -67,7 +59,7 @@ object Config {
   val SCREEN_HEIGHT = 240
 
   /** The width of the pulse generated when a player presses the coin button */
-  val PLAYER_COIN_PULSE_WIDTH = (100000000 / CPU_CLOCK_PERIOD).ceil.toInt // 100ms
+  val PLAYER_COIN_PULSE_WIDTH = (100000000 / CLOCK_PERIOD).ceil.toInt // 100ms
 
   /** The base address of the IOCTL data stored in DDR. */
   val IOCTL_DOWNLOAD_BASE_ADDR = 0x30000000
@@ -169,7 +161,7 @@ object Config {
 
   /** YMZ280B configuration */
   val ymzConfig = YMZ280BConfig(
-    clockFreq = CPU_CLOCK_FREQ,
+    clockFreq = CLOCK_FREQ,
     sampleFreq = 88200
   )
 

@@ -56,8 +56,6 @@ class Main extends Module {
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
-    /** CPU clock domain */
-    val cpuClock = Input(Clock())
     /** CPU reset */
     val cpuReset = Input(Bool())
     /** DDR port */
@@ -126,14 +124,13 @@ class Main extends Module {
   val cave = Module(new Cave)
   cave.io.videoClock := io.videoClock
   cave.io.videoReset := io.videoReset
-  cave.io.cpuClock := io.cpuClock
   cave.io.cpuReset := io.cpuReset
   cave.io.gameConfig <> gameConfigReg
   cave.io.options <> io.options
   cave.io.joystick <> io.joystick
-  cave.io.progRom <> DataFreezer.freeze(io.cpuClock, memSys.io.progRom)
-  cave.io.soundRom <> DataFreezer.freeze(io.cpuClock, memSys.io.soundRom)
-  cave.io.eeprom <> DataFreezer.freeze(io.cpuClock, memSys.io.eeprom)
+  cave.io.progRom <> memSys.io.progRom
+  cave.io.soundRom <> memSys.io.soundRom
+  cave.io.eeprom <> memSys.io.eeprom
   cave.io.layerTileRom(0) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(0))
   cave.io.layerTileRom(1) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(1))
   cave.io.layerTileRom(2) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(2))

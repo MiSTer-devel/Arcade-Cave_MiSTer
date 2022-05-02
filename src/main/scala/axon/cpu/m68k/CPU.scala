@@ -32,7 +32,7 @@
 
 package axon.cpu.m68k
 
-import axon.Util
+import axon.util.Counter
 import chisel3._
 import chisel3.util._
 
@@ -118,8 +118,8 @@ class CPU extends Module {
   //
   // To generate the PHI1 and PHI2 clock enable signals, we toggle a bit and use the normal and
   // inverted values.
-  val phi1 = Util.toggle()
-  val phi2 = !phi1
+  val (_, phi1) = Counter.static(6)
+  val phi2 = ShiftRegister(phi1, 3)
 
   // CPU
   val cpu = Module(new FX68K)

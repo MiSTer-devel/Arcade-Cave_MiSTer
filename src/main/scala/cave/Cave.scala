@@ -54,8 +54,6 @@ class Cave extends Module {
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
-    /** CPU clock domain */
-    val cpuClock = Input(Clock())
     /** CPU reset */
     val cpuReset = Input(Reset())
     /** Game config port */
@@ -130,7 +128,7 @@ class Cave extends Module {
   io.frameFinish := Util.falling(gpu.io.spriteCtrl.busy)
 
   // The CPU and registers run in the CPU clock domain
-  withClockAndReset(io.cpuClock, io.cpuReset) {
+  withReset(io.cpuReset) {
     // Registers
     val vBlank = ShiftRegister(io.video.vBlank, 2)
     val videoIRQ = RegInit(false.B)

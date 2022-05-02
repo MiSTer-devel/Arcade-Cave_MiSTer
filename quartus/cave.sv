@@ -190,7 +190,7 @@ localparam CONF_STR = {
 ////////////////////////////////////////////////////////////////////////////////
 
 wire pll_sys_locked, pll_video_locked;
-wire clk_sys, clk_sdram, clk_video, clk_cpu;
+wire clk_sys, clk_sdram, clk_video;
 wire rst_sys, rst_video, rst_cpu;
 reg  rst_pll;
 
@@ -221,8 +221,7 @@ pll_sys pll_sys (
   .rst(rst_pll),
   .locked(pll_sys_locked),
   .outclk_0(clk_sys),
-  .outclk_1(clk_sdram),
-  .outclk_2(clk_cpu)
+  .outclk_1(clk_sdram)
 );
 
 pll_video pll_video (
@@ -243,7 +242,7 @@ reset_ctrl reset_sys_ctrl (
 );
 
 reset_ctrl reset_cpu_ctrl (
-  .clk(clk_cpu),
+  .clk(clk_sys),
   .rst_i(RESET | status[0] | buttons[1] | ~pll_sys_locked),
   .rst_o(rst_cpu)
 );
@@ -455,7 +454,6 @@ Main main (
   .videoClock(clk_video),
   .videoReset(rst_video),
   // CPU clock domain
-  .cpuClock(clk_cpu),
   .cpuReset(rst_cpu),
   // Options
   .options_sdram(sdram_available),
