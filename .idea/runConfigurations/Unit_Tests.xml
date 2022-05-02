@@ -25,6 +25,7 @@
         <option value="axon.mem.MemArbiterTest" />
         <option value="axon.util.PISOTest" />
         <option value="axon.util.CounterTest" />
+        <option value="axon.cpu.MemMapTest" />
         <option value="axon.dma.WriteDMATest" />
         <option value="axon.dma.ReadDMATest" />
         <option value="axon.snd.LERPTest" />

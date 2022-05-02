@@ -47,27 +47,22 @@ class MemMap(cpu: CPUIO) {
   // Registers
   val dinReg = RegInit(0.U(CPU.DATA_WIDTH.W))
   val dtackReg = RegInit(false.B)
+
+  // Strobe signals
   val readStrobe = Util.rising(cpu.as) && cpu.rw
-  val upperWriteStrobe = Util.rising(cpu.uds) && !cpu.rw
-  val lowerWriteStrobe = Util.rising(cpu.lds) && !cpu.rw
+  val upperWriteStrobe = cpu.as && Util.rising(cpu.uds) && !cpu.rw
+  val lowerWriteStrobe = cpu.as && Util.rising(cpu.lds) && !cpu.rw
   val writeStrobe = upperWriteStrobe || lowerWriteStrobe
 
-  // Clear data transfer acknowledge register
-  when(!cpu.as) { dtackReg := false.B }
-
-  // Set the CPU input data bus and data transfer acknowledge from the registered values
-  cpu.din := dinReg
-  cpu.dtack := dtackReg
-
   /**
-   * Create a memory map for the given address.
+   * Creates a mapping for the given address.
    *
    * @param a The address.
    */
   def apply(a: Int): Mapping = apply(a.to(a))
 
   /**
-   * Create a memory map for the given address range.
+   * Creates a mapping for the given address range.
    *
    * @param r The address range.
    */
@@ -167,7 +162,11 @@ class MemMap(cpu: CPUIO) {
      */
     def rw(f: (UInt, UInt) => UInt)(g: (UInt, UInt, UInt) => Unit): Unit = {
       when(cs) {
-        when(readStrobe) { dinReg := f(addr, offset) }.elsewhen(writeStrobe) { g(addr, offset, cpu.dout) }
+        when(readStrobe) {
+          dinReg := f(addr, offset)
+        }.elsewhen(writeStrobe) {
+          g(addr, offset, cpu.dout)
+        }
         dtackReg := true.B
       }
     }
@@ -200,5 +199,12 @@ class MemMap(cpu: CPUIO) {
     def ignore(): Unit = {
       rw((_, _) => 0.U)((_, _, _) => {})
     }
+
+    // Clear data transfer acknowledge register
+    when(!cpu.as) { dtackReg := false.B }
+
+    // Set input data bus and data transfer acknowledge from the registered values
+    cpu.din := dinReg
+    cpu.dtack := dtackReg
   }
 }
