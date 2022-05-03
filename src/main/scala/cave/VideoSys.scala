@@ -43,27 +43,33 @@ import chisel3.util._
  */
 class VideoSys extends Module {
   val io = IO(new Bundle {
+    /** Video clock domain */
+    val videoClock = Input(Clock())
+    /** Video reset */
+    val videoReset = Input(Bool())
     /** Options port */
     val options = OptionsIO()
     /** Video port */
     val video = VideoIO()
   })
 
-  // Video timings
-  val originalVideoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
-  val compatibilityVideoTiming = Module(new VideoTiming(Config.compatibilityVideoTimingConfig))
+  withClockAndReset(io.videoClock, io.videoReset) {
+    // Video timings
+    val originalVideoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
+    val compatibilityVideoTiming = Module(new VideoTiming(Config.compatibilityVideoTimingConfig))
 
-  // Changing the CRT offset value during the display region can momentarily alter the screen
-  // dimensions, which may in turn cause issues with the video FIFO. To avoid this problem, the
-  // offset value must be latched during a VSYNC.
-  originalVideoTiming.io.offset := RegEnable(io.options.offset, originalVideoTiming.io.video.vSync)
-  compatibilityVideoTiming.io.offset := RegEnable(io.options.offset, compatibilityVideoTiming.io.video.vSync)
+    // Changing the CRT offset value during the display region can momentarily alter the screen
+    // dimensions, which may in turn cause issues with the video FIFO. To avoid this problem, the
+    // offset value must be latched during a VSYNC.
+    originalVideoTiming.io.offset := RegEnable(io.options.offset, originalVideoTiming.io.video.vSync)
+    compatibilityVideoTiming.io.offset := RegEnable(io.options.offset, compatibilityVideoTiming.io.video.vSync)
 
-  // The compatibility option should only be latched during a VBLANK, to avoid any sudden changes
-  // in the video timing.
-  val compatibilityReg = RegEnable(io.options.compatibility, originalVideoTiming.io.video.vBlank && compatibilityVideoTiming.io.video.vBlank)
+    // The compatibility option should only be latched during a VBLANK, to avoid any sudden changes
+    // in the video timing.
+    val compatibilityReg = RegEnable(io.options.compatibility, originalVideoTiming.io.video.vBlank && compatibilityVideoTiming.io.video.vBlank)
 
-  // Select original or compatibility video timing
-  val video = Mux(compatibilityReg, compatibilityVideoTiming.io.video, originalVideoTiming.io.video)
-  io.video := video
+    // Select original or compatibility video timing
+    val video = Mux(compatibilityReg, compatibilityVideoTiming.io.video, originalVideoTiming.io.video)
+    io.video := video
+  }
 }

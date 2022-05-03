@@ -116,7 +116,9 @@ class Main extends Module {
   memSys.io.sdram <> sdram.io.mem
 
   // Video subsystem
-  val videoSys = withClockAndReset(io.videoClock, io.videoReset) { Module(new VideoSys) }
+  val videoSys = Module(new VideoSys)
+  videoSys.io.videoClock := io.videoClock
+  videoSys.io.videoReset := io.videoReset
   videoSys.io.options <> io.options
   videoSys.io.video <> io.video
 
