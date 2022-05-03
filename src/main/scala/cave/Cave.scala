@@ -114,7 +114,7 @@ class Cave extends Module {
   gpu.io.spriteCtrl.tileRom <> io.spriteTileRom
   gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
   gpu.io.spriteCtrl.enable := io.options.layerEnable.sprite
-  gpu.io.spriteCtrl.start := Util.rising(ShiftRegister(frameStart, 2))
+  gpu.io.spriteCtrl.start := Util.rising(frameStart)
   gpu.io.spriteCtrl.flip := io.options.flip
   gpu.io.spriteCtrl.rotate := io.options.rotate
   gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
@@ -127,257 +127,254 @@ class Cave extends Module {
   io.frameStart := gpu.io.spriteCtrl.start
   io.frameFinish := Util.falling(gpu.io.spriteCtrl.busy)
 
-  // The CPU and registers run in the CPU clock domain
-  withReset(io.cpuReset) {
-    // Registers
-    val vBlank = ShiftRegister(io.video.vBlank, 2)
-    val videoIRQ = RegInit(false.B)
-    val iplReg = RegInit(0.U)
-    val pauseReg = Util.toggle(Util.rising(io.joystick.player1.pause || io.joystick.player2.pause))
+  // Registers
+  val vBlank = ShiftRegister(io.video.vBlank, 2)
+  val videoIRQ = RegInit(false.B)
+  val iplReg = RegInit(0.U)
+  val pauseReg = Util.toggle(Util.rising(io.joystick.player1.pause || io.joystick.player2.pause))
 
-    // M68K CPU
-    val cpu = Module(new CPU)
-    cpu.io.halt := pauseReg
-    cpu.io.dtack := false.B
-    cpu.io.vpa := intAck // autovectored interrupts
-    cpu.io.ipl := iplReg
-    cpu.io.din := 0.U
+  // M68K CPU
+  val cpu = withReset(io.cpuReset) { Module(new CPU(Config.CPU_CLOCK_DIV)) }
+  cpu.io.halt := pauseReg
+  cpu.io.dtack := false.B
+  cpu.io.vpa := intAck // autovectored interrupts
+  cpu.io.ipl := iplReg
+  cpu.io.din := 0.U
 
-    // EEPROM
-    val eeprom = Module(new EEPROM)
-    eeprom.io.mem <> io.eeprom
-    val cs = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(5), eepromMem.din(9))
-    val sck = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(6), eepromMem.din(10))
-    val sdi = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(7), eepromMem.din(11))
-    eeprom.io.serial.cs := RegEnable(cs, false.B, eepromMem.wr)
-    eeprom.io.serial.sck := RegEnable(sck, false.B, eepromMem.wr)
-    eeprom.io.serial.sdi := RegEnable(sdi, false.B, eepromMem.wr)
+  // EEPROM
+  val eeprom = Module(new EEPROM)
+  eeprom.io.mem <> io.eeprom
+  val cs = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(5), eepromMem.din(9))
+  val sck = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(6), eepromMem.din(10))
+  val sdi = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(7), eepromMem.din(11))
+  eeprom.io.serial.cs := RegEnable(cs, false.B, eepromMem.wr)
+  eeprom.io.serial.sck := RegEnable(sck, false.B, eepromMem.wr)
+  eeprom.io.serial.sdi := RegEnable(sdi, false.B, eepromMem.wr)
 
-    // Main RAM
-    val mainRam = Module(new SinglePortRam(
-      addrWidth = Config.MAIN_RAM_ADDR_WIDTH,
-      dataWidth = Config.MAIN_RAM_DATA_WIDTH,
+  // Main RAM
+  val mainRam = Module(new SinglePortRam(
+    addrWidth = Config.MAIN_RAM_ADDR_WIDTH,
+    dataWidth = Config.MAIN_RAM_DATA_WIDTH,
+    maskEnable = true
+  ))
+  mainRam.io.default()
+
+  // Sprite VRAM
+  val spriteRam = Module(new TrueDualPortRam(
+    addrWidthA = Config.SPRITE_RAM_ADDR_WIDTH,
+    dataWidthA = Config.SPRITE_RAM_DATA_WIDTH,
+    addrWidthB = Config.SPRITE_RAM_GPU_ADDR_WIDTH,
+    dataWidthB = Config.SPRITE_RAM_GPU_DATA_WIDTH,
+    maskEnable = true
+  ))
+  spriteRam.io.clockB := clock // system (i.e. fast) clock domain
+  spriteRam.io.portA.default()
+
+  // Layer VRAM
+  val layerRam = 0.until(Config.LAYER_COUNT).map { _ =>
+    val ram = Module(new TrueDualPortRam(
+      addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
+      dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
+      addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
+      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH,
       maskEnable = true
     ))
-    mainRam.io.default()
-
-    // Sprite VRAM
-    val spriteRam = Module(new TrueDualPortRam(
-      addrWidthA = Config.SPRITE_RAM_ADDR_WIDTH,
-      dataWidthA = Config.SPRITE_RAM_DATA_WIDTH,
-      addrWidthB = Config.SPRITE_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.SPRITE_RAM_GPU_DATA_WIDTH,
-      maskEnable = true
-    ))
-    spriteRam.io.clockB := clock // system (i.e. fast) clock domain
-    spriteRam.io.portA.default()
-
-    // Layer VRAM
-    val layerRam = 0.until(Config.LAYER_COUNT).map { _ =>
-      val ram = Module(new TrueDualPortRam(
-        addrWidthA = Config.LAYER_RAM_ADDR_WIDTH,
-        dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
-        addrWidthB = Config.LAYER_RAM_GPU_ADDR_WIDTH,
-        dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH,
-        maskEnable = true
-      ))
-      ram.io.clockB := io.videoClock
-      ram.io.portA.default()
-      ram
-    }
-
-    // Palette RAM
-    val paletteRam = Module(new TrueDualPortRam(
-      addrWidthA = Config.PALETTE_RAM_ADDR_WIDTH,
-      dataWidthA = Config.PALETTE_RAM_DATA_WIDTH,
-      addrWidthB = Config.PALETTE_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.PALETTE_RAM_GPU_DATA_WIDTH,
-      maskEnable = true
-    ))
-    paletteRam.io.clockB := io.videoClock
-    paletteRam.io.portA.default()
-
-    // Layer registers
-    val layerRegs = 0.until(Config.LAYER_COUNT).map { _ =>
-      val regs = Module(new RegisterFile(Config.LAYER_REGS_COUNT))
-      regs.io.mem.default()
-      regs
-    }
-
-    // Video registers
-    val videoRegs = Module(new RegisterFile(Config.VIDEO_REGS_COUNT))
-    videoRegs.io.mem.default()
-
-    // GPU
-    0.until(Config.LAYER_COUNT).foreach { i =>
-      gpu.io.layerCtrl(i).regs := withClock(io.videoClock) { ShiftRegister(Layer.decode(layerRegs(i).io.regs.asUInt), 2) }
-      gpu.io.layerCtrl(i).vram <> layerRam(i).io.portB
-    }
-    gpu.io.spriteCtrl.bank := videoRegs.io.regs.asUInt(64)
-    gpu.io.spriteCtrl.vram <> spriteRam.io.portB
-    gpu.io.paletteRam <> paletteRam.io.portB
-
-    // YMZ280B
-    val ymz = Module(new YMZ280B(Config.ymzConfig))
-    ymz.io.cpu.default()
-    ymz.io.mem <> io.soundRom
-    io.audio <> RegEnable(ymz.io.audio.bits, ymz.io.audio.valid)
-    val soundIRQ = ymz.io.irq
-
-    // Interrupt acknowledge
-    intAck := cpu.io.as && cpu.io.fc === 7.U
-
-    // Set and clear interrupt priority level register
-    when(videoIRQ || soundIRQ) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
-
-    // Set vertical blank IRQ
-    when(Util.rising(vBlank)) { videoIRQ := true.B }
-
-    // Set memory interface defaults, the actual values are assigned in the memory map
-    io.progRom.default()
-    eepromMem.default()
-
-    // Set input ports
-    val (input0, input1) = Cave.encodePlayers(io.gameConfig.index, io.joystick, eeprom)
-
-    // Memory map
-    val map = new MemMap(cpu.io)
-
-    // Access to 0x11xxxx appears during the service menu. It must be ignored, otherwise the service
-    // menu freezes.
-    map(0x110000 to 0x2fffff).ignore()
-
-    // Dangun Feveron
-    when(io.gameConfig.index === GameConfig.DFEVERON.U) {
-      map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
-      map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-      map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
-      map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-      map(0x500000 to 0x507fff).readWriteMem(layerRam(0).io.portA)
-      map(0x600000 to 0x607fff).readWriteMem(layerRam(1).io.portA)
-      map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
-      map(0x710000 to 0x717fff).readWriteMem(layerRam(2).io.portA)
-      map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
-      map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
-      map(0x800000 to 0x800007).r { (_, offset) =>
-        when(offset === 4.U) { videoIRQ := false.B }
-        "b001".U ## !videoIRQ
-      }
-      map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
-      map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
-      map(0xb00000).r { (_, _) => input0 }
-      map(0xb00002).r { (_, _) => input1 }
-      map(0xc00000).writeMem(eepromMem)
-    }
-
-    // DoDonPachi
-    when(io.gameConfig.index === GameConfig.DDONPACH.U) {
-      map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
-      map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-      map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
-      map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-      map(0x500000 to 0x507fff).readWriteMem(layerRam(0).io.portA)
-      map(0x600000 to 0x607fff).readWriteMem(layerRam(1).io.portA)
-      // Access to address 0x5fxxxx occurs during the attract loop on the air stage at frame 9355
-      // (i.e. after roughly 150 sec). The game is accessing data relative to a layer 1 address and
-      // underflows. These accesses do nothing, but should be acknowledged in order not to block the
-      // CPU.
-      //
-      // The reason these accesses appear is probably because it made the layer update routine
-      // simpler to write (no need to handle edge cases). These accesses are simply ignored by the
-      // hardware.
-      map(0x5f0000 to 0x5fffff).ignore()
-      map(0x700000 to 0x70ffff).readWriteMemT(layerRam(2).io.portA)(a => a(12, 0))
-      map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
-      map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
-      map(0x800000 to 0x800007).r { (_, offset) =>
-        when(offset === 0.U) { videoIRQ := false.B }
-        "b011".U ## !videoIRQ
-      }
-      map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
-      map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
-      map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
-      map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-      map(0xd00000).r { (_, _) => input0 }
-      map(0xd00002).r { (_, _) => input1 }
-      map(0xe00000).writeMem(eepromMem)
-    }
-
-    // ESP Ra.De.
-    when(io.gameConfig.index === GameConfig.ESPRADE.U) {
-      map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
-      map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-      map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
-      map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-      map(0x500000 to 0x507fff).readWriteMem(layerRam(0).io.portA)
-      map(0x600000 to 0x607fff).readWriteMem(layerRam(1).io.portA)
-      map(0x700000 to 0x707fff).readWriteMem(layerRam(2).io.portA)
-      map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
-      map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
-      map(0x800000 to 0x800007).r { (_, offset) =>
-        when(offset === 4.U) { videoIRQ := false.B }
-        "b001".U ## !videoIRQ
-      }
-      map(0x800008 to 0x800fff).ignore()
-      map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
-      map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
-      map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
-      map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-      map(0xd00000).r { (_, _) => input0 }
-      map(0xd00002).r { (_, _) => input1 }
-      map(0xe00000).writeMem(eepromMem)
-    }
-
-    // Guwange
-    when(io.gameConfig.index === GameConfig.GUWANGE.U) {
-      map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
-      map(0x200000 to 0x20ffff).readWriteMem(mainRam.io)
-      map(0x300000 to 0x30007f).writeMem(videoRegs.io.mem.asWriteMemIO)
-      map(0x300000 to 0x300007).r { (_, offset) =>
-        when(offset === 4.U) { videoIRQ := false.B }
-        "b001".U ## !videoIRQ
-      }
-      map(0x300008).w { (_, _, _) => frameStart := true.B }
-      map(0x300009 to 0x300fff).ignore()
-      map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-      map(0x500000 to 0x507fff).readWriteMem(layerRam(0).io.portA)
-      map(0x600000 to 0x607fff).readWriteMem(layerRam(1).io.portA)
-      map(0x700000 to 0x707fff).readWriteMem(layerRam(2).io.portA)
-      map(0x800000 to 0x800003).readWriteMem(ymz.io.cpu)
-      map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
-      map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
-      map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
-      map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-      map(0xd00010 to 0xd00014).ignore()
-      map(0xd00010).writeMem(eepromMem)
-      map(0xd00010).r { (_, _) => input0 }
-      map(0xd00012).r { (_, _) => input1 }
-    }
-
-    // Puzzle Uo Poko
-    when(io.gameConfig.index === GameConfig.UOPOKO.U) {
-      map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
-      map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-      map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
-      map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-      map(0x500000 to 0x507fff).readWriteMem(layerRam(0).io.portA)
-      map(0x600000 to 0x60007f).writeMem(videoRegs.io.mem.asWriteMemIO)
-      map(0x600000 to 0x600007).r { (_, offset) =>
-        when(offset === 4.U) { videoIRQ := false.B }
-        "b001".U ## !videoIRQ
-      }
-      map(0x600008).w { (_, _, _) => frameStart := true.B }
-      map(0x600009 to 0x600fff).ignore()
-      map(0x700000 to 0x700005).readWriteMem(layerRegs(0).io.mem)
-      map(0x800000 to 0x80ffff).readWriteMem(paletteRam.io.portA)
-      map(0x900000).r { (_, _) => input0 }
-      map(0x900002).r { (_, _) => input1 }
-      map(0xa00000).writeMem(eepromMem)
-    }
-
-    // When the game is paused, request frames at the start of every vertical blank
-    when(pauseReg) { frameStart := vBlank }
+    ram.io.clockB := io.videoClock
+    ram.io.portA.default()
+    ram
   }
+
+  // Palette RAM
+  val paletteRam = Module(new TrueDualPortRam(
+    addrWidthA = Config.PALETTE_RAM_ADDR_WIDTH,
+    dataWidthA = Config.PALETTE_RAM_DATA_WIDTH,
+    addrWidthB = Config.PALETTE_RAM_GPU_ADDR_WIDTH,
+    dataWidthB = Config.PALETTE_RAM_GPU_DATA_WIDTH,
+    maskEnable = true
+  ))
+  paletteRam.io.clockB := io.videoClock
+  paletteRam.io.portA.default()
+
+  // Layer registers
+  val layerRegs = 0.until(Config.LAYER_COUNT).map { _ =>
+    val regs = Module(new RegisterFile(Config.LAYER_REGS_COUNT))
+    regs.io.mem.default()
+    regs
+  }
+
+  // Video registers
+  val videoRegs = Module(new RegisterFile(Config.VIDEO_REGS_COUNT))
+  videoRegs.io.mem.default()
+
+  // GPU
+  0.until(Config.LAYER_COUNT).foreach { i =>
+    gpu.io.layerCtrl(i).regs := withClock(io.videoClock) { ShiftRegister(Layer.decode(layerRegs(i).io.regs.asUInt), 2) }
+    gpu.io.layerCtrl(i).vram <> layerRam(i).io.portB
+  }
+  gpu.io.spriteCtrl.bank := videoRegs.io.regs.asUInt(64)
+  gpu.io.spriteCtrl.vram <> spriteRam.io.portB
+  gpu.io.paletteRam <> paletteRam.io.portB
+
+  // YMZ280B
+  val ymz = Module(new YMZ280B(Config.ymzConfig))
+  ymz.io.cpu.default()
+  ymz.io.mem <> io.soundRom
+  io.audio <> RegEnable(ymz.io.audio.bits, ymz.io.audio.valid)
+  val soundIRQ = ymz.io.irq
+
+  // Interrupt acknowledge
+  intAck := cpu.io.as && cpu.io.fc === 7.U
+
+  // Set and clear interrupt priority level register
+  when(videoIRQ || soundIRQ) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
+
+  // Set vertical blank IRQ
+  when(Util.rising(vBlank)) { videoIRQ := true.B }
+
+  // Set memory interface defaults, the actual values are assigned in the memory map
+  io.progRom.default()
+  eepromMem.default()
+
+  // Set input ports
+  val (input0, input1) = Cave.encodePlayers(io.gameConfig.index, io.joystick, eeprom)
+
+  // Memory map
+  val map = new MemMap(cpu.io)
+
+  // Access to 0x11xxxx appears during the service menu. It must be ignored, otherwise the service
+  // menu freezes.
+  map(0x110000 to 0x2fffff).ignore()
+
+  // Dangun Feveron
+  when(io.gameConfig.index === GameConfig.DFEVERON.U) {
+    map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
+    map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
+    map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
+    map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
+    map(0x500000 to 0x507fff).readWriteMem(layerRam(0).io.portA)
+    map(0x600000 to 0x607fff).readWriteMem(layerRam(1).io.portA)
+    map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
+    map(0x710000 to 0x717fff).readWriteMem(layerRam(2).io.portA)
+    map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+    map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
+    map(0x800000 to 0x800007).r { (_, offset) =>
+      when(offset === 4.U) { videoIRQ := false.B }
+      "b001".U ## !videoIRQ
+    }
+    map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
+    map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
+    map(0xb00000).r { (_, _) => input0 }
+    map(0xb00002).r { (_, _) => input1 }
+    map(0xc00000).writeMem(eepromMem)
+  }
+
+  // DoDonPachi
+  when(io.gameConfig.index === GameConfig.DDONPACH.U) {
+    map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
+    map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
+    map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
+    map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
+    map(0x500000 to 0x507fff).readWriteMem(layerRam(0).io.portA)
+    map(0x600000 to 0x607fff).readWriteMem(layerRam(1).io.portA)
+    // Access to address 0x5fxxxx occurs during the attract loop on the air stage at frame 9355
+    // (i.e. after roughly 150 sec). The game is accessing data relative to a layer 1 address and
+    // underflows. These accesses do nothing, but should be acknowledged in order not to block the
+    // CPU.
+    //
+    // The reason these accesses appear is probably because it made the layer update routine
+    // simpler to write (no need to handle edge cases). These accesses are simply ignored by the
+    // hardware.
+    map(0x5f0000 to 0x5fffff).ignore()
+    map(0x700000 to 0x70ffff).readWriteMemT(layerRam(2).io.portA)(a => a(12, 0))
+    map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+    map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
+    map(0x800000 to 0x800007).r { (_, offset) =>
+      when(offset === 0.U) { videoIRQ := false.B }
+      "b011".U ## !videoIRQ
+    }
+    map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
+    map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
+    map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
+    map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
+    map(0xd00000).r { (_, _) => input0 }
+    map(0xd00002).r { (_, _) => input1 }
+    map(0xe00000).writeMem(eepromMem)
+  }
+
+  // ESP Ra.De.
+  when(io.gameConfig.index === GameConfig.ESPRADE.U) {
+    map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
+    map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
+    map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
+    map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
+    map(0x500000 to 0x507fff).readWriteMem(layerRam(0).io.portA)
+    map(0x600000 to 0x607fff).readWriteMem(layerRam(1).io.portA)
+    map(0x700000 to 0x707fff).readWriteMem(layerRam(2).io.portA)
+    map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+    map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
+    map(0x800000 to 0x800007).r { (_, offset) =>
+      when(offset === 4.U) { videoIRQ := false.B }
+      "b001".U ## !videoIRQ
+    }
+    map(0x800008 to 0x800fff).ignore()
+    map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
+    map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
+    map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
+    map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
+    map(0xd00000).r { (_, _) => input0 }
+    map(0xd00002).r { (_, _) => input1 }
+    map(0xe00000).writeMem(eepromMem)
+  }
+
+  // Guwange
+  when(io.gameConfig.index === GameConfig.GUWANGE.U) {
+    map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
+    map(0x200000 to 0x20ffff).readWriteMem(mainRam.io)
+    map(0x300000 to 0x30007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+    map(0x300000 to 0x300007).r { (_, offset) =>
+      when(offset === 4.U) { videoIRQ := false.B }
+      "b001".U ## !videoIRQ
+    }
+    map(0x300008).w { (_, _, _) => frameStart := true.B }
+    map(0x300009 to 0x300fff).ignore()
+    map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
+    map(0x500000 to 0x507fff).readWriteMem(layerRam(0).io.portA)
+    map(0x600000 to 0x607fff).readWriteMem(layerRam(1).io.portA)
+    map(0x700000 to 0x707fff).readWriteMem(layerRam(2).io.portA)
+    map(0x800000 to 0x800003).readWriteMem(ymz.io.cpu)
+    map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
+    map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
+    map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
+    map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
+    map(0xd00010 to 0xd00014).ignore()
+    map(0xd00010).writeMem(eepromMem)
+    map(0xd00010).r { (_, _) => input0 }
+    map(0xd00012).r { (_, _) => input1 }
+  }
+
+  // Puzzle Uo Poko
+  when(io.gameConfig.index === GameConfig.UOPOKO.U) {
+    map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
+    map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
+    map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
+    map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
+    map(0x500000 to 0x507fff).readWriteMem(layerRam(0).io.portA)
+    map(0x600000 to 0x60007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+    map(0x600000 to 0x600007).r { (_, offset) =>
+      when(offset === 4.U) { videoIRQ := false.B }
+      "b001".U ## !videoIRQ
+    }
+    map(0x600008).w { (_, _, _) => frameStart := true.B }
+    map(0x600009 to 0x600fff).ignore()
+    map(0x700000 to 0x700005).readWriteMem(layerRegs(0).io.mem)
+    map(0x800000 to 0x80ffff).readWriteMem(paletteRam.io.portA)
+    map(0x900000).r { (_, _) => input0 }
+    map(0x900002).r { (_, _) => input1 }
+    map(0xa00000).writeMem(eepromMem)
+  }
+
+  // When the game is paused, request frames at the start of every vertical blank
+  when(pauseReg) { frameStart := vBlank }
 }
 
 object Cave {

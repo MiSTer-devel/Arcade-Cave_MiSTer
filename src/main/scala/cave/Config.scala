@@ -39,11 +39,7 @@ import axon.snd.YMZ280BConfig
 import chisel3.util.log2Ceil
 
 object Config {
-  /**
-   * System clock frequency (Hz)
-   *
-   * This is the clock domain used by the memory, GPU, etc.
-   */
+  /** System clock frequency (Hz) */
   val CLOCK_FREQ = 96000000D
   /** Clock period (ns) */
   val CLOCK_PERIOD = 1 / CLOCK_FREQ * 1000000000
@@ -52,6 +48,9 @@ object Config {
   val VIDEO_CLOCK_FREQ = 28000000D
   /** Video clock divider */
   val VIDEO_CLOCK_DIV = 4
+
+  /** CPU clock divider */
+  val CPU_CLOCK_DIV = 6 // 16Mhz
 
   /** The screen width in pixels */
   val SCREEN_WIDTH = 320

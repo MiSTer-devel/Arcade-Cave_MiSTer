@@ -65,7 +65,7 @@ class CPUIO extends Bundle {
 }
 
 /** M68000 CPU */
-class CPU extends Module {
+class CPU(clockDiv: Int) extends Module {
   val io = IO(new CPUIO)
 
   class FX68K extends BlackBox {
@@ -110,16 +110,10 @@ class CPU extends Module {
     override def desiredName = "fx68k"
   }
 
-  // Clock enable signals
-  //
-  // The FX68K module requires an input clock that is twice the frequency of the desired clock
-  // speed. It has two clock enable signals (PHI1 and PHI2) that trigger the rising and falling
-  // edges of the CPU clock.
-  //
-  // To generate the PHI1 and PHI2 clock enable signals, we toggle a bit and use the normal and
-  // inverted values.
-  val (_, phi1) = Counter.static(6)
-  val phi2 = ShiftRegister(phi1, 3)
+  // The FX68K module requires two clock enable signals (PHI1 and PHI2) to enable the rising and
+  // falling edges of the clock
+  val (_, phi1) = Counter.static(clockDiv)
+  val phi2 = ShiftRegister(phi1, clockDiv / 2)
 
   // CPU
   val cpu = Module(new FX68K)
@@ -150,13 +144,10 @@ class CPU extends Module {
 object CPU {
   /** The width of the CPU address bus. */
   val ADDR_WIDTH = 23
-
   /** The width of the CPU data bus. */
   val DATA_WIDTH = 16
-
   /** The width of the CPU interrupt priority level value. */
   val IPL_WIDTH = 3
-
   /** The width of the function code value. */
   val FC_WIDTH = 3
 }
