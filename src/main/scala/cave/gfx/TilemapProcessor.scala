@@ -58,9 +58,6 @@ class TilemapProcessor extends Module {
     val pen = Output(new PaletteEntry)
   })
 
-  // Decode the line effect for the current scanline
-  val lineEffectReg = RegEnable(LineEffect.decode(io.ctrl.lineRam.dout), io.video.clockEnable)
-
   // Enable flags
   val layerEnable = io.ctrl.enable && io.ctrl.format =/= Config.GFX_FORMAT_UNKNOWN.U && io.ctrl.regs.enable
   val rowScrollEnable = io.ctrl.rowScrollEnable && io.ctrl.regs.rowScrollEnable
@@ -69,10 +66,14 @@ class TilemapProcessor extends Module {
   // Pixel position
   val pos = io.video.pos + io.ctrl.regs.scroll + io.offset
 
+  // Decode the line effect for the current scanline
+  val lineEffectReg = RegEnable(LineEffect.decode(io.ctrl.vram.dout), io.video.clockEnable)
+
   // Apply line effects
+  // FIXME
   val pos_ = {
-    val x = Mux(rowScrollEnable, lineEffectReg.rowScroll, 0.U) + pos.x
-    val y = Mux(rowSelectEnable, lineEffectReg.rowSelect, pos.y)
+    val x = Mux(false.B && rowScrollEnable, lineEffectReg.rowScroll, 0.U) + pos.x
+    val y = Mux(false.B && rowSelectEnable, lineEffectReg.rowSelect, pos.y)
     UVec2(x, y)
   }
 
@@ -84,8 +85,8 @@ class TilemapProcessor extends Module {
 
   // Decode tile
   val tile = Mux(io.ctrl.regs.tileSize,
-    Tile.decode16x16(io.ctrl.vram16x16.dout),
-    Tile.decode8x8(io.ctrl.vram8x8.dout)
+    Tile.decode16x16(io.ctrl.vram.dout),
+    Tile.decode8x8(io.ctrl.vram.dout)
   )
 
   // Latch signals
@@ -103,12 +104,8 @@ class TilemapProcessor extends Module {
   val pen = PaletteEntry(priorityReg, colorReg, pixReg(offset.x(2, 0)))
 
   // Outputs
-  io.ctrl.lineRam.rd := true.B // read-only
-  io.ctrl.lineRam.addr := pos.y
-  io.ctrl.vram8x8.rd := true.B // read-only
-  io.ctrl.vram8x8.addr := layerRamAddr
-  io.ctrl.vram16x16.rd := true.B // read-only
-  io.ctrl.vram16x16.addr := layerRamAddr
+  io.ctrl.vram.rd := true.B // read-only
+  io.ctrl.vram.addr := layerRamAddr
   io.ctrl.tileRom.rd := io.ctrl.format =/= Config.GFX_FORMAT_UNKNOWN.U
   io.ctrl.tileRom.addr := TilemapProcessor.tileRomAddr(io.ctrl, tileReg.code, offset)
   io.pen := Mux(layerEnable, pen, PaletteEntry.zero)
