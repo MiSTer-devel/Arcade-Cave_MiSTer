@@ -67,13 +67,13 @@ class TilemapProcessor extends Module {
   val pos = io.video.pos + io.ctrl.regs.scroll + io.offset
 
   // Decode the line effect for the current scanline
-  val lineEffectReg = RegEnable(LineEffect.decode(io.ctrl.vram.dout), io.video.clockEnable)
+  val loadLineEffect = Util.falling(io.video.hSync)
+  val lineEffectReg = RegEnable(LineEffect.decode(io.ctrl.vram.dout), RegNext(loadLineEffect))
 
   // Apply line effects
-  // FIXME
   val pos_ = {
-    val x = Mux(false.B && rowScrollEnable, lineEffectReg.rowScroll, 0.U) + pos.x
-    val y = Mux(false.B && rowSelectEnable, lineEffectReg.rowSelect, pos.y)
+    val x = Mux(rowScrollEnable, lineEffectReg.rowScroll, 0.U) + pos.x
+    val y = Mux(rowSelectEnable, lineEffectReg.rowSelect, pos.y)
     UVec2(x, y)
   }
 
@@ -81,7 +81,9 @@ class TilemapProcessor extends Module {
   val offset = TilemapProcessor.tileOffset(io.ctrl, pos_)
 
   // Layer RAM address
-  val layerRamAddr = TilemapProcessor.layerRamAddr(io.ctrl, pos_)
+  val lineEffectAddr = io.video.pos.y + TilemapProcessor.LINE_EFFECT_OFFSET.U
+  val tileAddr = TilemapProcessor.layerRamAddr(io.ctrl, pos_)
+  val layerRamAddr = Mux(loadLineEffect, lineEffectAddr, tileAddr)
 
   // Decode tile
   val tile = Mux(io.ctrl.regs.tileSize,
@@ -112,6 +114,9 @@ class TilemapProcessor extends Module {
 }
 
 object TilemapProcessor {
+  /** Line effect VRAM offset */
+  val LINE_EFFECT_OFFSET = 0x400
+
   /**
    * Calculate the layer RAM address for a tile.
    *

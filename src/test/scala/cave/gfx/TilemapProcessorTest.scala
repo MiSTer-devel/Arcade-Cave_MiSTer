@@ -38,9 +38,25 @@ import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
-trait TilemapProcessorTestHelpers {
-  def mkProcessor() = new TilemapProcessor
-}
+class TilemapProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+  it should "load tiles from VRAM" in {
+    test(new TilemapProcessor) { dut =>
+      dut.io.ctrl.regs.tileSize.poke(false)
+      dut.io.video.pos.x.poke(0)
+      dut.io.ctrl.vram.addr.expect(0x001)
+      dut.io.video.pos.x.poke(8)
+      dut.io.ctrl.vram.addr.expect(0x002)
+      dut.io.video.pos.x.poke(248)
+      dut.io.ctrl.vram.addr.expect(0x020)
+    }
+  }
 
-class TilemapProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with TilemapProcessorTestHelpers {
+  it should "load line effects from VRAM" in {
+    test(new TilemapProcessor) { dut =>
+      dut.io.video.hSync.poke(true.B)
+      dut.clock.step()
+      dut.io.video.hSync.poke(false.B)
+      dut.io.ctrl.vram.addr.expect(0x400)
+    }
+  }
 }
