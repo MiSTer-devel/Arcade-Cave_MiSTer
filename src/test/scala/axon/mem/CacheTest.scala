@@ -211,6 +211,17 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
     }
   }
 
+  it should "return to the latch state after writing a cache entry (chained)" in {
+    test(mkCacheMem()) { dut =>
+      dut.io.in.rd.poke(true)
+      waitForFill(dut)
+      dut.io.out.valid.poke(true)
+      waitForWrite(dut)
+      dut.clock.step()
+      dut.io.debug.latch.expect(true)
+    }
+  }
+
   it should "return to the idle state after a read hit" in {
     test(mkCacheMem()) { dut =>
       fillCacheLine(dut, 0, Seq(1, 2))
@@ -219,6 +230,17 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       dut.io.in.rd.poke(false)
       dut.clock.step()
       dut.io.debug.idle.expect(true)
+    }
+  }
+
+  it should "return to the latch state after a read hit (chained)" in {
+    test(mkCacheMem()) { dut =>
+      waitForIdle(dut)
+      fillCacheLine(dut, 0, Seq(1, 2))
+      dut.io.in.rd.poke(true)
+      waitForCheck(dut)
+      dut.clock.step()
+      dut.io.debug.latch.expect(true)
     }
   }
 
@@ -234,10 +256,22 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
     }
   }
 
+  it should "return to the latch state after a write hit (chained)" in {
+    test(mkCacheMem()) { dut =>
+      waitForIdle(dut)
+      fillCacheLine(dut, 0, Seq(1, 2))
+      dut.io.in.wr.poke(true)
+      waitForWrite(dut)
+      dut.clock.step()
+      dut.io.debug.latch.expect(true)
+    }
+  }
+
   behavior of "idle"
 
   it should "deassert the wait signal" in {
     test(mkCacheMem()) { dut =>
+      dut.io.in.waitReq.expect(true)
       waitForIdle(dut)
       dut.io.in.waitReq.expect(false)
     }
@@ -259,11 +293,10 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       dut.io.in.valid.expect(true)
       dut.io.in.dout.expect(0x12)
 
-      waitForIdle(dut)
-
       // Read
       dut.io.in.addr.poke(3)
       dut.clock.step()
+      dut.io.in.rd.poke(false)
       dut.io.out.rd.expect(false)
       dut.io.out.wr.expect(false)
       dut.clock.step()
@@ -425,14 +458,22 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
     }
   }
 
-  it should "assert the wait signal" in {
+  it should "assert the wait signal during a request" in {
     test(mkCacheMem()) { dut =>
-      dut.io.in.rd.poke(true)
-      dut.io.in.waitReq.expect(true)
       waitForIdle(dut)
-      dut.io.in.waitReq.expect(false)
+      dut.io.in.rd.poke(true)
       waitForCheck(dut)
       dut.io.in.waitReq.expect(true)
+    }
+  }
+
+  it should "deassert the wait signal for chained requests" in {
+    test(mkCacheMem()) { dut =>
+      waitForIdle(dut)
+      fillCacheLine(dut, 0, Seq(1, 2))
+      dut.io.in.rd.poke(true)
+      waitForCheck(dut)
+      dut.io.in.waitReq.expect(false)
     }
   }
 
@@ -449,15 +490,16 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       dut.clock.step()
       dut.io.out.rd.expect(false)
       dut.io.out.wr.expect(false)
-
-      waitForIdle(dut)
+      dut.clock.step(3)
 
       // Write
       dut.io.in.addr.poke(3)
       dut.io.in.din.poke(0xcd)
       dut.clock.step()
+      dut.io.in.wr.poke(false)
       dut.io.out.rd.expect(false)
       dut.io.out.wr.expect(false)
+      dut.clock.step()
 
       readCache(dut, 0) shouldBe 0xab
       readCache(dut, 1) shouldBe 0x34
@@ -554,14 +596,22 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
     }
   }
 
-  it should "assert the wait signal" in {
+  it should "assert the wait signal during a request" in {
     test(mkCacheMem()) { dut =>
-      dut.io.in.waitReq.expect(true)
       waitForIdle(dut)
-      dut.io.in.waitReq.expect(false)
       dut.io.in.wr.poke(true)
       waitForCheck(dut)
       dut.io.in.waitReq.expect(true)
+    }
+  }
+
+  it should "deassert the wait signal for chained requests" in {
+    test(mkCacheMem()) { dut =>
+      waitForIdle(dut)
+      fillCacheLine(dut, 0, Seq(1, 2))
+      dut.io.in.wr.poke(true)
+      waitForWrite(dut)
+      dut.io.in.waitReq.expect(false)
     }
   }
 

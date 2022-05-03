@@ -55,7 +55,7 @@ object MemRequest {
    * @param wr   Write enable.
    * @param addr The address value.
    */
-  def apply[S <: Data, T <: Data](rd: Bool, wr: Bool, addr: S): MemRequest[S] = {
+  def apply[S <: Data](rd: Bool, wr: Bool, addr: S): MemRequest[S] = {
     val req = Wire(new MemRequest(chiselTypeOf(addr)))
     req.rd := rd
     req.wr := wr

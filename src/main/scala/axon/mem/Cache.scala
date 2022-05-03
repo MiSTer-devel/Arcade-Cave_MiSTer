@@ -221,7 +221,7 @@ class Cache(config: CacheConfig) extends Module {
   val request = MemRequest(io.in.rd, io.in.wr, CacheAddress(io.in.addr)(config))
 
   // Assert the latch signal when a request should be latched
-  val latch = stateReg === State.idle && request.valid
+  val latch = nextState === State.latch
 
   // Request register
   val requestReg = RegEnable(request, latch)
@@ -256,6 +256,14 @@ class Cache(config: CacheConfig) extends Module {
   val dirty = cacheEntryReg.dirty && cacheEntryReg.tag =/= requestReg.addr.tag
   val hit = cacheEntryReg.valid && cacheEntryReg.tag === requestReg.addr.tag
   val miss = !hit
+
+  // Deassert the wait signal during the idle state, or at the end of a request to allow chaining
+  val waitReq = {
+    val idle = stateReg === State.idle
+    val read = stateReg === State.check && hit && requestReg.rd
+    val write = stateReg === State.write
+    !(idle || read || write)
+  }
 
   // For a wrapping burst, the word done signal is asserted as soon as enough output words have
   // been bursted to fill an input word. Otherwise, for a non-wrapping burst we just wait until the
@@ -322,7 +330,7 @@ class Cache(config: CacheConfig) extends Module {
     // Check cache entry
     is(State.check) {
       when(hit && requestReg.rd) {
-        nextState := State.idle
+        nextState := Mux(request.valid, State.latch, State.idle)
       }.elsewhen(hit && requestReg.wr) {
         nextState := State.merge
       }.elsewhen(dirty) {
@@ -356,11 +364,13 @@ class Cache(config: CacheConfig) extends Module {
     is(State.merge) { nextState := State.write }
 
     // Write cache entry
-    is(State.write) { nextState := State.idle }
+    is(State.write) {
+      nextState := Mux(request.valid, State.latch, State.idle)
+    }
   }
 
   // Outputs
-  io.in.waitReq := stateReg =/= State.idle
+  io.in.waitReq := waitReq
   io.in.valid := valid
   io.in.dout := cacheEntryReg.inWord(offsetReg)
   io.out.rd := stateReg === State.fill

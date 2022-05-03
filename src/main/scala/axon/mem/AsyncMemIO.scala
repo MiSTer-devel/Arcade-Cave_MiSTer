@@ -36,7 +36,7 @@ import chisel3._
 import chisel3.util._
 
 trait WaitIO {
-  /** The wait request signal is asserted when the device isn't ready to proceed with the request. */
+  /** The wait request signal is asserted when the device isn't ready to proceed with a request. */
   val waitReq = Input(Bool())
 }
 
