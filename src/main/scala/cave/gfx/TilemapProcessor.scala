@@ -58,6 +58,9 @@ class TilemapProcessor extends Module {
     val pen = Output(new PaletteEntry)
   })
 
+  // Wires
+  val lineEffect = Wire(new LineEffect)
+
   // Enable flags
   val layerEnable = io.ctrl.enable && io.ctrl.format =/= Config.GFX_FORMAT_UNKNOWN.U && io.ctrl.regs.enable
   val rowScrollEnable = io.ctrl.rowScrollEnable && io.ctrl.regs.rowScrollEnable
@@ -66,24 +69,28 @@ class TilemapProcessor extends Module {
   // Pixel position
   val pos = io.video.pos + io.ctrl.regs.scroll + io.offset
 
-  // Decode the line effect for the current scanline
-  val loadLineEffect = Util.falling(io.video.hSync)
-  val lineEffectReg = RegEnable(LineEffect.decode(io.ctrl.vram.dout), RegNext(loadLineEffect))
-
   // Apply line effects
   val pos_ = {
-    val x = Mux(rowScrollEnable, lineEffectReg.rowScroll, 0.U) + pos.x
-    val y = Mux(rowSelectEnable, lineEffectReg.rowSelect, pos.y)
+    val x = Mux(rowScrollEnable, lineEffect.rowScroll, 0.U) + pos.x
+    val y = Mux(rowSelectEnable, lineEffect.rowSelect, pos.y)
     UVec2(x, y)
   }
 
   // Pixel offset
   val offset = TilemapProcessor.tileOffset(io.ctrl, pos_)
 
-  // Layer RAM address
-  val lineEffectAddr = io.video.pos.y + TilemapProcessor.LINE_EFFECT_OFFSET.U
-  val tileAddr = TilemapProcessor.layerRamAddr(io.ctrl, pos_)
-  val layerRamAddr = Mux(loadLineEffect, lineEffectAddr, tileAddr)
+  // Control signals
+  val loadLineEffect = Util.falling(io.video.hSync) // beginning of scanline
+  val latchTile = io.video.clockEnable && Mux(io.ctrl.regs.tileSize, offset.x === 10.U, offset.x === 2.U)
+  val latchColor = io.video.clockEnable && Mux(io.ctrl.regs.tileSize, offset.x === 15.U, offset.x === 7.U)
+  val latchPix = io.video.clockEnable && offset.x(2, 0) === 7.U
+
+  // Set layer RAM address
+  val layerRamAddr = {
+    val lineEffectAddr = io.video.pos.y + TilemapProcessor.LINE_EFFECT_OFFSET.U
+    val tileAddr = TilemapProcessor.tileAddr(io.ctrl, pos_)
+    Mux(loadLineEffect, lineEffectAddr, tileAddr)
+  }
 
   // Decode tile
   val tile = Mux(io.ctrl.regs.tileSize,
@@ -91,16 +98,15 @@ class TilemapProcessor extends Module {
     Tile.decode8x8(io.ctrl.vram.dout)
   )
 
-  // Latch signals
-  val latchTile = io.video.clockEnable && Mux(io.ctrl.regs.tileSize, offset.x === 10.U, offset.x === 2.U)
-  val latchColor = io.video.clockEnable && Mux(io.ctrl.regs.tileSize, offset.x === 15.U, offset.x === 7.U)
-  val latchPix = io.video.clockEnable && offset.x(2, 0) === 7.U
-
   // Tile registers
+  val lineEffectReg = RegEnable(LineEffect.decode(io.ctrl.vram.dout), RegNext(loadLineEffect))
   val tileReg = RegEnable(tile, latchTile)
   val priorityReg = RegEnable(tileReg.priority, latchColor)
   val colorReg = RegEnable(tileReg.colorCode, latchColor)
   val pixReg = RegEnable(TilemapProcessor.decodePixels(io.ctrl.tileRom.dout, io.ctrl.format, offset), latchPix)
+
+  // Set line effect
+  lineEffect := lineEffectReg
 
   // Palette entry
   val pen = PaletteEntry(priorityReg, colorReg, pixReg(offset.x(2, 0)))
@@ -118,13 +124,13 @@ object TilemapProcessor {
   val LINE_EFFECT_OFFSET = 0x400
 
   /**
-   * Calculate the layer RAM address for a tile.
+   * Calculate the VRAM address for a tile.
    *
    * @param ctrl The layer control bundle.
    * @param pos  The absolute position of the pixel in the tilemap.
    * @return A memory address.
    */
-  private def layerRamAddr(ctrl: LayerCtrlIO, pos: UVec2): UInt = {
+  private def tileAddr(ctrl: LayerCtrlIO, pos: UVec2): UInt = {
     val large = pos.y(8, 4) ## (pos.x(8, 4) + 1.U)
     val small = pos.y(8, 3) ## (pos.x(8, 3) + 1.U)
     Mux(ctrl.regs.tileSize, large, small)
