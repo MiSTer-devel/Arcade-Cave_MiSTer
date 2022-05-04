@@ -32,13 +32,14 @@
 
 package axon.mem
 
+import axon.mem.cache.{Cache, Config}
 import chiseltest._
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
 trait CacheMemTestHelpers {
-  protected val cacheConfig = CacheConfig(
+  protected val cacheConfig = Config(
     inAddrWidth = 16,
     inDataWidth = 8,
     outAddrWidth = 16,
@@ -47,7 +48,7 @@ trait CacheMemTestHelpers {
     depth = 8
   )
 
-  protected def mkCacheMem(config: CacheConfig = cacheConfig) = new Cache(config)
+  protected def mkCacheMem(config: Config = cacheConfig) = new Cache(config)
 
   protected def readCache(dut: Cache, addr: Int) = {
     waitForIdle(dut)

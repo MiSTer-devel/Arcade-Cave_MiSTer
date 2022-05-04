@@ -33,6 +33,7 @@
 package cave
 
 import axon.mem._
+import axon.mem.cache.Cache
 import axon.mister._
 import cave.types._
 import chisel3._
@@ -68,7 +69,7 @@ class MemSys extends Module {
 
   // The DDR download cache is used to buffer IOCTL data, so that complete words can be written to
   // memory.
-  val ddrDownloadCache = Module(new Cache(CacheConfig(
+  val ddrDownloadCache = Module(new Cache(cache.Config(
     inAddrWidth = IOCTL.ADDR_WIDTH,
     inDataWidth = IOCTL.DATA_WIDTH,
     outAddrWidth = Config.ddrConfig.addrWidth,
@@ -80,7 +81,7 @@ class MemSys extends Module {
 
   // The SDRAM download cache is used to buffer IOCTL data, so that complete words can be written
   // to memory.
-  val sdramDownloadCache = Module(new Cache(CacheConfig(
+  val sdramDownloadCache = Module(new Cache(cache.Config(
     inAddrWidth = IOCTL.ADDR_WIDTH,
     inDataWidth = IOCTL.DATA_WIDTH,
     outAddrWidth = Config.sdramConfig.addrWidth,
@@ -92,7 +93,7 @@ class MemSys extends Module {
   sdramDownloadCache.io.in <> io.ioctl.asAsyncReadWriteMemIO(IOCTL.ROM_INDEX)
 
   // Program ROM cache
-  val progRomCache = Module(new Cache(CacheConfig(
+  val progRomCache = Module(new Cache(cache.Config(
     inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
     inDataWidth = Config.PROG_ROM_DATA_WIDTH,
     outAddrWidth = Config.sdramConfig.addrWidth,
@@ -104,7 +105,7 @@ class MemSys extends Module {
   progRomCache.io.in.asAsyncReadMemIO <> io.progRom
 
   // Sound ROM cache
-  val soundRomCache = Module(new Cache(CacheConfig(
+  val soundRomCache = Module(new Cache(cache.Config(
     inAddrWidth = Config.SOUND_ROM_ADDR_WIDTH,
     inDataWidth = Config.SOUND_ROM_DATA_WIDTH,
     outAddrWidth = Config.sdramConfig.addrWidth,
@@ -116,7 +117,7 @@ class MemSys extends Module {
   soundRomCache.io.in.asAsyncReadMemIO <> io.soundRom
 
   // EEPROM cache
-  val eepromCache = Module(new Cache(CacheConfig(
+  val eepromCache = Module(new Cache(cache.Config(
     inAddrWidth = Config.EEPROM_ADDR_WIDTH,
     inDataWidth = Config.EEPROM_DATA_WIDTH,
     outAddrWidth = Config.sdramConfig.addrWidth,
@@ -129,7 +130,7 @@ class MemSys extends Module {
 
   // Layer tile ROM cache
   val layerRomCache = 0.until(Config.LAYER_COUNT).map { i =>
-    val cache = Module(new Cache(CacheConfig(
+    val c = Module(new Cache(cache.Config(
       inAddrWidth = Config.TILE_ROM_ADDR_WIDTH,
       inDataWidth = Config.TILE_ROM_DATA_WIDTH,
       outAddrWidth = Config.sdramConfig.addrWidth,
@@ -138,8 +139,8 @@ class MemSys extends Module {
       depth = 256,
       wrapping = true
     )))
-    cache.io.in.asAsyncReadMemIO <> io.layerTileRom(i)
-    cache
+    c.io.in.asAsyncReadMemIO <> io.layerTileRom(i)
+    c
   }
 
   // DDR arbiter

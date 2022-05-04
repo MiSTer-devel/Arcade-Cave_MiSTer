@@ -30,144 +30,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.mem
+package axon.mem.cache
 
+import axon.mem._
 import chisel3._
 import chisel3.util._
-
-/**
- * Represents the cache configuration.
- *
- * @param inAddrWidth  The width of the input address bus.
- * @param inDataWidth  The width of the input data bus.
- * @param outAddrWidth The width of the output address bus.
- * @param outDataWidth The width of the output data bus.
- * @param lineWidth    The number of words in a cache line.
- * @param depth        The number of entries in the cache.
- * @param wrapping     A boolean indicating whether burst wrapping should be enabled for the cache.
- *                     When a wrapping burst reaches a burst boundary, the address wraps back to the
- *                     previous burst boundary.
- */
-case class CacheConfig(inAddrWidth: Int,
-                       inDataWidth: Int,
-                       outAddrWidth: Int,
-                       outDataWidth: Int,
-                       lineWidth: Int,
-                       depth: Int,
-                       wrapping: Boolean = false) {
-  /** The width of a cache address index */
-  val indexWidth = log2Ceil(depth)
-  /** The width of a cache address offset */
-  val offsetWidth = log2Ceil(lineWidth)
-  /** The width of a cache tag */
-  val tagWidth = inAddrWidth - indexWidth - offsetWidth
-  /** The number of input words in a cache line */
-  val inWords = outDataWidth * lineWidth / inDataWidth
-  /** The number of bytes in an input word */
-  val inBytes = inDataWidth / 8
-  /** The number of bytes in an output word */
-  val outBytes = outDataWidth / 8
-  /** The number of output words that fit into a single input word */
-  val inOutDataWidthRatio = if (inDataWidth > outDataWidth) inDataWidth / outDataWidth else 1
-}
-
-/**
- * A cache line is stored internally as a vector of words that has the same width as the output data
- * bus.
- *
- * A cache line can also be represented a vector of input words, by rearranging the byte grouping.
- */
-class CacheLine(private val config: CacheConfig) extends Bundle {
-  /** The cache line data */
-  val words: Vec[Bits] = Vec(config.lineWidth, Bits(config.outDataWidth.W))
-
-  /** Returns the cache line represented as a vector input words */
-  def inWords: Vec[Bits] = words.asTypeOf(Vec(config.inWords, Bits(config.inDataWidth.W)))
-
-  /** The output words in the cache line */
-  def outWords: Vec[Bits] = words
-}
-
-/** Represents the location of a word stored in the cache. */
-class CacheAddress(private val config: CacheConfig) extends Bundle {
-  /** The most significant bits of the address */
-  val tag = UInt(config.tagWidth.W)
-  /** The index of the cache entry within the cache */
-  val index = UInt(config.indexWidth.W)
-  /** The offset of the word within the cache line */
-  val offset = UInt(config.offsetWidth.W)
-}
-
-object CacheAddress {
-  /**
-   * Constructs a cache address.
-   *
-   * @param tag    The tag value.
-   * @param index  The index value.
-   * @param offset The offset value.
-   * @param config The cache configuration.
-   */
-  def apply(tag: UInt, index: UInt, offset: UInt)(config: CacheConfig): CacheAddress = {
-    val wire = Wire(new CacheAddress(config))
-    wire.tag := tag
-    wire.index := index
-    wire.offset := offset
-    wire
-  }
-
-  /**
-   * Constructs a cache address from a byte address.
-   *
-   * @param addr   The byte address.
-   * @param config The cache configuration.
-   */
-  def apply(addr: UInt)(config: CacheConfig): CacheAddress =
-    (addr >> log2Ceil(config.outBytes)).asTypeOf(new CacheAddress(config))
-}
-
-/** Represents an entry stored in the cache. */
-class CacheEntry(private val config: CacheConfig) extends Bundle {
-  /** The cache line */
-  val line = new CacheLine(config)
-  /** The most significant bits of the address */
-  val tag = UInt(config.tagWidth.W)
-  /** Flag to indicate whether the cache entry is valid */
-  val valid = Bool()
-  /** Flag to indicate whether the cache entry is dirty */
-  val dirty = Bool()
-
-  /** Returns the input word at the given offset. */
-  def inWord(offset: UInt): Bits = line.inWords((~offset).asUInt)
-
-  /** Returns the output word at the given offset. */
-  def outWord(offset: UInt): Bits = line.outWords((~offset).asUInt)
-
-  /**
-   * Fills the cache line with the given data, and marks the line as valid.
-   *
-   * @param tag    The cache line tag value.
-   * @param offset The address offset.
-   * @param data   The data.
-   */
-  def fill(tag: UInt, offset: UInt, data: Bits) = {
-    line.words((~offset).asUInt) := data
-    this.tag := tag
-    valid := true.B
-  }
-
-  /**
-   * Merges the given data with the cache line, and marks the line as dirty.
-   *
-   * @param offset The address offset.
-   * @param data   The data.
-   */
-  def merge(offset: UInt, data: Bits) = {
-    val words = WireInit(line.inWords)
-    words((~offset).asUInt) := data
-    line.words := words.asTypeOf(chiselTypeOf(line.words))
-    dirty := true.B
-  }
-}
 
 /**
  * A direct-mapped cache memory.
@@ -184,7 +51,7 @@ class CacheEntry(private val config: CacheConfig) extends Bundle {
  *
  * @param config The cache configuration.
  */
-class Cache(config: CacheConfig) extends Module {
+class Cache(config: Config) extends Module {
   // Sanity check
   assert(config.inDataWidth >= 8, "Input data width must be at least 8")
   assert(config.outDataWidth >= 8, "Output data width must be at least 8")
@@ -218,7 +85,7 @@ class Cache(config: CacheConfig) extends Module {
   val stateReg = RegNext(nextState, State.init)
 
   // Cache memory request
-  val request = MemRequest(io.in.rd, io.in.wr, CacheAddress(io.in.addr)(config))
+  val request = MemRequest(io.in.rd, io.in.wr, Address(io.in.addr)(config))
 
   // Assert the latch signal when a request should be latched
   val latch = nextState === State.latch
@@ -237,8 +104,8 @@ class Cache(config: CacheConfig) extends Module {
   }
 
   // Cache entry memory
-  val cacheEntryMem = SyncReadMem(config.depth, Bits(new CacheEntry(config).getWidth.W))
-  val cacheEntry = cacheEntryMem.read(request.addr.index).asTypeOf(new CacheEntry(config))
+  val cacheEntryMem = SyncReadMem(config.depth, Bits(new Entry(config).getWidth.W))
+  val cacheEntry = cacheEntryMem.read(request.addr.index).asTypeOf(new Entry(config))
   val cacheEntryReg = RegEnable(cacheEntry, stateReg === State.latch)
 
   // Assert the burst counter enable signal as words are bursted from memory
@@ -284,11 +151,11 @@ class Cache(config: CacheConfig) extends Module {
   // Calculate the output byte address
   val outAddr = {
     val fillAddr = if (!config.wrapping) {
-      CacheAddress(requestReg.addr.tag, requestReg.addr.index, 0.U)(config)
+      Address(requestReg.addr.tag, requestReg.addr.index, 0.U)(config)
     } else {
       requestReg.addr
     }
-    val evictAddr = CacheAddress(cacheEntryReg.tag, requestReg.addr.index, 0.U)(config)
+    val evictAddr = Address(cacheEntryReg.tag, requestReg.addr.index, 0.U)(config)
     val addr = Mux(stateReg === State.fill, fillAddr, evictAddr).asUInt
     (addr << log2Ceil(config.outBytes)).asUInt
   }
