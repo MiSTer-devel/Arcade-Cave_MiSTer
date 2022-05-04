@@ -34,7 +34,7 @@ package cave
 
 import axon.dma.DMAConfig
 import axon.gfx.VideoTimingConfig
-import axon.mem.{DDRConfig, SDRAMConfig}
+import axon.mem._
 import axon.snd.YMZ280BConfig
 import chisel3.util.log2Ceil
 
@@ -168,7 +168,7 @@ object Config {
   val ddrConfig = DDRConfig()
 
   /** SDRAM configuration */
-  val sdramConfig = SDRAMConfig(
+  val sdramConfig = sdram.Config(
     clockFreq = CLOCK_FREQ,
     colWidth = 10,
     burstLength = 4

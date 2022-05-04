@@ -32,13 +32,14 @@
 
 package axon.mem
 
+import axon.mem.sdram.{SDRAM, Config}
 import chiseltest._
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
 trait SDRAMTestHelpers {
-  protected val sdramConfig = SDRAMConfig(
+  protected val sdramConfig = Config(
     clockFreq = 100000000,
     tINIT = 20,
     tMRD = 10,
@@ -49,7 +50,7 @@ trait SDRAMTestHelpers {
     tREFI = 100
   )
 
-  protected def mkSDRAM(config: SDRAMConfig = sdramConfig) = new SDRAM(config)
+  protected def mkSDRAM(config: Config = sdramConfig) = new SDRAM(config)
 
   protected def waitForInit(dut: SDRAM) =
     while (!dut.io.debug.init.peekBoolean()) { dut.clock.step() }

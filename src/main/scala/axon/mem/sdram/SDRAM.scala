@@ -30,148 +30,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.mem
+package axon.mem.sdram
 
+import axon.mem.{BurstReadWriteMemIO, MemRequest}
 import chisel3._
 import chisel3.util._
-
-/**
- * An interface for controlling a SDRAM chip.
- *
- * @param config The SDRAM configuration.
- */
-class SDRAMIO(config: SDRAMConfig) extends Bundle {
-  /** Clock enable */
-  val cke = Output(Bool())
-  /** Chip select (active-low) */
-  val cs_n = Output(Bool())
-  /** Row address strobe (active-low) */
-  val ras_n = Output(Bool())
-  /** Column address strobe (active-low) */
-  val cas_n = Output(Bool())
-  /** Write enable (active-low) */
-  val we_n = Output(Bool())
-  /** Output enable */
-  val oe = Output(Bool())
-  /** Bank bus */
-  val bank = Output(UInt(config.bankWidth.W))
-  /** Address bus */
-  val addr = Output(UInt(config.rowWidth.W))
-  /** Data input bus */
-  val din = Output(Bits(config.dataWidth.W))
-  /** Data output bus */
-  val dout = Input(Bits(config.dataWidth.W))
-}
-
-object SDRAMIO {
-  def apply(config: SDRAMConfig) = new SDRAMIO(config)
-}
-
-/**
- * Represents the SDRAM configuration.
- *
- * The default values used here may not work for every device, so be sure to check the datasheet.
- *
- * @param clockFreq      The SDRAM clock frequency (Hz).
- * @param bankWidth      The width of the bank address.
- * @param rowWidth       The width of the row address.
- * @param colWidth       The width of the column address.
- * @param dataWidth      The width of the data bus.
- * @param burstLength    The number of words to be transferred during a read/write.
- * @param burstType      The burst type (0=sequential, 1=interleaved).
- * @param casLatency     The delay in clock cycles, between the start of a read command and the
- *                       availability of the output data.
- * @param writeBurstMode The write burst mode (0=burst, 1=single).
- * @param tINIT          The initialization delay (ns).
- * @param tMRD           The mode register cycle time (ns).
- * @param tRC            The row cycle time (ns).
- * @param tRCD           The RAS to CAS delay (ns).
- * @param tRP            The precharge to activate delay (ns).
- * @param tWR            The write recovery time (ns).
- * @param tREFI          The refresh interval (ns).
- */
-case class SDRAMConfig(clockFreq: Double,
-                       bankWidth: Int = 2,
-                       rowWidth: Int = 13,
-                       colWidth: Int = 9,
-                       dataWidth: Int = 16,
-                       burstLength: Int = 1,
-                       burstType: Int = 0,
-                       casLatency: Int = 2,
-                       writeBurstMode: Int = 0,
-                       tINIT: Double = 200000,
-                       tMRD: Double = 12,
-                       tRC: Double = 60,
-                       tRCD: Double = 18,
-                       tRP: Double = 18,
-                       tWR: Double = 12,
-                       tREFI: Double = 7800) extends BusConfig {
-  /** The width of the address bus (i.e. the byte width of all banks, rows, and columns). */
-  val addrWidth = bankWidth + rowWidth + colWidth + 1
-  /** The SDRAM clock period (ns). */
-  val clockPeriod = 1 / clockFreq * 1000000000
-  /** The number of clock cycles to wait before selecting the device. */
-  val deselectWait = (tINIT / clockPeriod).ceil.toLong
-  /** The number of clock cycles to wait for a PRECHARGE command. */
-  val prechargeWait = (tRP / clockPeriod).ceil.toLong
-  /** The number of clock cycles to wait for a MODE command. */
-  val modeWait = (tMRD / clockPeriod).ceil.toLong
-  /** The number of clock cycles to wait for an ACTIVE command. */
-  val activeWait = (tRCD / clockPeriod).ceil.toLong
-  /** The number of clock cycles to wait for a READ command. */
-  val readWait = casLatency + burstLength
-  /** The number of clock cycles to wait for a WRITE command. */
-  val writeWait = burstLength + ((tWR + tRP) / clockPeriod).ceil.toLong
-  /** The number of clock cycles to wait for a REFRESH command. */
-  val refreshWait = (tRC / clockPeriod).ceil.toLong
-  /** The number of clock cycles between REFRESH commands. */
-  val refreshInterval = (tREFI / clockPeriod).floor.toLong
-  /** The number of clock cycles to wait during initialization. */
-  val initWait = deselectWait + prechargeWait + refreshWait + refreshWait
-  /** The maximum value of the wait counter. */
-  val waitCounterMax = 1 << log2Ceil(Seq(initWait, readWait, writeWait).max)
-  /** The maximum value of the refresh counter. */
-  val refreshCounterMax = 1 << log2Ceil(refreshInterval)
-
-  /** The mode opcode value used for configuring the SDRAM module. */
-  def mode: UInt =
-    0.U(3.W) ## // unused
-      writeBurstMode.U(1.W) ##
-      0.U(2.W) ## // unused
-      casLatency.U(3.W) ##
-      burstType.U(1.W) ##
-      log2Ceil(burstLength).U(3.W)
-}
-
-/** Represents the address of a word stored in SDRAM. */
-class SDRAMAddress(private val config: SDRAMConfig) extends Bundle {
-  /** The bank address */
-  val bank = UInt(config.bankWidth.W)
-  /** The row address */
-  val row = UInt(config.rowWidth.W)
-  /** The column address */
-  val col = UInt(config.colWidth.W)
-}
-
-object SDRAMAddress {
-  /**
-   * Converts a byte address to a SDRAM address.
-   *
-   * @param addr   The address.
-   * @param config The SDRAM configuration.
-   */
-  def fromByteAddress(addr: UInt)(config: SDRAMConfig) = {
-    val n = log2Ceil(config.dataWidth / 8)
-    (addr >> n).asTypeOf(new SDRAMAddress(config))
-  }
-}
 
 /**
  * Handles reading/writing data to a SDRAM memory device.
  *
  * @param config The SDRAM configuration.
  */
-class SDRAM(val config: SDRAMConfig) extends Module {
+class SDRAM(val config: Config) extends Module {
   // Sanity check
   assert(Seq(1, 2, 4, 8).contains(config.burstLength), "SDRAM burst length must be 1, 2, 4, or 8")
 
@@ -214,7 +84,7 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   val latch = stateReg =/= State.active && nextState === State.active
 
   // Request register
-  val request = MemRequest(io.mem.rd, io.mem.wr, SDRAMAddress.fromByteAddress(io.mem.addr)(config))
+  val request = MemRequest(io.mem.rd, io.mem.wr, Address.fromByteAddress(io.mem.addr)(config))
   val requestReg = RegEnable(request, latch)
 
   // SDRAM registers
