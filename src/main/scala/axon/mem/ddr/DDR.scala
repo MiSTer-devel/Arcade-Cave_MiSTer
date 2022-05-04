@@ -30,26 +30,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.mem
+package axon.mem.ddr
 
+import axon.mem.BurstReadWriteMemIO
 import axon.util.Counter
 import chisel3._
 import chisel3.util._
-
-/**
- * Represents the DDR memory configuration.
- *
- * @param addrWidth The width of the address bus.
- * @param dataWidth The width of the data bus.
- */
-case class DDRConfig(addrWidth: Int = 32, dataWidth: Int = 64) extends BusConfig
 
 /**
  * Handles reading/writing data to a DDR memory device.
  *
  * @param config The DDR configuration.
  */
-class DDR(config: DDRConfig) extends Module {
+class DDR(config: Config) extends Module {
   val io = IO(new Bundle {
     /** Memory port */
     val mem = Flipped(BurstReadWriteMemIO(config))

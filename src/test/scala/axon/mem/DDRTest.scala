@@ -32,15 +32,16 @@
 
 package axon.mem
 
+import axon.mem.ddr.{DDR, Config}
 import chiseltest._
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
 trait DDRTestHelpers {
-  protected val ddrConfig = DDRConfig()
+  protected val ddrConfig = Config()
 
-  protected def mkDDR(config: DDRConfig = ddrConfig) = new DDR(config)
+  protected def mkDDR(config: Config = ddrConfig) = new DDR(config)
 }
 
 class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with DDRTestHelpers {

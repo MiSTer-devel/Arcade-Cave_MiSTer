@@ -165,7 +165,7 @@ object Config {
   )
 
   /** DDR configuration */
-  val ddrConfig = DDRConfig()
+  val ddrConfig = ddr.Config()
 
   /** SDRAM configuration */
   val sdramConfig = sdram.Config(

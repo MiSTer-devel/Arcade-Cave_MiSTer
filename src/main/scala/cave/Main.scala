@@ -35,6 +35,7 @@ package cave
 import axon._
 import axon.gfx._
 import axon.mem._
+import axon.mem.ddr.DDR
 import axon.mem.sdram.{SDRAM, SDRAMIO}
 import axon.mister._
 import axon.snd._
