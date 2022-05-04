@@ -217,14 +217,12 @@ class SDRAM(val config: SDRAMConfig) extends Module {
   val request = MemRequest(io.mem.rd, io.mem.wr, SDRAMAddress.fromByteAddress(io.mem.addr)(config))
   val requestReg = RegEnable(request, latch)
 
-  // Bank and address registers
+  // SDRAM registers
+  //
+  // Using simple registers for SDRAM I/O allows better timings to be achieved, because they can be
+  // optimized and moved physically closer to the FPGA pins during routing (i.e. fast registers).
   val bankReg = Reg(UInt())
   val addrReg = Reg(UInt())
-
-  // Data I/O registers
-  //
-  // Using simple registers for data I/O allows better timings to be achieved, because they can be
-  // optimized and moved physically closer to the FPGA pins during routing (i.e. fast registers).
   val dinReg = RegNext(io.mem.din)
   val doutReg = RegNext(io.sdram.dout)
 
