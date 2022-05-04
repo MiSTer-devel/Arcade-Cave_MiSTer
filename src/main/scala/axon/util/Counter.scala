@@ -80,6 +80,7 @@ private class CounterDynamic(to: UInt, init: Int) {
 
 object Counter {
   def static(n: Int, enable: Bool = true.B, reset: Bool = false.B, init: Int = 0): (UInt, Bool) = {
+    assert(init == 0 || init < n, "Initial value must be less than the maximum")
     val c = new CounterStatic(n, init)
     val wrap = WireInit(false.B)
     when(reset) { c.reset() }.elsewhen(enable) { wrap := c.inc() }
