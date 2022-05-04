@@ -41,9 +41,8 @@ import chisel3.util._
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
- * @param offset    The offset of the address.
  */
-case class DDRConfig(addrWidth: Int = 32, dataWidth: Int = 64, offset: Int = 0) extends BusConfig
+case class DDRConfig(addrWidth: Int = 32, dataWidth: Int = 64) extends BusConfig
 
 /**
  * Handles reading/writing data to a DDR memory device.
@@ -73,15 +72,12 @@ class DDR(config: DDRConfig) extends Module {
     RegEnable(io.mem.burstCount, stateReg === State.idle)
   )
 
-  // Read/write control signals
+  // Control signals
   val read = stateReg === State.idle && io.mem.rd && !io.ddr.waitReq
   val write = stateReg === State.idle && io.mem.wr && !io.ddr.waitReq
-
-  // Burst counter enable flag
-  val burstCounterEnable =
-    write ||
-      (stateReg === State.writeWait && !io.ddr.waitReq) ||
-      (stateReg === State.readWait && io.ddr.valid)
+  val burstCounterEnable = write ||
+    (stateReg === State.writeWait && !io.ddr.waitReq) ||
+    (stateReg === State.readWait && io.ddr.valid)
 
   // Burst counter
   val (burstCounter, burstCounterWrap) = Counter.dynamic(burstLength, burstCounterEnable)
@@ -100,7 +96,6 @@ class DDR(config: DDRConfig) extends Module {
   io.mem.burstDone := burstCounterWrap
   io.ddr.rd := io.mem.rd && stateReg =/= State.readWait
   io.ddr.wr := io.mem.wr || stateReg === State.writeWait
-  io.ddr.addr := io.mem.addr + config.offset.U
   io.ddr.burstCount := burstLength
   io.debug.burstCounter := burstCounter
 
