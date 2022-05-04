@@ -151,4 +151,6 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
   io.video.vSync := vSync
   io.video.hBlank := hBlank
   io.video.vBlank := vBlank
+
+  printf(p"VideoTiming(pos: (${ pos.x }, ${ pos.y }), width: ${ config.width }, height: ${ config.height }), hBeginDisplay: $hBeginDisplay, vBeginDisplay: $vBeginDisplay, hSync: ${ io.video.hSync }, vSync: ${ io.video.vSync }\n")
 }
