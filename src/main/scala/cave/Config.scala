@@ -185,7 +185,7 @@ object Config {
     hFrontPorch = 36,
     vFrontPorch = 12,
     hRetrace = 20,
-    vRetrace = 2,
+    vRetrace = 2
   )
 
   /** Compatibility (60Hz) video timing configuration */
@@ -199,7 +199,7 @@ object Config {
     hFrontPorch = 30,
     vFrontPorch = 12,
     hRetrace = 20,
-    vRetrace = 2,
+    vRetrace = 2
   )
 
   /** Sprite frame buffer DMA configuration */
