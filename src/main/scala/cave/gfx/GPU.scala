@@ -34,7 +34,6 @@ package cave.gfx
 
 import axon.Util
 import axon.gfx._
-import axon.mem._
 import axon.types._
 import cave._
 import cave.types._
@@ -83,19 +82,19 @@ class GPU extends Module {
     val layer0Processor = Module(new TilemapProcessor)
     layer0Processor.io.video <> io.video
     layer0Processor.io.ctrl <> io.layerCtrl(0)
-    layer0Processor.io.offset := UVec2(0x6b.U, 0x11.U)
+    layer0Processor.io.offset := GPU.layerOffset(0, io.layerCtrl, io.videoRegs)
 
     // Layer 1 processor
     val layer1Processor = Module(new TilemapProcessor)
     layer1Processor.io.video <> io.video
     layer1Processor.io.ctrl <> io.layerCtrl(1)
-    layer1Processor.io.offset := UVec2(0x6c.U, 0x11.U)
+    layer1Processor.io.offset := GPU.layerOffset(1, io.layerCtrl, io.videoRegs)
 
     // Layer 2 processor
     val layer2Processor = Module(new TilemapProcessor)
     layer2Processor.io.video <> io.video
     layer2Processor.io.ctrl <> io.layerCtrl(2)
-    layer2Processor.io.offset := UVec2(Mux(io.layerCtrl(2).regs.tileSize, 0x6d.U, 0x75.U), 0x11.U)
+    layer2Processor.io.offset := GPU.layerOffset(2, io.layerCtrl, io.videoRegs)
 
     // Color mixer
     val colorMixer = Module(new ColorMixer)
@@ -122,6 +121,22 @@ class GPU extends Module {
 }
 
 object GPU {
+  /**
+   * Calculates the offset adjustment for a layer.
+   *
+   * @param index The index of the layer.
+   * @param layerCtrl The layer controls.
+   * @param videoRegs The video registers.
+   * @return An offset value.
+   */
+  def layerOffset(index: Int, layerCtrl: Vec[LayerCtrlIO], videoRegs: VideoRegs): UVec2 = {
+    // Each layer is horizontally offset by one pixel with respect to the previous layer. There is
+    // an additional 8 pixel horizontal offset for layers with small (i.e. 8x8) tiles.
+    val x = Mux(layerCtrl(index).regs.tileSize, (0x13 - (index + 1)).U, (0x13 - (index + 1 + 8)).U)
+    val y = 0x1ee.U
+    videoRegs.layerOffset + UVec2(x, y)
+  }
+
   /**
    * Transforms a pixel position to a frame buffer memory address.
    *

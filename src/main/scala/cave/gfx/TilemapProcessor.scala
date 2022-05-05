@@ -52,7 +52,7 @@ class TilemapProcessor extends Module {
     val video = Input(new VideoIO)
     /** Layer control port */
     val ctrl = LayerCtrlIO()
-    /** Manual offset */
+    /** Layer offset */
     val offset = Input(UVec2(Config.LAYER_SCROLL_WIDTH.W))
     /** Palette entry output */
     val pen = Output(new PaletteEntry)
@@ -66,8 +66,9 @@ class TilemapProcessor extends Module {
   val rowScrollEnable = io.ctrl.rowScrollEnable && io.ctrl.regs.rowScrollEnable
   val rowSelectEnable = io.ctrl.rowSelectEnable && io.ctrl.regs.rowSelectEnable
 
-  // Pixel position
-  val pos = io.video.pos + io.ctrl.regs.scroll + io.offset
+
+  // Apply the scroll and layer offsets to get the final pixel position
+  val pos = io.video.pos + io.ctrl.regs.scroll - io.offset
 
   // Apply line effects
   val pos_ = {
