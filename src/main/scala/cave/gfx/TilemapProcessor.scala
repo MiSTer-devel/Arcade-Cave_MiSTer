@@ -66,7 +66,6 @@ class TilemapProcessor extends Module {
   val rowScrollEnable = io.ctrl.rowScrollEnable && io.ctrl.regs.rowScrollEnable
   val rowSelectEnable = io.ctrl.rowSelectEnable && io.ctrl.regs.rowSelectEnable
 
-
   // Apply the scroll and layer offsets to get the final pixel position
   val pos = io.video.pos + io.ctrl.regs.scroll - io.offset
 
