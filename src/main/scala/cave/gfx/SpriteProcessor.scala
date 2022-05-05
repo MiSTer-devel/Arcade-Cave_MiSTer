@@ -49,6 +49,8 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   val io = IO(new Bundle {
     /** Control port */
     val ctrl = SpriteCtrlIO()
+    /** Sprite bank */
+    val bank = Input(Bool())
     /** Frame buffer port */
     val frameBuffer = new SpriteFrameBufferIO
     /** Debug port */
@@ -112,7 +114,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   effectiveRead := tileRomRead && !io.ctrl.tileRom.waitReq
 
   // Set sprite RAM address
-  val spriteRamAddr = io.ctrl.bank ## spriteCounter
+  val spriteRamAddr = io.bank ## spriteCounter
 
   // Set tile ROM address
   val tileRomAddr = (spriteReg.code + tileCounter) << Mux(is8BPP, 8.U, 7.U)

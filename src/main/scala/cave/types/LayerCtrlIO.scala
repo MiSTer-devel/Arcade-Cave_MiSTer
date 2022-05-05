@@ -36,7 +36,7 @@ import axon.mem.ReadMemIO
 import cave.Config
 import chisel3._
 
-/** An bundle that contains control signals for the layer processor. */
+/** A bundle that contains control signals for the layer processor. */
 class LayerCtrlIO extends Bundle {
   /** Graphics format */
   val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))

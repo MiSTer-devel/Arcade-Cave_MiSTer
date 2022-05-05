@@ -36,7 +36,7 @@ import axon.mem.ReadMemIO
 import cave.Config
 import chisel3._
 
-/** An bundle that contains control signals for the sprite processor. */
+/** A bundle that contains control signals for the sprite processor. */
 class SpriteCtrlIO extends Bundle {
   /** Graphics format */
   val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))
@@ -52,8 +52,6 @@ class SpriteCtrlIO extends Bundle {
   val rotate = Input(Bool())
   /** Enable sprite scaling */
   val zoom = Input(Bool())
-  /** Sprite bank */
-  val bank = Input(Bool())
   /** VRAM port */
   val vram = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
   /** Tile ROM port */

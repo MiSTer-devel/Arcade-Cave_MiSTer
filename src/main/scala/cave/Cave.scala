@@ -211,9 +211,9 @@ class Cave extends Module {
     gpu.io.layerCtrl(i).regs := withClock(io.videoClock) { ShiftRegister(Layer.decode(layerRegs(i).io.regs.asUInt), 2) }
     gpu.io.layerCtrl(i).vram <> layerRam(i).io.portB
   }
-  gpu.io.spriteCtrl.bank := videoRegs.io.regs.asUInt(64)
   gpu.io.spriteCtrl.vram <> spriteRam.io.portB
   gpu.io.paletteRam <> paletteRam.io.portB
+  gpu.io.videoRegs := VideoRegs.decode(videoRegs.io.regs.asUInt)
 
   // YMZ280B
   val ymz = Module(new YMZ280B(Config.ymzConfig))

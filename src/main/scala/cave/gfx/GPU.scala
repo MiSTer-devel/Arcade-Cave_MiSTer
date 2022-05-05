@@ -58,6 +58,8 @@ class GPU extends Module {
     val spriteCtrl = SpriteCtrlIO()
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
+    /** Video registers */
+    val videoRegs = Input(new VideoRegs)
     /** Video port */
     val video = Flipped(VideoIO())
     /** RGB output */
@@ -73,6 +75,7 @@ class GPU extends Module {
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
   spriteProcessor.io.ctrl <> io.spriteCtrl
+  spriteProcessor.io.bank := io.videoRegs.spriteBank
   spriteProcessor.io.frameBuffer <> io.spriteFrameBuffer
 
   withClockAndReset(io.videoClock, io.videoReset) {
