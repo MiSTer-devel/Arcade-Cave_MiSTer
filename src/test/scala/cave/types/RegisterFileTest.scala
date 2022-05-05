@@ -34,7 +34,6 @@ package cave.types
 
 import chisel3._
 import chiseltest._
-import org.scalatest._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -87,9 +86,7 @@ class RegisterFileTest extends AnyFlatSpec with ChiselScalatestTester with Match
       dut.clock.step()
 
       // Read
-      dut.io.regs(0).expect(0x1234.U)
-      dut.io.regs(1).expect(0x5678.U)
-      dut.io.regs(2).expect(0xabcd.U)
+      dut.io.dout.expect("h_abcd_5678_1234".U)
     }
   }
 }

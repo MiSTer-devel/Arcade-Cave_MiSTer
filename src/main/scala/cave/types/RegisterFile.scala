@@ -49,8 +49,8 @@ class RegisterFile(numRegs: Int) extends Module {
   val io = IO(new Bundle {
     /** Memory port */
     val mem = Flipped(ReadWriteMemIO(ADDR_WIDTH, CPU.DATA_WIDTH))
-    /** Registers port */
-    val regs = Output(Vec(numRegs, Bits(CPU.DATA_WIDTH.W)))
+    /** Output data port */
+    val dout = Output(Bits((CPU.DATA_WIDTH * numRegs).W))
   })
 
   // Data registers
@@ -72,5 +72,5 @@ class RegisterFile(numRegs: Int) extends Module {
 
   // Outputs
   io.mem.dout := data
-  io.regs := regs
+  io.dout := regs.asUInt
 }
