@@ -97,36 +97,6 @@ class Cave extends Module {
   // A write-only memory interface is used to connect the CPU to the EEPROM
   val eepromMem = Wire(WriteMemIO(CPU.ADDR_WIDTH, CPU.DATA_WIDTH))
 
-  // The GPU runs in the video clock domain
-  val gpu = Module(new GPU)
-  gpu.io.videoClock := io.videoClock
-  gpu.io.videoReset := io.videoReset
-  gpu.io.video <> io.video
-  gpu.io.gameConfig <> io.gameConfig
-  gpu.io.options <> io.options
-  0.until(Config.LAYER_COUNT).foreach { i =>
-    gpu.io.layerCtrl(i).format := io.gameConfig.layer(i).format
-    gpu.io.layerCtrl(i).enable := io.options.layerEnable.layer(i)
-    gpu.io.layerCtrl(i).rowScrollEnable := io.options.rowScrollEnable
-    gpu.io.layerCtrl(i).rowSelectEnable := io.options.rowSelectEnable
-    gpu.io.layerCtrl(i).tileRom <> io.layerTileRom(i)
-  }
-  gpu.io.spriteCtrl.tileRom <> io.spriteTileRom
-  gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
-  gpu.io.spriteCtrl.enable := io.options.layerEnable.sprite
-  gpu.io.spriteCtrl.start := Util.rising(frameStart)
-  gpu.io.spriteCtrl.flip := io.options.flip
-  gpu.io.spriteCtrl.rotate := io.options.rotate
-  gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
-  gpu.io.rgb <> io.rgb
-  gpu.io.spriteLineBuffer <> io.spriteLineBuffer
-  gpu.io.spriteFrameBuffer <> io.spriteFrameBuffer
-  gpu.io.systemFrameBuffer <> io.systemFrameBuffer
-
-  // Set frame start/finish flags
-  io.frameStart := gpu.io.spriteCtrl.start
-  io.frameFinish := Util.falling(gpu.io.spriteCtrl.busy)
-
   // Registers
   val vBlank = ShiftRegister(io.video.vBlank, 2)
   val videoIRQ = RegInit(false.B)
@@ -206,14 +176,40 @@ class Cave extends Module {
   val videoRegs = Module(new RegisterFile(Config.VIDEO_REGS_COUNT))
   videoRegs.io.mem.default()
 
-  // GPU
+  // Graphics processor
+  val gpu = Module(new GPU)
+  gpu.io.videoClock := io.videoClock
+  gpu.io.videoReset := io.videoReset
+  gpu.io.video <> io.video
+  gpu.io.videoRegs := VideoRegs.decode(videoRegs.io.dout)
+  gpu.io.paletteRam <> paletteRam.io.portB
   0.until(Config.LAYER_COUNT).foreach { i =>
+    gpu.io.layerCtrl(i).format := io.gameConfig.layer(i).format
+    gpu.io.layerCtrl(i).enable := io.options.layerEnable.layer(i)
+    gpu.io.layerCtrl(i).rowScrollEnable := io.options.rowScrollEnable
+    gpu.io.layerCtrl(i).rowSelectEnable := io.options.rowSelectEnable
     gpu.io.layerCtrl(i).regs := withClock(io.videoClock) { ShiftRegister(Layer.decode(layerRegs(i).io.dout), 2) }
     gpu.io.layerCtrl(i).vram <> layerRam(i).io.portB
+    gpu.io.layerCtrl(i).tileRom <> io.layerTileRom(i)
   }
+  gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
+  gpu.io.spriteCtrl.enable := io.options.layerEnable.sprite
+  gpu.io.spriteCtrl.start := Util.rising(frameStart)
+  gpu.io.spriteCtrl.flip := io.options.flip
+  gpu.io.spriteCtrl.rotate := io.options.rotate
+  gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
   gpu.io.spriteCtrl.vram <> spriteRam.io.portB
-  gpu.io.paletteRam <> paletteRam.io.portB
-  gpu.io.videoRegs := VideoRegs.decode(videoRegs.io.dout)
+  gpu.io.spriteCtrl.tileRom <> io.spriteTileRom
+  gpu.io.spriteLineBuffer <> io.spriteLineBuffer
+  gpu.io.spriteFrameBuffer <> io.spriteFrameBuffer
+  gpu.io.systemFrameBuffer <> io.systemFrameBuffer
+  gpu.io.gameConfig <> io.gameConfig
+  gpu.io.options <> io.options
+  gpu.io.rgb <> io.rgb
+
+  // Set frame start/finish flags
+  io.frameStart := gpu.io.spriteCtrl.start
+  io.frameFinish := Util.falling(gpu.io.spriteCtrl.busy)
 
   // YMZ280B
   val ymz = Module(new YMZ280B(Config.ymzConfig))

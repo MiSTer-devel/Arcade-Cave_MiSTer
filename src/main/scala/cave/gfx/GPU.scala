@@ -47,28 +47,28 @@ class GPU extends Module {
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
-    /** Game config port */
-    val gameConfig = Input(GameConfig())
-    /** Options port */
-    val options = OptionsIO()
+    /** Video port */
+    val video = Flipped(VideoIO())
+    /** Video registers */
+    val videoRegs = Input(new VideoRegs)
+    /** Palette RAM port */
+    val paletteRam = new PaletteRamIO
     /** Layer control ports */
     val layerCtrl = Vec(Config.LAYER_COUNT, LayerCtrlIO())
     /** Sprite control port */
     val spriteCtrl = SpriteCtrlIO()
-    /** Palette RAM port */
-    val paletteRam = new PaletteRamIO
-    /** Video registers */
-    val videoRegs = Input(new VideoRegs)
-    /** Video port */
-    val video = Flipped(VideoIO())
-    /** RGB output */
-    val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
     /** Sprite line buffer port */
     val spriteLineBuffer = new SpriteLineBufferIO
     /** Sprite frame buffer port */
     val spriteFrameBuffer = new SpriteFrameBufferIO
     /** System frame buffer port */
     val systemFrameBuffer = new SystemFrameBufferIO
+    /** Game config port */
+    val gameConfig = Input(GameConfig())
+    /** Options port */
+    val options = OptionsIO()
+    /** RGB output */
+    val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
   })
 
   // Sprite processor
