@@ -30,7 +30,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.dma
+package axon.mem.dma
 
 import axon.mem.BusConfig
 
@@ -42,10 +42,10 @@ import axon.mem.BusConfig
  * @param depth      The total number of words to transfer.
  * @param burstCount The number of words to transfer during a burst.
  */
-case class DMAConfig(addrWidth: Int = 32,
-                     dataWidth: Int = 64,
-                     depth: Int,
-                     burstCount: Int) extends BusConfig {
+case class Config(addrWidth: Int = 32,
+                  dataWidth: Int = 64,
+                  depth: Int,
+                  burstCount: Int) extends BusConfig {
   /** The number of bursts. */
   val numBursts = depth / burstCount
 }

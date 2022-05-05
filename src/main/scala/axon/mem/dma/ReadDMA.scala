@@ -30,7 +30,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.dma
+package axon.mem.dma
 
 import axon.mem._
 import axon.util.Counter
@@ -43,8 +43,8 @@ import chisel3._
  *
  * @param config The DMA configuration.
  */
-class ReadDMA(config: DMAConfig) extends Module {
-  assert(config.depth % config.burstCount == 0, s"The number of words to transfer must be divisible by the burst count")
+class ReadDMA(config: Config) extends Module {
+  assert(config.depth % config.burstCount == 0, "The number of words to transfer must be divisible by the burst count")
 
   val io = IO(new Bundle {
     /** Enable the DMA controller */

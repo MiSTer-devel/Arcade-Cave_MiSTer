@@ -30,22 +30,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.dma
+package axon.mem
 
+import axon.mem.dma.{Config, ReadDMA}
 import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-trait WriteDMATestHelpers {
-  protected def mkDMA() = new WriteDMA(DMAConfig(depth = 8, burstCount = 4))
+trait ReadDMATestHelpers {
+  protected def mkDMA() = new ReadDMA(Config(depth = 8, burstCount = 4))
 }
 
-class WriteDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with WriteDMATestHelpers {
+class ReadDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with ReadDMATestHelpers {
   it should "assert the busy signal during a transfer" in {
     test(mkDMA()) { dut =>
       dut.io.enable.poke(true)
       dut.io.start.poke(true)
-      dut.io.in.burstDone.poke(true)
+      dut.io.out.burstDone.poke(true)
       dut.io.busy.expect(false)
       dut.clock.step()
       dut.io.busy.expect(true)
@@ -73,7 +74,7 @@ class WriteDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers 
     }
   }
 
-  it should "copy data from the bursted input memory to the output memory" in {
+  it should "copy data from the input memory to the bursted output memory" in {
     test(mkDMA()) { dut =>
       // Start transfer
       dut.io.enable.poke(true)
@@ -82,122 +83,106 @@ class WriteDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers 
       dut.io.out.wr.expect(false)
       dut.clock.step()
 
-      // Wait
+      // Read request
       dut.io.in.rd.expect(true)
-      dut.io.in.waitReq.poke(true)
       dut.io.in.addr.expect(0)
       dut.io.out.wr.expect(false)
       dut.clock.step()
 
       // Read request
       dut.io.in.rd.expect(true)
-      dut.io.in.waitReq.poke(false)
-      dut.io.in.addr.expect(0)
-      dut.io.out.wr.expect(false)
-      dut.clock.step()
-
-      // Wait for data
-      dut.io.in.rd.expect(true)
-      dut.io.in.addr.expect(0)
-      dut.io.out.wr.expect(false)
-      dut.clock.step()
-
-      // Word 0
-      dut.io.in.rd.expect(true)
-      dut.io.in.valid.poke(true)
-      dut.io.in.addr.expect(0)
+      dut.io.in.addr.expect(1)
       dut.io.in.dout.poke(0x10)
       dut.io.out.wr.expect(false)
       dut.clock.step()
 
-      // Word 1
+      // Wait
       dut.io.in.rd.expect(true)
-      dut.io.in.addr.expect(0)
+      dut.io.in.addr.expect(2)
       dut.io.in.dout.poke(0x11)
       dut.io.out.wr.expect(true)
+      dut.io.out.waitReq.poke(true)
       dut.io.out.addr.expect(0)
       dut.io.out.din.expect(0x10)
       dut.clock.step()
 
-      // Word 2
+      // Word 0
+      dut.io.in.rd.expect(false)
+      dut.io.out.wr.expect(true)
+      dut.io.out.waitReq.poke(false)
+      dut.io.out.addr.expect(0)
+      dut.io.out.din.expect(0x10)
+      dut.clock.step()
+
+      // Word 1
       dut.io.in.rd.expect(true)
-      dut.io.in.valid.poke(false)
-      dut.io.in.addr.expect(0)
+      dut.io.in.addr.expect(3)
       dut.io.in.dout.poke(0x12)
       dut.io.out.wr.expect(true)
-      dut.io.out.addr.expect(1)
+      dut.io.out.waitReq.poke(true)
+      dut.io.out.addr.expect(0)
       dut.io.out.din.expect(0x11)
       dut.clock.step()
 
-      // Wait for data
-      dut.io.in.rd.expect(true)
-      dut.io.in.addr.expect(0)
-      dut.io.in.dout.poke(0x12)
-      dut.io.out.wr.expect(false)
+      // Word 1
+      dut.io.in.rd.expect(false)
+      dut.io.out.wr.expect(true)
+      dut.io.out.waitReq.poke(false)
+      dut.io.out.addr.expect(0)
+      dut.io.out.din.expect(0x11)
       dut.clock.step()
 
-      // Wait for data
+      // Word 2
       dut.io.in.rd.expect(true)
-      dut.io.in.valid.poke(true)
-      dut.io.in.addr.expect(0)
-      dut.io.in.dout.poke(0x12)
-      dut.io.out.wr.expect(false)
+      dut.io.in.addr.expect(4)
+      dut.io.in.dout.poke(0x13)
+      dut.io.out.wr.expect(true)
+      dut.io.out.addr.expect(0)
+      dut.io.out.din.expect(0x12)
       dut.clock.step()
 
       // Word 3
       dut.io.in.rd.expect(true)
-      dut.io.in.burstDone.poke(true)
-      dut.io.in.addr.expect(0)
-      dut.io.in.dout.poke(0x13)
+      dut.io.in.addr.expect(5)
+      dut.io.in.dout.poke(0x14)
+      dut.io.out.burstDone.poke(true)
       dut.io.out.wr.expect(true)
-      dut.io.out.addr.expect(2)
-      dut.io.out.din.expect(0x12)
+      dut.io.out.addr.expect(0)
+      dut.io.out.din.expect(0x13)
       dut.clock.step()
 
       // Word 4
       dut.io.in.rd.expect(true)
-      dut.io.in.burstDone.poke(false)
-      dut.io.in.addr.expect(0x20)
-      dut.io.in.dout.poke(0x14)
+      dut.io.in.addr.expect(6)
+      dut.io.in.dout.poke(0x15)
+      dut.io.out.burstDone.poke(false)
       dut.io.out.wr.expect(true)
-      dut.io.out.addr.expect(3)
-      dut.io.out.din.expect(0x13)
+      dut.io.out.addr.expect(0x20)
+      dut.io.out.din.expect(0x14)
       dut.clock.step()
 
       // Word 5
       dut.io.in.rd.expect(true)
-      dut.io.in.addr.expect(0x20)
-      dut.io.in.dout.poke(0x15)
-      dut.io.out.wr.expect(true)
-      dut.io.out.addr.expect(4)
-      dut.io.out.din.expect(0x14)
-      dut.clock.step()
-
-      // Word 6
-      dut.io.in.rd.expect(true)
-      dut.io.in.addr.expect(0x20)
+      dut.io.in.addr.expect(7)
       dut.io.in.dout.poke(0x16)
       dut.io.out.wr.expect(true)
-      dut.io.out.addr.expect(5)
+      dut.io.out.addr.expect(0x20)
       dut.io.out.din.expect(0x15)
       dut.clock.step()
 
-      // Word 7
-      dut.io.in.rd.expect(true)
-      dut.io.in.burstDone.poke(true)
-      dut.io.in.addr.expect(0x20)
+      // Word 6
+      dut.io.in.rd.expect(false)
       dut.io.in.dout.poke(0x17)
       dut.io.out.wr.expect(true)
-      dut.io.out.addr.expect(6)
+      dut.io.out.addr.expect(0x20)
       dut.io.out.din.expect(0x16)
       dut.clock.step()
 
-      // Word 8
+      // Word 7
       dut.io.in.rd.expect(false)
-      dut.io.in.valid.poke(false)
-      dut.io.in.burstDone.poke(false)
+      dut.io.out.burstDone.poke(true)
       dut.io.out.wr.expect(true)
-      dut.io.out.addr.expect(7)
+      dut.io.out.addr.expect(0x20)
       dut.io.out.din.expect(0x17)
       dut.clock.step()
 

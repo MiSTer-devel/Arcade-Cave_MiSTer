@@ -32,7 +32,6 @@
 
 package cave
 
-import axon.dma.DMAConfig
 import axon.gfx.VideoTimingConfig
 import axon.mem._
 import axon.snd.YMZ280BConfig
@@ -203,13 +202,13 @@ object Config {
   )
 
   /** Sprite frame buffer DMA configuration */
-  val spriteFrameBufferDmaConfig = DMAConfig(
+  val spriteFrameBufferDmaConfig = dma.Config(
     depth = Config.SCREEN_WIDTH * Config.SCREEN_HEIGHT * SPRITE_FRAME_BUFFER_DATA_WIDTH / Config.ddrConfig.dataWidth,
     burstCount = 64
   )
 
   /** Sprite line buffer DMA configuration */
-  val spriteLineBufferDmaConfig = DMAConfig(
+  val spriteLineBufferDmaConfig = dma.Config(
     depth = Config.SCREEN_WIDTH * SPRITE_FRAME_BUFFER_DATA_WIDTH / Config.ddrConfig.dataWidth,
     burstCount = 16
   )
