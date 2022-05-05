@@ -367,7 +367,7 @@ class Cave extends Module {
       "b001".U ## !videoIRQ
     }
     map(0x600008).w { (_, _, _) => frameStart := true.B }
-    map(0x600010 to 0x600fff).ignore()
+    map(0x60000a to 0x600fff).ignore()
     map(0x700000 to 0x700005).readWriteMem(layerRegs(0).io.mem)
     map(0x800000 to 0x80ffff).readWriteMem(paletteRam.io.portA)
     map(0x900000).r { (_, _) => input0 }
