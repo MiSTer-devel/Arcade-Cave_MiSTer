@@ -255,12 +255,13 @@ class Cave extends Module {
     map(0x600000 to 0x607fff).readWriteMem(layerRam(1).io.portA)
     map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
     map(0x710000 to 0x717fff).readWriteMem(layerRam(2).io.portA)
-    map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+    map(0x800000 to 0x80000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
     map(0x800000 to 0x800007).r { (_, offset) =>
       when(offset === 4.U) { videoIRQ := false.B }
       "b001".U ## !videoIRQ
     }
+    map(0x800010 to 0x80007f).ignore()
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
     map(0xb00000).r { (_, _) => input0 }
@@ -286,12 +287,13 @@ class Cave extends Module {
     // hardware.
     map(0x5f0000 to 0x5fffff).ignore()
     map(0x700000 to 0x70ffff).readWriteMemT(layerRam(2).io.portA)(a => a(12, 0))
-    map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+    map(0x800000 to 0x80000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
     map(0x800000 to 0x800007).r { (_, offset) =>
       when(offset === 0.U) { videoIRQ := false.B }
       "b011".U ## !videoIRQ
     }
+    map(0x800010 to 0x80007f).ignore()
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
     map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
@@ -310,13 +312,13 @@ class Cave extends Module {
     map(0x500000 to 0x507fff).readWriteMem(layerRam(0).io.portA)
     map(0x600000 to 0x607fff).readWriteMem(layerRam(1).io.portA)
     map(0x700000 to 0x707fff).readWriteMem(layerRam(2).io.portA)
-    map(0x800000 to 0x80007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+    map(0x800000 to 0x80000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
     map(0x800000 to 0x800007).r { (_, offset) =>
       when(offset === 4.U) { videoIRQ := false.B }
       "b001".U ## !videoIRQ
     }
-    map(0x800008 to 0x800fff).ignore()
+    map(0x800010 to 0x800fff).ignore()
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
     map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
@@ -330,13 +332,13 @@ class Cave extends Module {
   when(io.gameConfig.index === GameConfig.GUWANGE.U) {
     map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x200000 to 0x20ffff).readWriteMem(mainRam.io)
-    map(0x300000 to 0x30007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+    map(0x300000 to 0x30000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x300000 to 0x300007).r { (_, offset) =>
       when(offset === 4.U) { videoIRQ := false.B }
       "b001".U ## !videoIRQ
     }
     map(0x300008).w { (_, _, _) => frameStart := true.B }
-    map(0x300009 to 0x300fff).ignore()
+    map(0x300010 to 0x300fff).ignore()
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     map(0x500000 to 0x507fff).readWriteMem(layerRam(0).io.portA)
     map(0x600000 to 0x607fff).readWriteMem(layerRam(1).io.portA)
@@ -359,13 +361,13 @@ class Cave extends Module {
     map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     map(0x500000 to 0x507fff).readWriteMem(layerRam(0).io.portA)
-    map(0x600000 to 0x60007f).writeMem(videoRegs.io.mem.asWriteMemIO)
+    map(0x600000 to 0x60000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x600000 to 0x600007).r { (_, offset) =>
       when(offset === 4.U) { videoIRQ := false.B }
       "b001".U ## !videoIRQ
     }
     map(0x600008).w { (_, _, _) => frameStart := true.B }
-    map(0x600009 to 0x600fff).ignore()
+    map(0x600010 to 0x600fff).ignore()
     map(0x700000 to 0x700005).readWriteMem(layerRegs(0).io.mem)
     map(0x800000 to 0x80ffff).readWriteMem(paletteRam.io.portA)
     map(0x900000).r { (_, _) => input0 }
