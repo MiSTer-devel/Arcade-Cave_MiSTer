@@ -84,12 +84,12 @@ class SystemFrameBuffer extends Module {
   // enabled.
   val pageFlipper = Module(new PageFlipper(Config.SYSTEM_FRAME_BUFFER_BASE_ADDR))
   pageFlipper.io.mode := !io.lowLat
-  pageFlipper.io.swapA := Util.rising(ShiftRegister(io.frameBufferCtrl.vBlank, 2))
-  pageFlipper.io.swapB := Util.rising(ShiftRegister(io.video.vBlank, 2))
+  pageFlipper.io.swapRead := Util.rising(ShiftRegister(io.frameBufferCtrl.vBlank, 2))
+  pageFlipper.io.swapWrite := Util.rising(ShiftRegister(io.video.vBlank, 2))
 
   // Configure the MiSTer frame buffer
   io.frameBufferCtrl.configure(
-    baseAddr = pageFlipper.io.addrA,
+    baseAddr = pageFlipper.io.addrRead,
     enable = io.enable,
     rotate = io.rotate,
     forceBlank = io.forceBlank
@@ -101,5 +101,5 @@ class SystemFrameBuffer extends Module {
   }
   queue.io.readClock := clock // requests are read from the queue in the system clock domain
   queue.io.frameBuffer <> io.frameBuffer
-  queue.io.ddr.mapAddr(_ + pageFlipper.io.addrB) <> io.ddr
+  queue.io.ddr.mapAddr(_ + pageFlipper.io.addrWrite) <> io.ddr
 }

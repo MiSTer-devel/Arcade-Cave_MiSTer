@@ -117,15 +117,15 @@ class SpriteFrameBuffer extends Module {
   // vertical blank.
   val pageFlipper = Module(new PageFlipper(Config.SPRITE_FRAME_BUFFER_BASE_ADDR))
   pageFlipper.io.mode := false.B
-  pageFlipper.io.swapA := false.B
-  pageFlipper.io.swapB := vBlankStart
+  pageFlipper.io.swapRead := false.B
+  pageFlipper.io.swapWrite := vBlankStart
 
   // Copy next scanline from DDR memory to the line buffer
   val lineBufferDma = Module(new WriteDMA(Config.spriteLineBufferDmaConfig))
   lineBufferDma.io.enable := io.enable
   lineBufferDma.io.start := hBlankStart
   lineBufferDma.io.in.mapAddr(
-    _ + pageFlipper.io.addrA + ((io.video.pos.y + 1.U) * (Config.SCREEN_WIDTH * 2).U) // FIXME: Avoid expensive multiply
+    _ + pageFlipper.io.addrRead + ((io.video.pos.y + 1.U) * (Config.SCREEN_WIDTH * 2).U) // FIXME: Avoid expensive multiply
   ) <> io.ddr.lineBuffer
   lineBufferDma.io.out <> lineBuffer.io.portA.asWriteMemIO
 
@@ -134,5 +134,5 @@ class SpriteFrameBuffer extends Module {
   frameBufferDma.io.enable := io.enable
   frameBufferDma.io.start := Util.falling(io.spriteProcessorBusy) // sprite processor done
   frameBufferDma.io.in <> frameBuffer.io.portB
-  frameBufferDma.io.out.mapAddr(_ + pageFlipper.io.addrB) <> io.ddr.frameBuffer
+  frameBufferDma.io.out.mapAddr(_ + pageFlipper.io.addrWrite) <> io.ddr.frameBuffer
 }
