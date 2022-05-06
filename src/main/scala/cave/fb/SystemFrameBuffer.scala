@@ -80,11 +80,10 @@ class SystemFrameBuffer extends Module {
     val ddr = BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
   })
 
-  // Frame buffer page flipper
-  val pageFlipper = withReset(io.videoReset) {
-    Module(new PageFlipper(Config.SYSTEM_FRAME_BUFFER_BASE_ADDR))
-  }
-  pageFlipper.io.mode := !io.lowLat // use double buffering when low latency mode is enabled
+  // The page flipper uses triple buffering by default, or double buffering when low latency mode is
+  // enabled.
+  val pageFlipper = Module(new PageFlipper(Config.SYSTEM_FRAME_BUFFER_BASE_ADDR))
+  pageFlipper.io.mode := !io.lowLat
   pageFlipper.io.swapA := Util.rising(ShiftRegister(io.frameBufferCtrl.vBlank, 2))
   pageFlipper.io.swapB := Util.rising(ShiftRegister(io.video.vBlank, 2))
 
