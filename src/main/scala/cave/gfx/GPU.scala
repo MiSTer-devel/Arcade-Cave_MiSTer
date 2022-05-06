@@ -124,7 +124,7 @@ object GPU {
   /**
    * Calculates the offset adjustment for a layer.
    *
-   * @param index The index of the layer.
+   * @param index     The index of the layer.
    * @param layerCtrl The layer controls.
    * @param videoRegs The video registers.
    * @return An offset value.
@@ -153,16 +153,13 @@ object GPU {
    * Transforms a pixel position to a frame buffer memory address, applying the optional flip
    * transform.
    *
-   * @param pos  The pixel position.
-   * @param flip Flips the horizontal axis when asserted.
+   * @param pos The pixel position.
    * @return A memory address.
    */
-  def frameBufferAddr(pos: SVec2, flip: Bool): UInt = {
+  def frameBufferAddr(pos: SVec2): UInt = {
     val x = pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0)
     val y = pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
-    val x_ = (Config.SCREEN_WIDTH - 1).U - x
-    val y_ = (Config.SCREEN_HEIGHT - 1).U - y
-    Mux(flip, (y_ * Config.SCREEN_WIDTH.U) + x_, (y * Config.SCREEN_WIDTH.U) + x)
+    (y * Config.SCREEN_WIDTH.U) + x
   }
 
   /**
