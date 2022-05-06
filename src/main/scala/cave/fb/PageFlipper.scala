@@ -43,43 +43,44 @@ import chisel3.util._
  */
 class PageFlipper(baseAddr: Int) extends Module {
   val io = IO(new Bundle {
-    /** Use triple buffering when asserted, otherwise double buffering is used. */
+    /** Enable triple buffering when asserted, otherwise double buffering is used. */
     val mode = Input(Bool())
-    /** Swap page A */
-    val swapA = Input(Bool())
-    /** Swap page B */
-    val swapB = Input(Bool())
-    /** Memory address for page A */
-    val addrA = Output(UInt(32.W))
-    /** Memory address for page B */
-    val addrB = Output(UInt(32.W))
+    /** Swap read page */
+    val swapRead = Input(Bool())
+    /** Swap write page */
+    val swapWrite = Input(Bool())
+    /** Memory address for read page */
+    val addrRead = Output(UInt(32.W))
+    /** Memory address for write page */
+    val addrWrite = Output(UInt(32.W))
   })
 
   // Registers
-  val aIndexReg = RegInit(0.U(2.W))
-  val bIndexReg = RegInit(1.U(2.W))
+  val rdIndexReg = RegInit(0.U(2.W))
+  val wrIndexReg = RegInit(1.U(2.W))
 
   when(io.mode) {
-    when(io.swapA && io.swapB) {
-      aIndexReg := bIndexReg
-      bIndexReg := PageFlipper.nextIndex(bIndexReg, aIndexReg)
-    }.elsewhen(io.swapA) {
-      aIndexReg := PageFlipper.nextIndex(aIndexReg, bIndexReg)
-    }.elsewhen(io.swapB) {
-      bIndexReg := PageFlipper.nextIndex(bIndexReg, aIndexReg)
+    when(io.swapRead && io.swapWrite) {
+      rdIndexReg := wrIndexReg
+      wrIndexReg := PageFlipper.nextIndex(wrIndexReg, rdIndexReg)
+    }.elsewhen(io.swapRead) {
+      rdIndexReg := PageFlipper.nextIndex(rdIndexReg, wrIndexReg)
+    }.elsewhen(io.swapWrite) {
+      wrIndexReg := PageFlipper.nextIndex(wrIndexReg, rdIndexReg)
     }
   }.otherwise {
-    when(io.swapB) {
-      aIndexReg := bIndexReg(0)
-      bIndexReg := ~bIndexReg(0)
+    // In double buffer mode, we only swap the write page (the read page is always opposite).
+    when(io.swapWrite) {
+      rdIndexReg := wrIndexReg(0)
+      wrIndexReg := ~wrIndexReg(0)
     }
   }
 
   // Outputs
-  io.addrA := baseAddr.U(31, 21) ## aIndexReg(1, 0) ## 0.U(19.W)
-  io.addrB := baseAddr.U(31, 21) ## bIndexReg(1, 0) ## 0.U(19.W)
+  io.addrRead := baseAddr.U(31, 21) ## rdIndexReg(1, 0) ## 0.U(19.W)
+  io.addrWrite := baseAddr.U(31, 21) ## wrIndexReg(1, 0) ## 0.U(19.W)
 
-  printf(p"PageFlipper(aIndex: $aIndexReg, bIndex: $bIndexReg)\n")
+  printf(p"PageFlipper(rdIndex: $rdIndexReg, wrIndex: $wrIndexReg)\n")
 }
 
 object PageFlipper {

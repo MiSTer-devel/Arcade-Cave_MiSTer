@@ -41,56 +41,56 @@ class PageFlipperTest extends AnyFlatSpec with ChiselScalatestTester with Matche
   it should "flip pages in double buffer mode" in {
     test(new PageFlipper(0x24000000)) { dut =>
       dut.io.mode.poke(false)
-      dut.io.addrA.expect(0x24000000)
-      dut.io.addrB.expect(0x24080000)
+      dut.io.addrRead.expect(0x24000000)
+      dut.io.addrWrite.expect(0x24080000)
 
-      // Swap A
-      dut.io.swapA.poke(true)
+      // Swap read
+      dut.io.swapRead.poke(true)
       dut.clock.step()
-      dut.io.addrA.expect(0x24000000)
-      dut.io.addrB.expect(0x24080000)
+      dut.io.addrRead.expect(0x24000000)
+      dut.io.addrWrite.expect(0x24080000)
 
-      // Swap B
-      dut.io.swapA.poke(false)
-      dut.io.swapB.poke(true)
+      // Swap write
+      dut.io.swapRead.poke(false)
+      dut.io.swapWrite.poke(true)
       dut.clock.step()
-      dut.io.addrA.expect(0x24080000)
-      dut.io.addrB.expect(0x24000000)
+      dut.io.addrRead.expect(0x24080000)
+      dut.io.addrWrite.expect(0x24000000)
 
-      // Swap A and B
-      dut.io.swapA.poke(true)
-      dut.io.swapB.poke(true)
+      // Swap read and write
+      dut.io.swapRead.poke(true)
+      dut.io.swapWrite.poke(true)
       dut.clock.step()
-      dut.io.addrA.expect(0x24000000)
-      dut.io.addrB.expect(0x24080000)
+      dut.io.addrRead.expect(0x24000000)
+      dut.io.addrWrite.expect(0x24080000)
     }
   }
 
   it should "flip pages in triple buffer mode" in {
     test(new PageFlipper(0x24000000)) { dut =>
       dut.io.mode.poke(true)
-      dut.io.addrA.expect(0x24000000)
-      dut.io.addrB.expect(0x24080000)
+      dut.io.addrRead.expect(0x24000000)
+      dut.io.addrWrite.expect(0x24080000)
 
-      // Swap A
-      dut.io.swapA.poke(true)
+      // Swap read
+      dut.io.swapRead.poke(true)
       dut.clock.step()
-      dut.io.addrA.expect(0x24100000)
-      dut.io.addrB.expect(0x24080000)
+      dut.io.addrRead.expect(0x24100000)
+      dut.io.addrWrite.expect(0x24080000)
 
-      // Swap B
-      dut.io.swapA.poke(false)
-      dut.io.swapB.poke(true)
+      // Swap write
+      dut.io.swapRead.poke(false)
+      dut.io.swapWrite.poke(true)
       dut.clock.step()
-      dut.io.addrA.expect(0x24100000)
-      dut.io.addrB.expect(0x24000000)
+      dut.io.addrRead.expect(0x24100000)
+      dut.io.addrWrite.expect(0x24000000)
 
-      // Swap A and B
-      dut.io.swapA.poke(true)
-      dut.io.swapB.poke(true)
+      // Swap read and write
+      dut.io.swapRead.poke(true)
+      dut.io.swapWrite.poke(true)
       dut.clock.step()
-      dut.io.addrA.expect(0x24000000)
-      dut.io.addrB.expect(0x24080000)
+      dut.io.addrRead.expect(0x24000000)
+      dut.io.addrWrite.expect(0x24080000)
     }
   }
 }
