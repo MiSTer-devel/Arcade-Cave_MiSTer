@@ -33,5 +33,5 @@
     <part>00 04</part>
   </rom>
 
-  <buttons names="Start,Coin,Pause,Service" default="R,L,Start" />
+  <buttons names="B1,B2,B3,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />
 </misterromdescription>
