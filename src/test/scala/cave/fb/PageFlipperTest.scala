@@ -47,7 +47,7 @@ class PageFlipperTest extends AnyFlatSpec with ChiselScalatestTester with Matche
       // Swap A
       dut.io.swapA.poke(true)
       dut.clock.step()
-      dut.io.addrA.expect(0x24080000)
+      dut.io.addrA.expect(0x24000000)
       dut.io.addrB.expect(0x24080000)
 
       // Swap B

@@ -61,16 +61,18 @@ class PageFlipper(baseAddr: Int) extends Module {
 
   when(io.mode) {
     when(io.swapA && io.swapB) {
-      bIndexReg := PageFlipper.nextIndex(bIndexReg, aIndexReg)
       aIndexReg := bIndexReg
+      bIndexReg := PageFlipper.nextIndex(bIndexReg, aIndexReg)
     }.elsewhen(io.swapA) {
       aIndexReg := PageFlipper.nextIndex(aIndexReg, bIndexReg)
     }.elsewhen(io.swapB) {
       bIndexReg := PageFlipper.nextIndex(bIndexReg, aIndexReg)
     }
   }.otherwise {
-    when(io.swapA) { aIndexReg := ~aIndexReg(0) }
-    when(io.swapB) { bIndexReg := ~bIndexReg(0) }
+    when(io.swapB) {
+      aIndexReg := bIndexReg(0)
+      bIndexReg := ~bIndexReg(0)
+    }
   }
 
   // Outputs
