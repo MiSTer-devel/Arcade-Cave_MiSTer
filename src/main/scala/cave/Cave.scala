@@ -84,10 +84,8 @@ class Cave extends Module {
     val spriteFrameBuffer = new SpriteFrameBufferIO
     /** System frame buffer port */
     val systemFrameBuffer = new SystemFrameBufferIO
-    /** Asserted when the sprite processor has started rendering a frame */
-    val frameStart = Output(Bool())
-    /** Asserted when the sprite processor has finished rendering a frame */
-    val frameFinish = Output(Bool())
+    /** Asserted when the sprite processor is busy */
+    val spriteProcessorBusy = Output(Bool())
   })
 
   // Wires
@@ -207,9 +205,8 @@ class Cave extends Module {
   gpu.io.options <> io.options
   gpu.io.rgb <> io.rgb
 
-  // Set frame start/finish flags
-  io.frameStart := gpu.io.spriteCtrl.start
-  io.frameFinish := Util.falling(gpu.io.spriteCtrl.busy)
+  // Set busy flag
+  io.spriteProcessorBusy := gpu.io.spriteCtrl.busy
 
   // YMZ280B
   val ymz = Module(new YMZ280B(Config.ymzConfig))

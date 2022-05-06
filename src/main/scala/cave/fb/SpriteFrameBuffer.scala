@@ -66,10 +66,8 @@ class SpriteFrameBuffer extends Module {
     val videoReset = Input(Bool())
     /** Enables the sprite frame buffer */
     val enable = Input(Bool())
-    /** Asserted when the sprite processor has started rendering a frame */
-    val frameStart = Input(Bool())
-    /** Asserted when the sprite processor has finished rendering a frame */
-    val frameFinish = Input(Bool())
+    /** Asserted when the sprite processor is busy */
+    val spriteProcessorBusy = Input(Bool())
     /** Video port */
     val video = Flipped(VideoIO())
     /** GPU-side */
@@ -92,7 +90,7 @@ class SpriteFrameBuffer extends Module {
   val hBlankStart = Util.rising(ShiftRegister(io.video.hBlank, 2))
   val vBlankStart = Util.rising(ShiftRegister(io.video.vBlank, 2))
 
-  // Line buffer (320x16BPP)
+  // Line buffer (320x1x16BPP)
   val lineBuffer = Module(new TrueDualPortRam(
     addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH_X - 2,
     dataWidthA = Config.SPRITE_FRAME_BUFFER_DATA_WIDTH * 4,
@@ -115,13 +113,12 @@ class SpriteFrameBuffer extends Module {
   ))
   frameBuffer.io.portA <> io.gpu.frameBuffer
 
-  // Frame buffer page flipper
-  val pageFlipper = withReset(io.videoReset) {
-    Module(new PageFlipper(Config.SPRITE_FRAME_BUFFER_BASE_ADDR))
-  }
-  pageFlipper.io.mode := false.B // use double buffering for sprites
-  pageFlipper.io.swapA := vBlankStart
-  pageFlipper.io.swapB := io.frameStart
+  // The page flipper uses double buffering for sprites. The pages are swapped at the start of every
+  // vertical blank.
+  val pageFlipper = Module(new PageFlipper(Config.SPRITE_FRAME_BUFFER_BASE_ADDR))
+  pageFlipper.io.mode := false.B
+  pageFlipper.io.swapA := false.B
+  pageFlipper.io.swapB := vBlankStart
 
   // Copy next scanline from DDR memory to the line buffer
   val lineBufferDma = Module(new WriteDMA(Config.spriteLineBufferDmaConfig))
@@ -135,7 +132,7 @@ class SpriteFrameBuffer extends Module {
   // Copy frame buffer to DDR memory
   val frameBufferDma = Module(new ReadDMA(Config.spriteFrameBufferDmaConfig))
   frameBufferDma.io.enable := io.enable
-  frameBufferDma.io.start := io.frameFinish
+  frameBufferDma.io.start := Util.falling(io.spriteProcessorBusy) // sprite processor done
   frameBufferDma.io.in <> frameBuffer.io.portB
   frameBufferDma.io.out.mapAddr(_ + pageFlipper.io.addrB) <> io.ddr.frameBuffer
 }
