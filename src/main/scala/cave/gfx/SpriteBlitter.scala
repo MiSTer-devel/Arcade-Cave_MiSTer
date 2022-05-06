@@ -106,7 +106,7 @@ class SpriteBlitter extends Module {
   io.config.ready := configReady
   io.pixelData.ready := pixelDataReady
   io.frameBuffer.wr := RegNext(visible)
-  io.frameBuffer.addr := RegNext(GPU.frameBufferAddr(posReg, configReg.flip))
+  io.frameBuffer.addr := RegNext(GPU.frameBufferAddr(posReg))
   io.frameBuffer.mask := 0.U
   io.frameBuffer.din := RegNext(penReg.asUInt)
   io.busy := RegNext(busyReg) // delayed to align with the other signals
