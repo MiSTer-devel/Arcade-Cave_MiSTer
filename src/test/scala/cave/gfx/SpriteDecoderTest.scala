@@ -48,31 +48,31 @@ class SpriteDecoderTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.clock.step()
 
       // Initial request
-      dut.io.rom.valid.poke(true)
-      dut.io.rom.ready.expect(true)
+      dut.io.tileRom.valid.poke(true)
+      dut.io.tileRom.ready.expect(true)
       dut.clock.step()
       dut.io.pixelData.valid.expect(true)
-      dut.io.rom.ready.expect(false)
+      dut.io.tileRom.ready.expect(false)
       dut.clock.step()
 
       // First request
       dut.io.pixelData.ready.poke(true)
       dut.clock.step()
       dut.io.pixelData.ready.poke(false)
-      dut.io.rom.ready.expect(true)
+      dut.io.tileRom.ready.expect(true)
       dut.clock.step()
       dut.io.pixelData.valid.expect(true)
-      dut.io.rom.ready.expect(false)
+      dut.io.tileRom.ready.expect(false)
       dut.clock.step()
 
       // Second request
       dut.io.pixelData.ready.poke(true)
       dut.clock.step()
       dut.io.pixelData.ready.poke(false)
-      dut.io.rom.ready.expect(true)
+      dut.io.tileRom.ready.expect(true)
       dut.clock.step()
       dut.io.pixelData.valid.expect(true)
-      dut.io.rom.ready.expect(false)
+      dut.io.tileRom.ready.expect(false)
     }
   }
 
@@ -80,14 +80,14 @@ class SpriteDecoderTest extends AnyFlatSpec with ChiselScalatestTester with Matc
     test(new SpriteDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_4BPP)
       dut.clock.step()
-      dut.io.rom.valid.poke(true)
-      dut.io.rom.bits.poke("hfedcba9876543210".U)
+      dut.io.tileRom.valid.poke(true)
+      dut.io.tileRom.bits.poke("h_fedcba98_76543210".U)
       dut.clock.step()
       dut.io.pixelData.valid.expect(true)
-      dut.io.pixelData.bits(0).expect(0xe.U)
-      dut.io.pixelData.bits(1).expect(0xf.U)
-      dut.io.pixelData.bits(14).expect(0x0.U)
-      dut.io.pixelData.bits(15).expect(0x1.U)
+      dut.io.pixelData.bits(0).expect(0x0.U)
+      dut.io.pixelData.bits(1).expect(0x1.U)
+      dut.io.pixelData.bits(14).expect(0xe.U)
+      dut.io.pixelData.bits(15).expect(0xf.U)
     }
   }
 
@@ -95,14 +95,14 @@ class SpriteDecoderTest extends AnyFlatSpec with ChiselScalatestTester with Matc
     test(new SpriteDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_4BPP_MSB)
       dut.clock.step()
-      dut.io.rom.valid.poke(true)
-      dut.io.rom.bits.poke("hfedcba9876543210".U)
+      dut.io.tileRom.valid.poke(true)
+      dut.io.tileRom.bits.poke("h_fedcba98_76543210".U)
       dut.clock.step()
       dut.io.pixelData.valid.expect(true)
-      dut.io.pixelData.bits(0).expect(0xd.U)
-      dut.io.pixelData.bits(1).expect(0xc.U)
-      dut.io.pixelData.bits(14).expect(0x3.U)
-      dut.io.pixelData.bits(15).expect(0x2.U)
+      dut.io.pixelData.bits(0).expect(0x3.U)
+      dut.io.pixelData.bits(1).expect(0x2.U)
+      dut.io.pixelData.bits(14).expect(0xd.U)
+      dut.io.pixelData.bits(15).expect(0xc.U)
     }
   }
 
@@ -114,40 +114,40 @@ class SpriteDecoderTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.clock.step()
 
       // Initial request
-      dut.io.rom.valid.poke(true)
-      dut.io.rom.ready.expect(true)
+      dut.io.tileRom.valid.poke(true)
+      dut.io.tileRom.ready.expect(true)
       dut.clock.step()
       dut.io.pixelData.valid.expect(false)
-      dut.io.rom.ready.expect(true)
+      dut.io.tileRom.ready.expect(true)
       dut.clock.step()
       dut.io.pixelData.valid.expect(true)
-      dut.io.rom.ready.expect(false)
+      dut.io.tileRom.ready.expect(false)
       dut.clock.step()
 
       // First request
       dut.io.pixelData.ready.poke(true)
       dut.clock.step()
       dut.io.pixelData.ready.poke(false)
-      dut.io.rom.ready.expect(true)
+      dut.io.tileRom.ready.expect(true)
       dut.clock.step()
       dut.io.pixelData.valid.expect(false)
-      dut.io.rom.ready.expect(true)
+      dut.io.tileRom.ready.expect(true)
       dut.clock.step()
       dut.io.pixelData.valid.expect(true)
-      dut.io.rom.ready.expect(false)
+      dut.io.tileRom.ready.expect(false)
       dut.clock.step()
 
       // Second request
       dut.io.pixelData.ready.poke(true)
       dut.clock.step()
       dut.io.pixelData.ready.poke(false)
-      dut.io.rom.ready.expect(true)
+      dut.io.tileRom.ready.expect(true)
       dut.clock.step()
       dut.io.pixelData.valid.expect(false)
-      dut.io.rom.ready.expect(true)
+      dut.io.tileRom.ready.expect(true)
       dut.clock.step()
       dut.io.pixelData.valid.expect(true)
-      dut.io.rom.ready.expect(false)
+      dut.io.tileRom.ready.expect(false)
       dut.clock.step()
     }
   }
@@ -156,14 +156,14 @@ class SpriteDecoderTest extends AnyFlatSpec with ChiselScalatestTester with Matc
     test(new SpriteDecoder) { dut =>
       dut.io.format.poke(Config.GFX_FORMAT_8BPP)
       dut.clock.step()
-      dut.io.rom.valid.poke(true)
-      dut.io.rom.bits.poke("hfedcba9876543210".U)
+      dut.io.tileRom.valid.poke(true)
+      dut.io.tileRom.bits.poke("h_fedcba98_76543210".U)
       dut.clock.step(2)
       dut.io.pixelData.valid.expect(true)
-      dut.io.pixelData.bits(0).expect(0xec.U)
-      dut.io.pixelData.bits(1).expect(0xfd.U)
-      dut.io.pixelData.bits(14).expect(0x20.U)
-      dut.io.pixelData.bits(15).expect(0x31.U)
+      dut.io.pixelData.bits(0).expect(0x02.U)
+      dut.io.pixelData.bits(1).expect(0x13.U)
+      dut.io.pixelData.bits(6).expect(0xce.U)
+      dut.io.pixelData.bits(7).expect(0xdf.U)
     }
   }
 }

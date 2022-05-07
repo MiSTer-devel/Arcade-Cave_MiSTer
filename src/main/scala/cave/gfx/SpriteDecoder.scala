@@ -38,19 +38,17 @@ import chisel3._
 import chisel3.util._
 
 /**
- * Decodes sprites tiles from tile ROM data.
+ * Decodes sprite pixel data from the tile ROM.
  *
- * Tile ROM data is accessed using the 64-bit `rom` port and decoded:
- *
- *   - 16x16x4: 64-bits (1 word)
- *   - 16x16x8: 128-bits (2 words)
+ * Tile ROM data is read from a 64-bit FIFO, decoded, and written to another FIFO as 16x8BPP strides
+ * of pixel data, to be processed by the sprite blitter.
  */
 class SpriteDecoder extends Module {
   val io = IO(new Bundle {
     /** Graphics format port */
     val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))
     /** Tile ROM data port */
-    val rom = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
+    val tileRom = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
     /** Pixel data port */
     val pixelData = Flipped(DeqIO(Vec(Config.LARGE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W))))
   })
@@ -90,27 +88,27 @@ class SpriteDecoder extends Module {
   }
 
   // Update the state when there is valid tile ROM data
-  when(io.rom.fire) {
+  when(io.tileRom.fire) {
     when(done) {
       pendingReg := false.B
       validReg := true.B
     }
-    dataReg := dataReg.tail(Config.TILE_ROM_DATA_WIDTH) ## io.rom.bits
+    dataReg := dataReg.tail(Config.TILE_ROM_DATA_WIDTH) ## io.tileRom.bits
     toggleReg := !toggleReg
   }
 
   // Outputs
-  io.rom.ready := pendingReg
+  io.tileRom.ready := pendingReg
   io.pixelData.valid := validReg
   io.pixelData.bits := bits
 
-  printf(p"SpriteDecoder(start: $start, ready: $ready, done: $done, pending: $pendingReg, valid: $validReg, toggle: $toggleReg, romReady: ${ io.rom.ready }, romValid: ${ io.rom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid }), data: 0x${ Hexadecimal(dataReg) })\n")
+  printf(p"SpriteDecoder(start: $start, ready: $ready, done: $done, pending: $pendingReg, valid: $validReg, toggle: $toggleReg, romReady: ${ io.tileRom.ready }, romValid: ${ io.tileRom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid }), data: 0x${ Hexadecimal(dataReg) })\n")
 }
 
 object SpriteDecoder {
   /** Decode 16x16x4 tiles (i.e. 64 bits per row) */
   private def decode4BPP(data: Bits): Seq[Bits] =
-    Seq(1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14)
+    Seq(15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
       // Decode data into nibbles
       .reverseIterator.map(Util.decode(data, 16, 4).apply)
       // Pad nibbles into 8-bit pixels
@@ -118,7 +116,7 @@ object SpriteDecoder {
 
   /** Decode 16x16x4 MSB tile (i.e. 64 bits per row) */
   private def decode4BPPMSB(data: Bits): Seq[Bits] =
-    Seq(2, 3, 0, 1, 6, 7, 4, 5, 10, 11, 8, 9, 14, 15, 12, 13)
+    Seq(12, 13, 14, 15, 8, 9, 10, 11, 4, 5, 6, 7, 0, 1, 2, 3)
       // Decode data into nibbles
       .reverseIterator.map(Util.decode(data, 16, 4).apply)
       // Pad nibbles into 8-bit pixels
@@ -126,7 +124,7 @@ object SpriteDecoder {
 
   /** Decode 16x16x8 MSB sprite (i.e. 128 bits per row) */
   private def decode8BPP(data: Bits): Seq[Bits] =
-    Seq(1, 3, 0, 2, 5, 7, 4, 6, 9, 11, 8, 10, 13, 15, 12, 14, 17, 19, 16, 18, 21, 23, 20, 22, 25, 27, 24, 26, 29, 31, 28, 30)
+    Seq(15, 13, 14, 12, 11, 9, 10, 8, 7, 5, 6, 4, 3, 1, 2, 0, 31, 29, 30, 28, 27, 25, 26, 24, 23, 21, 22, 20, 19, 17, 18, 16)
       // Decode data into nibbles
       .reverseIterator.map(Util.decode(data, 32, 4).apply)
       // Join high/low nibbles into 8-bit pixels

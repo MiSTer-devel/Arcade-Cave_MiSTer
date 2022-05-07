@@ -104,7 +104,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   // Sprite decoder
   val decoder = Module(new SpriteDecoder)
   decoder.io.format := io.ctrl.format
-  decoder.io.rom <> fifo.io.deq
+  decoder.io.tileRom <> fifo.io.deq
   decoder.io.pixelData <> blitter.io.pixelData
 
   // Set tile ROM read flag
