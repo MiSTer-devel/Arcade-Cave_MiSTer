@@ -10,7 +10,7 @@ This project contains the MiSTer core for Cave's first-generation 68k arcade har
 |------|---------|----------|
 [**Do Donpachi**](https://en.wikipedia.org/wiki/DoDonPachi) | Implemented | Yes |
 [**ESP Ra. De.**](https://en.wikipedia.org/wiki/ESP_Ra.De.) | Implemented | Yes |
-[**Dangun Feveron**](https://en.wikipedia.org/wiki/Dangun_Feveron) | **W.I.P** | No |
+[**Dangun Feveron**](https://en.wikipedia.org/wiki/Dangun_Feveron) | [**Beta (Available in Patreon)**](https://www.patreon.com/nullobject) | No |
 [**Air Gallet**](https://en.wikipedia.org/wiki/Air_Gallet) | N/A | No |
 [**Donpachi**](https://en.wikipedia.org/wiki/DonPachi) |  N/A | No |
 [**Gaia Crusaiders**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=gaia&arcade_only=0&autosearch=1) | N/A | No |
