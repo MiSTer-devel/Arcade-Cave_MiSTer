@@ -33,6 +33,7 @@
 package axon.mem
 
 import axon.mem.cache.{Cache, Config}
+import chisel3._
 import chiseltest._
 import org.scalatest._
 import flatspec.AnyFlatSpec
@@ -76,7 +77,7 @@ trait CacheMemTestHelpers {
     waitForIdle(dut)
   }
 
-  protected def fillCacheLine(dut: Cache, addr: Int, data: Seq[Long]) = {
+  protected def fillCacheLine(dut: Cache, addr: UInt, data: Seq[UInt]): Unit = {
     dut.io.enable.poke(true)
     waitForIdle(dut)
     dut.io.in.rd.poke(true)
@@ -96,6 +97,10 @@ trait CacheMemTestHelpers {
 
     dut.io.out.valid.poke(false)
     waitForIdle(dut)
+  }
+
+  protected def fillCacheLine(dut: Cache, addr: Int, data: Seq[Int]): Unit = {
+    fillCacheLine(dut, addr.U, data.map(_.U))
   }
 
   protected def waitForIdle(dut: Cache) =
@@ -665,6 +670,15 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
     }
   }
 
+  it should "read a word (8:8) swap endianness" in {
+    test(mkCacheMem(cacheConfig.copy(inDataWidth = 8, outDataWidth = 8, swapEndianness = true))) { dut =>
+      dut.io.enable.poke(true)
+      fillCacheLine(dut, 0, Seq(0x12, 0x34))
+      readCache(dut, 0) shouldBe 0x12
+      readCache(dut, 1) shouldBe 0x34
+    }
+  }
+
   it should "read a word (8:16)" in {
     test(mkCacheMem(cacheConfig.copy(inDataWidth = 8, outDataWidth = 16))) { dut =>
       dut.io.enable.poke(true)
@@ -679,7 +693,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "read a word (8:32)" in {
     test(mkCacheMem(cacheConfig.copy(inDataWidth = 8, outDataWidth = 32))) { dut =>
       dut.io.enable.poke(true)
-      fillCacheLine(dut, 0, Seq(0x78563412L, 0xefcdab90L))
+      fillCacheLine(dut, 0.U, Seq("h_78563412".U, "h_efcdab90".U))
       readCache(dut, 0) shouldBe 0x12
       readCache(dut, 1) shouldBe 0x34
       readCache(dut, 2) shouldBe 0x56
@@ -688,6 +702,28 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       readCache(dut, 5) shouldBe 0xab
       readCache(dut, 6) shouldBe 0xcd
       readCache(dut, 7) shouldBe 0xef
+    }
+  }
+
+  it should "read a word (16:64)" in {
+    test(mkCacheMem(cacheConfig.copy(inDataWidth = 16, outDataWidth = 64, lineWidth = 1))) { dut =>
+      dut.io.enable.poke(true)
+      fillCacheLine(dut, 0.U, Seq("h_efcdab90_78563412".U))
+      readCache(dut, 0) shouldBe 0x3412
+      readCache(dut, 2) shouldBe 0x7856
+      readCache(dut, 4) shouldBe 0xab90
+      readCache(dut, 6) shouldBe 0xefcd
+    }
+  }
+
+  it should "read a word (16:64) swap endianness" in {
+    test(mkCacheMem(cacheConfig.copy(inDataWidth = 16, outDataWidth = 64, lineWidth = 1, swapEndianness = true))) { dut =>
+      dut.io.enable.poke(true)
+      fillCacheLine(dut, 0.U, Seq("h_efcdab90_78563412".U))
+      readCache(dut, 0) shouldBe 0x1234
+      readCache(dut, 2) shouldBe 0x5678
+      readCache(dut, 4) shouldBe 0x90ab
+      readCache(dut, 6) shouldBe 0xcdef
     }
   }
 
@@ -705,6 +741,15 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       fillCacheLine(dut, 0, Seq(0x3412, 0x7856))
       readCache(dut, 0) shouldBe 0x3412
       readCache(dut, 2) shouldBe 0x7856
+    }
+  }
+
+  it should "read a word (16:16) swap endianness" in {
+    test(mkCacheMem(cacheConfig.copy(inDataWidth = 16, outDataWidth = 16, swapEndianness = true))) { dut =>
+      dut.io.enable.poke(true)
+      fillCacheLine(dut, 0, Seq(0x3412, 0x7856))
+      readCache(dut, 0) shouldBe 0x1234
+      readCache(dut, 2) shouldBe 0x5678
     }
   }
 }

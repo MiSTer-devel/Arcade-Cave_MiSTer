@@ -45,10 +45,18 @@ class Entry(private val config: Config) extends Bundle {
   /** Flag to indicate whether the cache entry is dirty */
   val dirty = Bool()
 
-  /** Returns the input word at the given offset. */
+  /**
+   * Returns the input word at the given offset.
+   *
+   * @param offset The address offset.
+   */
   def inWord(offset: UInt): Bits = line.inWords(offset)
 
-  /** Returns the output word at the given offset. */
+  /**
+   * Returns the output word at the given offset.
+   *
+   * @param offset The address offset.
+   */
   def outWord(offset: UInt): Bits = line.outWords(offset)
 
   /**
@@ -56,7 +64,7 @@ class Entry(private val config: Config) extends Bundle {
    *
    * @param tag    The cache line tag value.
    * @param offset The address offset.
-   * @param data   The data.
+   * @param data   The data to be written.
    */
   def fill(tag: UInt, offset: UInt, data: Bits): Unit = {
     line.words(offset) := data
@@ -68,7 +76,7 @@ class Entry(private val config: Config) extends Bundle {
    * Merges the given data with the cache line, and marks the line as dirty.
    *
    * @param offset The address offset.
-   * @param data   The data.
+   * @param data   The data to be written.
    */
   def merge(offset: UInt, data: Bits): Unit = {
     val words = WireInit(line.inWords)
