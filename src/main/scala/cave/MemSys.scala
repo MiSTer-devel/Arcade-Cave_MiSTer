@@ -108,7 +108,8 @@ class MemSys extends Module {
     outDataWidth = Config.sdramConfig.dataWidth,
     lineWidth = Config.sdramConfig.burstLength,
     depth = 256,
-    wrapping = true
+    wrapping = true,
+    swapEndianness = true
   )))
   progRomCache.io.enable := readyReg
   progRomCache.io.in.asAsyncReadMemIO <> io.progRom
@@ -134,7 +135,8 @@ class MemSys extends Module {
     outDataWidth = Config.sdramConfig.dataWidth,
     lineWidth = Config.sdramConfig.burstLength,
     depth = 4,
-    wrapping = true
+    wrapping = true,
+    swapEndianness = true
   )))
   eepromCache.io.enable := readyReg
   eepromCache.io.in <> io.eeprom
