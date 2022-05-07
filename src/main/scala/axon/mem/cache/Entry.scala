@@ -46,10 +46,10 @@ class Entry(private val config: Config) extends Bundle {
   val dirty = Bool()
 
   /** Returns the input word at the given offset. */
-  def inWord(offset: UInt): Bits = line.inWords((~offset).asUInt)
+  def inWord(offset: UInt): Bits = line.inWords(offset)
 
   /** Returns the output word at the given offset. */
-  def outWord(offset: UInt): Bits = line.outWords((~offset).asUInt)
+  def outWord(offset: UInt): Bits = line.outWords(offset)
 
   /**
    * Fills the cache line with the given data, and marks the line as valid.
@@ -58,8 +58,8 @@ class Entry(private val config: Config) extends Bundle {
    * @param offset The address offset.
    * @param data   The data.
    */
-  def fill(tag: UInt, offset: UInt, data: Bits) = {
-    line.words((~offset).asUInt) := data
+  def fill(tag: UInt, offset: UInt, data: Bits): Unit = {
+    line.words(offset) := data
     this.tag := tag
     valid := true.B
   }
@@ -70,9 +70,9 @@ class Entry(private val config: Config) extends Bundle {
    * @param offset The address offset.
    * @param data   The data.
    */
-  def merge(offset: UInt, data: Bits) = {
+  def merge(offset: UInt, data: Bits): Unit = {
     val words = WireInit(line.inWords)
-    words((~offset).asUInt) := data
+    words(offset) := data
     line.words := words.asTypeOf(chiselTypeOf(line.words))
     dirty := true.B
   }
