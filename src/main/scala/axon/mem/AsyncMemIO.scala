@@ -86,8 +86,8 @@ object AsyncWriteMemIO {
 class AsyncReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends ReadWriteMemIO(addrWidth, dataWidth) with WaitIO with ValidIO {
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
-  /** Converts the interface to read-only. */
-  def asAsyncReadMemIO: AsyncReadMemIO = {
+  /** Converts the interface to asynchronous read-only. */
+  override def asAsyncReadMemIO: AsyncReadMemIO = {
     val wire = Wire(Flipped(AsyncReadMemIO(this)))
     rd := wire.rd
     wr := false.B
