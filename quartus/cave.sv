@@ -243,7 +243,7 @@ reset_ctrl reset_sys_ctrl (
 
 reset_ctrl reset_cpu_ctrl (
   .clk(clk_sys),
-  .rst_i(RESET | status[0] | buttons[1] | ~pll_sys_locked),
+  .rst_i(RESET | ~pll_sys_locked | status[0] | buttons[1]),
   .rst_o(rst_cpu)
 );
 
