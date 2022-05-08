@@ -57,6 +57,8 @@ class Cache(config: Config) extends Module {
   assert(config.outDataWidth >= 8, "Output data width must be at least 8")
 
   val io = IO(new Bundle {
+    /** Enable the cache */
+    val enable = Input(Bool())
     /** Input port */
     val in = Flipped(AsyncReadWriteMemIO(config.inAddrWidth, config.inDataWidth))
     /** Output port */
@@ -120,6 +122,7 @@ class Cache(config: Config) extends Module {
   val (burstCounter, burstCounterWrap) = Counter(burstCounterEnable, config.lineWidth)
 
   // Control signals
+  val start = io.enable && request.valid
   val dirty = cacheEntryReg.dirty && cacheEntryReg.tag =/= requestReg.addr.tag
   val hit = cacheEntryReg.valid && cacheEntryReg.tag === requestReg.addr.tag
   val miss = !hit
@@ -188,7 +191,7 @@ class Cache(config: Config) extends Module {
 
     // Wait for a request
     is(State.idle) {
-      when(request.valid) { nextState := State.latch }
+      when(start) { nextState := State.latch }
     }
 
     // Latch cache entry
@@ -197,7 +200,7 @@ class Cache(config: Config) extends Module {
     // Check cache entry
     is(State.check) {
       when(hit && requestReg.rd) {
-        nextState := Mux(request.valid, State.latch, State.idle)
+        nextState := Mux(start, State.latch, State.idle)
       }.elsewhen(hit && requestReg.wr) {
         nextState := State.merge
       }.elsewhen(dirty) {
@@ -232,7 +235,7 @@ class Cache(config: Config) extends Module {
 
     // Write cache entry
     is(State.write) {
-      nextState := Mux(request.valid, State.latch, State.idle)
+      nextState := Mux(start, State.latch, State.idle)
     }
   }
 

@@ -77,6 +77,7 @@ class MemSys extends Module {
     lineWidth = 1,
     depth = 1
   )))
+  ddrDownloadCache.io.enable := true.B
   ddrDownloadCache.io.in <> io.ioctl.asAsyncReadWriteMemIO(IOCTL.ROM_INDEX)
 
   // The SDRAM download cache is used to buffer IOCTL data, so that complete words can be written
@@ -90,6 +91,7 @@ class MemSys extends Module {
     depth = 1,
     wrapping = true
   )))
+  sdramDownloadCache.io.enable := true.B
   sdramDownloadCache.io.in <> io.ioctl.asAsyncReadWriteMemIO(IOCTL.ROM_INDEX)
 
   // Program ROM cache
@@ -102,6 +104,7 @@ class MemSys extends Module {
     depth = 256,
     wrapping = true
   )))
+  progRomCache.io.enable := true.B
   progRomCache.io.in.asAsyncReadMemIO <> io.progRom
 
   // Sound ROM cache
@@ -114,6 +117,7 @@ class MemSys extends Module {
     depth = 256,
     wrapping = true
   )))
+  soundRomCache.io.enable := true.B
   soundRomCache.io.in.asAsyncReadMemIO <> io.soundRom
 
   // EEPROM cache
@@ -126,6 +130,7 @@ class MemSys extends Module {
     depth = 4,
     wrapping = true
   )))
+  eepromCache.io.enable := true.B
   eepromCache.io.in <> io.eeprom
 
   // Layer tile ROM cache
@@ -139,6 +144,7 @@ class MemSys extends Module {
       depth = 256,
       wrapping = true
     )))
+    c.io.enable := true.B
     c.io.in.asAsyncReadMemIO <> io.layerTileRom(i)
     c
   }
