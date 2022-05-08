@@ -126,7 +126,7 @@ class Main extends Module {
 
   // Cave
   val cave = Module(new Cave)
-  cave.io.cpuReset := io.cpuReset || !memSys.io.ready
+  cave.io.cpuReset := io.cpuReset
   cave.io.videoClock := io.videoClock
   cave.io.videoReset := io.videoReset
   cave.io.gameConfig <> gameConfigReg
