@@ -127,7 +127,7 @@ class SpriteFrameBuffer extends Module {
   lineBufferDma.io.in.mapAddr(
     _ + pageFlipper.io.addrRead + ((io.video.pos.y + 1.U) * (Config.SCREEN_WIDTH * 2).U) // FIXME: Avoid expensive multiply
   ) <> io.ddr.lineBuffer
-  lineBufferDma.io.out <> lineBuffer.io.portA.asWriteMemIO
+  lineBufferDma.io.out <> lineBuffer.io.portA.asAsyncWriteMemIO
 
   // Copy frame buffer to DDR memory
   val frameBufferDma = Module(new ReadDMA(Config.spriteFrameBufferDmaConfig))

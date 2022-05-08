@@ -38,8 +38,8 @@ import chisel3.util._
 import chisel3._
 
 /**
- * The read direct memory access (DMA) controller copies data from a read-only memory to a bursted
- * write-only memory.
+ * The read direct memory access (DMA) controller copies data from a synchornous read-only memory
+ * interface to a bursted write-only memory interface.
  *
  * @param config The DMA configuration.
  */

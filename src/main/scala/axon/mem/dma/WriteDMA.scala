@@ -38,12 +38,13 @@ import chisel3.util._
 import chisel3._
 
 /**
- * The read direct memory access (DMA) controller copies data from a bursted read-only memory to a
- * write-only memory.
+ * The read direct memory access (DMA) controller copies data from a bursted read-only memory
+ * interface to an asynchronous write-only memory interface.
  *
  * @param config The DMA configuration.
  */
 class WriteDMA(config: Config) extends Module {
+  // Sanity check
   assert(config.depth % config.burstCount == 0, "The number of words to transfer must be divisible by the burst count")
 
   val io = IO(new Bundle {
@@ -56,22 +57,27 @@ class WriteDMA(config: Config) extends Module {
     /** Read memory port */
     val in = BurstReadMemIO(config)
     /** Write memory port */
-    val out = WriteMemIO(config)
+    val out = AsyncWriteMemIO(config)
   })
 
   // Registers
-  val readWaitReg = RegInit(false.B)
-  val writeWaitReg = RegInit(false.B)
+  val enableReadReg = RegInit(false.B)
+  val enableWriteReg = RegInit(false.B)
+  val pendingReadReg = RegInit(false.B)
+
+  // The FIFO is used to buffer words bursted from the read memory port. It is deep enough two hold
+  // two full bursts, so that when the FIFO is half-empty another burst can be requested.
+  val fifo = Module(new Queue(Bits(config.dataWidth.W), config.burstCount * 2, flow = true))
 
   // Control signals
-  val busy = readWaitReg || writeWaitReg
-  val read = io.enable && readWaitReg
-  val write = io.enable && writeWaitReg && RegNext(io.in.valid)
-  val latch = io.in.valid
+  val busy = enableReadReg || enableWriteReg
+  val read = io.enable && enableReadReg && !pendingReadReg && fifo.io.count <= config.burstCount.U
+  val write = io.enable && enableWriteReg && fifo.io.deq.valid
   val effectiveRead = read && !io.in.waitReq
+  val effectiveWrite = write && !io.out.waitReq
 
   // Counters
-  val (writeAddr, writeAddrWrap) = Counter.static(config.depth, enable = write)
+  val (writeAddr, writeAddrWrap) = Counter.static(config.depth, enable = effectiveWrite)
   val (burstCounter, burstCounterWrap) = Counter.static(config.numBursts, enable = io.in.burstDone)
 
   // Calculate read memory address
@@ -81,18 +87,35 @@ class WriteDMA(config: Config) extends Module {
   }
 
   // Toggle read wait register
-  when(burstCounterWrap && effectiveRead) {
-    readWaitReg := false.B
+  when(burstCounterWrap) {
+    enableReadReg := false.B
   }.elsewhen(io.start && !busy) {
-    readWaitReg := true.B
+    enableReadReg := true.B
   }
 
   // Toggle write wait register
   when(writeAddrWrap) {
-    writeWaitReg := false.B
-  }.elsewhen(latch) {
-    writeWaitReg := true.B
+    enableWriteReg := false.B
+  }.elsewhen(fifo.io.deq.valid) {
+    enableWriteReg := true.B
   }
+
+  // Toggle pending read register
+  when(io.in.burstDone) {
+    pendingReadReg := false.B
+  }.elsewhen(effectiveRead) {
+    pendingReadReg := true.B
+  }
+
+  // Enqueue data in the FIFO when it is available
+  when(io.in.valid) {
+    fifo.io.enq.enq(io.in.dout)
+  } otherwise {
+    fifo.io.enq.noenq()
+  }
+
+  // Set FIFO dequeue ready flag
+  fifo.io.deq.ready := effectiveWrite
 
   // Outputs
   io.busy := busy
@@ -101,9 +124,8 @@ class WriteDMA(config: Config) extends Module {
   io.in.addr := readAddr
   io.out.wr := write
   io.out.addr := writeAddr
-  io.out.din := RegEnable(io.in.dout, latch)
+  io.out.din := fifo.io.deq.bits
   io.out.mask := Fill(io.out.maskWidth, 1.U)
 
-  printf(p"ReadDMA(start: ${ io.start }, readWait: $readWaitReg, writeWait: $writeWaitReg, busy: $busy, read: $read, write: $write, latch: $latch , inAddr: 0x${ Hexadecimal(io.in.addr) }, inData: 0x${ Hexadecimal(io.in.dout) }, outAddr: 0x${ Hexadecimal(io.out.addr) }, outData: 0x${ Hexadecimal(io.out.din) }, waitReq: ${io.in
-    .waitReq}, valid: ${ io.in.valid }, burst: $burstCounter ($burstCounterWrap))\n")
+  printf(p"WriteDMA(start: ${ io.start }, readWait: $enableReadReg, writeWait: $enableWriteReg, busy: $busy, read: $read, write: $write, inAddr: 0x${ Hexadecimal(io.in.addr) }, inData: 0x${ Hexadecimal(io.in.dout) }, outAddr: 0x${ Hexadecimal(io.out.addr) }, outData: 0x${ Hexadecimal(io.out.din) }, waitReq: ${ io.in.waitReq }, valid: ${ io.in.valid }, burst: $burstCounter ($burstCounterWrap))\n")
 }
