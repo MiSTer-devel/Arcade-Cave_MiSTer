@@ -276,6 +276,18 @@ class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, da
     mem
   }
 
+  /** Converts the interface to asynchronous write-only. */
+  def asAsyncWriteMemIO: AsyncWriteMemIO = {
+    val mem = Wire(Flipped(AsyncWriteMemIO(this)))
+    rd := false.B
+    wr := mem.wr
+    mem.waitReq := false.B
+    addr := mem.addr
+    mask := mem.mask
+    din := mem.din
+    mem
+  }
+
   /** Sets default values for all the signals. */
   def default(): Unit = {
     rd := false.B
