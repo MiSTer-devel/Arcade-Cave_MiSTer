@@ -32,6 +32,7 @@
 
 package cave
 
+import axon.Util
 import axon.mem._
 import axon.mem.cache.Cache
 import axon.mister._
@@ -65,7 +66,12 @@ class MemSys extends Module {
     val spriteFrameBuffer = Flipped(BurstWriteMemIO(Config.ddrConfig))
     /** System frame buffer port */
     val systemFrameBuffer = Flipped(BurstWriteMemIO(Config.ddrConfig))
+    /** Asserted when the memory system is ready */
+    val ready = Output(Bool())
   })
+
+  // The ready register is asserted when the memory system is ready.
+  val readyReg = RegInit(false.B)
 
   // The DDR download cache is used to buffer IOCTL data, so that complete words can be written to
   // memory.
@@ -104,7 +110,7 @@ class MemSys extends Module {
     depth = 256,
     wrapping = true
   )))
-  progRomCache.io.enable := true.B
+  progRomCache.io.enable := readyReg
   progRomCache.io.in.asAsyncReadMemIO <> io.progRom
 
   // Sound ROM cache
@@ -117,7 +123,7 @@ class MemSys extends Module {
     depth = 256,
     wrapping = true
   )))
-  soundRomCache.io.enable := true.B
+  soundRomCache.io.enable := readyReg
   soundRomCache.io.in.asAsyncReadMemIO <> io.soundRom
 
   // EEPROM cache
@@ -130,7 +136,7 @@ class MemSys extends Module {
     depth = 4,
     wrapping = true
   )))
-  eepromCache.io.enable := true.B
+  eepromCache.io.enable := readyReg
   eepromCache.io.in <> io.eeprom
 
   // Layer tile ROM cache
@@ -144,7 +150,7 @@ class MemSys extends Module {
       depth = 256,
       wrapping = true
     )))
-    c.io.enable := true.B
+    c.io.enable := readyReg
     c.io.in.asAsyncReadMemIO <> io.layerTileRom(i)
     c
   }
@@ -170,6 +176,16 @@ class MemSys extends Module {
     layerRomCache(1).io.out.mapAddr(_ + io.gameConfig.layer(1).romOffset),
     layerRomCache(2).io.out.mapAddr(_ + io.gameConfig.layer(2).romOffset)
   ) <> io.sdram
+
+  // Toggle ready register
+  when(Util.rising(io.ioctl.download)) {
+    readyReg := false.B
+  }.elsewhen(Util.falling(io.ioctl.download)) {
+    readyReg := true.B
+  }
+
+  // Outputs
+  io.ready := readyReg
 
   // Wait until both DDR and SDRAM are ready
   io.ioctl.waitReq := ddrDownloadCache.io.in.waitReq || sdramDownloadCache.io.in.waitReq
