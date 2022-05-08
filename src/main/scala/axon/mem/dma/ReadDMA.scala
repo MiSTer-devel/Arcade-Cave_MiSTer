@@ -44,6 +44,7 @@ import chisel3._
  * @param config The DMA configuration.
  */
 class ReadDMA(config: Config) extends Module {
+  // Sanity check
   assert(config.depth % config.burstCount == 0, "The number of words to transfer must be divisible by the burst count")
 
   val io = IO(new Bundle {
@@ -104,6 +105,5 @@ class ReadDMA(config: Config) extends Module {
   io.out.din := RegEnable(io.in.dout, latch)
   io.out.mask := Fill(io.out.maskWidth, 1.U)
 
-  printf(p"ReadDMA(start: ${ io.start }, readWait: $readWaitReg, writeWait: $writeWaitReg, busy: $busy, read: $read, write: $write, latch: $latch , inAddr: 0x${ Hexadecimal(io.in.addr) }, inData: 0x${ Hexadecimal(io.in.dout) }, outAddr: 0x${ Hexadecimal(io.out.addr) }, outData: 0x${ Hexadecimal(io.out.din) }, waitReq: ${io.out
-  .waitReq}, burst: $burstCounter ($burstCounterWrap))\n")
+  printf(p"ReadDMA(start: ${ io.start }, readWait: $readWaitReg, writeWait: $writeWaitReg, busy: $busy, read: $read, write: $write, latch: $latch , inAddr: 0x${ Hexadecimal(io.in.addr) }, inData: 0x${ Hexadecimal(io.in.dout) }, outAddr: 0x${ Hexadecimal(io.out.addr) }, outData: 0x${ Hexadecimal(io.out.din) }, waitReq: ${io.out.waitReq}, burst: $burstCounter ($burstCounterWrap))\n")
 }
