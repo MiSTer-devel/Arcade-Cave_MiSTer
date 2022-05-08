@@ -91,7 +91,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   //
   // The queue is configured in show-ahead mode, which means there will be valid output as soon as
   // an element has been written to the queue.
-  val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), Config.FIFO_DEPTH, flow = true))
+  val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), SpriteProcessor.FIFO_DEPTH, flow = true))
 
   // Counters
   val (clearAddr, clearDone) = Counter.static(Config.SCREEN_WIDTH * Config.SCREEN_HEIGHT, enable = stateReg === State.clear)
@@ -108,7 +108,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   decoder.io.pixelData <> blitter.io.pixelData
 
   // Set tile ROM read flag
-  val tileRomRead = stateReg === State.pending && !burstPendingReg && fifo.io.count <= (Config.FIFO_DEPTH / 2).U
+  val tileRomRead = stateReg === State.pending && !burstPendingReg && fifo.io.count <= (SpriteProcessor.FIFO_DEPTH / 2).U
 
   // Set effective read flag
   effectiveRead := tileRomRead && !io.ctrl.tileRom.waitReq
@@ -213,6 +213,9 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
 }
 
 object SpriteProcessor {
+  /** The depth of the tile ROM FIFO in words */
+  val FIFO_DEPTH = 64
+
   /**
    * Returns a virtual write-only memory interface that writes a constant value to the sprite frame
    * buffer.

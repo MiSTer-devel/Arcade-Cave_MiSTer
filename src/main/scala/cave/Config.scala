@@ -122,9 +122,6 @@ object Config {
   /** The width of the sprite frame buffer data bus */
   val SPRITE_FRAME_BUFFER_DATA_WIDTH = 16
 
-  /** The depth of the layer FIFOs */
-  val FIFO_DEPTH = 64
-
   /** The width of a priority value */
   val PRIO_WIDTH = 2
   /** The width of a color code value */
