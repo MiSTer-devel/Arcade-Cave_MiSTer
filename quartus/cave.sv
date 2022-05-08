@@ -447,14 +447,14 @@ assign SDRAM_DQ = sdram_oe ? sdram_din : 16'bZ;
 assign sdram_dout = SDRAM_DQ;
 
 Main main (
-  // Fast clock domain
+  // System clock/reset
   .clock(clk_sys),
   .reset(rst_sys),
-  // Video clock domain
+  // CPU reset
+  .cpuReset(rst_cpu),
+  // Video clock/reset
   .videoClock(clk_video),
   .videoReset(rst_video),
-  // CPU clock domain
-  .cpuReset(rst_cpu),
   // Options
   .options_sdram(sdram_available),
   .options_offset_x(status[27:24]),

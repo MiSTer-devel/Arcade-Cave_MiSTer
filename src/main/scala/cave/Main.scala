@@ -54,12 +54,12 @@ import chisel3.stage._
  */
 class Main extends Module {
   val io = FlatIO(new Bundle {
+    /** CPU reset */
+    val cpuReset = Input(Bool())
     /** Video clock domain */
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
-    /** CPU reset */
-    val cpuReset = Input(Bool())
     /** DDR port */
     val ddr = BurstReadWriteMemIO(Config.ddrConfig)
     /** SDRAM control port */
@@ -126,9 +126,9 @@ class Main extends Module {
 
   // Cave
   val cave = Module(new Cave)
+  cave.io.cpuReset := io.cpuReset || !memSys.io.ready
   cave.io.videoClock := io.videoClock
   cave.io.videoReset := io.videoReset
-  cave.io.cpuReset := io.cpuReset
   cave.io.gameConfig <> gameConfigReg
   cave.io.options <> io.options
   cave.io.joystick <> io.joystick
