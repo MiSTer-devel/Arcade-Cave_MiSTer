@@ -63,11 +63,10 @@ class IOCTL extends Bundle {
    * @param index The download index to connect the memory interface.
    */
   def asAsyncReadWriteMemIO(index: Int): AsyncReadWriteMemIO = {
-    val enable = download && wr && this.index === index.U
     val wire = Wire(AsyncReadWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
     wire.rd := false.B
-    wire.wr := enable
-    waitReq := enable && wire.waitReq
+    wire.wr := download && wr && this.index === index.U
+    waitReq := wire.waitReq
     wire.addr := addr
     wire.mask := Fill(wire.maskWidth, 1.U)
     wire.din := dout
