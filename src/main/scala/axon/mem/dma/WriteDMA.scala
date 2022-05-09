@@ -77,13 +77,19 @@ class WriteDMA(config: Config) extends Module {
   val effectiveWrite = write && !io.out.waitReq
 
   // Counters
-  val (writeAddr, writeAddrWrap) = Counter.static(config.depth, enable = effectiveWrite)
+  val (wordCounter, wordCounterWrap) = Counter.static(config.depth, enable = effectiveWrite)
   val (burstCounter, burstCounterWrap) = Counter.static(config.numBursts, enable = io.in.burstDone)
 
-  // Calculate read memory address
+  // Calculate read byte address
   val readAddr = {
-    val n = log2Ceil(config.burstCount * 8)
+    val n = log2Ceil(config.burstCount * config.byteWidth)
     (burstCounter << n).asUInt
+  }
+
+  // Calculate write byte address
+  val writeAddr = {
+    val n = log2Ceil(config.byteWidth)
+    (wordCounter << n).asUInt
   }
 
   // Toggle read wait register
@@ -94,7 +100,7 @@ class WriteDMA(config: Config) extends Module {
   }
 
   // Toggle write wait register
-  when(writeAddrWrap) {
+  when(wordCounterWrap) {
     enableWriteReg := false.B
   }.elsewhen(fifo.io.deq.valid) {
     enableWriteReg := true.B

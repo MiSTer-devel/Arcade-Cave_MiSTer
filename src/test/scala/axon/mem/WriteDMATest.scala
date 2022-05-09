@@ -113,7 +113,7 @@ class WriteDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers 
       dut.io.in.rd.expect(false)
       dut.io.in.dout.poke(0x11)
       dut.io.out.wr.expect(true)
-      dut.io.out.addr.expect(0)
+      dut.io.out.addr.expect(0x00)
       dut.io.out.din.expect(0x10)
       dut.clock.step()
 
@@ -121,7 +121,7 @@ class WriteDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers 
       dut.io.in.rd.expect(false)
       dut.io.in.dout.poke(0x12)
       dut.io.out.wr.expect(true)
-      dut.io.out.addr.expect(1)
+      dut.io.out.addr.expect(0x08)
       dut.io.out.din.expect(0x11)
       dut.clock.step()
 
@@ -130,7 +130,7 @@ class WriteDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers 
       dut.io.in.rd.expect(false)
       dut.io.in.dout.poke(0x13)
       dut.io.out.wr.expect(true)
-      dut.io.out.addr.expect(2)
+      dut.io.out.addr.expect(0x10)
       dut.io.out.din.expect(0x12)
       dut.clock.step()
 
@@ -141,7 +141,7 @@ class WriteDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers 
       dut.io.in.dout.poke(0x14)
       dut.io.out.waitReq.poke(true)
       dut.io.out.wr.expect(true)
-      dut.io.out.addr.expect(3)
+      dut.io.out.addr.expect(0x18)
       dut.io.out.din.expect(0x13)
       dut.clock.step()
 
@@ -150,7 +150,7 @@ class WriteDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers 
       dut.io.in.rd.expect(false)
       dut.io.in.dout.poke(0x15)
       dut.io.out.wr.expect(true)
-      dut.io.out.addr.expect(3)
+      dut.io.out.addr.expect(0x18)
       dut.io.out.din.expect(0x13)
       dut.clock.step()
 
@@ -158,7 +158,7 @@ class WriteDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers 
       dut.io.in.rd.expect(false)
       dut.io.in.dout.poke(0x16)
       dut.io.out.wr.expect(true)
-      dut.io.out.addr.expect(4)
+      dut.io.out.addr.expect(0x20)
       dut.io.out.din.expect(0x14)
       dut.clock.step()
 
@@ -167,7 +167,7 @@ class WriteDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers 
       dut.io.in.dout.poke(0x17)
       dut.io.in.rd.expect(false)
       dut.io.out.wr.expect(true)
-      dut.io.out.addr.expect(5)
+      dut.io.out.addr.expect(0x28)
       dut.io.out.din.expect(0x15)
       dut.clock.step()
 
@@ -175,14 +175,14 @@ class WriteDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers 
       dut.io.in.burstDone.poke(false)
       dut.io.in.rd.expect(false)
       dut.io.out.wr.expect(true)
-      dut.io.out.addr.expect(6)
+      dut.io.out.addr.expect(0x30)
       dut.io.out.din.expect(0x16)
       dut.clock.step()
 
       // Word 7
       dut.io.in.rd.expect(false)
       dut.io.out.wr.expect(true)
-      dut.io.out.addr.expect(7)
+      dut.io.out.addr.expect(0x38)
       dut.io.out.din.expect(0x17)
       dut.clock.step()
 

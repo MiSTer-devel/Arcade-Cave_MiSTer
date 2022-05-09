@@ -46,6 +46,8 @@ case class Config(addrWidth: Int = 32,
                   dataWidth: Int = 64,
                   depth: Int,
                   burstCount: Int) extends BusConfig {
+  /** The width of the DMA data bus in bytes. */
+  val byteWidth = dataWidth / 8
   /** The number of bursts. */
   val numBursts = depth / burstCount
 }
