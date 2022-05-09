@@ -64,12 +64,8 @@ class SystemFrameBuffer extends Module {
     val videoReset = Input(Bool())
     /** Enables the system frame buffer */
     val enable = Input(Bool())
-    /** Enable low latency mode */
-    val lowLat = Input(Bool())
     /** Disable the frame buffer output */
     val forceBlank = Input(Bool())
-    /** Rotate the frame buffer */
-    val rotate = Input(Bool())
     /** Video port */
     val video = Flipped(VideoIO())
     /** Frame buffer control port */
@@ -83,7 +79,7 @@ class SystemFrameBuffer extends Module {
   // The page flipper uses triple buffering by default, or double buffering when low latency mode is
   // enabled.
   val pageFlipper = Module(new PageFlipper(Config.SYSTEM_FRAME_BUFFER_BASE_ADDR))
-  pageFlipper.io.mode := !io.lowLat
+  pageFlipper.io.mode := !io.frameBufferCtrl.lowLat
   pageFlipper.io.swapRead := Util.rising(ShiftRegister(io.frameBufferCtrl.vBlank, 2))
   pageFlipper.io.swapWrite := Util.rising(ShiftRegister(io.video.vBlank, 2))
 
@@ -91,7 +87,7 @@ class SystemFrameBuffer extends Module {
   io.frameBufferCtrl.configure(
     baseAddr = pageFlipper.io.addrRead,
     enable = io.enable,
-    rotate = io.rotate,
+    rotate = true.B,
     forceBlank = io.forceBlank
   )
 

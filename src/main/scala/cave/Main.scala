@@ -82,9 +82,6 @@ class Main extends Module {
     val led = mister.LEDIO()
   })
 
-  // The download done register is latched when the ROM download has completed.
-  val downloadDoneReg = Util.latchSync(Util.falling(io.ioctl.download))
-
   // The game configuration register is latched when data is written to the download port (i.e. the
   // game index is set by the MRA file).
   val gameConfigReg = {
@@ -147,7 +144,7 @@ class Main extends Module {
   val spriteFrameBuffer = Module(new SpriteFrameBuffer)
   spriteFrameBuffer.io.videoClock := io.videoClock
   spriteFrameBuffer.io.videoReset := io.videoReset
-  spriteFrameBuffer.io.enable := downloadDoneReg
+  spriteFrameBuffer.io.enable := memSys.io.ready
   spriteFrameBuffer.io.spriteProcessorBusy := cave.io.spriteProcessorBusy
   spriteFrameBuffer.io.video <> videoSys.io.video
   spriteFrameBuffer.io.gpu.lineBuffer <> cave.io.spriteLineBuffer
@@ -159,10 +156,8 @@ class Main extends Module {
   val systemFrameBuffer = Module(new SystemFrameBuffer)
   systemFrameBuffer.io.videoClock := io.videoClock
   systemFrameBuffer.io.videoReset := io.videoReset
-  systemFrameBuffer.io.enable := io.options.rotate // enable only for rotated HDMI output
-  systemFrameBuffer.io.lowLat := io.frameBufferCtrl.lowLat
-  systemFrameBuffer.io.forceBlank := io.cpuReset
-  systemFrameBuffer.io.rotate := io.options.rotate
+  systemFrameBuffer.io.enable := io.options.rotate // only enable during rotated HDMI output
+  systemFrameBuffer.io.forceBlank := !memSys.io.ready
   systemFrameBuffer.io.video <> videoSys.io.video
   systemFrameBuffer.io.frameBufferCtrl <> io.frameBufferCtrl
   systemFrameBuffer.io.frameBuffer <> cave.io.systemFrameBuffer
