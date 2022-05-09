@@ -53,6 +53,21 @@ trait ValidIO {
  */
 class AsyncReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth, dataWidth) with WaitIO with ValidIO {
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  override def mapAddr(f: UInt => UInt): AsyncReadMemIO = {
+    val mem = Wire(chiselTypeOf(this))
+    mem.rd := rd
+    waitReq := mem.waitReq
+    valid := mem.valid
+    mem.addr := f(addr)
+    dout := mem.dout
+    mem
+  }
 }
 
 object AsyncReadMemIO {
@@ -69,6 +84,21 @@ object AsyncReadMemIO {
  */
 class AsyncWriteMemIO(addrWidth: Int, dataWidth: Int) extends WriteMemIO(addrWidth, dataWidth) with WaitIO {
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  override def mapAddr(f: UInt => UInt): AsyncWriteMemIO = {
+    val mem = Wire(chiselTypeOf(this))
+    mem.wr := wr
+    waitReq := mem.waitReq
+    mem.addr := f(addr)
+    mem.mask := mask
+    mem.din := din
+    mem
+  }
 
   /** Converts the interface to synchronous read-write. */
   def asReadWriteMemIO: ReadWriteMemIO = {
@@ -121,6 +151,24 @@ class AsyncReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends ReadWriteMemIO
     addr := mem.addr
     mask := mem.mask
     din := mem.din
+    mem
+  }
+
+  /**
+   * Maps the address using the given function.
+   *
+   * @param f The transform function.
+   */
+  override def mapAddr(f: UInt => UInt): AsyncReadWriteMemIO = {
+    val mem = Wire(chiselTypeOf(this))
+    mem.rd := rd
+    mem.wr := wr
+    waitReq := mem.waitReq
+    valid := mem.valid
+    mem.addr := f(addr)
+    mem.mask := mask
+    mem.din := din
+    dout := mem.dout
     mem
   }
 }
