@@ -81,6 +81,7 @@ class TilemapProcessor extends Module {
 
   // Control signals
   val loadLineEffect = Util.falling(io.video.hSync) // beginning of scanline
+  val latchLineEffect = RegNext(loadLineEffect) // one clock cycle after loading
   val latchTile = io.video.clockEnable && Mux(io.ctrl.regs.tileSize, offset.x === 10.U, offset.x === 2.U)
   val latchColor = io.video.clockEnable && Mux(io.ctrl.regs.tileSize, offset.x === 15.U, offset.x === 7.U)
   val latchPix = io.video.clockEnable && offset.x(2, 0) === 7.U
@@ -99,7 +100,7 @@ class TilemapProcessor extends Module {
   )
 
   // Tile registers
-  val lineEffectReg = RegEnable(LineEffect.decode(io.ctrl.vram.dout), RegNext(loadLineEffect))
+  val lineEffectReg = RegEnable(LineEffect.decode(io.ctrl.vram.dout), latchLineEffect)
   val tileReg = RegEnable(tile, latchTile)
   val priorityReg = RegEnable(tileReg.priority, latchColor)
   val colorReg = RegEnable(tileReg.colorCode, latchColor)
