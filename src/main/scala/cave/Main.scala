@@ -165,8 +165,8 @@ class Main extends Module {
 
   // System LED outputs
   io.led.power := false.B
-  io.led.disk := io.ioctl.waitReq
-  io.led.user := io.ioctl.download
+  io.led.disk := io.ioctl.download
+  io.led.user := memSys.io.ready
 }
 
 object Main extends App {
