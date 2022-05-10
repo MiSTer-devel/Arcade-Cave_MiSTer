@@ -38,7 +38,7 @@ import chisel3.util._
 /** Defines signals required for a burst memory device. */
 trait BurstIO {
   /** The number of words to transfer during a burst. */
-  val burstCount = Output(UInt(8.W))
+  val burstLength = Output(UInt(8.W))
   /** A flag indicating whether a burst has finished. */
   val burstDone = Input(Bool())
 }
@@ -57,7 +57,7 @@ class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addr
     val mem = Wire(Flipped(BurstReadWriteMemIO(this)))
     mem.rd := rd
     mem.wr := false.B
-    mem.burstCount := burstCount
+    mem.burstLength := burstLength
     waitReq := mem.waitReq
     valid := mem.valid
     burstDone := mem.burstDone
@@ -71,7 +71,7 @@ class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addr
   /** Sets default values for all the signals. */
   override def default() = {
     super.default()
-    burstCount := 0.U
+    burstLength := 0.U
   }
 
   /**
@@ -82,7 +82,7 @@ class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addr
   override def mapAddr(f: UInt => UInt): BurstReadMemIO = {
     val mem = Wire(chiselTypeOf(this))
     mem.rd := rd
-    mem.burstCount := burstCount
+    mem.burstLength := burstLength
     waitReq := mem.waitReq
     valid := mem.valid
     burstDone := mem.burstDone
@@ -106,7 +106,7 @@ object BurstReadMemIO {
   def mux(in: Seq[(Bool, BurstReadMemIO)]): BurstReadMemIO = {
     val mem = Wire(chiselTypeOf(in.head._2))
     mem.rd := MuxCase(false.B, in.map(a => a._1 -> a._2.rd))
-    mem.burstCount := MuxCase(0.U, in.map(a => a._1 -> a._2.burstCount))
+    mem.burstLength := MuxCase(0.U, in.map(a => a._1 -> a._2.burstLength))
     mem.addr := MuxCase(DontCare, in.map(a => a._1 -> a._2.addr))
     for ((selected, port) <- in) {
       port.waitReq := (selected && mem.waitReq) || (!selected && port.rd)
@@ -132,7 +132,7 @@ class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(ad
     val mem = Wire(Flipped(BurstReadWriteMemIO(this)))
     mem.rd := false.B
     mem.wr := wr
-    mem.burstCount := burstCount
+    mem.burstLength := burstLength
     waitReq := mem.waitReq
     burstDone := mem.burstDone
     mem.addr := addr
@@ -144,7 +144,7 @@ class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(ad
   /** Sets default values for all the signals. */
   override def default() = {
     super.default()
-    burstCount := 0.U
+    burstLength := 0.U
   }
 
   /**
@@ -155,7 +155,7 @@ class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(ad
   override def mapAddr(f: UInt => UInt): BurstWriteMemIO = {
     val mem = Wire(chiselTypeOf(this))
     mem.wr := wr
-    mem.burstCount := burstCount
+    mem.burstLength := burstLength
     waitReq := mem.waitReq
     burstDone := mem.burstDone
     mem.addr := f(addr)
@@ -185,7 +185,7 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
     val mem = Wire(Flipped(BurstReadMemIO(this)))
     rd := mem.rd
     wr := false.B
-    burstCount := mem.burstCount
+    burstLength := mem.burstLength
     mem.waitReq := waitReq
     mem.valid := valid
     mem.burstDone := burstDone
@@ -201,7 +201,7 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
     val mem = Wire(Flipped(BurstWriteMemIO(this)))
     rd := false.B
     wr := mem.wr
-    burstCount := mem.burstCount
+    burstLength := mem.burstLength
     mem.waitReq := waitReq
     mem.burstDone := burstDone
     addr := mem.addr
@@ -213,7 +213,7 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
   /** Sets default values for all the signals. */
   override def default() = {
     super.default()
-    burstCount := 0.U
+    burstLength := 0.U
   }
 
   /**
@@ -225,7 +225,7 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
     val mem = Wire(chiselTypeOf(this))
     mem.rd := rd
     mem.wr := wr
-    mem.burstCount := burstCount
+    mem.burstLength := burstLength
     waitReq := mem.waitReq
     valid := mem.valid
     burstDone := mem.burstDone
@@ -252,7 +252,7 @@ object BurstReadWriteMemIO {
     val mem = Wire(chiselTypeOf(in.head._2))
     mem.rd := Mux1H(in.map(a => a._1 -> a._2.rd))
     mem.wr := Mux1H(in.map(a => a._1 -> a._2.wr))
-    mem.burstCount := Mux1H(in.map(a => a._1 -> a._2.burstCount))
+    mem.burstLength := Mux1H(in.map(a => a._1 -> a._2.burstLength))
     mem.addr := Mux1H(in.map(a => a._1 -> a._2.addr))
     mem.mask := Mux1H(in.map(a => a._1 -> a._2.mask))
     mem.din := Mux1H(in.map(a => a._1 -> a._2.din))

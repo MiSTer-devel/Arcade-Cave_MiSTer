@@ -513,7 +513,7 @@ Main main (
   .ddr_dout(DDRAM_DOUT),
   .ddr_waitReq(DDRAM_BUSY),
   .ddr_valid(DDRAM_DOUT_READY),
-  .ddr_burstCount(DDRAM_BURSTCNT),
+  .ddr_burstLength(DDRAM_BURSTCNT),
   // SDRAM
   .sdram_cke(SDRAM_CKE),
   .sdram_cs_n(SDRAM_nCS),

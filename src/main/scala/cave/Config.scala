@@ -206,17 +206,17 @@ object Config {
   )
 
   /** Copy download DMA configuration */
-  val copyDownloadDmaConfig = dma.Config(depth = 0x800000, burstCount = 16) // 64MB
+  val copyDownloadDmaConfig = dma.Config(depth = 0x800000, burstLength = 16) // 64MB
 
   /** Sprite frame buffer DMA configuration */
   val spriteFrameBufferDmaConfig = dma.Config(
     depth = Config.SCREEN_WIDTH * Config.SCREEN_HEIGHT * SPRITE_FRAME_BUFFER_DATA_WIDTH / Config.ddrConfig.dataWidth,
-    burstCount = 64
+    burstLength = 64
   )
 
   /** Sprite line buffer DMA configuration */
   val spriteLineBufferDmaConfig = dma.Config(
     depth = Config.SCREEN_WIDTH * SPRITE_FRAME_BUFFER_DATA_WIDTH / Config.ddrConfig.dataWidth,
-    burstCount = 16
+    burstLength = 16
   )
 }

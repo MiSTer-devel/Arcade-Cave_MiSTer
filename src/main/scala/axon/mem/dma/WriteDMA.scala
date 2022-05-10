@@ -45,7 +45,7 @@ import chisel3._
  */
 class WriteDMA(config: Config) extends Module {
   // Sanity check
-  assert(config.depth % config.burstCount == 0, "The number of words to transfer must be divisible by the burst count")
+  assert(config.depth % config.burstLength == 0, "The number of words to transfer must be divisible by the burst length")
 
   val io = IO(new Bundle {
     /** Enable the DMA controller */
@@ -67,12 +67,12 @@ class WriteDMA(config: Config) extends Module {
 
   // The FIFO is used to buffer words bursted from the read memory port. It is deep enough two hold
   // two full bursts, so that when the FIFO is half-empty another burst can be requested.
-  val fifo = Module(new Queue(Bits(config.dataWidth.W), config.burstCount * 2, flow = true, hasFlush = true))
+  val fifo = Module(new Queue(Bits(config.dataWidth.W), config.burstLength * 2, flow = true, hasFlush = true))
   fifo.flush := !io.enable
 
   // Control signals
   val busy = enableReadReg || enableWriteReg
-  val read = io.enable && enableReadReg && !pendingReadReg && fifo.io.count <= config.burstCount.U
+  val read = io.enable && enableReadReg && !pendingReadReg && fifo.io.count <= config.burstLength.U
   val write = io.enable && enableWriteReg && fifo.io.deq.valid
   val effectiveRead = read && !io.in.waitReq
   val effectiveWrite = write && !io.out.waitReq
@@ -83,7 +83,7 @@ class WriteDMA(config: Config) extends Module {
 
   // Calculate read byte address
   val readAddr = {
-    val n = log2Ceil(config.burstCount * config.byteWidth)
+    val n = log2Ceil(config.burstLength * config.byteWidth)
     (burstCounter << n).asUInt
   }
 
@@ -127,7 +127,7 @@ class WriteDMA(config: Config) extends Module {
   // Outputs
   io.busy := busy
   io.in.rd := read
-  io.in.burstCount := config.burstCount.U
+  io.in.burstLength := config.burstLength.U
   io.in.addr := readAddr
   io.out.wr := write
   io.out.addr := writeAddr

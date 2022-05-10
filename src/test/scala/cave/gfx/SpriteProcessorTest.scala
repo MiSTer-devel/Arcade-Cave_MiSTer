@@ -182,7 +182,7 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
       dut.clock.step()
       dut.io.ctrl.tileRom.rd.expect(true)
       dut.io.ctrl.tileRom.addr.expect(0x80.U)
-      dut.io.ctrl.tileRom.burstCount.expect(16.U)
+      dut.io.ctrl.tileRom.burstLength.expect(16.U)
       dut.clock.step()
       dut.io.ctrl.tileRom.rd.expect(false)
     }

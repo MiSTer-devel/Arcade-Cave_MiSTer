@@ -200,7 +200,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   io.ctrl.vram.addr := spriteRamAddr
   io.ctrl.tileRom.rd := tileRomRead
   io.ctrl.tileRom.addr := tileRomAddr
-  io.ctrl.tileRom.burstCount := tileRomBurstLength
+  io.ctrl.tileRom.burstLength := tileRomBurstLength
   io.frameBuffer := Mux(stateReg === State.clear, SpriteProcessor.clearMem(clearAddr), blitter.io.frameBuffer)
   io.debug.idle := stateReg === State.idle
   io.debug.clear := stateReg === State.clear

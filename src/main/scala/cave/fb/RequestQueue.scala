@@ -66,7 +66,7 @@ class RequestQueue(depth: Int) extends Module {
   io.ddr.wr := fifo.io.deq.valid
   fifo.io.deq.ready := !io.ddr.waitReq
   val request = fifo.io.deq.bits.asTypeOf(new SystemFrameBufferIO)
-  io.ddr.burstCount := 1.U
+  io.ddr.burstLength := 1.U
   io.ddr.addr := request.addr ## 0.U(2.W)
   io.ddr.mask := Mux(request.addr(0), request.mask ## 0.U(4.W), request.mask)
   io.ddr.din := request.din ## request.din

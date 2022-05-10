@@ -353,7 +353,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       // Line fill
       dut.io.out.rd.expect(true)
       dut.io.out.wr.expect(false)
-      dut.io.out.burstCount.expect(2)
+      dut.io.out.burstLength.expect(2)
       dut.io.out.addr.expect(0)
       dut.clock.step()
       dut.io.out.valid.poke(true)
@@ -386,7 +386,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       // Line fill
       dut.io.out.rd.expect(true)
       dut.io.out.wr.expect(false)
-      dut.io.out.burstCount.expect(2)
+      dut.io.out.burstLength.expect(2)
       dut.io.out.addr.expect(2)
       dut.clock.step()
       dut.io.out.valid.poke(true)
@@ -420,7 +420,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       // Evict
       dut.io.out.rd.expect(false)
       dut.io.out.wr.expect(true)
-      dut.io.out.burstCount.expect(2)
+      dut.io.out.burstLength.expect(2)
       dut.io.out.addr.expect(0)
       dut.io.out.din.expect(0x3412)
       dut.clock.step()
@@ -432,7 +432,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       // Line fill
       dut.io.out.rd.expect(true)
       dut.io.out.wr.expect(false)
-      dut.io.out.burstCount.expect(2)
+      dut.io.out.burstLength.expect(2)
       dut.io.out.addr.expect(0x20)
       dut.clock.step()
       dut.io.out.valid.poke(true)
@@ -465,7 +465,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       // Evict
       dut.io.out.rd.expect(false)
       dut.io.out.wr.expect(true)
-      dut.io.out.burstCount.expect(2)
+      dut.io.out.burstLength.expect(2)
       dut.io.out.addr.expect(0)
       dut.io.out.din.expect(0x3412)
       dut.clock.step()
@@ -477,7 +477,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       // Line fill
       dut.io.out.rd.expect(true)
       dut.io.out.wr.expect(false)
-      dut.io.out.burstCount.expect(2)
+      dut.io.out.burstLength.expect(2)
       dut.io.out.addr.expect(0x22)
       dut.clock.step()
       dut.io.out.valid.poke(true)
@@ -565,7 +565,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       dut.io.out.rd.expect(true)
       dut.io.out.wr.expect(false)
       dut.io.out.addr.expect(0)
-      dut.io.out.burstCount.expect(2)
+      dut.io.out.burstLength.expect(2)
       dut.clock.step()
       dut.io.out.valid.poke(true)
       dut.io.out.dout.poke(0x3412)
@@ -603,7 +603,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       // Evict
       dut.io.out.rd.expect(false)
       dut.io.out.wr.expect(true)
-      dut.io.out.burstCount.expect(2)
+      dut.io.out.burstLength.expect(2)
       dut.io.out.addr.expect(0)
       dut.io.out.din.expect(0x3412)
       dut.clock.step()
@@ -615,7 +615,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       // Line fill & merge
       dut.io.out.rd.expect(true)
       dut.io.out.wr.expect(false)
-      dut.io.out.burstCount.expect(2)
+      dut.io.out.burstLength.expect(2)
       dut.io.out.addr.expect(0x20)
       dut.clock.step()
       dut.io.out.valid.poke(true)

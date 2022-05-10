@@ -38,7 +38,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 trait ReadDMATestHelpers {
-  protected def mkDMA() = new ReadDMA(Config(depth = 8, burstCount = 4))
+  protected def mkDMA() = new ReadDMA(Config(depth = 8, burstLength = 4))
 }
 
 class ReadDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with ReadDMATestHelpers {

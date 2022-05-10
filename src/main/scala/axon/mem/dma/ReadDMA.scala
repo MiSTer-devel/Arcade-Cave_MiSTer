@@ -45,7 +45,7 @@ import chisel3._
  */
 class ReadDMA(config: Config) extends Module {
   // Sanity check
-  assert(config.depth % config.burstCount == 0, "The number of words to transfer must be divisible by the burst count")
+  assert(config.depth % config.burstLength == 0, "The number of words to transfer must be divisible by the burst length")
 
   val io = IO(new Bundle {
     /** Enable the DMA controller */
@@ -77,7 +77,7 @@ class ReadDMA(config: Config) extends Module {
 
   // Calculate write memory address
   val writeAddr = {
-    val n = log2Ceil(config.burstCount * 8)
+    val n = log2Ceil(config.burstLength * 8)
     (burstCounter << n).asUInt
   }
 
@@ -100,7 +100,7 @@ class ReadDMA(config: Config) extends Module {
   io.in.rd := read
   io.in.addr := readAddr
   io.out.wr := write
-  io.out.burstCount := config.burstCount.U
+  io.out.burstLength := config.burstLength.U
   io.out.addr := writeAddr
   io.out.din := RegEnable(io.in.dout, latch)
   io.out.mask := Fill(io.out.maskWidth, 1.U)

@@ -245,7 +245,7 @@ class Cache(config: Config) extends Module {
   io.in.dout := cacheEntryReg.inWord(offsetReg)
   io.out.rd := stateReg === State.fill
   io.out.wr := stateReg === State.evict || stateReg === State.evictWait
-  io.out.burstCount := config.lineWidth.U
+  io.out.burstLength := config.lineWidth.U
   io.out.addr := outAddr
   io.out.mask := Fill(config.outBytes, 1.U)
   io.out.din := cacheEntryReg.outWord(burstCounter)

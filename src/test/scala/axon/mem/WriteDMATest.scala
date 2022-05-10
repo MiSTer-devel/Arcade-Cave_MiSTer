@@ -38,7 +38,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 trait WriteDMATestHelpers {
-  protected def mkDMA() = new WriteDMA(Config(depth = 8, burstCount = 4))
+  protected def mkDMA() = new WriteDMA(Config(depth = 8, burstLength = 4))
 }
 
 class WriteDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with WriteDMATestHelpers {
