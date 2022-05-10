@@ -48,8 +48,12 @@ class LayerCtrlIO extends Bundle {
   val rowSelectEnable = Input(Bool())
   /** Layer registers port */
   val regs = Input(new Layer)
-  /** VRAM port */
-  val vram = ReadMemIO(Config.LAYER_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
+  /** 8x8 VRAM port */
+  val vram8x8 = ReadMemIO(Config.LAYER_8x8_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
+  /** 16x16 VRAM port */
+  val vram16x16 = ReadMemIO(Config.LAYER_16x16_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
+  /** Line RAM port */
+  val lineRam = ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
   /** Tile ROM port */
   val tileRom = new LayerRomIO
 }

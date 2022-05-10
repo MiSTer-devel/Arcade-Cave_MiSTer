@@ -43,11 +43,11 @@ class TilemapProcessorTest extends AnyFlatSpec with ChiselScalatestTester with M
     test(new TilemapProcessor) { dut =>
       dut.io.ctrl.regs.tileSize.poke(false)
       dut.io.video.pos.x.poke(0)
-      dut.io.ctrl.vram.addr.expect(0x001)
+      dut.io.ctrl.vram16x16.addr.expect(0x01)
       dut.io.video.pos.x.poke(8)
-      dut.io.ctrl.vram.addr.expect(0x002)
+      dut.io.ctrl.vram16x16.addr.expect(0x02)
       dut.io.video.pos.x.poke(248)
-      dut.io.ctrl.vram.addr.expect(0x020)
+      dut.io.ctrl.vram16x16.addr.expect(0x20)
     }
   }
 
@@ -56,7 +56,7 @@ class TilemapProcessorTest extends AnyFlatSpec with ChiselScalatestTester with M
       dut.io.video.hSync.poke(true.B)
       dut.clock.step()
       dut.io.video.hSync.poke(false.B)
-      dut.io.ctrl.vram.addr.expect(0x400)
+      dut.io.ctrl.lineRam.addr.expect(0)
     }
   }
 }
