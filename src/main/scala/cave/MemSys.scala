@@ -107,7 +107,7 @@ class MemSys extends Module {
     outAddrWidth = Config.sdramConfig.addrWidth,
     outDataWidth = Config.sdramConfig.dataWidth,
     lineWidth = Config.sdramConfig.burstLength,
-    depth = 256,
+    depth = 64,
     wrapping = true,
     swapEndianness = true
   )))
@@ -121,7 +121,7 @@ class MemSys extends Module {
     outAddrWidth = Config.sdramConfig.addrWidth,
     outDataWidth = Config.sdramConfig.dataWidth,
     lineWidth = Config.sdramConfig.burstLength,
-    depth = 256,
+    depth = 16,
     wrapping = true
   )))
   soundRomCache.io.enable := readyReg
@@ -149,7 +149,7 @@ class MemSys extends Module {
       outAddrWidth = Config.sdramConfig.addrWidth,
       outDataWidth = Config.sdramConfig.dataWidth,
       lineWidth = Config.sdramConfig.burstLength,
-      depth = 256,
+      depth = 16,
       wrapping = true
     )))
     c.io.enable := readyReg
