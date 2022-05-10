@@ -8,7 +8,7 @@
   <rbf>cave</rbf>
 
   <!-- ROM data -->
-  <rom index="0" zip="uopokoj.zip|uopoko.zip" md5="none">
+  <rom index="0" zip="uopokoj.zip|uopoko.zip" md5="none" address="0x30000000">
     <!-- main CPU -->
     <interleave output="16">
       <part name="u26.bin" crc="e7eec050" map="01" />
@@ -30,7 +30,7 @@
 
   <!-- select game -->
   <rom index="1">
-    <part>00 04</part>
+    <part>04</part>
   </rom>
 
   <buttons names="B1,B2,B3,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />

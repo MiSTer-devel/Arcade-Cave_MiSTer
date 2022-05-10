@@ -8,7 +8,7 @@
   <rbf>cave</rbf>
 
   <!-- ROM data -->
-  <rom index="0" zip="feversos.zip" md5="none">
+  <rom index="0" zip="feversos.zip" md5="none" address="0x30000000">
     <!-- main CPU -->
     <interleave output="16">
       <part name="cv01-u34.sos" crc="24ef3ce6" map="01" />
@@ -38,7 +38,7 @@
 
   <!-- select game -->
   <rom index="1">
-    <part>00 00</part>
+    <part>00</part>
   </rom>
 
   <buttons names="B1,B2,B3,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />

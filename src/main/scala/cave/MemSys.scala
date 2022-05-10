@@ -35,6 +35,7 @@ package cave
 import axon.Util
 import axon.mem._
 import axon.mem.cache.Cache
+import axon.mem.dma.WriteDMA
 import axon.mister._
 import cave.types._
 import chisel3._
@@ -73,8 +74,8 @@ class MemSys extends Module {
   // The ready register is asserted when the memory system is ready.
   val readyReg = RegInit(false.B)
 
-  // The DDR download cache is used to buffer IOCTL data, so that complete words can be written to
-  // memory.
+  // The DDR download cache is used to buffer download data, so that complete words can be written
+  // to memory.
   val ddrDownloadCache = Module(new Cache(cache.Config(
     inAddrWidth = IOCTL.ADDR_WIDTH,
     inDataWidth = IOCTL.DATA_WIDTH,
@@ -86,11 +87,11 @@ class MemSys extends Module {
   ddrDownloadCache.io.enable := true.B
   ddrDownloadCache.io.in <> io.ioctl.asAsyncReadWriteMemIO(IOCTL.ROM_INDEX)
 
-  // The SDRAM download cache is used to buffer IOCTL data, so that complete words can be written
+  // The SDRAM download cache is used to buffer download data, so that complete words can be written
   // to memory.
   val sdramDownloadCache = Module(new Cache(cache.Config(
-    inAddrWidth = IOCTL.ADDR_WIDTH,
-    inDataWidth = IOCTL.DATA_WIDTH,
+    inAddrWidth = Config.ddrConfig.addrWidth,
+    inDataWidth = Config.ddrConfig.dataWidth,
     outAddrWidth = Config.sdramConfig.addrWidth,
     outDataWidth = Config.sdramConfig.dataWidth,
     lineWidth = Config.sdramConfig.burstLength,
@@ -98,7 +99,6 @@ class MemSys extends Module {
     wrapping = true
   )))
   sdramDownloadCache.io.enable := true.B
-  sdramDownloadCache.io.in <> io.ioctl.asAsyncReadWriteMemIO(IOCTL.ROM_INDEX)
 
   // Program ROM cache
   val progRomCache = Module(new Cache(cache.Config(
@@ -157,10 +157,17 @@ class MemSys extends Module {
     c
   }
 
+  // Copy download data from DDR to SDRAM
+  val copyDownloadDma = Module(new WriteDMA(Config.copyDownloadDmaConfig))
+  copyDownloadDma.io.enable := !readyReg
+  copyDownloadDma.io.start := Util.falling(io.ioctl.download)
+  copyDownloadDma.io.out <> sdramDownloadCache.io.in.asAsyncWriteMemIO
+
   // DDR arbiter
-  val ddrArbiter = Module(new MemArbiter(5, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
+  val ddrArbiter = Module(new MemArbiter(6, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
   ddrArbiter.connect(
     ddrDownloadCache.io.out.mapAddr(_ + Config.IOCTL_DOWNLOAD_BASE_ADDR.U),
+    copyDownloadDma.io.in.mapAddr(_ + Config.IOCTL_DOWNLOAD_BASE_ADDR.U).asBurstReadWriteMemIO,
     io.spriteLineBuffer.asBurstReadWriteMemIO,
     io.systemFrameBuffer.asBurstReadWriteMemIO,
     io.spriteFrameBuffer.asBurstReadWriteMemIO,
@@ -182,13 +189,10 @@ class MemSys extends Module {
   // Toggle ready register
   when(Util.rising(io.ioctl.download)) {
     readyReg := false.B
-  }.elsewhen(Util.falling(io.ioctl.download)) {
+  }.elsewhen(Util.falling(copyDownloadDma.io.busy)) {
     readyReg := true.B
   }
 
   // Outputs
   io.ready := readyReg
-
-  // Wait until both DDR and SDRAM are ready
-  io.ioctl.waitReq := ddrDownloadCache.io.in.waitReq || sdramDownloadCache.io.in.waitReq
 }

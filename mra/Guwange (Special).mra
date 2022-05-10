@@ -8,7 +8,7 @@
   <rbf>cave</rbf>
 
   <!-- ROM data -->
-  <rom index="0" zip="guwanges.zip" md5="none">
+  <rom index="0" zip="guwanges.zip" md5="none" address="0x30000000">
     <!-- maincpu - starts at 0x0 -->
     <interleave output="16">
       <part name="gu-u0127b.bin" crc="f86b5293" map="01" />
@@ -51,7 +51,7 @@
 
   <!-- select game -->
   <rom index="1">
-    <part>00 05</part>
+    <part>05</part>
   </rom>
 
   <buttons names="B1,B2,B3,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />

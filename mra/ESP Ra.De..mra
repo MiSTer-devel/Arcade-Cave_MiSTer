@@ -8,7 +8,7 @@
   <rbf>cave</rbf>
 
   <!-- ROM data -->
-  <rom index="0" zip="esprade.zip" md5="none">
+  <rom index="0" zip="esprade.zip" md5="none" address="0x30000000">
     <!-- main CPU -->
     <interleave output="16">
       <part name="u42.int" crc="3b510a73" map="01" />
@@ -49,7 +49,7 @@
 
   <!-- select game -->
   <rom index="1">
-    <part>00 03</part>
+    <part>03</part>
   </rom>
 
   <buttons names="Main Shot,Power Shot,Guard Barrier,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />

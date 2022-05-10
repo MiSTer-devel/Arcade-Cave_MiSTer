@@ -198,6 +198,9 @@ object Config {
     vRetrace = 2
   )
 
+  /** Copy download DMA configuration */
+  val copyDownloadDmaConfig = dma.Config(depth = 0x800000, burstCount = 64) // 64MB
+
   /** Sprite frame buffer DMA configuration */
   val spriteFrameBufferDmaConfig = dma.Config(
     depth = Config.SCREEN_WIDTH * Config.SCREEN_HEIGHT * SPRITE_FRAME_BUFFER_DATA_WIDTH / Config.ddrConfig.dataWidth,
