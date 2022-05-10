@@ -67,7 +67,8 @@ class WriteDMA(config: Config) extends Module {
 
   // The FIFO is used to buffer words bursted from the read memory port. It is deep enough two hold
   // two full bursts, so that when the FIFO is half-empty another burst can be requested.
-  val fifo = Module(new Queue(Bits(config.dataWidth.W), config.burstCount * 2, flow = true))
+  val fifo = Module(new Queue(Bits(config.dataWidth.W), config.burstCount * 2, flow = true, hasFlush = true))
+  fifo.flush := !io.enable
 
   // Control signals
   val busy = enableReadReg || enableWriteReg
