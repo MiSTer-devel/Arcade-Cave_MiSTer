@@ -108,8 +108,10 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   decoder.io.tileRom <> fifo.io.deq
   decoder.io.pixelData <> blitter.io.pixelData
 
-  // Set tile ROM read flag
-  val tileRomRead = stateReg === State.pending && !burstPendingReg && fifo.io.count <= (SpriteProcessor.FIFO_DEPTH / 2).U
+  // Read tile ROM data when the FIFO is half-empty (i.e. there is enough room to fit another burst)
+  val tileRomRead = stateReg === State.pending &&
+    !burstPendingReg &&
+    fifo.io.count <= (SpriteProcessor.FIFO_DEPTH / 2).U
 
   // Set effective read flag
   effectiveRead := tileRomRead && !io.ctrl.tileRom.waitReq

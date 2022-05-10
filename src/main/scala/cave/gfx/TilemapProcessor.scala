@@ -66,6 +66,11 @@ class TilemapProcessor extends Module {
   val rowScrollEnable = io.ctrl.rowScrollEnable && io.ctrl.regs.rowScrollEnable
   val rowSelectEnable = io.ctrl.rowSelectEnable && io.ctrl.regs.rowSelectEnable
 
+  // Don't read tile ROM data if the layer is disabled, or during a vertical blank. This is just to
+  // ease SDRAM contention, as the layer tile ROM data is stored in SDRAM. This wouldn't be required
+  // in the original arcade hardware.
+  val tileRomRead = layerEnable && !io.video.vBlank
+
   // Apply the scroll and layer offsets to get the final pixel position
   val pos = io.video.pos + io.ctrl.regs.scroll - io.offset
 
@@ -79,7 +84,7 @@ class TilemapProcessor extends Module {
   // Pixel offset
   val offset = TilemapProcessor.tileOffset(io.ctrl, pos_)
 
-  // Control signals
+  // Latch signals
   val latchTile = io.video.clockEnable && Mux(io.ctrl.regs.tileSize, offset.x === 10.U, offset.x === 2.U)
   val latchColor = io.video.clockEnable && Mux(io.ctrl.regs.tileSize, offset.x === 15.U, offset.x === 7.U)
   val latchPix = io.video.clockEnable && offset.x(2, 0) === 7.U
@@ -109,7 +114,7 @@ class TilemapProcessor extends Module {
   io.ctrl.vram8x8.addr := layerRamAddr
   io.ctrl.vram16x16.rd := true.B // read-only
   io.ctrl.vram16x16.addr := layerRamAddr
-  io.ctrl.tileRom.rd := io.ctrl.format =/= Config.GFX_FORMAT_UNKNOWN.U
+  io.ctrl.tileRom.rd := tileRomRead
   io.ctrl.tileRom.addr := TilemapProcessor.tileRomAddr(io.ctrl, tileReg.code, offset)
   io.pen := Mux(layerEnable, pen, PaletteEntry.zero)
 }
