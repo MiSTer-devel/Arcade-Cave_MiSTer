@@ -50,8 +50,6 @@ import chisel3.util._
  */
 class Cave extends Module {
   val io = IO(new Bundle {
-    /** CPU reset */
-    val cpuReset = Input(Reset())
     /** Video clock domain */
     val videoClock = Input(Clock())
     /** Video reset */
@@ -102,7 +100,7 @@ class Cave extends Module {
   val pauseReg = Util.toggle(Util.rising(io.joystick.player1.pause || io.joystick.player2.pause))
 
   // M68K CPU
-  val cpu = withReset(io.cpuReset) { Module(new CPU(Config.CPU_CLOCK_DIV)) }
+  val cpu = Module(new CPU(Config.CPU_CLOCK_DIV))
   cpu.io.halt := pauseReg
   cpu.io.dtack := false.B
   cpu.io.vpa := intAck // autovectored interrupts

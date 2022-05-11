@@ -121,9 +121,9 @@ class Main extends Module {
   videoSys.io.options <> io.options
   videoSys.io.video <> io.video
 
-  // Cave
-  val cave = Module(new Cave)
-  cave.io.cpuReset := io.cpuReset || !memSys.io.ready
+  // The Cave module should be reset when the CPU reset signal is asserted (i.e. the user pressed
+  // the reset button), or while the memory system is not ready.
+  val cave = withReset(io.cpuReset || !memSys.io.ready) { Module(new Cave) }
   cave.io.videoClock := io.videoClock
   cave.io.videoReset := io.videoReset
   cave.io.gameConfig <> gameConfigReg
