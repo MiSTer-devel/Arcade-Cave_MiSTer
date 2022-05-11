@@ -60,22 +60,14 @@ class Cave extends Module {
     val options = OptionsIO()
     /** Joystick port */
     val joystick = JoystickIO()
-    /** Program ROM port */
-    val progRom = new ProgRomIO
-    /** Sound ROM port */
-    val soundRom = new SoundRomIO
-    /** EEPROM port */
-    val eeprom = new EEPROMIO
-    /** Layer tile ROM port */
-    val layerTileRom = Vec(Config.LAYER_COUNT, new LayerRomIO)
-    /** Sprite tile ROM port */
-    val spriteTileRom = new SpriteRomIO
     /** Video port */
     val video = Flipped(VideoIO())
     /** Audio port */
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** RGB output */
     val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
+    /** ROM port */
+    val rom = new RomIO
     /** Sprite line buffer port */
     val spriteLineBuffer = new SpriteLineBufferIO
     /** Sprite frame buffer port */
@@ -109,7 +101,7 @@ class Cave extends Module {
 
   // EEPROM
   val eeprom = Module(new EEPROM)
-  eeprom.io.mem <> io.eeprom
+  eeprom.io.mem <> io.rom.eeprom
   val cs = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(5), eepromMem.din(9))
   val sck = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(6), eepromMem.din(10))
   val sdi = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(7), eepromMem.din(11))
@@ -216,7 +208,7 @@ class Cave extends Module {
     gpu.io.layerCtrl(i).vram8x8 <> layerRam8x8(i).io.portB
     gpu.io.layerCtrl(i).vram16x16 <> layerRam16x16(i).io.portB
     gpu.io.layerCtrl(i).lineRam <> lineRam(i).io.portB
-    gpu.io.layerCtrl(i).tileRom <> io.layerTileRom(i)
+    gpu.io.layerCtrl(i).tileRom <> ClockDomain.syncronize(io.videoClock, io.rom.layerTileRom(i))
   }
   gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
   gpu.io.spriteCtrl.enable := io.options.layerEnable.sprite
@@ -225,7 +217,7 @@ class Cave extends Module {
   gpu.io.spriteCtrl.rotate := io.options.rotate
   gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
   gpu.io.spriteCtrl.vram <> spriteRam.io.portB
-  gpu.io.spriteCtrl.tileRom <> io.spriteTileRom
+  gpu.io.spriteCtrl.tileRom <> io.rom.spriteTileRom
   gpu.io.spriteLineBuffer <> io.spriteLineBuffer
   gpu.io.spriteFrameBuffer <> io.spriteFrameBuffer
   gpu.io.systemFrameBuffer <> io.systemFrameBuffer
@@ -239,7 +231,7 @@ class Cave extends Module {
   // YMZ280B
   val ymz = Module(new YMZ280B(Config.ymzConfig))
   ymz.io.cpu.default()
-  ymz.io.mem <> io.soundRom
+  ymz.io.mem <> io.rom.soundRom
   io.audio <> RegEnable(ymz.io.audio.bits, ymz.io.audio.valid)
   val soundIRQ = ymz.io.irq
 
@@ -253,7 +245,7 @@ class Cave extends Module {
   when(Util.rising(vBlank)) { videoIRQ := true.B }
 
   // Set memory interface defaults, the actual values are assigned in the memory map
-  io.progRom.default()
+  io.rom.progRom.default()
   eepromMem.default()
 
   // Set input ports
@@ -268,7 +260,7 @@ class Cave extends Module {
 
   // Dangun Feveron
   when(io.gameConfig.index === GameConfig.DFEVERON.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
+    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
@@ -298,7 +290,7 @@ class Cave extends Module {
 
   // DoDonPachi
   when(io.gameConfig.index === GameConfig.DDONPACH.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
+    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
@@ -334,7 +326,7 @@ class Cave extends Module {
 
   // ESP Ra.De.
   when(io.gameConfig.index === GameConfig.ESPRADE.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
+    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
@@ -368,7 +360,7 @@ class Cave extends Module {
 
   // Guwange
   when(io.gameConfig.index === GameConfig.GUWANGE.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
+    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
     map(0x200000 to 0x20ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x30000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x300000 to 0x300007).r { (_, offset) =>
@@ -403,7 +395,7 @@ class Cave extends Module {
 
   // Puzzle Uo Poko
   when(io.gameConfig.index === GameConfig.UOPOKO.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
+    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)

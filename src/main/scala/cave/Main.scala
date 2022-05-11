@@ -129,16 +129,10 @@ class Main extends Module {
   cave.io.gameConfig <> gameConfigReg
   cave.io.options <> io.options
   cave.io.joystick <> io.joystick
-  cave.io.progRom <> memSys.io.progRom
-  cave.io.soundRom <> memSys.io.soundRom
-  cave.io.eeprom <> memSys.io.eeprom
-  cave.io.layerTileRom(0) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(0))
-  cave.io.layerTileRom(1) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(1))
-  cave.io.layerTileRom(2) <> ClockDomain.syncronize(io.videoClock, memSys.io.layerTileRom(2))
-  cave.io.spriteTileRom <> memSys.io.spriteTileRom
   cave.io.audio <> io.audio
   cave.io.video <> videoSys.io.video
   cave.io.rgb <> io.rgb
+  cave.io.rom <> memSys.io.rom
 
   // Sprite frame buffer
   val spriteFrameBuffer = Module(new SpriteFrameBuffer)

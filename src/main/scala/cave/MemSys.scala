@@ -40,6 +40,20 @@ import axon.mister._
 import cave.types._
 import chisel3._
 
+/** A bundle that contains all the ROMs. */
+class RomIO extends Bundle {
+  /** Program ROM port */
+  val progRom = new ProgRomIO
+  /** Sound ROM port */
+  val soundRom = new SoundRomIO
+  /** EEPROM port */
+  val eeprom = new EEPROMIO
+  /** Layer tile ROM port */
+  val layerTileRom = Vec(Config.LAYER_COUNT, new LayerRomIO)
+  /** Sprite tile ROM port */
+  val spriteTileRom = new SpriteRomIO
+}
+
 /** The memory subsystem routes memory requests to either DDR or SDRAM. */
 class MemSys extends Module {
   val io = IO(new Bundle {
@@ -51,16 +65,8 @@ class MemSys extends Module {
     val ddr = BurstReadWriteMemIO(Config.ddrConfig)
     /** SDRAM port */
     val sdram = BurstReadWriteMemIO(Config.sdramConfig)
-    /** Program ROM port */
-    val progRom = Flipped(new ProgRomIO)
-    /** Sound ROM port */
-    val soundRom = Flipped(new SoundRomIO)
-    /** EEPROM port */
-    val eeprom = Flipped(new EEPROMIO)
-    /** Layer tile ROM port */
-    val layerTileRom = Flipped(Vec(Config.LAYER_COUNT, new LayerRomIO))
-    /** Sprite tile ROM port */
-    val spriteTileRom = Flipped(new SpriteRomIO)
+    /** ROM port */
+    val rom = Flipped(new RomIO)
     /** Sprite line buffer port */
     val spriteLineBuffer = Flipped(BurstReadMemIO(Config.ddrConfig))
     /** Sprite frame buffer port */
@@ -112,7 +118,7 @@ class MemSys extends Module {
     swapEndianness = true
   )))
   progRomCache.io.enable := readyReg
-  progRomCache.io.in.asAsyncReadMemIO <> io.progRom
+  progRomCache.io.in.asAsyncReadMemIO <> io.rom.progRom
 
   // Sound ROM cache
   val soundRomCache = Module(new Cache(cache.Config(
@@ -125,7 +131,7 @@ class MemSys extends Module {
     wrapping = true
   )))
   soundRomCache.io.enable := readyReg
-  soundRomCache.io.in.asAsyncReadMemIO <> io.soundRom
+  soundRomCache.io.in.asAsyncReadMemIO <> io.rom.soundRom
 
   // EEPROM cache
   val eepromCache = Module(new Cache(cache.Config(
@@ -139,7 +145,7 @@ class MemSys extends Module {
     swapEndianness = true
   )))
   eepromCache.io.enable := readyReg
-  eepromCache.io.in <> io.eeprom
+  eepromCache.io.in <> io.rom.eeprom
 
   // Layer tile ROM cache
   val layerRomCache = 0.until(Config.LAYER_COUNT).map { i =>
@@ -153,7 +159,7 @@ class MemSys extends Module {
       wrapping = true
     )))
     c.io.enable := readyReg
-    c.io.in.asAsyncReadMemIO <> io.layerTileRom(i)
+    c.io.in.asAsyncReadMemIO <> io.rom.layerTileRom(i)
     c
   }
 
@@ -171,7 +177,7 @@ class MemSys extends Module {
     io.spriteLineBuffer.asBurstReadWriteMemIO,
     io.systemFrameBuffer.asBurstReadWriteMemIO,
     io.spriteFrameBuffer.asBurstReadWriteMemIO,
-    io.spriteTileRom.mapAddr(_ + io.gameConfig.sprite.romOffset + Config.IOCTL_DOWNLOAD_BASE_ADDR.U).asBurstReadWriteMemIO
+    io.rom.spriteTileRom.mapAddr(_ + io.gameConfig.sprite.romOffset + Config.IOCTL_DOWNLOAD_BASE_ADDR.U).asBurstReadWriteMemIO
   ) <> io.ddr
 
   // SDRAM arbiter
