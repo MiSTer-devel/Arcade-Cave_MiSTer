@@ -76,6 +76,8 @@ class Main extends Module {
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** Video port */
     val video = VideoIO()
+    /** Change video mode strobe */
+    val changeVideoMode = Output(Bool())
     /** RGB output */
     val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
     /** LED port */
@@ -120,6 +122,7 @@ class Main extends Module {
   videoSys.io.videoReset := io.videoReset
   videoSys.io.options <> io.options
   videoSys.io.video <> io.video
+  io.changeVideoMode := videoSys.io.changeVideoMode
 
   // The Cave module should be reset when the CPU reset signal is asserted (i.e. the user pressed
   // the reset button), or while the memory system is not ready.

@@ -261,6 +261,7 @@ wire  [1:0] buttons;
 wire [31:0] status;
 wire        forced_scandoubler;
 wire [21:0] gamma_bus;
+wire        new_vmode;
 wire        direct_video;
 wire [15:0] sdram_sz;
 
@@ -287,6 +288,7 @@ hps_io #(.CONF_STR(CONF_STR), .WIDE(1)) hps_io (
   .status(status),
   .status_menumask({sdram_available, direct_video}),
   .forced_scandoubler(forced_scandoubler),
+  .new_vmode(new_vmode),
   .gamma_bus(gamma_bus),
   .direct_video(direct_video),
   .sdram_sz(sdram_sz),
@@ -494,6 +496,7 @@ Main main (
   .video_vSync(vsync),
   .video_hBlank(hblank),
   .video_vBlank(vblank),
+  .changeVideoMode(new_vmode),
   // Frame buffer control signals
   .frameBufferCtrl_enable(FB_EN),
   .frameBufferCtrl_hSize(FB_WIDTH),

@@ -51,9 +51,11 @@ class VideoSys extends Module {
     val options = OptionsIO()
     /** Video port */
     val video = VideoIO()
+    /** Change video mode strobe */
+    val changeVideoMode = Output(Bool())
   })
 
-  withClockAndReset(io.videoClock, io.videoReset) {
+  val video = withClockAndReset(io.videoClock, io.videoReset) {
     // Video timings
     val originalVideoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
     val compatibilityVideoTiming = Module(new VideoTiming(Config.compatibilityVideoTimingConfig))
@@ -69,7 +71,10 @@ class VideoSys extends Module {
     val compatibilityReg = RegEnable(io.options.compatibility, originalVideoTiming.io.video.vBlank && compatibilityVideoTiming.io.video.vBlank)
 
     // Select original or compatibility video timing
-    val video = Mux(compatibilityReg, compatibilityVideoTiming.io.video, originalVideoTiming.io.video)
-    io.video := video
+    Mux(compatibilityReg, compatibilityVideoTiming.io.video, originalVideoTiming.io.video)
   }
+
+  // Outputs
+  io.video := video
+  io.changeVideoMode := io.options.compatibility ^ RegNext(io.options.compatibility)
 }
