@@ -35,7 +35,7 @@ package cave
 import axon.Util
 import axon.mem._
 import axon.mem.cache.Cache
-import axon.mem.dma.WriteDMA
+import axon.mem.dma.BurstReadDMA
 import axon.mister._
 import cave.types._
 import chisel3._
@@ -164,7 +164,7 @@ class MemSys extends Module {
   }
 
   // Copy download data from DDR to SDRAM
-  val copyDownloadDma = Module(new WriteDMA(Config.copyDownloadDmaConfig))
+  val copyDownloadDma = Module(new BurstReadDMA(Config.copyDownloadDmaConfig))
   copyDownloadDma.io.enable := !readyReg
   copyDownloadDma.io.start := Util.falling(io.ioctl.download)
   copyDownloadDma.io.out <> sdramDownloadCache.io.in.asAsyncWriteMemIO

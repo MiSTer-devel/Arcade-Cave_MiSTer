@@ -35,7 +35,7 @@ package cave.fb
 import axon.Util
 import axon.gfx.VideoIO
 import axon.mem._
-import axon.mem.dma.{ReadDMA, WriteDMA}
+import axon.mem.dma.{BurstWriteDMA, BurstReadDMA}
 import cave.Config
 import cave.types._
 import chisel3._
@@ -121,7 +121,7 @@ class SpriteFrameBuffer extends Module {
   pageFlipper.io.swapWrite := vBlankStart
 
   // Copy next scanline from DDR memory to the line buffer
-  val lineBufferDma = Module(new WriteDMA(Config.spriteLineBufferDmaConfig))
+  val lineBufferDma = Module(new BurstReadDMA(Config.spriteLineBufferDmaConfig))
   lineBufferDma.io.enable := io.enable
   lineBufferDma.io.start := hBlankStart
   lineBufferDma.io.in.mapAddr(
@@ -132,7 +132,7 @@ class SpriteFrameBuffer extends Module {
   }.asReadWriteMemIO <> lineBuffer.io.portA
 
   // Copy frame buffer to DDR memory
-  val frameBufferDma = Module(new ReadDMA(Config.spriteFrameBufferDmaConfig))
+  val frameBufferDma = Module(new BurstWriteDMA(Config.spriteFrameBufferDmaConfig))
   frameBufferDma.io.enable := io.enable
   frameBufferDma.io.start := Util.falling(io.spriteProcessorBusy) // sprite processor done
   frameBufferDma.io.in <> frameBuffer.io.portB

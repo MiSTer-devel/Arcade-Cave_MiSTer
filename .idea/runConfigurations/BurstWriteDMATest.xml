@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="WriteDMATest" type="ScalaTestRunConfiguration" factoryName="ScalaTest" show_console_on_std_err="false" show_console_on_std_out="false">
+  <configuration default="false" name="BurstWriteDMATest" type="ScalaTestRunConfiguration" factoryName="ScalaTest" show_console_on_std_err="false" show_console_on_std_out="false">
     <module name="cave-chisel" />
     <option name="allowRunningInParallel" value="false" />
     <option name="projectPathOnTarget" />
@@ -8,7 +8,7 @@
     </option>
     <option name="testKind" value="Class" />
     <option name="shortenClasspath" value="NONE" />
-    <option name="testClassPath" value="axon.mem.WriteDMATest" />
+    <option name="testClassPath" value="axon.mem.BurstWriteDMATest" />
     <option name="workingDirectory" value="$PROJECT_DIR$" />
     <method v="2">
       <option name="Make" enabled="true" />

@@ -43,7 +43,7 @@ import chisel3._
  *
  * @param config The DMA configuration.
  */
-class WriteDMA(config: Config) extends Module {
+class BurstReadDMA(config: Config) extends Module {
   // Sanity check
   assert(config.depth % config.burstLength == 0, "The number of words to transfer must be divisible by the burst length")
 
