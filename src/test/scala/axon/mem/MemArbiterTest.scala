@@ -49,17 +49,17 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
       dut.io.in(1).rd.poke(true)
       dut.io.in(1).addr.poke(2)
       dut.io.out.rd.expect(true)
-      dut.io.out.addr.expect(1.U)
+      dut.io.out.addr.expect(1)
 
       // Read 1
       dut.io.in(0).rd.poke(false)
       dut.io.out.rd.expect(true)
-      dut.io.out.addr.expect(2.U)
+      dut.io.out.addr.expect(2)
 
       // Done
       dut.io.in(1).rd.poke(false)
       dut.io.out.rd.expect(false)
-      dut.io.out.addr.expect(0.U)
+      dut.io.out.addr.expect(0)
     }
   }
 
@@ -84,15 +84,15 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
       // Read 1
       dut.io.in(0).rd.poke(false)
       dut.io.in(1).rd.poke(true)
-      dut.io.in(0).waitReq.expect(false)
+      dut.io.in(0).waitReq.expect(true)
       dut.io.in(1).waitReq.expect(true)
 
       // Wait 1
       dut.io.out.waitReq.poke(false)
-      dut.io.in(0).waitReq.expect(false)
+      dut.io.in(0).waitReq.expect(true)
       dut.io.in(1).waitReq.expect(false)
       dut.io.out.waitReq.poke(true)
-      dut.io.in(0).waitReq.expect(false)
+      dut.io.in(0).waitReq.expect(true)
       dut.io.in(1).waitReq.expect(true)
     }
   }
@@ -109,7 +109,7 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
       dut.io.out.dout.poke(1)
       dut.io.in(0).valid.expect(true)
       dut.io.in(1).valid.expect(false)
-      dut.io.in(0).dout.expect(1.U)
+      dut.io.in(0).dout.expect(1)
       dut.clock.step()
 
       // Burst done
@@ -125,7 +125,7 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
       dut.io.out.dout.poke(2)
       dut.io.in(0).valid.expect(false)
       dut.io.in(1).valid.expect(true)
-      dut.io.in(1).dout.expect(2.U)
+      dut.io.in(1).dout.expect(2)
       dut.io.out.valid.poke(false)
     }
   }
