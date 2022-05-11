@@ -165,7 +165,6 @@ class MemSys extends Module {
 
   // Copy download data from DDR to SDRAM
   val copyDownloadDma = Module(new BurstReadDMA(Config.copyDownloadDmaConfig))
-  copyDownloadDma.io.enable := !readyReg
   copyDownloadDma.io.start := Util.falling(io.ioctl.download)
   copyDownloadDma.io.out <> sdramDownloadCache.io.in.asAsyncWriteMemIO
 

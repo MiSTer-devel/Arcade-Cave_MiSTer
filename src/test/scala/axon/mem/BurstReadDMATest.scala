@@ -42,154 +42,128 @@ trait BurstReadDMATestHelpers {
 }
 
 class BurstReadDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with BurstReadDMATestHelpers {
-  it should "assert the busy signal during a transfer" in {
+  it should "copy data from a bursted input memory to an asynchronous output memory" in {
     test(mkDMA()) { dut =>
-      dut.io.enable.poke(true)
-      dut.io.start.poke(true)
-      dut.io.in.burstDone.poke(true)
-      dut.io.busy.expect(false)
-      dut.clock.step()
-      dut.io.busy.expect(true)
-      dut.clock.step(9)
-      dut.io.busy.expect(false)
-      dut.clock.step()
-      dut.io.busy.expect(true)
-    }
-  }
-
-  it should "not start a transfer when the enable signal is deasserted" in {
-    test(mkDMA()) { dut =>
-      dut.io.enable.poke(false)
-      dut.io.start.poke(true)
-      dut.clock.step(10)
-
-      dut.io.in.rd.expect(false)
-      dut.io.out.wr.expect(false)
-      dut.clock.step()
-
-      dut.io.enable.poke(true)
-      dut.io.in.rd.expect(true)
-      dut.io.in.addr.expect(0)
-      dut.clock.step()
-    }
-  }
-
-  it should "copy data from the bursted input memory to the output memory" in {
-    test(mkDMA()) { dut =>
-      // Start transfer
-      dut.io.enable.poke(true)
+      // start
       dut.io.start.poke(true)
       dut.io.in.rd.expect(false)
       dut.io.out.wr.expect(false)
       dut.clock.step()
 
-      // Wait for read request
+      // wait for read
+      dut.io.start.poke(false)
+      dut.io.busy.expect(true)
       dut.io.in.waitReq.poke(true)
       dut.io.in.rd.expect(true)
-      dut.io.in.addr.expect(0)
+      dut.io.in.addr.expect(0x00)
       dut.io.out.wr.expect(false)
       dut.clock.step()
 
-      // Effective read
+      // read 0
       dut.io.in.waitReq.poke(false)
       dut.io.in.rd.expect(true)
-      dut.io.in.addr.expect(0)
+      dut.io.in.addr.expect(0x00)
       dut.io.out.wr.expect(false)
       dut.clock.step()
 
-      // Wait for valid data
+      // wait for valid data
       dut.io.in.rd.expect(false)
       dut.io.out.wr.expect(false)
       dut.clock.step()
 
-      // First word
-      dut.io.in.rd.expect(false)
+      // valid data
       dut.io.in.valid.poke(true)
       dut.io.in.dout.poke(0x10)
+      dut.io.in.rd.expect(false)
       dut.io.out.wr.expect(false)
       dut.clock.step()
 
-      // Word 0
-      dut.io.in.rd.expect(false)
+      // write 0
       dut.io.in.dout.poke(0x11)
+      dut.io.in.rd.expect(false)
       dut.io.out.wr.expect(true)
       dut.io.out.addr.expect(0x00)
       dut.io.out.din.expect(0x10)
       dut.clock.step()
 
-      // Word 1
-      dut.io.in.rd.expect(false)
+      // write 1
       dut.io.in.dout.poke(0x12)
+      dut.io.in.rd.expect(false)
       dut.io.out.wr.expect(true)
       dut.io.out.addr.expect(0x08)
       dut.io.out.din.expect(0x11)
       dut.clock.step()
 
-      // Word 2
+      // write 2
       dut.io.in.burstDone.poke(true)
-      dut.io.in.rd.expect(false)
       dut.io.in.dout.poke(0x13)
+      dut.io.in.rd.expect(false)
       dut.io.out.wr.expect(true)
       dut.io.out.addr.expect(0x10)
       dut.io.out.din.expect(0x12)
       dut.clock.step()
 
-      // Wait for write request
+      // read 1, wait for write
+      dut.io.in.valid.poke(false)
       dut.io.in.burstDone.poke(false)
       dut.io.in.rd.expect(true)
       dut.io.in.addr.expect(0x20)
-      dut.io.in.dout.poke(0x14)
       dut.io.out.waitReq.poke(true)
       dut.io.out.wr.expect(true)
       dut.io.out.addr.expect(0x18)
       dut.io.out.din.expect(0x13)
       dut.clock.step()
 
-      // Word 3
-      dut.io.out.waitReq.poke(false)
+      // write 3
+      dut.io.in.valid.poke(true)
+      dut.io.in.dout.poke(0x14)
       dut.io.in.rd.expect(false)
-      dut.io.in.dout.poke(0x15)
+      dut.io.out.waitReq.poke(false)
       dut.io.out.wr.expect(true)
       dut.io.out.addr.expect(0x18)
       dut.io.out.din.expect(0x13)
       dut.clock.step()
 
-      // Word 4
+      // write 4
       dut.io.in.rd.expect(false)
-      dut.io.in.dout.poke(0x16)
+      dut.io.in.dout.poke(0x15)
       dut.io.out.wr.expect(true)
       dut.io.out.addr.expect(0x20)
       dut.io.out.din.expect(0x14)
       dut.clock.step()
 
-      // Word 5
-      dut.io.in.burstDone.poke(true)
-      dut.io.in.dout.poke(0x17)
+      // write 5
+      dut.io.in.dout.poke(0x16)
       dut.io.in.rd.expect(false)
       dut.io.out.wr.expect(true)
       dut.io.out.addr.expect(0x28)
       dut.io.out.din.expect(0x15)
       dut.clock.step()
 
-      // Word 6
-      dut.io.in.burstDone.poke(false)
+      // write 6
+      dut.io.in.burstDone.poke(true)
+      dut.io.in.dout.poke(0x17)
       dut.io.in.rd.expect(false)
       dut.io.out.wr.expect(true)
       dut.io.out.addr.expect(0x30)
       dut.io.out.din.expect(0x16)
       dut.clock.step()
 
-      // Word 7
+      // write 7
+      dut.io.in.burstDone.poke(false)
+      dut.io.in.valid.poke(false)
       dut.io.in.rd.expect(false)
       dut.io.out.wr.expect(true)
       dut.io.out.addr.expect(0x38)
       dut.io.out.din.expect(0x17)
       dut.clock.step()
 
-      // Done
+      // done
       dut.io.in.rd.expect(false)
       dut.io.out.wr.expect(false)
       dut.clock.step()
+
+      dut.io.busy.expect(false)
     }
   }
 }

@@ -38,8 +38,8 @@ import chisel3.util._
 import chisel3._
 
 /**
- * The read direct memory access (DMA) controller copies data from a bursted read-only memory
- * interface to an asynchronous write-only memory interface.
+ * The burst read DMA controller copies data from a bursted read-only memory interface to an
+ * asynchronous write-only memory interface.
  *
  * @param config The DMA configuration.
  */
@@ -48,8 +48,6 @@ class BurstReadDMA(config: Config) extends Module {
   assert(config.depth % config.burstLength == 0, "The number of words to transfer must be divisible by the burst length")
 
   val io = IO(new Bundle {
-    /** Enable the DMA controller */
-    val enable = Input(Bool())
     /** Start a DMA transfer */
     val start = Input(Bool())
     /** Asserted when the DMA controller is busy */
@@ -61,19 +59,21 @@ class BurstReadDMA(config: Config) extends Module {
   })
 
   // Registers
-  val enableReadReg = RegInit(false.B)
-  val enableWriteReg = RegInit(false.B)
-  val pendingReadReg = RegInit(false.B)
+  val readEnableReg = RegInit(false.B)
+  val writeEnableReg = RegInit(false.B)
+  val readPendingReg = RegInit(false.B)
 
-  // The FIFO is used to buffer words bursted from the read memory port. It is deep enough two hold
-  // two full bursts, so that when the FIFO is half-empty another burst can be requested.
-  val fifo = Module(new Queue(Bits(config.dataWidth.W), config.burstLength * 2, flow = true, hasFlush = true))
-  fifo.flush := !io.enable
+  // The FIFO is used to buffer words bursted from the read memory port. It is deep enough to hold
+  // two full bursts, so that while a burst is in progress the data for the next burst can be
+  // requested.
+  val fifo = Module(new Queue(Bits(config.dataWidth.W), config.burstLength * 2, useSyncReadMem = true, hasFlush = true))
+  val fifoNearlyEmpty = fifo.io.count <= config.burstLength.U
 
   // Control signals
-  val busy = enableReadReg || enableWriteReg
-  val read = io.enable && enableReadReg && !pendingReadReg && fifo.io.count <= config.burstLength.U
-  val write = io.enable && enableWriteReg && fifo.io.deq.valid
+  val busy = readEnableReg || writeEnableReg
+  val start = io.start && !busy
+  val read = readEnableReg && !readPendingReg && fifoNearlyEmpty
+  val write = writeEnableReg && fifo.io.deq.valid
   val effectiveRead = read && !io.in.waitReq
   val effectiveWrite = write && !io.out.waitReq
 
@@ -93,29 +93,22 @@ class BurstReadDMA(config: Config) extends Module {
     (wordCounter << n).asUInt
   }
 
-  // Toggle read wait register
-  when(burstCounterWrap) {
-    enableReadReg := false.B
-  }.elsewhen(io.start && !busy) {
-    enableReadReg := true.B
-  }
+  // Flush the FIFO when a transfer is started
+  fifo.flush := start
 
-  // Toggle write wait register
-  when(wordCounterWrap) {
-    enableWriteReg := false.B
-  }.elsewhen(fifo.io.deq.valid) {
-    enableWriteReg := true.B
-  }
+  // Toggle read/write enable registers
+  when(start) { readEnableReg := true.B }.elsewhen(burstCounterWrap) { readEnableReg := false.B }
+  when(start) { writeEnableReg := true.B }.elsewhen(wordCounterWrap) { writeEnableReg := false.B }
 
-  // Toggle pending read register
+  // Toggle read pending register
   when(io.in.burstDone) {
-    pendingReadReg := false.B
+    readPendingReg := false.B
   }.elsewhen(effectiveRead) {
-    pendingReadReg := true.B
+    readPendingReg := true.B
   }
 
   // Enqueue data in the FIFO when it is available
-  when(io.in.valid) {
+  when(io.in.valid && readPendingReg) {
     fifo.io.enq.enq(io.in.dout)
   } otherwise {
     fifo.io.enq.noenq()
@@ -134,5 +127,5 @@ class BurstReadDMA(config: Config) extends Module {
   io.out.din := fifo.io.deq.bits
   io.out.mask := Fill(io.out.maskWidth, 1.U)
 
-  printf(p"WriteDMA(start: ${ io.start }, readWait: $enableReadReg, writeWait: $enableWriteReg, busy: $busy, read: $read, write: $write, inAddr: 0x${ Hexadecimal(io.in.addr) }, inData: 0x${ Hexadecimal(io.in.dout) }, outAddr: 0x${ Hexadecimal(io.out.addr) }, outData: 0x${ Hexadecimal(io.out.din) }, waitReq: ${ io.in.waitReq }, valid: ${ io.in.valid }, burst: $burstCounter ($burstCounterWrap))\n")
+  printf(p"BurstReadDMA(start: ${ io.start }, rdEnable: $readEnableReg, wrEnable: $writeEnableReg, rdPending: $readPendingReg, busy: $busy, read: $read, write: $write, inAddr: 0x${ Hexadecimal(io.in.addr) }, inData: 0x${ Hexadecimal(io.in.dout) }, outAddr: 0x${ Hexadecimal(io.out.addr) }, outData: 0x${ Hexadecimal(io.out.din) }, waitReq: ${ io.in.waitReq }, valid: ${ io.in.valid }, burst: $burstCounter ($burstCounterWrap))\n")
 }

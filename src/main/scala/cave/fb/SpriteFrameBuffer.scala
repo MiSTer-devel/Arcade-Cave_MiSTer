@@ -86,9 +86,12 @@ class SpriteFrameBuffer extends Module {
     }
   })
 
-  // Detect the beginning of the blanking signals
+  // Set the blanking signal strobes
   val hBlankStart = Util.rising(ShiftRegister(io.video.hBlank, 2))
   val vBlankStart = Util.rising(ShiftRegister(io.video.vBlank, 2))
+
+  // Set the sprite processor done strobe
+  val spriteProcessorDone = Util.falling(io.spriteProcessorBusy)
 
   // Line buffer (320x1x16BPP)
   val lineBuffer = Module(new TrueDualPortRam(
@@ -120,10 +123,9 @@ class SpriteFrameBuffer extends Module {
   pageFlipper.io.swapRead := false.B
   pageFlipper.io.swapWrite := vBlankStart
 
-  // Copy next scanline from DDR memory to the line buffer
+  // Copy line buffer from DDR memory to BRAM
   val lineBufferDma = Module(new BurstReadDMA(Config.spriteLineBufferDmaConfig))
-  lineBufferDma.io.enable := io.enable
-  lineBufferDma.io.start := hBlankStart
+  lineBufferDma.io.start := io.enable && hBlankStart
   lineBufferDma.io.in.mapAddr(
     _ + pageFlipper.io.addrRead + ((io.video.pos.y + 1.U) * (Config.SCREEN_WIDTH * 2).U) // FIXME: avoid expensive multiply
   ) <> io.ddr.lineBuffer
@@ -131,10 +133,11 @@ class SpriteFrameBuffer extends Module {
     (a >> 3).asUInt // convert from byte address
   }.asReadWriteMemIO <> lineBuffer.io.portA
 
-  // Copy frame buffer to DDR memory
+  // Copy frame buffer from BRAM to DDR memory
   val frameBufferDma = Module(new BurstWriteDMA(Config.spriteFrameBufferDmaConfig))
-  frameBufferDma.io.enable := io.enable
-  frameBufferDma.io.start := Util.falling(io.spriteProcessorBusy) // sprite processor done
-  frameBufferDma.io.in <> frameBuffer.io.portB
+  frameBufferDma.io.start := io.enable && spriteProcessorDone
+  frameBufferDma.io.in.mapAddr { a =>
+    (a >> 3).asUInt // convert from byte address
+  }.asReadMemIO <> frameBuffer.io.portB
   frameBufferDma.io.out.mapAddr(_ + pageFlipper.io.addrWrite) <> io.ddr.frameBuffer
 }
