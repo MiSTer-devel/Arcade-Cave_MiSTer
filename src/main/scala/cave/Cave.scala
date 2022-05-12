@@ -50,10 +50,6 @@ import chisel3.util._
  */
 class Cave extends Module {
   val io = IO(new Bundle {
-    /** Video clock domain */
-    val videoClock = Input(Clock())
-    /** Video reset */
-    val videoReset = Input(Bool())
     /** Game config port */
     val gameConfig = Input(GameConfig())
     /** Options port */
@@ -137,7 +133,7 @@ class Cave extends Module {
       dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH,
       maskEnable = true
     ))
-    ram.io.clockB := io.videoClock
+    ram.io.clockB := io.video.clock
     ram.io.portA.default()
     ram
   }
@@ -151,7 +147,7 @@ class Cave extends Module {
       dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH,
       maskEnable = true
     ))
-    ram.io.clockB := io.videoClock
+    ram.io.clockB := io.video.clock
     ram.io.portA.default()
     ram
   }
@@ -165,7 +161,7 @@ class Cave extends Module {
       dataWidthB = Config.LINE_RAM_GPU_DATA_WIDTH,
       maskEnable = true
     ))
-    ram.io.clockB := io.videoClock
+    ram.io.clockB := io.video.clock
     ram.io.portA.default()
     ram
   }
@@ -178,7 +174,7 @@ class Cave extends Module {
     dataWidthB = Config.PALETTE_RAM_GPU_DATA_WIDTH,
     maskEnable = true
   ))
-  paletteRam.io.clockB := io.videoClock
+  paletteRam.io.clockB := io.video.clock
   paletteRam.io.portA.default()
 
   // Layer registers
@@ -194,8 +190,6 @@ class Cave extends Module {
 
   // Graphics processor
   val gpu = Module(new GPU)
-  gpu.io.videoClock := io.videoClock
-  gpu.io.videoReset := io.videoReset
   gpu.io.video <> io.video
   gpu.io.videoRegs := VideoRegs.decode(videoRegs.io.dout)
   gpu.io.paletteRam <> paletteRam.io.portB
@@ -204,11 +198,11 @@ class Cave extends Module {
     gpu.io.layerCtrl(i).enable := io.options.layerEnable.layer(i)
     gpu.io.layerCtrl(i).rowScrollEnable := io.options.rowScrollEnable
     gpu.io.layerCtrl(i).rowSelectEnable := io.options.rowSelectEnable
-    gpu.io.layerCtrl(i).regs := withClock(io.videoClock) { ShiftRegister(Layer.decode(layerRegs(i).io.dout), 2) }
+    gpu.io.layerCtrl(i).regs := withClock(io.video.clock) { ShiftRegister(Layer.decode(layerRegs(i).io.dout), 2) }
     gpu.io.layerCtrl(i).vram8x8 <> layerRam8x8(i).io.portB
     gpu.io.layerCtrl(i).vram16x16 <> layerRam16x16(i).io.portB
     gpu.io.layerCtrl(i).lineRam <> lineRam(i).io.portB
-    gpu.io.layerCtrl(i).tileRom <> ClockDomain.syncronize(io.videoClock, io.rom.layerTileRom(i))
+    gpu.io.layerCtrl(i).tileRom <> ClockDomain.syncronize(io.video.clock, io.rom.layerTileRom(i))
   }
   gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
   gpu.io.spriteCtrl.enable := io.options.layerEnable.sprite

@@ -54,12 +54,12 @@ import chisel3.stage._
  */
 class Main extends Module {
   val io = FlatIO(new Bundle {
-    /** CPU reset */
-    val cpuReset = Input(Bool())
     /** Video clock domain */
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
+    /** CPU reset */
+    val cpuReset = Input(Bool())
     /** DDR port */
     val ddr = BurstReadWriteMemIO(Config.ddrConfig)
     /** SDRAM control port */
@@ -76,8 +76,6 @@ class Main extends Module {
     val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
     /** Video port */
     val video = VideoIO()
-    /** Change video mode strobe */
-    val changeVideoMode = Output(Bool())
     /** RGB output */
     val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
     /** LED port */
@@ -122,13 +120,10 @@ class Main extends Module {
   videoSys.io.videoReset := io.videoReset
   videoSys.io.options <> io.options
   videoSys.io.video <> io.video
-  io.changeVideoMode := videoSys.io.changeVideoMode
 
   // The Cave module should be reset when the CPU reset signal is asserted (i.e. the user pressed
   // the reset button), or while the memory system is not ready.
   val cave = withReset(io.cpuReset || !memSys.io.ready) { Module(new Cave) }
-  cave.io.videoClock := io.videoClock
-  cave.io.videoReset := io.videoReset
   cave.io.gameConfig <> gameConfigReg
   cave.io.options <> io.options
   cave.io.joystick <> io.joystick
@@ -139,8 +134,6 @@ class Main extends Module {
 
   // Sprite frame buffer
   val spriteFrameBuffer = Module(new SpriteFrameBuffer)
-  spriteFrameBuffer.io.videoClock := io.videoClock
-  spriteFrameBuffer.io.videoReset := io.videoReset
   spriteFrameBuffer.io.enable := memSys.io.ready
   spriteFrameBuffer.io.spriteProcessorBusy := cave.io.spriteProcessorBusy
   spriteFrameBuffer.io.video <> videoSys.io.video
@@ -151,8 +144,6 @@ class Main extends Module {
 
   // System frame buffer
   val systemFrameBuffer = Module(new SystemFrameBuffer)
-  systemFrameBuffer.io.videoClock := io.videoClock
-  systemFrameBuffer.io.videoReset := io.videoReset
   systemFrameBuffer.io.enable := io.options.rotate // only enable during rotated HDMI output
   systemFrameBuffer.io.forceBlank := !memSys.io.ready
   systemFrameBuffer.io.video <> videoSys.io.video

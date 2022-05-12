@@ -36,28 +36,6 @@ import axon.types._
 import axon.util.Counter
 import chisel3._
 
-/** An interface that contains analog video timing signals. */
-class VideoIO extends Bundle {
-  /** Asserted when the video clock is enabled */
-  val clockEnable = Output(Bool())
-  /** Asserted when the video position is in the display region */
-  val displayEnable = Output(Bool())
-  /** Video position */
-  val pos = Output(UVec2(9.W))
-  /** Horizontal sync */
-  val hSync = Output(Bool())
-  /** Vertical sync */
-  val vSync = Output(Bool())
-  /** Horizontal blank */
-  val hBlank = Output(Bool())
-  /** Vertical blank */
-  val vBlank = Output(Bool())
-}
-
-object VideoIO {
-  def apply() = new VideoIO
-}
-
 /**
  * Represents the video timing configuration.
  *
@@ -111,8 +89,8 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
   val io = IO(new Bundle {
     /** CRT offset */
     val offset = Input(SVec2(OptionsIO.SCREEN_OFFSET_WIDTH.W))
-    /** Video port */
-    val video = VideoIO()
+    /** Timing port */
+    val timing = VideoTimingIO()
   })
 
   // Counters
@@ -144,13 +122,13 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
   val vBlank = y < vBeginDisplay || y >= vEndDisplay
 
   // Outputs
-  io.video.clockEnable := clockDivWrap
-  io.video.displayEnable := !(hBlank || vBlank)
-  io.video.pos := pos
-  io.video.hSync := hSync
-  io.video.vSync := vSync
-  io.video.hBlank := hBlank
-  io.video.vBlank := vBlank
+  io.timing.clockEnable := clockDivWrap
+  io.timing.displayEnable := !(hBlank || vBlank)
+  io.timing.pos := pos
+  io.timing.hSync := hSync
+  io.timing.vSync := vSync
+  io.timing.hBlank := hBlank
+  io.timing.vBlank := vBlank
 
-  printf(p"VideoTiming(pos: (${ pos.x }, ${ pos.y }), width: ${ config.width }, height: ${ config.height }), hBeginDisplay: $hBeginDisplay, vBeginDisplay: $vBeginDisplay, hSync: ${ io.video.hSync }, vSync: ${ io.video.vSync }\n")
+  printf(p"VideoTiming(pos: (${ pos.x }, ${ pos.y }), width: ${ config.width }, height: ${ config.height }), hBeginDisplay: $hBeginDisplay, vBeginDisplay: $vBeginDisplay, hSync: $hSync , vSync: $vSync \n")
 }

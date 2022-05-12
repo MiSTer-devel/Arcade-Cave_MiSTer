@@ -60,10 +60,6 @@ import chisel3.util._
  */
 class SpriteFrameBuffer extends Module {
   val io = IO(new Bundle {
-    /** Video clock domain */
-    val videoClock = Input(Clock())
-    /** Video reset */
-    val videoReset = Input(Bool())
     /** Enables the sprite frame buffer */
     val enable = Input(Bool())
     /** Asserted when the sprite processor is busy */
@@ -102,7 +98,7 @@ class SpriteFrameBuffer extends Module {
     dataWidthB = Config.SPRITE_FRAME_BUFFER_DATA_WIDTH,
     depthB = Some(Config.SCREEN_WIDTH)
   ))
-  lineBuffer.io.clockB := io.videoClock
+  lineBuffer.io.clockB := io.video.clock
   lineBuffer.io.portB <> io.gpu.lineBuffer
 
   // Frame buffer (320x240x16BPP)

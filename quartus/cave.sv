@@ -452,11 +452,11 @@ Main main (
   // System clock/reset
   .clock(clk_sys),
   .reset(rst_sys),
-  // CPU reset
-  .cpuReset(rst_cpu),
   // Video clock/reset
   .videoClock(clk_video),
   .videoReset(rst_video),
+  // CPU reset
+  .cpuReset(rst_cpu),
   // Options
   .options_sdram(sdram_available),
   .options_offset_x(status[27:24]),
@@ -492,11 +492,11 @@ Main main (
   .joystick_service2(service_2),
   // Video signals
   .video_clockEnable(ce_pix),
+  .video_changeMode(new_vmode),
   .video_hSync(hsync),
   .video_vSync(vsync),
   .video_hBlank(hblank),
   .video_vBlank(vblank),
-  .changeVideoMode(new_vmode),
   // Frame buffer control signals
   .frameBufferCtrl_enable(FB_EN),
   .frameBufferCtrl_hSize(FB_WIDTH),

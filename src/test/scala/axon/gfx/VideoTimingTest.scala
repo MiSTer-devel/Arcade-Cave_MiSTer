@@ -65,9 +65,9 @@ class VideoTimingTest extends AnyFlatSpec with ChiselScalatestTester with Matche
 
   it should "be incremented" in {
     test(mkVideoTiming(72)) { dut =>
-      dut.io.video.pos.x.expect(0)
+      dut.io.timing.pos.x.expect(0)
       dut.clock.step()
-      dut.io.video.pos.x.expect(1)
+      dut.io.timing.pos.x.expect(1)
     }
   }
 
@@ -75,17 +75,17 @@ class VideoTimingTest extends AnyFlatSpec with ChiselScalatestTester with Matche
 
   it should "be asserted after the horizontal front porch" in {
     test(mkVideoTiming(427)) { dut =>
-      dut.io.video.hSync.expect(false)
+      dut.io.timing.hSync.expect(false)
       dut.clock.step()
-      dut.io.video.hSync.expect(true)
+      dut.io.timing.hSync.expect(true)
     }
   }
 
   it should "be deasserted after the horizontal retrace" in {
     test(mkVideoTiming(447)) { dut =>
-      dut.io.video.hSync.expect(true)
+      dut.io.timing.hSync.expect(true)
       dut.clock.step()
-      dut.io.video.hSync.expect(false)
+      dut.io.timing.hSync.expect(false)
     }
   }
 
@@ -93,17 +93,17 @@ class VideoTimingTest extends AnyFlatSpec with ChiselScalatestTester with Matche
 
   it should "be asserted at the end of the horizontal display region" in {
     test(mkVideoTiming(391)) { dut =>
-      dut.io.video.hBlank.expect(false)
+      dut.io.timing.hBlank.expect(false)
       dut.clock.step()
-      dut.io.video.hBlank.expect(true)
+      dut.io.timing.hBlank.expect(true)
     }
   }
 
   it should "be deasserted at the start of the horizontal display region" in {
     test(mkVideoTiming(71)) { dut =>
-      dut.io.video.hBlank.expect(true)
+      dut.io.timing.hBlank.expect(true)
       dut.clock.step()
-      dut.io.video.hBlank.expect(false)
+      dut.io.timing.hBlank.expect(false)
     }
   }
 
@@ -111,9 +111,9 @@ class VideoTimingTest extends AnyFlatSpec with ChiselScalatestTester with Matche
 
   it should "be incremented after the horizontal sync" in {
     test(mkVideoTiming(447, 19)) { dut =>
-      dut.io.video.pos.y.expect(0)
+      dut.io.timing.pos.y.expect(0)
       dut.clock.step()
-      dut.io.video.pos.y.expect(1)
+      dut.io.timing.pos.y.expect(1)
     }
   }
 
@@ -121,17 +121,17 @@ class VideoTimingTest extends AnyFlatSpec with ChiselScalatestTester with Matche
 
   it should "be asserted after the vertical front porch" in {
     test(mkVideoTiming(447, 270)) { dut =>
-      dut.io.video.vSync.expect(false)
+      dut.io.timing.vSync.expect(false)
       dut.clock.step()
-      dut.io.video.vSync.expect(true)
+      dut.io.timing.vSync.expect(true)
     }
   }
 
   it should "be deasserted after the vertical retrace" in {
     test(mkVideoTiming(447, 272)) { dut =>
-      dut.io.video.vSync.expect(true)
+      dut.io.timing.vSync.expect(true)
       dut.clock.step()
-      dut.io.video.vSync.expect(false)
+      dut.io.timing.vSync.expect(false)
     }
   }
 
@@ -139,17 +139,17 @@ class VideoTimingTest extends AnyFlatSpec with ChiselScalatestTester with Matche
 
   it should "be asserted at the end of the vertical display region" in {
     test(mkVideoTiming(447, 258)) { dut =>
-      dut.io.video.vBlank.expect(false)
+      dut.io.timing.vBlank.expect(false)
       dut.clock.step()
-      dut.io.video.vBlank.expect(true)
+      dut.io.timing.vBlank.expect(true)
     }
   }
 
   it should "be deasserted at the start of the vertical display region" in {
     test(mkVideoTiming(447, 18)) { dut =>
-      dut.io.video.vBlank.expect(true)
+      dut.io.timing.vBlank.expect(true)
       dut.clock.step()
-      dut.io.video.vBlank.expect(false)
+      dut.io.timing.vBlank.expect(false)
     }
   }
 
@@ -157,17 +157,17 @@ class VideoTimingTest extends AnyFlatSpec with ChiselScalatestTester with Matche
 
   it should "be asserted at the start of the horizontal and vertical display regions" in {
     test(mkVideoTiming(71, 19)) { dut =>
-      dut.io.video.displayEnable.expect(false)
+      dut.io.timing.displayEnable.expect(false)
       dut.clock.step()
-      dut.io.video.displayEnable.expect(true)
+      dut.io.timing.displayEnable.expect(true)
     }
   }
 
   it should "be deasserted at the end of the horizontal and vertical display regions" in {
     test(mkVideoTiming(391, 258)) { dut =>
-      dut.io.video.displayEnable.expect(true)
+      dut.io.timing.displayEnable.expect(true)
       dut.clock.step()
-      dut.io.video.displayEnable.expect(false)
+      dut.io.timing.displayEnable.expect(false)
     }
   }
 }

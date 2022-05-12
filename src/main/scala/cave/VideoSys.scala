@@ -51,11 +51,9 @@ class VideoSys extends Module {
     val options = OptionsIO()
     /** Video port */
     val video = VideoIO()
-    /** Change video mode strobe */
-    val changeVideoMode = Output(Bool())
   })
 
-  val video = withClockAndReset(io.videoClock, io.videoReset) {
+  val timing = withClockAndReset(io.videoClock, io.videoReset) {
     // Video timings
     val originalVideoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
     val compatibilityVideoTiming = Module(new VideoTiming(Config.compatibilityVideoTimingConfig))
@@ -63,18 +61,29 @@ class VideoSys extends Module {
     // Changing the CRT offset value during the display region can momentarily alter the screen
     // dimensions, which may in turn cause issues with the video FIFO. To avoid this problem, the
     // offset value must be latched during a VSYNC.
-    originalVideoTiming.io.offset := RegEnable(io.options.offset, originalVideoTiming.io.video.vSync)
-    compatibilityVideoTiming.io.offset := RegEnable(io.options.offset, compatibilityVideoTiming.io.video.vSync)
+    originalVideoTiming.io.offset := RegEnable(io.options.offset, originalVideoTiming.io.timing.vSync)
+    compatibilityVideoTiming.io.offset := RegEnable(io.options.offset, compatibilityVideoTiming.io.timing.vSync)
 
     // The compatibility option should only be latched during a VBLANK, to avoid any sudden changes
     // in the video timing.
-    val compatibilityReg = RegEnable(io.options.compatibility, originalVideoTiming.io.video.vBlank && compatibilityVideoTiming.io.video.vBlank)
+    val compatibilityReg = RegEnable(io.options.compatibility, originalVideoTiming.io.timing.vBlank && compatibilityVideoTiming.io.timing.vBlank)
 
     // Select original or compatibility video timing
-    Mux(compatibilityReg, compatibilityVideoTiming.io.video, originalVideoTiming.io.video)
+    Mux(compatibilityReg, compatibilityVideoTiming.io.timing, originalVideoTiming.io.timing)
   }
 
+  val video = Wire(new VideoIO)
+  video.clock := io.videoClock
+  video.reset := io.videoReset
+  video.clockEnable := timing.clockEnable
+  video.displayEnable := timing.displayEnable
+  video.changeMode := io.options.compatibility ^ RegNext(io.options.compatibility)
+  video.pos := timing.pos
+  video.hSync := timing.hSync
+  video.vSync := timing.vSync
+  video.hBlank := timing.hBlank
+  video.vBlank := timing.vBlank
+
   // Outputs
-  io.video := video
-  io.changeVideoMode := io.options.compatibility ^ RegNext(io.options.compatibility)
+  io.video <> video
 }

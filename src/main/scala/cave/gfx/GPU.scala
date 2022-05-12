@@ -43,10 +43,6 @@ import chisel3.util._
 /** Graphics processing unit (GPU). */
 class GPU extends Module {
   val io = IO(new Bundle {
-    /** Video clock domain */
-    val videoClock = Input(Clock())
-    /** Video reset */
-    val videoReset = Input(Bool())
     /** Video port */
     val video = Flipped(VideoIO())
     /** Video registers */
@@ -77,7 +73,7 @@ class GPU extends Module {
   spriteProcessor.io.bank := io.videoRegs.spriteBank
   spriteProcessor.io.frameBuffer <> io.spriteFrameBuffer
 
-  withClockAndReset(io.videoClock, io.videoReset) {
+  withClockAndReset(io.video.clock, io.video.reset) {
     // Layer 0 processor
     val layer0Processor = Module(new TilemapProcessor)
     layer0Processor.io.video <> io.video
