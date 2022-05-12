@@ -289,9 +289,11 @@ class Cave extends Module {
     map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     map(0x500000 to 0x500fff).readWriteMem(layerRam16x16(0).io.portA)
-    map(0x501000 to 0x507fff).ignore()
+    map(0x501000 to 0x503fff).ignore()
+    map(0x504000 to 0x507fff).readWriteMem(layerRam8x8(0).io.portA)
     map(0x600000 to 0x600fff).readWriteMem(layerRam16x16(1).io.portA)
-    map(0x601000 to 0x607fff).ignore()
+    map(0x601000 to 0x603fff).ignore()
+    map(0x604000 to 0x607fff).readWriteMem(layerRam8x8(1).io.portA)
     // Access to address 0x5fxxxx occurs during the attract loop on the air stage at frame 9355
     // (i.e. after roughly 150 sec). The game is accessing data relative to a layer 1 address and
     // underflows. These accesses do nothing, but should be acknowledged in order not to block the
