@@ -58,8 +58,10 @@ import chisel3.util.ShiftRegister
  */
 class SystemFrameBuffer extends Module {
   val io = IO(new Bundle {
-    /** Enables the system frame buffer */
+    /** Enable the frame buffer */
     val enable = Input(Bool())
+    /** Rotate the frame buffer 90 degress */
+    val rotate = Input(Bool())
     /** Disable the frame buffer output */
     val forceBlank = Input(Bool())
     /** Video port */
@@ -83,7 +85,7 @@ class SystemFrameBuffer extends Module {
   io.frameBufferCtrl.configure(
     baseAddr = pageFlipper.io.addrRead,
     enable = io.enable,
-    rotate = true.B,
+    rotate = io.rotate,
     forceBlank = io.forceBlank
   )
 

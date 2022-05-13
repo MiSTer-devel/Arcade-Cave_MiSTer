@@ -144,7 +144,8 @@ class Main extends Module {
 
   // System frame buffer
   val systemFrameBuffer = Module(new SystemFrameBuffer)
-  systemFrameBuffer.io.enable := io.options.rotate // only enable during rotated HDMI output
+  systemFrameBuffer.io.enable := memSys.io.ready
+  systemFrameBuffer.io.rotate := io.options.rotate
   systemFrameBuffer.io.forceBlank := !memSys.io.ready
   systemFrameBuffer.io.video <> videoSys.io.video
   systemFrameBuffer.io.frameBufferCtrl <> io.frameBufferCtrl

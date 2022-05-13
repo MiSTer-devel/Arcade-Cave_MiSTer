@@ -60,7 +60,7 @@ import chisel3.util._
  */
 class SpriteFrameBuffer extends Module {
   val io = IO(new Bundle {
-    /** Enables the sprite frame buffer */
+    /** Enable the frame buffer */
     val enable = Input(Bool())
     /** Asserted when the sprite processor is busy */
     val spriteProcessorBusy = Input(Bool())
