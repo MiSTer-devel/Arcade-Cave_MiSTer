@@ -66,11 +66,11 @@ class DDR(config: Config) extends Module {
   )
 
   // Control signals
-  val read = stateReg === State.idle && io.mem.rd && !io.ddr.waitReq
-  val write = stateReg === State.idle && io.mem.wr && !io.ddr.waitReq
-  val burstCounterEnable = write ||
-    (stateReg === State.writeWait && !io.ddr.waitReq) ||
-    (stateReg === State.readWait && io.ddr.valid)
+  val read = stateReg === State.idle && io.mem.rd
+  val write = (stateReg === State.idle || stateReg === State.writeWait) && io.mem.wr
+  val effectiveRead = read && !io.ddr.waitReq
+  val effectiveWrite = write && !io.ddr.waitReq
+  val burstCounterEnable = (stateReg === State.readWait && io.ddr.valid) || effectiveWrite
 
   // Burst counter
   val (burstCounter, burstCounterWrap) = Counter.dynamic(burstLength, burstCounterEnable)
@@ -78,8 +78,8 @@ class DDR(config: Config) extends Module {
   // FSM
   stateReg := MuxCase(stateReg, Seq(
     burstCounterWrap -> State.idle,
-    read -> State.readWait,
-    write -> State.writeWait
+    effectiveRead -> State.readWait,
+    effectiveWrite -> State.writeWait
   ))
 
   // Connect I/O ports
@@ -87,8 +87,8 @@ class DDR(config: Config) extends Module {
 
   // Outputs
   io.mem.burstDone := burstCounterWrap
-  io.ddr.rd := io.mem.rd && stateReg =/= State.readWait
-  io.ddr.wr := io.mem.wr || stateReg === State.writeWait
+  io.ddr.rd := read
+  io.ddr.wr := write
   io.ddr.burstLength := burstLength
   io.debug.burstCounter := burstCounter
 

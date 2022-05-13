@@ -170,7 +170,6 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
       dut.clock.step()
 
       // Data
-      dut.io.mem.wr.poke(false)
       dut.io.mem.din.poke(0x5678)
       dut.io.ddr.wr.expect(true)
       dut.io.ddr.din.expect(0x5678)
@@ -178,6 +177,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
       dut.clock.step()
 
       // Done
+      dut.io.mem.wr.poke(false)
       dut.io.ddr.wr.expect(false)
       dut.io.mem.burstDone.expect(false)
     }
@@ -193,6 +193,22 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
       dut.io.ddr.burstLength.expect(2)
       dut.clock.step(2)
       dut.io.ddr.burstLength.expect(1)
+    }
+  }
+
+  it should "hold the burst counter when the write signal is deasserted" in {
+    test(mkDDR()) { dut =>
+      dut.io.mem.burstLength.poke(2)
+      dut.io.mem.wr.poke(true)
+      dut.io.debug.burstCounter.expect(0)
+      dut.clock.step()
+      dut.io.mem.wr.poke(false)
+      dut.io.debug.burstCounter.expect(1)
+      dut.clock.step()
+      dut.io.mem.wr.poke(true)
+      dut.io.debug.burstCounter.expect(1)
+      dut.clock.step()
+      dut.io.debug.burstCounter.expect(0)
     }
   }
 
