@@ -125,7 +125,7 @@ class Cave extends Module {
   spriteRam.io.portA.default()
 
   // Layer VRAM (8x8)
-  val layerRam8x8 = 0.until(Config.LAYER_COUNT).map { _ =>
+  val vram8x8 = 0.until(Config.LAYER_COUNT).map { _ =>
     val ram = Module(new TrueDualPortRam(
       addrWidthA = Config.LAYER_8x8_RAM_ADDR_WIDTH,
       dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
@@ -139,7 +139,7 @@ class Cave extends Module {
   }
 
   // Layer VRAM (16x16)
-  val layerRam16x16 = 0.until(Config.LAYER_COUNT).map { _ =>
+  val vram16x16 = 0.until(Config.LAYER_COUNT).map { _ =>
     val ram = Module(new TrueDualPortRam(
       addrWidthA = Config.LAYER_16x16_RAM_ADDR_WIDTH,
       dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
@@ -199,8 +199,8 @@ class Cave extends Module {
     gpu.io.layerCtrl(i).rowScrollEnable := io.options.rowScrollEnable
     gpu.io.layerCtrl(i).rowSelectEnable := io.options.rowSelectEnable
     gpu.io.layerCtrl(i).regs := withClock(io.video.clock) { ShiftRegister(Layer.decode(layerRegs(i).io.dout), 2) }
-    gpu.io.layerCtrl(i).vram8x8 <> layerRam8x8(i).io.portB
-    gpu.io.layerCtrl(i).vram16x16 <> layerRam16x16(i).io.portB
+    gpu.io.layerCtrl(i).vram8x8 <> vram8x8(i).io.portB
+    gpu.io.layerCtrl(i).vram16x16 <> vram16x16(i).io.portB
     gpu.io.layerCtrl(i).lineRam <> lineRam(i).io.portB
     gpu.io.layerCtrl(i).tileRom <> ClockDomain.syncronize(io.video.clock, io.rom.layerTileRom(i))
   }
@@ -258,16 +258,12 @@ class Cave extends Module {
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-    map(0x500000 to 0x500fff).readWriteMem(layerRam16x16(0).io.portA)
-    map(0x501000 to 0x5017ff).readWriteMem(lineRam(0).io.portA)
-    map(0x501800 to 0x507fff).ignore()
-    map(0x600000 to 0x600fff).readWriteMem(layerRam16x16(1).io.portA)
-    map(0x601000 to 0x6017ff).readWriteMem(lineRam(1).io.portA)
-    map(0x601800 to 0x607fff).ignore()
+
+    Cave.vramMap(0x500000, map, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
+    Cave.vramMap(0x600000, map, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
+    Cave.vramMap(0x710000, map, vram8x8(2).io.portA, vram16x16(2).io.portA, lineRam(2).io.portA)
+
     map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
-    map(0x710000 to 0x710fff).readWriteMem(layerRam16x16(2).io.portA)
-    map(0x711000 to 0x7117ff).readWriteMem(lineRam(2).io.portA)
-    map(0x711800 to 0x717fff).ignore()
     map(0x800000 to 0x80000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
     map(0x800000 to 0x800007).r { (_, offset) =>
@@ -288,12 +284,10 @@ class Cave extends Module {
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-    map(0x500000 to 0x500fff).readWriteMem(layerRam16x16(0).io.portA)
-    map(0x501000 to 0x503fff).ignore()
-    map(0x504000 to 0x507fff).readWriteMem(layerRam8x8(0).io.portA)
-    map(0x600000 to 0x600fff).readWriteMem(layerRam16x16(1).io.portA)
-    map(0x601000 to 0x603fff).ignore()
-    map(0x604000 to 0x607fff).readWriteMem(layerRam8x8(1).io.portA)
+
+    Cave.vramMap(0x500000, map, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
+    Cave.vramMap(0x600000, map, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
+
     // Access to address 0x5fxxxx occurs during the attract loop on the air stage at frame 9355
     // (i.e. after roughly 150 sec). The game is accessing data relative to a layer 1 address and
     // underflows. These accesses do nothing, but should be acknowledged in order not to block the
@@ -303,7 +297,10 @@ class Cave extends Module {
     // simpler to write (no need to handle edge cases). These accesses are simply ignored by the
     // hardware.
     map(0x5f0000 to 0x5fffff).ignore()
-    map(0x700000 to 0x70ffff).readWriteMemT(layerRam8x8(2).io.portA)(a => a(12, 0))
+
+    // DoDonPachi only uses 8x8 VRAM for layer 2, with no line RAM
+    map(0x700000 to 0x70ffff).readWriteMemT(vram8x8(2).io.portA)(a => a(12, 0))
+
     map(0x800000 to 0x80000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
     map(0x800000 to 0x800007).r { (_, offset) =>
@@ -326,18 +323,11 @@ class Cave extends Module {
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-    map(0x500000 to 0x500fff).readWriteMem(layerRam16x16(0).io.portA)
-    map(0x501000 to 0x5017ff).readWriteMem(lineRam(0).io.portA)
-    map(0x501800 to 0x503fff).ignore()
-    map(0x504000 to 0x507fff).readWriteMem(layerRam8x8(0).io.portA)
-    map(0x600000 to 0x600fff).readWriteMem(layerRam16x16(1).io.portA)
-    map(0x601000 to 0x6017ff).readWriteMem(lineRam(1).io.portA)
-    map(0x601800 to 0x603fff).ignore()
-    map(0x604000 to 0x607fff).readWriteMem(layerRam8x8(1).io.portA)
-    map(0x700000 to 0x700fff).readWriteMem(layerRam16x16(2).io.portA)
-    map(0x701000 to 0x7017ff).readWriteMem(lineRam(2).io.portA)
-    map(0x701800 to 0x703fff).ignore()
-    map(0x704000 to 0x707fff).readWriteMem(layerRam8x8(2).io.portA)
+
+    Cave.vramMap(0x500000, map, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
+    Cave.vramMap(0x600000, map, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
+    Cave.vramMap(0x700000, map, vram8x8(2).io.portA, vram16x16(2).io.portA, lineRam(2).io.portA)
+
     map(0x800000 to 0x80000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
     map(0x800000 to 0x800007).r { (_, offset) =>
@@ -366,18 +356,11 @@ class Cave extends Module {
     map(0x300008).w { (_, _, _) => frameStart := true.B }
     map(0x300010 to 0x300fff).ignore()
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-    map(0x500000 to 0x500fff).readWriteMem(layerRam16x16(0).io.portA)
-    map(0x501000 to 0x5017ff).readWriteMem(lineRam(0).io.portA)
-    map(0x501800 to 0x503fff).ignore()
-    map(0x504000 to 0x507fff).readWriteMem(layerRam8x8(0).io.portA)
-    map(0x600000 to 0x600fff).readWriteMem(layerRam16x16(1).io.portA)
-    map(0x601000 to 0x6017ff).readWriteMem(lineRam(1).io.portA)
-    map(0x601800 to 0x603fff).ignore()
-    map(0x604000 to 0x607fff).readWriteMem(layerRam8x8(1).io.portA)
-    map(0x700000 to 0x700fff).readWriteMem(layerRam16x16(2).io.portA)
-    map(0x701000 to 0x7017ff).readWriteMem(lineRam(2).io.portA)
-    map(0x701800 to 0x703fff).ignore()
-    map(0x704000 to 0x707fff).readWriteMem(layerRam8x8(2).io.portA)
+
+    Cave.vramMap(0x500000, map, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
+    Cave.vramMap(0x600000, map, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
+    Cave.vramMap(0x700000, map, vram8x8(2).io.portA, vram16x16(2).io.portA, lineRam(2).io.portA)
+
     map(0x800000 to 0x800003).readWriteMem(ymz.io.cpu)
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
@@ -395,10 +378,9 @@ class Cave extends Module {
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-    map(0x500000 to 0x500fff).readWriteMem(layerRam16x16(0).io.portA)
-    map(0x501000 to 0x5017ff).readWriteMem(lineRam(0).io.portA)
-    map(0x501800 to 0x503fff).ignore()
-    map(0x504000 to 0x507fff).readWriteMem(layerRam8x8(0).io.portA)
+
+    Cave.vramMap(0x500000, map, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
+
     map(0x600000 to 0x60000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x600000 to 0x600007).r { (_, offset) =>
       when(offset === 4.U) { videoIRQ := false.B }
@@ -441,5 +423,20 @@ object Cave {
     )
 
     (left, right)
+  }
+
+  /**
+   * Maps 8x8 VRAM, 16x16 VRAM, and line RAM to the given base address.
+   *
+   * @param baseAddr The base memory address.
+   * @param vram8x8 The 8x8 VRAM memory interface.
+   * @param vram16x16 The 16x16 VRAM memory interface.
+   * @param lineRam The line RAM memory interface.
+   */
+  private def vramMap(baseAddr: Int, map: MemMap, vram8x8: ReadWriteMemIO, vram16x16: ReadWriteMemIO, lineRam: ReadWriteMemIO): Unit = {
+    map((baseAddr + 0x0000) to (baseAddr + 0x0fff)).readWriteMem(vram16x16)
+    map((baseAddr + 0x1000) to (baseAddr + 0x17ff)).readWriteMem(lineRam)
+    map((baseAddr + 0x1800) to (baseAddr + 0x3fff)).ignore()
+    map((baseAddr + 0x4000) to (baseAddr + 0x7fff)).readWriteMem(vram8x8)
   }
 }
