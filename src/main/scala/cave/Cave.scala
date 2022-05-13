@@ -190,6 +190,8 @@ class Cave extends Module {
 
   // Graphics processor
   val gpu = Module(new GPU)
+  gpu.io.gameConfig <> io.gameConfig
+  gpu.io.options <> io.options
   gpu.io.video <> io.video
   gpu.io.videoRegs := VideoRegs.decode(videoRegs.io.dout)
   gpu.io.paletteRam <> paletteRam.io.portB
@@ -215,8 +217,6 @@ class Cave extends Module {
   gpu.io.spriteLineBuffer <> io.spriteLineBuffer
   gpu.io.spriteFrameBuffer <> io.spriteFrameBuffer
   gpu.io.systemFrameBuffer <> io.systemFrameBuffer
-  gpu.io.gameConfig <> io.gameConfig
-  gpu.io.options <> io.options
   gpu.io.rgb <> io.rgb
 
   // Set busy flag

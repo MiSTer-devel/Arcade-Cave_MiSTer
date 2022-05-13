@@ -43,6 +43,10 @@ import chisel3.util._
 /** Graphics processing unit (GPU). */
 class GPU extends Module {
   val io = IO(new Bundle {
+    /** Game config port */
+    val gameConfig = Input(GameConfig())
+    /** Options port */
+    val options = OptionsIO()
     /** Video port */
     val video = Flipped(VideoIO())
     /** Video registers */
@@ -59,10 +63,6 @@ class GPU extends Module {
     val spriteFrameBuffer = new SpriteFrameBufferIO
     /** System frame buffer port */
     val systemFrameBuffer = new SystemFrameBufferIO
-    /** Game config port */
-    val gameConfig = Input(GameConfig())
-    /** Options port */
-    val options = OptionsIO()
     /** RGB output */
     val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
   })
