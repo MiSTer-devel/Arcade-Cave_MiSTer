@@ -50,7 +50,7 @@ class SpriteDecoder extends Module {
     /** Tile ROM data port */
     val tileRom = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
     /** Pixel data port */
-    val pixelData = Flipped(DeqIO(Vec(Config.LARGE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W))))
+    val pixelData = Flipped(DeqIO(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.SPRITE_TILE_MAX_BPP.W))))
   })
 
   // Set 8BPP flag

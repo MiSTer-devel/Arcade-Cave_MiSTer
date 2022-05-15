@@ -57,7 +57,7 @@ class SpriteBlitter extends Module {
     /** Busy flag */
     val busy = Output(Bool())
     /** Pixel data port */
-    val pixelData = DeqIO(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
+    val pixelData = DeqIO(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.SPRITE_TILE_MAX_BPP.W)))
     /** Frame buffer port */
     val frameBuffer = new SpriteFrameBufferIO
   })
@@ -67,7 +67,7 @@ class SpriteBlitter extends Module {
   val configReg = RegEnable(io.config.bits, io.config.fire)
 
   // The PISO is used to buffer a single row of pixels to be copied to the frame buffer
-  val piso = Module(new PISO(Config.SPRITE_TILE_SIZE, Bits(Config.TILE_MAX_BPP.W)))
+  val piso = Module(new PISO(Config.SPRITE_TILE_SIZE, Bits(Config.SPRITE_TILE_MAX_BPP.W)))
   piso.io.wr := io.pixelData.fire
   piso.io.din := io.pixelData.bits
 

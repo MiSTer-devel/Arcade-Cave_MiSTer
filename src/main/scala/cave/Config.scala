@@ -56,60 +56,87 @@ object Config {
   /** The screen height in pixels */
   val SCREEN_HEIGHT = 240
 
-  /** The width of the pulse generated when a player presses the coin button */
-  val PLAYER_COIN_PULSE_WIDTH = (100000000 / CLOCK_PERIOD).ceil.toInt // 100ms
-
-  /** The base address of the IOCTL data stored in DDR. */
-  val IOCTL_DOWNLOAD_BASE_ADDR = 0x30000000
   /** The base address of the system frame buffer in DDR. */
   val SYSTEM_FRAME_BUFFER_BASE_ADDR = 0x24000000
   /** The base address of the sprite frame buffer in DDR. */
   val SPRITE_FRAME_BUFFER_BASE_ADDR = 0x24200000
+  /** The base address of the IOCTL data stored in DDR. */
+  val IOCTL_DOWNLOAD_BASE_ADDR = 0x30000000
 
+  /** The width of the pulse generated when a player presses the coin button */
+  val PLAYER_COIN_PULSE_WIDTH = (100000000 / CLOCK_PERIOD).ceil.toInt // 100ms
+
+  /** The width of the program ROM address bus */
   val PROG_ROM_ADDR_WIDTH = 20 // 1MB
+  /** The width of the program ROM data bus */
   val PROG_ROM_DATA_WIDTH = 16
 
+  /** The width of the sound ROM address bus */
   val SOUND_ROM_ADDR_WIDTH = 25
+  /** The width of the sound ROM data bus */
   val SOUND_ROM_DATA_WIDTH = 8
 
+  /** The width of the EEPROM address bus */
   val EEPROM_ADDR_WIDTH = 7 // 256B
+  /** The width of the EEPROM data bus */
   val EEPROM_DATA_WIDTH = 16
 
+  /** The width of the tile ROM address bus */
   val TILE_ROM_ADDR_WIDTH = 32
+  /** The width of the tile ROM data bus */
   val TILE_ROM_DATA_WIDTH = 64
 
+  /** The width of the main RAM address bus */
   val MAIN_RAM_ADDR_WIDTH = 15
+  /** The width of the main RAM address bus */
   val MAIN_RAM_DATA_WIDTH = 16
 
+  /** The width of the sprite RAM address bus (CPU-side) */
   val SPRITE_RAM_ADDR_WIDTH = 15
+  /** The width of the sprite RAM data bus (CPU-side) */
   val SPRITE_RAM_DATA_WIDTH = 16
+  /** The width of the sprite RAM address bus (GPU-side) */
   val SPRITE_RAM_GPU_ADDR_WIDTH = 12
+  /** The width of the sprite RAM data bus (GPU-side) */
   val SPRITE_RAM_GPU_DATA_WIDTH = 128
 
+  /** The width of the 8x8 VRAM address bus (CPU-side) */
   val LAYER_8x8_RAM_ADDR_WIDTH = 13
+  /** The width of the 8x8 VRAM address bus (GPU-side) */
   val LAYER_8x8_RAM_GPU_ADDR_WIDTH = 12
+  /** The width of the 16x16 VRAM address bus (CPU-side) */
   val LAYER_16x16_RAM_ADDR_WIDTH = 11
+  /** The width of the 16x16 VRAM address bus (GPU-side) */
   val LAYER_16x16_RAM_GPU_ADDR_WIDTH = 10
+  /** The width of the VRAM data bus (CPU-side) */
   val LAYER_RAM_DATA_WIDTH = 16
+  /** The width of the VRAM data bus (GPU-side) */
   val LAYER_RAM_GPU_DATA_WIDTH = 32
 
+  /** The width of the line RAM address bus (CPU-side) */
   val LINE_RAM_ADDR_WIDTH = 10
+  /** The width of the line RAM data bus (CPU-side) */
   val LINE_RAM_DATA_WIDTH = 16
+  /** The width of the line RAM data bus (GPU-side) */
   val LINE_RAM_GPU_ADDR_WIDTH = 9
+  /** The width of the line RAM data bus (GPU-side) */
   val LINE_RAM_GPU_DATA_WIDTH = 32
 
+  /** The width of the palette RAM address bus (CPU-side) */
   val PALETTE_RAM_ADDR_WIDTH = 15
+  /** The width of the palette RAM data bus (CPU-side) */
   val PALETTE_RAM_DATA_WIDTH = 16
+  /** The width of the palette RAM address bus (GPU-side) */
   val PALETTE_RAM_GPU_ADDR_WIDTH = 15
+  /** The width of the palette RAM data bus (GPU-side) */
   val PALETTE_RAM_GPU_DATA_WIDTH = 16
 
   /** The number of tilemap layers */
   val LAYER_COUNT = 3
+  /** The number of layer registers */
   val LAYER_REGS_COUNT = 3
-  val LAYER_REGS_GPU_DATA_WIDTH = 48
-
+  /** The number of video registers */
   val VIDEO_REGS_COUNT = 8
-  val VIDEO_REGS_GPU_DATA_WIDTH = 128
 
   /** The number of bits per color channel for the output RGB signal */
   val RGB_OUTPUT_BPP = 8
@@ -135,10 +162,13 @@ object Config {
   val PALETTE_WIDTH = 6
   /** The width of palette index (256 colors) */
   val COLOR_WIDTH = 8
-  /** The width of the layer index value */
-  val LAYER_INDEX_WIDTH = 2
   /** The width of the layer scroll value */
   val LAYER_SCROLL_WIDTH = 9
+
+  /** The size of a sprite tile in pixels */
+  val SPRITE_TILE_SIZE = 16
+  /** The maximum bit depth of a tile */
+  val SPRITE_TILE_MAX_BPP = 8
 
   /** The width of the graphics format value */
   val GFX_FORMAT_WIDTH = 2
@@ -150,16 +180,6 @@ object Config {
   val GFX_FORMAT_4BPP_MSB = 2
   /** 8BPP graphics format */
   val GFX_FORMAT_8BPP = 3
-
-  /** The maximum bit depth of a tile */
-  val TILE_MAX_BPP = 8
-
-  /** The size of a small tile in pixels */
-  val SMALL_TILE_SIZE = 8
-  /** The size of a large tile in pixels */
-  val LARGE_TILE_SIZE = 16
-  /** The size of a sprite tile in pixels */
-  val SPRITE_TILE_SIZE = 16
 
   /** YMZ280B configuration */
   val ymzConfig = YMZ280BConfig(
