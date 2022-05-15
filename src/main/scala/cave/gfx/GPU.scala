@@ -102,7 +102,7 @@ class GPU extends Module {
     colorMixer.io.paletteRam <> io.paletteRam
 
     // Read next pixel from the sprite line buffer
-    io.spriteLineBuffer.rd := io.video.clockEnable && io.video.displayEnable
+    io.spriteLineBuffer.rd := true.B // read-only
     io.spriteLineBuffer.addr := io.video.pos.x
 
     // Decode color mixer data and write it to the system frame buffer
