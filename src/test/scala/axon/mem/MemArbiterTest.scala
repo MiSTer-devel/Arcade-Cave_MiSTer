@@ -32,7 +32,6 @@
 
 package axon.mem
 
-import chisel3._
 import chiseltest._
 import org.scalatest._
 import flatspec.AnyFlatSpec
@@ -50,16 +49,19 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
       dut.io.in(1).addr.poke(2)
       dut.io.out.rd.expect(true)
       dut.io.out.addr.expect(1)
+      dut.io.chosen.expect(1)
 
       // Read 1
       dut.io.in(0).rd.poke(false)
       dut.io.out.rd.expect(true)
       dut.io.out.addr.expect(2)
+      dut.io.chosen.expect(2)
 
       // Done
       dut.io.in(1).rd.poke(false)
       dut.io.out.rd.expect(false)
       dut.io.out.addr.expect(0)
+      dut.io.chosen.expect(0)
     }
   }
 

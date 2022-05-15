@@ -48,6 +48,8 @@ class MemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
     val in = Flipped(Vec(n, BurstReadWriteMemIO(addrWidth, dataWidth)))
     /** Output port */
     val out = BurstReadWriteMemIO(addrWidth, dataWidth)
+    /** One-hot vector indicating which output was chosen */
+    val chosen = Output(UInt(n.W))
   })
 
   /**
@@ -72,7 +74,7 @@ class MemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
   val index = VecInit(PriorityEncoderOH(io.in.map(mem => mem.rd || mem.wr))).asUInt
 
   // Set the selected index value
-  val selectedIndex = Mux(pending, pendingIndex, index)
+  io.chosen := Mux(pending, pendingIndex, index)
 
   // Toggle the pending registers
   when(!pending && index.orR && !io.out.waitReq) {
@@ -83,7 +85,7 @@ class MemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
   }
 
   // Mux the selected input port to the output port
-  io.out <> BurstReadWriteMemIO.mux1H(selectedIndex, io.in)
+  io.out <> BurstReadWriteMemIO.mux1H(io.chosen, io.in)
 
-  printf(p"MemArbiter(selectedIndex: $selectedIndex, pending: $pending)\n")
+  printf(p"MemArbiter(selectedIndex: ${ io.chosen }, pending: $pending)\n")
 }
