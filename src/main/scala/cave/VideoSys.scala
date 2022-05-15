@@ -58,14 +58,14 @@ class VideoSys extends Module {
     val originalVideoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
     val compatibilityVideoTiming = Module(new VideoTiming(Config.compatibilityVideoTimingConfig))
 
-    // Changing the CRT offset value during the display region can momentarily alter the screen
-    // dimensions, which may in turn cause issues with the video FIFO. To avoid this problem, the
-    // offset value must be latched during a VSYNC.
+    // Changing the analog video offset during the display region can momentarily alter the screen
+    // dimensions, which may cause issues with other modules. If we latch the offset during a
+    // vertical sync, then we can avoid causing any problems.
     originalVideoTiming.io.offset := RegEnable(io.options.offset, originalVideoTiming.io.timing.vSync)
     compatibilityVideoTiming.io.offset := RegEnable(io.options.offset, compatibilityVideoTiming.io.timing.vSync)
 
-    // The compatibility option should only be latched during a VBLANK, to avoid any sudden changes
-    // in the video timing.
+    // The compatibility option is latched during a vertical blank to avoid any sudden changes in
+    // the video timing.
     val latchReg = RegEnable(io.options.compatibility, originalVideoTiming.io.timing.vBlank && compatibilityVideoTiming.io.timing.vBlank)
 
     // Select original or compatibility video timing
