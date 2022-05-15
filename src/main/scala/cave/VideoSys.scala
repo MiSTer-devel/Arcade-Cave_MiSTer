@@ -66,10 +66,13 @@ class VideoSys extends Module {
 
     // The compatibility option should only be latched during a VBLANK, to avoid any sudden changes
     // in the video timing.
-    val compatibilityReg = RegEnable(io.options.compatibility, originalVideoTiming.io.timing.vBlank && compatibilityVideoTiming.io.timing.vBlank)
+    val latchReg = RegEnable(io.options.compatibility, originalVideoTiming.io.timing.vBlank && compatibilityVideoTiming.io.timing.vBlank)
 
     // Select original or compatibility video timing
-    Mux(compatibilityReg, compatibilityVideoTiming.io.timing, originalVideoTiming.io.timing)
+    val timing = Mux(latchReg, compatibilityVideoTiming.io.timing, originalVideoTiming.io.timing)
+
+    // Register all video timing signals
+    RegNext(timing)
   }
 
   val video = Wire(new VideoIO)
