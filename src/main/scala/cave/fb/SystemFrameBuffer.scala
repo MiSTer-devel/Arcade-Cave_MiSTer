@@ -93,6 +93,7 @@ class SystemFrameBuffer extends Module {
   val queue = withClockAndReset(io.video.clock, io.video.reset) {
     Module(new RequestQueue(Config.SYSTEM_FRAME_BUFFER_REQUEST_QUEUE_DEPTH))
   }
+  queue.io.enable := io.enable
   queue.io.readClock := clock // requests are read from the queue in the system clock domain
   queue.io.frameBuffer <> io.frameBuffer
   queue.io.ddr.mapAddr(_ + pageFlipper.io.addrWrite) <> io.ddr

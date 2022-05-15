@@ -46,6 +46,8 @@ import chisel3._
  */
 class RequestQueue(depth: Int) extends Module {
   val io = IO(new Bundle {
+    /** Enable the request queue */
+    val enable = Input(Bool())
     /** The read clock domain */
     val readClock = Input(Clock())
     /** Frame buffer port */
@@ -63,7 +65,7 @@ class RequestQueue(depth: Int) extends Module {
   fifo.io.enq.bits := io.frameBuffer.asUInt
 
   // FIFO -> DDR
-  io.ddr.wr := fifo.io.deq.valid
+  io.ddr.wr := io.enable && fifo.io.deq.valid
   fifo.io.deq.ready := !io.ddr.waitReq
   val request = fifo.io.deq.bits.asTypeOf(new SystemFrameBufferIO)
   io.ddr.burstLength := 1.U
