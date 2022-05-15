@@ -41,5 +41,5 @@
     <part>00</part>
   </rom>
 
-  <buttons names="B1,B2,B3,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />
+  <buttons names="Normal/Powerful Shot,Bomber,Full-Auto,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />
 </misterromdescription>
