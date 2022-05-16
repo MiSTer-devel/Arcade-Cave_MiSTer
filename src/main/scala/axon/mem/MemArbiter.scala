@@ -61,7 +61,7 @@ class MemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
    * @return The output port.
    */
   def connect(in: BurstReadWriteMemIO*): BurstReadWriteMemIO = {
-    assert(in.length == n, s"There must be exactly ${n} input ports")
+    assert(in.length == n, s"There must be exactly $n input ports")
     in.zipWithIndex.foreach { case (port, i) => port <> io.in(i) }
     io.out
   }
