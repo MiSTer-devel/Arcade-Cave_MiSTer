@@ -58,25 +58,16 @@ class MemSysTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
       dut.clock.step(2)
       dut.io.ddr.rd.expect(true)
       dut.io.ddr.burstLength.expect(1.U)
-      dut.io.sdram.rd.expect(true)
-      dut.io.sdram.burstLength.expect(4.U)
 
       // DDR valid
       dut.io.ddr.valid.poke(true)
       dut.clock.step(2)
       dut.io.ddr.valid.poke(false)
 
-      // SDRAM valid
-      dut.io.sdram.valid.poke(true)
-      dut.clock.step(5)
-      dut.io.sdram.valid.poke(false)
-
       // Burst done
       dut.io.ddr.burstDone.poke(true)
-      dut.io.sdram.burstDone.poke(true)
       dut.clock.step()
       dut.io.ddr.burstDone.poke(false)
-      dut.io.sdram.burstDone.poke(false)
 
       // Download & evict
       dut.io.ioctl.wr.poke(true)
@@ -87,8 +78,6 @@ class MemSysTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
       dut.clock.step(2)
       dut.io.ddr.wr.expect(true)
       dut.io.ddr.burstLength.expect(1.U)
-      dut.io.sdram.wr.expect(true)
-      dut.io.sdram.burstLength.expect(4.U)
     }
   }
 }
