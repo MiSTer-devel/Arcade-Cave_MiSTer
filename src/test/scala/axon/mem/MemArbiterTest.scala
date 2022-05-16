@@ -42,7 +42,7 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
 
   it should "mux the request to the input port with the highest priority" in {
     test(mkMemArbiter) { dut =>
-      // Read 0+1
+      // read 0+1
       dut.io.in(0).rd.poke(true)
       dut.io.in(0).addr.poke(1)
       dut.io.in(1).rd.poke(true)
@@ -51,13 +51,13 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
       dut.io.out.addr.expect(1)
       dut.io.chosen.expect(1)
 
-      // Read 1
+      // read 1
       dut.io.in(0).rd.poke(false)
       dut.io.out.rd.expect(true)
       dut.io.out.addr.expect(2)
       dut.io.chosen.expect(2)
 
-      // Done
+      // done
       dut.io.in(1).rd.poke(false)
       dut.io.out.rd.expect(false)
       dut.io.out.addr.expect(0)
@@ -65,17 +65,17 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
     }
   }
 
-  it should "assert the wait signal" in {
+  it should "assert the wait signal when the output is busy" in {
     test(mkMemArbiter) { dut =>
       dut.io.out.waitReq.poke(true)
 
-      // Read 0+1
+      // read 0+1
       dut.io.in(0).rd.poke(true)
       dut.io.in(1).rd.poke(true)
       dut.io.in(0).waitReq.expect(true)
       dut.io.in(1).waitReq.expect(true)
 
-      // Wait 0
+      // wait 0
       dut.io.out.waitReq.poke(false)
       dut.io.in(0).waitReq.expect(false)
       dut.io.in(1).waitReq.expect(true)
@@ -83,13 +83,13 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
       dut.io.in(0).waitReq.expect(true)
       dut.io.in(1).waitReq.expect(true)
 
-      // Read 1
+      // read 1
       dut.io.in(0).rd.poke(false)
       dut.io.in(1).rd.poke(true)
       dut.io.in(0).waitReq.expect(true)
       dut.io.in(1).waitReq.expect(true)
 
-      // Wait 1
+      // wait 1
       dut.io.out.waitReq.poke(false)
       dut.io.in(0).waitReq.expect(true)
       dut.io.in(1).waitReq.expect(false)
@@ -101,12 +101,12 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
 
   it should "assert the valid signal" in {
     test(mkMemArbiter) { dut =>
-      // Read 0+1
+      // read 0+1
       dut.io.in(0).rd.poke(true)
       dut.io.in(1).rd.poke(true)
       dut.clock.step()
 
-      // Valid 0
+      // valid 0
       dut.io.out.valid.poke(true)
       dut.io.out.dout.poke(1)
       dut.io.in(0).valid.expect(true)
@@ -114,7 +114,7 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
       dut.io.in(0).dout.expect(1)
       dut.clock.step()
 
-      // Burst done
+      // valid 1, burst done
       dut.io.out.burstDone.poke(true)
       dut.io.out.dout.poke(2)
       dut.io.in(0).valid.expect(true)
@@ -125,25 +125,25 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
       dut.io.in(0).rd.poke(false)
       dut.clock.step()
 
-      // Valid 1
+      // valid 2
       dut.io.in(1).rd.poke(false)
       dut.io.out.valid.poke(true)
-      dut.io.out.dout.poke(2)
+      dut.io.out.dout.poke(3)
       dut.io.in(0).valid.expect(false)
       dut.io.in(1).valid.expect(true)
-      dut.io.in(1).dout.expect(2)
+      dut.io.in(1).dout.expect(3)
       dut.io.out.valid.poke(false)
     }
   }
 
   it should "assert the burst done signal" in {
     test(mkMemArbiter) { dut =>
-      // Read 0+1
+      // read 0+1
       dut.io.in(0).rd.poke(true)
       dut.io.in(1).rd.poke(true)
       dut.clock.step()
 
-      // Burst done 0
+      // burst done 0
       dut.io.out.burstDone.poke(true)
       dut.io.in(0).burstDone.expect(true)
       dut.io.in(1).burstDone.expect(false)
@@ -151,7 +151,7 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
       dut.io.in(0).rd.poke(false)
       dut.clock.step()
 
-      // Burst done 1
+      // burst done 1
       dut.io.in(0).burstDone.expect(false)
       dut.io.in(1).burstDone.expect(true)
       dut.clock.step()
@@ -161,13 +161,25 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
     }
   }
 
-  it should "write a word (burst=1)" in {
+  it should "assert the busy signal for pending requests" in {
+    test(mkMemArbiter) { dut =>
+      dut.io.in(0).wr.poke(true)
+      dut.io.busy.expect(false)
+      dut.clock.step()
+      dut.io.out.burstDone.poke(true)
+      dut.io.busy.expect(true)
+      dut.clock.step()
+      dut.io.busy.expect(false)
+    }
+  }
+
+  it should "not assert the busy signal for a request with unit burst length" in {
     test(mkMemArbiter) { dut =>
       dut.io.in(0).wr.poke(true)
       dut.io.out.burstDone.poke(true)
-      dut.io.pending.expect(false)
+      dut.io.busy.expect(false)
       dut.clock.step()
-      dut.io.pending.expect(false)
+      dut.io.busy.expect(false)
     }
   }
 }

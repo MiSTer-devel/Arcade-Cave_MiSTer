@@ -36,7 +36,7 @@ import chisel3._
 import chisel3.util._
 
 /**
- * The memory arbiter routes requests from multiple input ports to a single output port.
+ * The memory arbiter multiplexes requests from multiple input ports to a single output port.
  *
  * @param n         Then number of inputs.
  * @param addrWidth The width of the address bus.
@@ -44,14 +44,14 @@ import chisel3.util._
  */
 class MemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
   val io = IO(new Bundle {
+    /** Asserted when the arbiter has a pending request */
+    val busy = Output(Bool())
+    /** One-hot vector indicating which output was chosen */
+    val chosen = Output(UInt(n.W))
     /** Input ports */
     val in = Flipped(Vec(n, BurstReadWriteMemIO(addrWidth, dataWidth)))
     /** Output port */
     val out = BurstReadWriteMemIO(addrWidth, dataWidth)
-    /** Asserted when the arbiter has a pending request */
-    val pending = Output(Bool())
-    /** One-hot vector indicating which output was chosen */
-    val chosen = Output(UInt(n.W))
   })
 
   /**
@@ -69,27 +69,30 @@ class MemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
   }
 
   // Registers
-  val pending = RegInit(false.B)
-  val pendingIndex = RegInit(0.U)
+  val busyReg = RegInit(false.B)
+  val indexReg = RegInit(0.U)
 
   // Encode input requests to a one-hot encoded value
   val index = VecInit(PriorityEncoderOH(io.in.map(mem => mem.rd || mem.wr))).asUInt
 
-  // Set the selected index value
-  val chosen = Mux(pending, pendingIndex, index)
+  // Set the chosen index
+  val chosen = Mux(busyReg, indexReg, index)
 
-  // Toggle the pending registers
+  // Assert the effective request signal when a request is accepted by the output port
+  val effectiveRequest = !busyReg && index.orR && !io.out.waitReq
+
+  // Toggle the busy register
   when(io.out.burstDone) {
-    pending := false.B
-  }.elsewhen(!pending && index.orR && !io.out.waitReq) {
-    pending := true.B
-    pendingIndex := index
+    busyReg := false.B
+  }.elsewhen(effectiveRequest) {
+    busyReg := true.B
+    indexReg := index
   }
 
   // Outputs
-  io.out <> BurstReadWriteMemIO.mux1H(chosen, io.in)
-  io.pending := pending
+  io.busy := busyReg
   io.chosen := chosen
+  io.out <> BurstReadWriteMemIO.mux1H(chosen, io.in)
 
-  printf(p"MemArbiter(selectedIndex: $chosen , pending: $pending)\n")
+  printf(p"MemArbiter(chosen: $chosen, busy: $busyReg)\n")
 }
