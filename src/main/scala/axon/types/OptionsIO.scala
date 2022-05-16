@@ -58,6 +58,13 @@ class OptionsIO extends Bundle {
   val rowScrollEnable = Input(Bool())
   /** Enable the row select effect */
   val rowSelectEnable = Input(Bool())
+  /** Frame buffer enable flags */
+  val frameBufferEnable = Input(new Bundle {
+    /** Enable the sprite frame buffer */
+    val sprite = Input(Bool())
+    /** Enable the system frame buffer */
+    val system = Input(Bool())
+  })
   /** Game index */
   val gameIndex = Input(UInt(OptionsIO.GAME_INDEX_WIDTH.W))
 }
