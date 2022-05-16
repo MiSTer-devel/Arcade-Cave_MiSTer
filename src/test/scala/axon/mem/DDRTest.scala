@@ -49,7 +49,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
 
   it should "read from DDR memory (burst=1)" in {
     test(mkDDR()) { dut =>
-      // Request
+      // request
       dut.io.mem.burstLength.poke(1)
       dut.io.mem.rd.poke(true)
       dut.io.mem.addr.poke(1)
@@ -58,7 +58,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
       dut.clock.step()
       dut.io.ddr.rd.expect(false)
 
-      // Data
+      // data
       dut.io.mem.rd.poke(false)
       dut.io.ddr.valid.poke(true)
       dut.io.ddr.dout.poke(0x1234)
@@ -67,7 +67,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
       dut.io.mem.dout.expect(0x1234)
       dut.clock.step()
 
-      // Done
+      // done
       dut.io.ddr.rd.expect(false)
       dut.io.mem.burstDone.expect(false)
     }
@@ -75,7 +75,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
 
   it should "read from DDR memory (burst=2)" in {
     test(mkDDR()) { dut =>
-      // Request
+      // request
       dut.io.mem.burstLength.poke(2)
       dut.io.mem.rd.poke(true)
       dut.io.mem.addr.poke(1)
@@ -84,7 +84,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
       dut.clock.step()
       dut.io.ddr.rd.expect(false)
 
-      // Data
+      // data
       dut.io.mem.rd.poke(false)
       dut.io.ddr.valid.poke(true)
       dut.io.ddr.dout.poke(0x1234)
@@ -97,7 +97,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
       dut.io.mem.dout.expect(0x5678)
       dut.clock.step()
 
-      // Done
+      // done
       dut.io.ddr.rd.expect(false)
       dut.io.mem.burstDone.expect(false)
     }
@@ -140,7 +140,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
 
   it should "write to DDR memory (burst=1)" in {
     test(mkDDR()) { dut =>
-      // Request
+      // request
       dut.io.mem.burstLength.poke(1)
       dut.io.mem.wr.poke(true)
       dut.io.mem.addr.poke(1)
@@ -152,7 +152,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
       dut.clock.step()
       dut.io.mem.wr.poke(false)
 
-      // Done
+      // done
       dut.io.ddr.wr.expect(false)
       dut.io.mem.burstDone.expect(false)
     }
@@ -160,7 +160,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
 
   it should "write to DDR memory (burst=2)" in {
     test(mkDDR()) { dut =>
-      // Request
+      // request
       dut.io.mem.burstLength.poke(2)
       dut.io.mem.wr.poke(true)
       dut.io.mem.addr.poke(1)
@@ -170,14 +170,14 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
       dut.io.ddr.din.expect(0x1234)
       dut.clock.step()
 
-      // Data
+      // data
       dut.io.mem.din.poke(0x5678)
       dut.io.ddr.wr.expect(true)
       dut.io.ddr.din.expect(0x5678)
       dut.io.mem.burstDone.expect(true)
       dut.clock.step()
 
-      // Done
+      // done
       dut.io.mem.wr.poke(false)
       dut.io.ddr.wr.expect(false)
       dut.io.mem.burstDone.expect(false)
