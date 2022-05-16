@@ -173,8 +173,8 @@ class MemSys extends Module {
   ddrArbiter.connect(
     ddrDownloadCache.io.out.mapAddr(_ + Config.IOCTL_DOWNLOAD_BASE_ADDR.U),
     copyDownloadDma.io.in.mapAddr(_ + Config.IOCTL_DOWNLOAD_BASE_ADDR.U).asBurstReadWriteMemIO,
-    io.spriteLineBuffer.asBurstReadWriteMemIO,
     io.systemFrameBuffer.asBurstReadWriteMemIO,
+    io.spriteLineBuffer.asBurstReadWriteMemIO,
     io.spriteFrameBuffer.asBurstReadWriteMemIO,
     io.rom.spriteTileRom.mapAddr(_ + io.gameConfig.sprite.romOffset + Config.IOCTL_DOWNLOAD_BASE_ADDR.U).asBurstReadWriteMemIO
   ) <> io.ddr
