@@ -148,6 +148,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
       dut.io.ddr.wr.expect(true)
       dut.io.ddr.addr.expect(1)
       dut.io.ddr.din.expect(0x1234)
+      dut.io.mem.burstDone.expect(true)
       dut.clock.step()
       dut.io.mem.wr.poke(false)
 
