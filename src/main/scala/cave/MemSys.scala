@@ -40,20 +40,6 @@ import axon.mister._
 import cave.types._
 import chisel3._
 
-/** A bundle that contains all the ROMs. */
-class RomIO extends Bundle {
-  /** Program ROM port */
-  val progRom = new ProgRomIO
-  /** Sound ROM port */
-  val soundRom = new SoundRomIO
-  /** EEPROM port */
-  val eeprom = new EEPROMIO
-  /** Layer tile ROM port */
-  val layerTileRom = Vec(Config.LAYER_COUNT, new LayerRomIO)
-  /** Sprite tile ROM port */
-  val spriteTileRom = new SpriteRomIO
-}
-
 /** The memory subsystem routes memory requests to either DDR or SDRAM. */
 class MemSys extends Module {
   val io = IO(new Bundle {
