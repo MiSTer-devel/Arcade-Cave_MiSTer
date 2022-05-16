@@ -87,11 +87,8 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   val numTilesReg = RegEnable(spriteReg.cols * spriteReg.rows, stateReg === State.check)
   val burstPendingReg = RegInit(false.B)
 
-  // The FIFO is used to buffer the raw data read from the tile ROM.
-  //
-  // The queue is configured in show-ahead mode, which means there will be valid output as soon as
-  // an element has been written to the queue.
-  val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), SpriteProcessor.FIFO_DEPTH, flow = true, hasFlush = true))
+  // The FIFO is used to buffer tile ROM data to be processed by the sprite decoder
+  val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), SpriteProcessor.FIFO_DEPTH, useSyncReadMem = true, hasFlush = true))
   fifo.flush := stateReg === State.idle
 
   // Counters

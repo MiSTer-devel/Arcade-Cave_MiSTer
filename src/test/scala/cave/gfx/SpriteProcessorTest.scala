@@ -157,7 +157,7 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
       dut.io.ctrl.tileRom.burstDone.poke(true)
       waitForDone(dut)
       dut.io.ctrl.busy.expect(true)
-      dut.clock.step(244)
+      dut.clock.step(245)
       dut.io.ctrl.busy.expect(false)
     }
   }
