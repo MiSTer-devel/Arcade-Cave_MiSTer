@@ -116,10 +116,14 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
 
       // Burst done
       dut.io.out.burstDone.poke(true)
-      dut.clock.step()
-      dut.io.in(0).rd.poke(false)
+      dut.io.out.dout.poke(2)
+      dut.io.in(0).valid.expect(true)
+      dut.io.in(1).valid.expect(false)
+      dut.io.in(0).dout.expect(2)
       dut.clock.step()
       dut.io.out.burstDone.poke(false)
+      dut.io.in(0).rd.poke(false)
+      dut.clock.step()
 
       // Valid 1
       dut.io.in(1).rd.poke(false)
@@ -154,6 +158,16 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
       dut.io.in(1).rd.poke(false)
       dut.io.in(0).burstDone.expect(false)
       dut.io.in(1).burstDone.expect(false)
+    }
+  }
+
+  it should "write a word (burst=1)" in {
+    test(mkMemArbiter) { dut =>
+      dut.io.in(0).wr.poke(true)
+      dut.io.out.burstDone.poke(true)
+      dut.io.pending.expect(false)
+      dut.clock.step()
+      dut.io.pending.expect(false)
     }
   }
 }
