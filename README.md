@@ -1,6 +1,6 @@
 # Cave 68k
 
-This project contains the MiSTer core for Cave's first-generation 68k arcade hardware. 
+This project contains the MiSTer core for Cave's first-generation 68k arcade hardware.
 
 ![23](https://user-images.githubusercontent.com/32810066/126911397-e54b786a-39ff-4200-8fdb-8750d1b40976.png)
 
@@ -10,9 +10,9 @@ This project contains the MiSTer core for Cave's first-generation 68k arcade har
 |------|---------|----------|
 [**Do Donpachi**](https://en.wikipedia.org/wiki/DoDonPachi) | Implemented | Yes |
 [**ESP Ra. De.**](https://en.wikipedia.org/wiki/ESP_Ra.De.) | Implemented | Yes |
-[**Dangun Feveron**](https://en.wikipedia.org/wiki/Dangun_Feveron) | **W.I.P** | No |
+[**Dangun Feveron**](https://en.wikipedia.org/wiki/Dangun_Feveron) | Implemented | Yes |
 [**Air Gallet**](https://en.wikipedia.org/wiki/Air_Gallet) | N/A | No |
-[**Donpachi**](https://en.wikipedia.org/wiki/DonPachi) |  N/A | No |
+[**Donpachi**](https://en.wikipedia.org/wiki/DonPachi) | N/A | No |
 [**Gaia Crusaiders**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=gaia&arcade_only=0&autosearch=1) | N/A | No |
 [**Gunwange**](https://en.wikipedia.org/wiki/Guwange) | [**Beta (Available in Patreon)**](https://www.patreon.com/nullobject) | No |
 [**Hotdog Storm**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=hotdogst&arcade_only=0&autosearch=1) | N/A | No |
@@ -24,11 +24,11 @@ This project contains the MiSTer core for Cave's first-generation 68k arcade har
 [**Pretty Soldier Sailor Moon**](https://en.wikipedia.org/wiki/Pretty_Soldier_Sailor_Moon_(arcade_game)) | N/A | No |
 [**The Ninja Master**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=metmqstr&arcade_only=0&autosearch=1) | N/A | No |
 [**Thunder Heroes**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=theroes&arcade_only=0&autosearch=1) | N/A | No |
-[**Uo Poko**](https://en.wikipedia.org/wiki/Puzzle_Uo_Poko) | [**Beta (Available in Patreon)**](https://www.patreon.com/nullobject) | No |
+[**Uo Poko**](https://en.wikipedia.org/wiki/Puzzle_Uo_Poko) | Implemented | Yes |
 
 ## Credits
 
-Made with :heart: by Josh (nullobject) Bassett, 2021.
+Made with :heart: by Josh (nullobject) Bassett, 2022.
 
 This project is based on the [prior work](https://gitlab.com/rwk-source/cave_1st_gen) of Rick (rwk) Wertenbroek, who reverse engineered DoDonPachi for his master's thesis back in 2019. I would like to thank him personally for his technical guidance along the way, and providing me with source code for his original prototype.
 
