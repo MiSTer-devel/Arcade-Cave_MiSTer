@@ -65,7 +65,7 @@ class FrameBufferCtrlIO(width: Int, height: Int) extends Bundle {
    *
    * @param baseAddr   The base address of the frame buffer in DDR memory.
    * @param enable     Enable the frame buffer.
-   * @param rotate     Rotate the frame buffer 90 degress.
+   * @param rotate     Rotate the frame buffer 90 degrees.
    * @param forceBlank Disable the frame buffer output.
    */
   def configure(baseAddr: UInt, enable: Bool, rotate: Bool, forceBlank: Bool): Unit = {

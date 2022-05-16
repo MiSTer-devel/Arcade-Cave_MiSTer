@@ -60,7 +60,7 @@ class SystemFrameBuffer extends Module {
   val io = IO(new Bundle {
     /** Enable the frame buffer */
     val enable = Input(Bool())
-    /** Rotate the frame buffer 90 degress */
+    /** Rotate the frame buffer 90 degrees */
     val rotate = Input(Bool())
     /** Disable the frame buffer output */
     val forceBlank = Input(Bool())
