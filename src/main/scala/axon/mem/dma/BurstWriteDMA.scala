@@ -68,13 +68,13 @@ class BurstWriteDMA(config: Config) extends Module {
   // hold a full burst so that while a burst is in progress, the data for the next burst can be
   // requested.
   val fifo = Module(new Queue(Bits(config.dataWidth.W), config.burstLength, useSyncReadMem = true, hasFlush = true))
-  val fifoNearlyFull = fifo.io.count >= (fifo.entries - 1).U
+  val fifoAlmostFull = fifo.io.count >= (fifo.entries - 1).U
   val fifoBurstReady = fifo.io.count === config.burstLength.U
 
   // Control signals
   val busy = readEnableReg || writeEnableReg
   val start = io.start && !busy
-  val read = readEnableReg && ((!readPendingReg && fifo.io.enq.ready) || (io.in.valid && !fifoNearlyFull))
+  val read = readEnableReg && ((!readPendingReg && fifo.io.enq.ready) || (io.in.valid && !fifoAlmostFull))
   val write = writeEnableReg && (writePendingReg || fifoBurstReady)
   val effectiveRead = read && !io.in.waitReq
   val effectiveWrite = write && !io.out.waitReq
