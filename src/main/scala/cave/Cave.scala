@@ -83,7 +83,9 @@ class Cave extends Module {
 
   // Registers
   val vBlank = ShiftRegister(io.video.vBlank, 2)
-  val videoIRQ = RegInit(false.B)
+  val videoIrq = RegInit(false.B)
+  val agalletIrq = RegInit(false.B)
+  val unknownIrq = RegInit(false.B)
   val iplReg = RegInit(0.U)
   val pauseReg = Util.toggle(Util.rising(io.joystick.player1.pause || io.joystick.player2.pause))
 
@@ -227,16 +229,21 @@ class Cave extends Module {
   ymz.io.cpu.default()
   ymz.io.mem <> io.rom.soundRom
   io.audio <> RegEnable(ymz.io.audio.bits, ymz.io.audio.valid)
-  val soundIRQ = ymz.io.irq
+  val soundIrq = ymz.io.irq
 
   // Interrupt acknowledge
   intAck := cpu.io.as && cpu.io.fc === 7.U
 
   // Set and clear interrupt priority level register
-  when(videoIRQ || soundIRQ) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
+  when(videoIrq || soundIrq || unknownIrq) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
 
-  // Set vertical blank IRQ
-  when(Util.rising(vBlank)) { videoIRQ := true.B }
+  // Toggle video IRQ
+  when(Util.rising(vBlank)) {
+    videoIrq := true.B
+    agalletIrq := true.B
+  }.elsewhen(Util.falling(vBlank)) {
+    agalletIrq := false.B
+  }
 
   // Set memory interface defaults, the actual values are assigned in the memory map
   io.rom.progRom.default()
@@ -247,6 +254,16 @@ class Cave extends Module {
 
   // Memory map
   val map = new MemMap(cpu.io)
+
+  /** Handles the IRQ cause read request from the CPU */
+  def irqCause(addr: UInt, offset: UInt): UInt = {
+    val a = offset === 0.U && agalletIrq
+    val b = unknownIrq
+    val c = videoIrq
+    when(offset === 4.U) { videoIrq := false.B }
+    when(offset === 6.U) { unknownIrq := false.B }
+    Cat(!a, !b, !c)
+  }
 
   // Access to 0x11xxxx appears during the service menu. It must be ignored, otherwise the service
   // menu freezes.
@@ -266,10 +283,7 @@ class Cave extends Module {
     map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
     map(0x800000 to 0x80000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
-    map(0x800000 to 0x800007).r { (_, offset) =>
-      when(offset === 4.U) { videoIRQ := false.B }
-      "b001".U ## !videoIRQ
-    }
+    map(0x800000 to 0x800007).r(irqCause)
     map(0x800010 to 0x80007f).ignore()
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
@@ -303,10 +317,7 @@ class Cave extends Module {
 
     map(0x800000 to 0x80000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
-    map(0x800000 to 0x800007).r { (_, offset) =>
-      when(offset === 0.U) { videoIRQ := false.B }
-      "b011".U ## !videoIRQ
-    }
+    map(0x800000 to 0x800007).r(irqCause)
     map(0x800010 to 0x80007f).ignore()
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
@@ -330,10 +341,7 @@ class Cave extends Module {
 
     map(0x800000 to 0x80000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
-    map(0x800000 to 0x800007).r { (_, offset) =>
-      when(offset === 4.U) { videoIRQ := false.B }
-      "b001".U ## !videoIRQ
-    }
+    map(0x800000 to 0x800007).r(irqCause)
     map(0x800010 to 0x800fff).ignore()
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
@@ -349,10 +357,7 @@ class Cave extends Module {
     map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
     map(0x200000 to 0x20ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x30000f).writeMem(videoRegs.io.mem.asWriteMemIO)
-    map(0x300000 to 0x300007).r { (_, offset) =>
-      when(offset === 4.U) { videoIRQ := false.B }
-      "b001".U ## !videoIRQ
-    }
+    map(0x300000 to 0x300007).r(irqCause)
     map(0x300008).w { (_, _, _) => frameStart := true.B }
     map(0x300010 to 0x300fff).ignore()
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
@@ -382,10 +387,7 @@ class Cave extends Module {
     Cave.vramMap(0x500000, map, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
 
     map(0x600000 to 0x60000f).writeMem(videoRegs.io.mem.asWriteMemIO)
-    map(0x600000 to 0x600007).r { (_, offset) =>
-      when(offset === 4.U) { videoIRQ := false.B }
-      "b001".U ## !videoIRQ
-    }
+    map(0x600000 to 0x600007).r(irqCause)
     map(0x600008).w { (_, _, _) => frameStart := true.B }
     map(0x60000a to 0x600fff).ignore()
     map(0x700000 to 0x700005).readWriteMem(layerRegs(0).io.mem)
