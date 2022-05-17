@@ -40,7 +40,7 @@ import chisel3._
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class ClockDomain(addrWidth: Int, dataWidth: Int) extends Module {
+class Crossing(addrWidth: Int, dataWidth: Int) extends Module {
   val io = IO(new Bundle {
     /** The target clock domain. */
     val targetClock = Input(Clock())
@@ -77,7 +77,7 @@ class ClockDomain(addrWidth: Int, dataWidth: Int) extends Module {
   io.in.dout := dataFifo.io.deq.deq()
 }
 
-object ClockDomain {
+object Crossing {
   /**
    * Wraps the given asynchronous read-only memory interface with a `ClockDomain` module.
    *
@@ -85,7 +85,7 @@ object ClockDomain {
    * @param mem         The memory interface.
    */
   def syncronize(targetClock: Clock, mem: AsyncReadMemIO): AsyncReadMemIO = {
-    val freezer = Module(new ClockDomain(mem.addrWidth, mem.dataWidth))
+    val freezer = Module(new Crossing(mem.addrWidth, mem.dataWidth))
     freezer.io.targetClock := targetClock
     freezer.io.out <> mem
     freezer.io.in

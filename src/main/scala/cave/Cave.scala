@@ -204,7 +204,7 @@ class Cave extends Module {
     gpu.io.layerCtrl(i).vram8x8 <> vram8x8(i).io.portB
     gpu.io.layerCtrl(i).vram16x16 <> vram16x16(i).io.portB
     gpu.io.layerCtrl(i).lineRam <> lineRam(i).io.portB
-    gpu.io.layerCtrl(i).tileRom <> ClockDomain.syncronize(io.video.clock, io.rom.layerTileRom(i))
+    gpu.io.layerCtrl(i).tileRom <> Crossing.syncronize(io.video.clock, io.rom.layerTileRom(i))
   }
   gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
   gpu.io.spriteCtrl.enable := io.options.layerEnable.sprite
