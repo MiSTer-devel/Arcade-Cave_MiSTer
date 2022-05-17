@@ -113,8 +113,9 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   // Set effective read flag
   effectiveRead := tileRomRead && !io.ctrl.tileRom.waitReq
 
-  // Set sprite RAM address
-  val spriteRamAddr = io.bank ## spriteCounter
+  // Set the sprite RAM address. The sprite counter is padded to 10-bits (1024) to handle a lower
+  // maximum sprite count (during testing).
+  val spriteRamAddr = io.bank ## spriteCounter.pad(10)
 
   // Set tile ROM address
   val tileRomAddr = (spriteReg.code + tileCounter) << Mux(is8BPP, 8.U, 7.U)
