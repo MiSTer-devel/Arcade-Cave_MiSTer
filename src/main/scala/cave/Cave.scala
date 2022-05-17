@@ -75,7 +75,6 @@ class Cave extends Module {
   })
 
   // Wires
-  val frameStart = WireInit(false.B)
   val intAck = Wire(Bool())
 
   // A write-only memory interface is used to connect the CPU to the EEPROM
@@ -210,7 +209,7 @@ class Cave extends Module {
   }
   gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
   gpu.io.spriteCtrl.enable := io.options.layerEnable.sprite
-  gpu.io.spriteCtrl.start := Util.rising(frameStart)
+  gpu.io.spriteCtrl.start := Util.falling(vBlank)
   gpu.io.spriteCtrl.flip := io.options.flip
   gpu.io.spriteCtrl.rotate := io.options.rotate
   gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
@@ -316,7 +315,6 @@ class Cave extends Module {
     map(0x700000 to 0x70ffff).readWriteMemT(vram8x8(2).io.portA)(a => a(12, 0))
 
     map(0x800000 to 0x80000f).writeMem(videoRegs.io.mem.asWriteMemIO)
-    map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
     map(0x800000 to 0x800007).r(irqCause)
     map(0x800010 to 0x80007f).ignore()
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
@@ -340,7 +338,6 @@ class Cave extends Module {
     Cave.vramMap(0x700000, map, vram8x8(2).io.portA, vram16x16(2).io.portA, lineRam(2).io.portA)
 
     map(0x800000 to 0x80000f).writeMem(videoRegs.io.mem.asWriteMemIO)
-    map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
     map(0x800000 to 0x800007).r(irqCause)
     map(0x800010 to 0x800fff).ignore()
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
@@ -358,7 +355,6 @@ class Cave extends Module {
     map(0x200000 to 0x20ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x30000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x300000 to 0x300007).r(irqCause)
-    map(0x300008).w { (_, _, _) => frameStart := true.B }
     map(0x300010 to 0x300fff).ignore()
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
 
@@ -388,7 +384,6 @@ class Cave extends Module {
 
     map(0x600000 to 0x60000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x600000 to 0x600007).r(irqCause)
-    map(0x600008).w { (_, _, _) => frameStart := true.B }
     map(0x60000a to 0x600fff).ignore()
     map(0x700000 to 0x700005).readWriteMem(layerRegs(0).io.mem)
     map(0x800000 to 0x80ffff).readWriteMem(paletteRam.io.portA)
@@ -396,9 +391,6 @@ class Cave extends Module {
     map(0x900002).r { (_, _) => input1 }
     map(0xa00000).writeMem(eepromMem)
   }
-
-  // When the game is paused, request frames at the start of every vertical blank
-  when(pauseReg) { frameStart := vBlank }
 }
 
 object Cave {
