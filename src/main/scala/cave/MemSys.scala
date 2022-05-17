@@ -99,7 +99,7 @@ class MemSys extends Module {
     outAddrWidth = Config.sdramConfig.addrWidth,
     outDataWidth = Config.sdramConfig.dataWidth,
     lineWidth = Config.sdramConfig.burstLength,
-    depth = 64,
+    depth = 256,
     wrapping = true,
     swapEndianness = true
   )))
