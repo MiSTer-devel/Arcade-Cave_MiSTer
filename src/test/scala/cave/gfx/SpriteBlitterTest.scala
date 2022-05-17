@@ -270,7 +270,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.clock.step()
 
       // Pixel 1
-      dut.io.frameBuffer.addr.expect(0x0f.U)
+      dut.io.frameBuffer.addr.expect(0x0e.U)
       dut.io.frameBuffer.din.expect(1.U)
       dut.clock.step(13)
 
@@ -280,7 +280,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.clock.step()
 
       // Pixel 15
-      dut.io.frameBuffer.addr.expect(0x08.U)
+      dut.io.frameBuffer.addr.expect(0x07.U)
       dut.io.frameBuffer.din.expect(1.U)
     }
   }

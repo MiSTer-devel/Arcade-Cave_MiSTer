@@ -130,8 +130,8 @@ object SpriteBlitter {
     val y = pos.y * sprite.zoom.y
 
     // Flip x/y values
-    val x_ = Mux(sprite.flipX, size.x - x - 0x80.U, x)
-    val y_ = Mux(sprite.flipY, size.y - y - 0x80.U, y)
+    val x_ = Mux(sprite.flipX, size.x - x - (1 << Sprite.ZOOM_PRECISION).U, x)
+    val y_ = Mux(sprite.flipY, size.y - y - (1 << Sprite.ZOOM_PRECISION).U, y)
 
     // Adjusted sprite pixel position
     val result = sprite.pos + SVec2(x_, y_)
