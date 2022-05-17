@@ -39,8 +39,9 @@ import chisel3._
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
+ * @param depth     The depth of the FIFO.
  */
-class Crossing(addrWidth: Int, dataWidth: Int) extends Module {
+class Crossing(addrWidth: Int, dataWidth: Int, depth: Int = 4) extends Module {
   val io = IO(new Bundle {
     /** The target clock domain. */
     val targetClock = Input(Clock())
@@ -51,11 +52,11 @@ class Crossing(addrWidth: Int, dataWidth: Int) extends Module {
   })
 
   // Address FIFO
-  val addrFifo = withClock(io.targetClock) { Module(new DualClockFIFO(addrWidth, 4)) }
+  val addrFifo = withClock(io.targetClock) { Module(new DualClockFIFO(addrWidth, depth)) }
   addrFifo.io.readClock := clock
 
   // Data FIFO
-  val dataFifo = withClock(clock) { Module(new DualClockFIFO(dataWidth, 4)) }
+  val dataFifo = withClock(clock) { Module(new DualClockFIFO(dataWidth, depth)) }
   dataFifo.io.readClock := io.targetClock
 
   // input port -> address FIFO
