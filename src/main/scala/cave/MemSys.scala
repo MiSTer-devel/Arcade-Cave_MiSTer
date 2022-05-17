@@ -113,7 +113,7 @@ class MemSys extends Module {
     outAddrWidth = Config.sdramConfig.addrWidth,
     outDataWidth = Config.sdramConfig.dataWidth,
     lineWidth = Config.sdramConfig.burstLength,
-    depth = 16,
+    depth = 64,
     wrapping = true
   )))
   soundRomCache.io.enable := readyReg
