@@ -11,10 +11,11 @@ This project contains the MiSTer core for Cave's first-generation 68k arcade har
 [**Do Donpachi**](https://en.wikipedia.org/wiki/DoDonPachi) | Implemented | Yes |
 [**ESP Ra. De.**](https://en.wikipedia.org/wiki/ESP_Ra.De.) | Implemented | Yes |
 [**Dangun Feveron**](https://en.wikipedia.org/wiki/Dangun_Feveron) | Implemented | Yes |
-[**Air Gallet**](https://en.wikipedia.org/wiki/Air_Gallet) | N/A | No |
+[**Uo Poko**](https://en.wikipedia.org/wiki/Puzzle_Uo_Poko) | Implemented | Yes |
+[**Gunwange**](https://en.wikipedia.org/wiki/Guwange) | [**Beta (Available in Patreon)**](https://www.patreon.com/nullobject) | No |
+[**Air Gallet**](https://en.wikipedia.org/wiki/Air_Gallet) | **W.I.P** | No |
 [**Donpachi**](https://en.wikipedia.org/wiki/DonPachi) | N/A | No |
 [**Gaia Crusaiders**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=gaia&arcade_only=0&autosearch=1) | N/A | No |
-[**Gunwange**](https://en.wikipedia.org/wiki/Guwange) | [**Beta (Available in Patreon)**](https://www.patreon.com/nullobject) | No |
 [**Hotdog Storm**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=hotdogst&arcade_only=0&autosearch=1) | N/A | No |
 [**Koro Koro Quest**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=korokoro&arcade_only=0&autosearch=1) | N/A | No |
 [**Mazinger Z**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=mazinger&arcade_only=0&autosearch=1) | N/A | No |
@@ -24,7 +25,7 @@ This project contains the MiSTer core for Cave's first-generation 68k arcade har
 [**Pretty Soldier Sailor Moon**](https://en.wikipedia.org/wiki/Pretty_Soldier_Sailor_Moon_(arcade_game)) | N/A | No |
 [**The Ninja Master**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=metmqstr&arcade_only=0&autosearch=1) | N/A | No |
 [**Thunder Heroes**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=theroes&arcade_only=0&autosearch=1) | N/A | No |
-[**Uo Poko**](https://en.wikipedia.org/wiki/Puzzle_Uo_Poko) | Implemented | Yes |
+
 
 ## Credits
 
