@@ -70,8 +70,10 @@ class Cave extends Module {
     val spriteFrameBuffer = new SpriteFrameBufferIO
     /** System frame buffer port */
     val systemFrameBuffer = new SystemFrameBufferIO
-    /** Asserted when the sprite processor is busy */
-    val spriteProcessorBusy = Output(Bool())
+    /** Asserted when the sprite frame buffer should start copying a frame */
+    val spriteFrameBufferReady = Output(Bool())
+    /** Asserted when the current page for the sprite frame buffer should be swapped */
+    val spriteFrameBufferSwap = Output(Bool())
   })
 
   // Wires
@@ -220,9 +222,6 @@ class Cave extends Module {
   gpu.io.systemFrameBuffer <> io.systemFrameBuffer
   gpu.io.rgb <> io.rgb
 
-  // Set busy flag
-  io.spriteProcessorBusy := gpu.io.spriteCtrl.busy
-
   // YMZ280B
   val ymz = Module(new YMZ280B(Config.ymzConfig))
   ymz.io.cpu.default()
@@ -251,11 +250,8 @@ class Cave extends Module {
   // Set input ports
   val (input0, input1) = Cave.encodePlayers(io.gameConfig.index, io.joystick, eeprom)
 
-  // Memory map
-  val map = new MemMap(cpu.io)
-
-  /** Handles the IRQ cause read request from the CPU */
-  def irqCause(addr: UInt, offset: UInt): UInt = {
+  // Clears the IRQs and returns the cause of the last interrupt
+  val irqCause = (_: UInt, offset: UInt) => {
     val a = offset === 0.U && agalletIrq
     val b = unknownIrq
     val c = videoIrq
@@ -263,6 +259,16 @@ class Cave extends Module {
     when(offset === 6.U) { unknownIrq := false.B }
     Cat(!a, !b, !c)
   }
+
+  // Assert sprite frame buffer ready signal when the sprite processor has finished drawing a frame
+  io.spriteFrameBufferReady := Util.falling(gpu.io.spriteCtrl.busy)
+  // Handles video register write access which swap the sprite frame buffer
+  io.spriteFrameBufferSwap := false.B
+  // Assert sprite frame buffer swap signal when the CPU writes the video register at offset 8
+  val swapSpriteFrameBuffer = (_: UInt, _: UInt, _: Bits) => { io.spriteFrameBufferSwap := true.B }
+
+  // Memory map
+  val map = new MemMap(cpu.io)
 
   // Access to 0x11xxxx appears during the service menu. It must be ignored, otherwise the service
   // menu freezes.
@@ -281,8 +287,8 @@ class Cave extends Module {
 
     map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
     map(0x800000 to 0x80000f).writeMem(videoRegs.io.mem.asWriteMemIO)
-    map(0x800004).w { (_, _, data) => frameStart := data === 0x01f0.U }
     map(0x800000 to 0x800007).r(irqCause)
+    map(0x800008).w(swapSpriteFrameBuffer)
     map(0x800010 to 0x80007f).ignore()
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
@@ -316,6 +322,7 @@ class Cave extends Module {
 
     map(0x800000 to 0x80000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x800000 to 0x800007).r(irqCause)
+    map(0x800008).w(swapSpriteFrameBuffer)
     map(0x800010 to 0x80007f).ignore()
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
@@ -339,6 +346,7 @@ class Cave extends Module {
 
     map(0x800000 to 0x80000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x800000 to 0x800007).r(irqCause)
+    map(0x800008).w(swapSpriteFrameBuffer)
     map(0x800010 to 0x800fff).ignore()
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
@@ -355,6 +363,7 @@ class Cave extends Module {
     map(0x200000 to 0x20ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x30000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x300000 to 0x300007).r(irqCause)
+    map(0x300008).w(swapSpriteFrameBuffer)
     map(0x300010 to 0x300fff).ignore()
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
 
@@ -384,6 +393,7 @@ class Cave extends Module {
 
     map(0x600000 to 0x60000f).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(0x600000 to 0x600007).r(irqCause)
+    map(0x600008).w(swapSpriteFrameBuffer)
     map(0x60000a to 0x600fff).ignore()
     map(0x700000 to 0x700005).readWriteMem(layerRegs(0).io.mem)
     map(0x800000 to 0x80ffff).readWriteMem(paletteRam.io.portA)

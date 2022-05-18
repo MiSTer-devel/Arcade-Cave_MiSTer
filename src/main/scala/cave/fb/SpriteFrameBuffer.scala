@@ -62,8 +62,10 @@ class SpriteFrameBuffer extends Module {
   val io = IO(new Bundle {
     /** Enable the frame buffer */
     val enable = Input(Bool())
-    /** Asserted when the sprite processor is busy */
-    val spriteProcessorBusy = Input(Bool())
+    /** Start copying a frame */
+    val ready = Input(Bool())
+    /** Swap the current page */
+    val swap = Input(Bool())
     /** Video port */
     val video = Flipped(VideoIO())
     /** GPU-side */
@@ -81,13 +83,6 @@ class SpriteFrameBuffer extends Module {
       val frameBuffer = BurstWriteMemIO(Config.ddrConfig)
     }
   })
-
-  // Set the blanking signal strobes
-  val hBlankStart = Util.rising(ShiftRegister(io.video.hBlank, 2))
-  val vBlankStart = Util.rising(ShiftRegister(io.video.vBlank, 2))
-
-  // Set the sprite processor done strobe
-  val spriteProcessorDone = Util.falling(io.spriteProcessorBusy)
 
   // Line buffer (320x1x16BPP)
   val lineBuffer = Module(new TrueDualPortRam(
@@ -117,11 +112,14 @@ class SpriteFrameBuffer extends Module {
   val pageFlipper = Module(new PageFlipper(Config.SPRITE_FRAME_BUFFER_BASE_ADDR))
   pageFlipper.io.mode := false.B
   pageFlipper.io.swapRead := false.B
-  pageFlipper.io.swapWrite := vBlankStart
+  pageFlipper.io.swapWrite := io.swap
+
+  // Start line buffer DMA as soon as the current line has finished
+  val lineBufferDmaStart = Util.rising(ShiftRegister(io.video.hBlank, 2))
 
   // Copy line buffer from DDR memory to BRAM
   val lineBufferDma = Module(new BurstReadDMA(Config.spriteLineBufferDmaConfig))
-  lineBufferDma.io.start := io.enable && hBlankStart
+  lineBufferDma.io.start := io.enable && lineBufferDmaStart
   lineBufferDma.io.in.mapAddr(
     _ + pageFlipper.io.addrRead + ((io.video.pos.y + 1.U) * (Config.SCREEN_WIDTH * 2).U) // FIXME: avoid expensive multiply
   ) <> io.ddr.lineBuffer
@@ -131,7 +129,7 @@ class SpriteFrameBuffer extends Module {
 
   // Copy frame buffer from BRAM to DDR memory
   val frameBufferDma = Module(new BurstWriteDMA(Config.spriteFrameBufferDmaConfig))
-  frameBufferDma.io.start := io.enable && spriteProcessorDone
+  frameBufferDma.io.start := io.enable && io.ready
   frameBufferDma.io.in.mapAddr { a =>
     (a >> 3).asUInt // convert from byte address
   }.asReadMemIO <> frameBuffer.io.portB

@@ -135,7 +135,8 @@ class Main extends Module {
   // Sprite frame buffer
   val spriteFrameBuffer = Module(new SpriteFrameBuffer)
   spriteFrameBuffer.io.enable := io.options.frameBufferEnable.sprite && memSys.io.ready
-  spriteFrameBuffer.io.spriteProcessorBusy := cave.io.spriteProcessorBusy
+  spriteFrameBuffer.io.ready := cave.io.spriteFrameBufferReady
+  spriteFrameBuffer.io.swap := cave.io.spriteFrameBufferSwap
   spriteFrameBuffer.io.video <> videoSys.io.video
   spriteFrameBuffer.io.gpu.lineBuffer <> cave.io.spriteLineBuffer
   spriteFrameBuffer.io.gpu.frameBuffer <> cave.io.spriteFrameBuffer
