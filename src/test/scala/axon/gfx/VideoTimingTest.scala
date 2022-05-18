@@ -47,7 +47,7 @@ trait VideoTimingTestHelpers {
     clockFreq = 7000000,
     clockDiv = 1,
     hFreq = 15625,
-    vFreq = 57.44,
+    vFreq = 57.444,
     hDisplay = 320,
     vDisplay = 240,
     hFrontPorch = 36,
@@ -110,7 +110,7 @@ class VideoTimingTest extends AnyFlatSpec with ChiselScalatestTester with Matche
   behavior of "y position"
 
   it should "be incremented after the horizontal sync" in {
-    test(mkVideoTiming(447, 19)) { dut =>
+    test(mkVideoTiming(447, 18)) { dut =>
       dut.io.timing.pos.y.expect(0)
       dut.clock.step()
       dut.io.timing.pos.y.expect(1)
@@ -120,7 +120,7 @@ class VideoTimingTest extends AnyFlatSpec with ChiselScalatestTester with Matche
   behavior of "vertical sync"
 
   it should "be asserted after the vertical front porch" in {
-    test(mkVideoTiming(447, 270)) { dut =>
+    test(mkVideoTiming(447, 269)) { dut =>
       dut.io.timing.vSync.expect(false)
       dut.clock.step()
       dut.io.timing.vSync.expect(true)
@@ -128,7 +128,7 @@ class VideoTimingTest extends AnyFlatSpec with ChiselScalatestTester with Matche
   }
 
   it should "be deasserted after the vertical retrace" in {
-    test(mkVideoTiming(447, 272)) { dut =>
+    test(mkVideoTiming(447, 271)) { dut =>
       dut.io.timing.vSync.expect(true)
       dut.clock.step()
       dut.io.timing.vSync.expect(false)
@@ -138,7 +138,7 @@ class VideoTimingTest extends AnyFlatSpec with ChiselScalatestTester with Matche
   behavior of "vertical blank"
 
   it should "be asserted at the end of the vertical display region" in {
-    test(mkVideoTiming(447, 258)) { dut =>
+    test(mkVideoTiming(447, 257)) { dut =>
       dut.io.timing.vBlank.expect(false)
       dut.clock.step()
       dut.io.timing.vBlank.expect(true)
@@ -146,7 +146,7 @@ class VideoTimingTest extends AnyFlatSpec with ChiselScalatestTester with Matche
   }
 
   it should "be deasserted at the start of the vertical display region" in {
-    test(mkVideoTiming(447, 18)) { dut =>
+    test(mkVideoTiming(447, 17)) { dut =>
       dut.io.timing.vBlank.expect(true)
       dut.clock.step()
       dut.io.timing.vBlank.expect(false)
@@ -156,7 +156,7 @@ class VideoTimingTest extends AnyFlatSpec with ChiselScalatestTester with Matche
   behavior of "display enable"
 
   it should "be asserted at the start of the horizontal and vertical display regions" in {
-    test(mkVideoTiming(71, 19)) { dut =>
+    test(mkVideoTiming(71, 18)) { dut =>
       dut.io.timing.displayEnable.expect(false)
       dut.clock.step()
       dut.io.timing.displayEnable.expect(true)
@@ -164,7 +164,7 @@ class VideoTimingTest extends AnyFlatSpec with ChiselScalatestTester with Matche
   }
 
   it should "be deasserted at the end of the horizontal and vertical display regions" in {
-    test(mkVideoTiming(391, 258)) { dut =>
+    test(mkVideoTiming(391, 257)) { dut =>
       dut.io.timing.displayEnable.expect(true)
       dut.clock.step()
       dut.io.timing.displayEnable.expect(false)

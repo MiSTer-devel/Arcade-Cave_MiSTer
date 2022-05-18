@@ -69,9 +69,9 @@ case class VideoTimingConfig(clockFreq: Double,
                              vOffset: Int = 0,
                              vInit: Int = 0) {
   /** Total width in pixels */
-  val width = math.ceil(clockFreq / clockDiv / hFreq).toInt
+  val width = math.round(clockFreq / clockDiv / hFreq).toInt
   /** Total height in pixels */
-  val height = math.ceil(hFreq / vFreq).toInt
+  val height = math.round(hFreq / vFreq).toInt
 }
 
 /**
