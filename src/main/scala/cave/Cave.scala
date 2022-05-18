@@ -363,10 +363,15 @@ class Cave extends Module {
   when(io.gameConfig.index === GameConfig.GUWANGE.U) {
     map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
     map(0x200000 to 0x20ffff).readWriteMem(mainRam.io)
+    map(0x210000 to 0x2fffff).nopr() // access occurs for Guwange (Special)
     vregMap(0x300000)
+    map(0x300080 to 0x3fffff).nopr() // access occurs for Guwange (Special)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
+    map(0x410000 to 0x4fffff).nopr() // access occurs for Guwange (Special)
     vramMap(0x500000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
+    map(0x508000 to 0x5fffff).nopr() // access occurs for Guwange (Special)
     vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
+    map(0x608000 to 0x6fffff).nopr() // access occurs for Guwange (Special)
     vramMap(0x700000, vram8x8(2).io.portA, vram16x16(2).io.portA, lineRam(2).io.portA)
     map(0x800000 to 0x800003).readWriteMem(ymz.io.cpu)
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
