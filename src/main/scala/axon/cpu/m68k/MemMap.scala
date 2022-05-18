@@ -195,6 +195,16 @@ class MemMap(cpu: CPUIO) {
       }
     }
 
+    /** Ignores write access for the address range. */
+    def nopr(): Unit = {
+      r((_, _) => 0.U)
+    }
+
+    /** Ignores write access for the address range. */
+    def nopw(): Unit = {
+      w((_, _, _) => {})
+    }
+
     /** Ignores read/write access for the address range. */
     def noprw(): Unit = {
       rw((_, _) => 0.U)((_, _, _) => {})
