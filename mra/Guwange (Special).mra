@@ -8,7 +8,7 @@
   <rbf>cave</rbf>
 
   <!-- ROM data -->
-  <rom index="0" zip="guwanges.zip" md5="none" address="0x30000000">
+  <rom index="0" zip="guwanges.zip|guwange.zip" md5="none" address="0x30000000">
     <!-- maincpu - starts at 0x0 -->
     <interleave output="16">
       <part name="gu-u0127b.bin" crc="f86b5293" map="01" />
