@@ -266,7 +266,7 @@ class Cave extends Module {
   private def vramMap(baseAddr: Int, vram8x8: ReadWriteMemIO, vram16x16: ReadWriteMemIO, lineRam: ReadWriteMemIO): Unit = {
     map((baseAddr + 0x0000) to (baseAddr + 0x0fff)).readWriteMem(vram16x16)
     map((baseAddr + 0x1000) to (baseAddr + 0x17ff)).readWriteMem(lineRam)
-    map((baseAddr + 0x1800) to (baseAddr + 0x3fff)).ignore()
+    map((baseAddr + 0x1800) to (baseAddr + 0x3fff)).noprw()
     map((baseAddr + 0x4000) to (baseAddr + 0x7fff)).readWriteMem(vram8x8)
   }
 
@@ -286,12 +286,12 @@ class Cave extends Module {
     }
     map((baseAddr + 0x00) to (baseAddr + 0x0f)).writeMem(videoRegs.io.mem.asWriteMemIO)
     map(baseAddr + 0x08).w { (_, _, _) => io.spriteFrameBufferSwap := true.B }
-    map((baseAddr + 0x0a) to (baseAddr + 0x7f)).ignore()
+    map((baseAddr + 0x0a) to (baseAddr + 0x7f)).noprw()
   }
 
   // Access to 0x11xxxx appears during the service menu. It must be ignored, otherwise the service
   // menu freezes.
-  map(0x110000 to 0x2fffff).ignore()
+  map(0x110000 to 0x2fffff).noprw()
 
   // Dangun Feveron
   when(io.gameConfig.index === GameConfig.DFEVERON.U) {
@@ -326,7 +326,7 @@ class Cave extends Module {
     // The reason these accesses appear is probably because it made the layer update routine
     // simpler to write (no need to handle edge cases). These accesses are simply ignored by the
     // hardware.
-    map(0x5f0000 to 0x5fffff).ignore()
+    map(0x5f0000 to 0x5fffff).noprw()
     vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
     // DoDonPachi only uses 8x8 VRAM for layer 2, with no line RAM
     map(0x700000 to 0x70ffff).readWriteMemT(vram8x8(2).io.portA)(a => a(12, 0))
@@ -373,7 +373,7 @@ class Cave extends Module {
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
     map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
     map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-    map(0xd00010 to 0xd00014).ignore()
+    map(0xd00010 to 0xd00014).noprw()
     map(0xd00010).writeMem(eepromMem)
     map(0xd00010).r { (_, _) => input0 }
     map(0xd00012).r { (_, _) => input1 }

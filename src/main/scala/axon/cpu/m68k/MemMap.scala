@@ -195,8 +195,8 @@ class MemMap(cpu: CPUIO) {
       }
     }
 
-    /** Ignores the address range. Read/write operations will still be acknowledged. */
-    def ignore(): Unit = {
+    /** Ignores read/write access for the address range. */
+    def noprw(): Unit = {
       rw((_, _) => 0.U)((_, _, _) => {})
     }
 
