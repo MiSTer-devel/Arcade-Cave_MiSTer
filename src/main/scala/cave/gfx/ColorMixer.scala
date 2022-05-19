@@ -32,7 +32,6 @@
 
 package cave.gfx
 
-import axon.types._
 import cave.Config
 import cave.types._
 import chisel3._
@@ -65,11 +64,11 @@ class ColorMixer extends Module {
 
   // Calculate the palette RAM address
   val paletteRamAddr = MuxLookup(index, 0.U, Seq(
-    ColorMixer.Priority.FILL.U -> ColorMixer.paletteRamAddr(io.gameConfig.numColors, 0.U, backgroundPen),
-    ColorMixer.Priority.SPRITE.U -> ColorMixer.paletteRamAddr(io.gameConfig.numColors, 0.U, io.spritePen),
-    ColorMixer.Priority.LAYER0.U -> ColorMixer.paletteRamAddr(io.gameConfig.numColors, 1.U, io.layer0Pen),
-    ColorMixer.Priority.LAYER1.U -> ColorMixer.paletteRamAddr(io.gameConfig.numColors, 1.U, io.layer1Pen),
-    ColorMixer.Priority.LAYER2.U -> ColorMixer.paletteRamAddr(io.gameConfig.numColors, 1.U, io.layer2Pen)
+    ColorMixer.Priority.FILL.U -> ColorMixer.paletteRamAddr(backgroundPen, 0.U, io.gameConfig.granularity),
+    ColorMixer.Priority.SPRITE.U -> ColorMixer.paletteRamAddr(io.spritePen, 0.U, io.gameConfig.granularity),
+    ColorMixer.Priority.LAYER0.U -> ColorMixer.paletteRamAddr(io.layer0Pen, 1.U, io.gameConfig.granularity),
+    ColorMixer.Priority.LAYER1.U -> ColorMixer.paletteRamAddr(io.layer1Pen, 1.U, io.gameConfig.granularity),
+    ColorMixer.Priority.LAYER2.U -> ColorMixer.paletteRamAddr(io.layer2Pen, 1.U, io.gameConfig.granularity)
   ))
 
   // Outputs
@@ -102,14 +101,15 @@ object ColorMixer {
   /**
    * Calculates the palette RAM address from the given palette entry.
    *
-   * The address is calculated differently, depending on the maximum number of colors per palette.
+   * The address is calculated differently, depending on the number of colors per palette.
    *
-   * @param numColors The maximum number of colors per palette.
-   * @param pen       The palette entry.
+   * @param pen         The palette entry.
+   * @param bank        The palette RAM bank.
+   * @param granularity The number of colors per palette.
    * @return A memory address.
    */
-  private def paletteRamAddr(numColors: UInt, bank: UInt, pen: PaletteEntry): UInt =
-    MuxLookup(numColors, bank ## pen.palette ## pen.color, Seq(
+  private def paletteRamAddr(pen: PaletteEntry, bank: UInt, granularity: UInt) =
+    MuxLookup(granularity, bank ## pen.palette ## pen.color, Seq(
       16.U -> bank ## pen.palette ## pen.color(3, 0),
       64.U -> bank ## pen.palette ## pen.color(5, 0)
     ))

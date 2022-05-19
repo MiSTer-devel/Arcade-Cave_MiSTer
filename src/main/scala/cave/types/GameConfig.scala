@@ -46,8 +46,8 @@ class GameConfig extends Bundle {
   val soundRomOffset = UInt(32.W)
   /** EEPROM offset */
   val eepromOffset = UInt(32.W)
-  /** Number of colors per palette */
-  val numColors = UInt(9.W)
+  /** The number of colors per palette */
+  val granularity = UInt(9.W)
   /** Sprite configuration */
   val sprite = new Bundle {
     /** Sprite graphics format */
@@ -102,7 +102,7 @@ object GameConfig {
     wire.progRomOffset := 0x00000000.U
     wire.soundRomOffset := 0x00d00000.U
     wire.eepromOffset := 0x01100000.U
-    wire.numColors := 16.U
+    wire.granularity := 16.U
     wire.sprite.format := Config.GFX_FORMAT_4BPP.U
     wire.sprite.zoom := true.B
     wire.sprite.romOffset := 0x00100000.U
@@ -121,7 +121,7 @@ object GameConfig {
     wire.progRomOffset := 0x00000000.U
     wire.soundRomOffset := 0x00f00000.U
     wire.eepromOffset := 0x01300000.U
-    wire.numColors := 256.U
+    wire.granularity := 256.U
     wire.sprite.format := Config.GFX_FORMAT_4BPP_MSB.U
     wire.sprite.zoom := false.B
     wire.sprite.romOffset := 0x00100000.U
@@ -140,7 +140,7 @@ object GameConfig {
     wire.progRomOffset := 0x00000000.U
     wire.soundRomOffset := 0x02500000.U
     wire.eepromOffset := 0x02900000.U
-    wire.numColors := 256.U
+    wire.granularity := 256.U
     wire.sprite.format := Config.GFX_FORMAT_8BPP.U
     wire.sprite.zoom := true.B
     wire.sprite.romOffset := 0x00100000.U
@@ -159,7 +159,7 @@ object GameConfig {
     wire.progRomOffset := 0x00000000.U
     wire.soundRomOffset := 0x03100000.U
     wire.eepromOffset := 0x03500000.U
-    wire.numColors := 256.U
+    wire.granularity := 256.U
     wire.sprite.format := Config.GFX_FORMAT_8BPP.U
     wire.sprite.zoom := true.B
     wire.sprite.romOffset := 0x00100000.U
@@ -178,7 +178,7 @@ object GameConfig {
     wire.progRomOffset := 0x00000000.U
     wire.soundRomOffset := 0x00900000.U
     wire.eepromOffset := 0x00b00000.U
-    wire.numColors := 256.U
+    wire.granularity := 256.U
     wire.sprite.format := Config.GFX_FORMAT_4BPP.U
     wire.sprite.zoom := true.B
     wire.sprite.romOffset := 0x00100000.U
