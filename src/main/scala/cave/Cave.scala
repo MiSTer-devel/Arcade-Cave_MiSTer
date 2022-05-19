@@ -322,18 +322,9 @@ class Cave extends Module {
     map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     vramMap(0x500000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
-    // Access to address 0x5fxxxx occurs during the attract loop on the air stage at frame 9355
-    // (i.e. after roughly 150 sec). The game is accessing data relative to a layer 1 address and
-    // underflows. These accesses do nothing, but should be acknowledged in order not to block the
-    // CPU.
-    //
-    // The reason these accesses appear is probably because it made the layer update routine
-    // simpler to write (no need to handle edge cases). These accesses are simply ignored by the
-    // hardware.
-    map(0x5f0000 to 0x5fffff).noprw()
+    map(0x5fff00 to 0x5fffff).nopw() // access occurs during attract loop
     vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
-    // DoDonPachi only uses 8x8 VRAM for layer 2, with no line RAM
-    map(0x700000 to 0x70ffff).readWriteMemT(vram8x8(2).io.portA)(a => a(12, 0))
+    map(0x700000 to 0x70ffff).readWriteMemT(vram8x8(2).io.portA)(a => a(12, 0)) // layer 2 is 8x8 only
     vregMap(0x800000)
     map(0x800000 to 0x800007).r(irqCause)
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
