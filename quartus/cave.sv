@@ -183,7 +183,7 @@ localparam CONF_STR = {
   "P2OIL,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.,Puzzle Uo Poko,Guwange;",
   "-;",
   "R0,Reset;",
-  "J,B0,B1,B2,Start,Coin,Pause,Service;",
+  "J,B0,B1,B2,B3,Start,Coin,Pause,Service;",
   "V,v",`BUILD_DATE," - Made with love by nullobject.;"
 };
 
@@ -367,6 +367,7 @@ reg key_down  = 0;
 reg key_up    = 0;
 reg key_ctrl  = 0;
 reg key_alt   = 0;
+reg key_shift = 0;
 reg key_space = 0;
 reg key_1     = 0;
 reg key_2     = 0;
@@ -382,6 +383,7 @@ reg key_f     = 0;
 reg key_d     = 0;
 reg key_g     = 0;
 reg key_p     = 0;
+reg key_w     = 0;
 
 always @(posedge clk_sys) begin
   reg old_state;
@@ -395,6 +397,7 @@ always @(posedge clk_sys) begin
       'h74: key_right <= pressed;
       'h14: key_ctrl  <= pressed;
       'h11: key_alt   <= pressed;
+      'h12: key_shift <= pressed;
       'h29: key_space <= pressed;
       'h16: key_1     <= pressed;
       'h1E: key_2     <= pressed;
@@ -410,6 +413,7 @@ always @(posedge clk_sys) begin
       'h23: key_d     <= pressed;
       'h34: key_g     <= pressed;
       'h4d: key_p     <= pressed;
+      'h1d: key_w     <= pressed;
     endcase
   end
 end
@@ -421,9 +425,10 @@ wire player_1_right    = key_right | joystick_0[0];
 wire player_1_button_1 = key_ctrl  | joystick_0[4];
 wire player_1_button_2 = key_alt   | joystick_0[5];
 wire player_1_button_3 = key_space | joystick_0[6];
-wire player_1_start    = key_1     | joystick_0[7];
-wire player_1_coin     = key_5     | joystick_0[8];
-wire player_1_pause    = key_p     | joystick_0[9];
+wire player_1_button_4 = key_shift | joystick_0[7];
+wire player_1_start    = key_1     | joystick_0[8];
+wire player_1_coin     = key_5     | joystick_0[9];
+wire player_1_pause    = key_p     | joystick_0[10];
 wire player_2_up       = key_r     | joystick_1[3];
 wire player_2_down     = key_f     | joystick_1[2];
 wire player_2_left     = key_d     | joystick_1[1];
@@ -431,11 +436,12 @@ wire player_2_right    = key_g     | joystick_1[0];
 wire player_2_button_1 = key_a     | joystick_1[4];
 wire player_2_button_2 = key_s     | joystick_1[5];
 wire player_2_button_3 = key_q     | joystick_1[6];
-wire player_2_start    = key_2     | joystick_1[7];
-wire player_2_coin     = key_6     | joystick_1[8];
-wire player_2_pause    =             joystick_1[9];
-wire service_1         = key_9     | joystick_0[10];
-wire service_2         = key_0     | joystick_1[10];
+wire player_2_button_4 = key_w     | joystick_1[7];
+wire player_2_start    = key_2     | joystick_1[8];
+wire player_2_coin     = key_6     | joystick_1[9];
+wire player_2_pause    =             joystick_1[10];
+wire service_1         = key_9     | joystick_0[11];
+wire service_2         = key_0     | joystick_1[11];
 
 ////////////////////////////////////////////////////////////////////////////////
 // CAVE
@@ -480,7 +486,7 @@ Main main (
   .joystick_player1_down(player_1_down),
   .joystick_player1_left(player_1_left),
   .joystick_player1_right(player_1_right),
-  .joystick_player1_buttons({player_1_button_3, player_1_button_2, player_1_button_1}),
+  .joystick_player1_buttons({player_1_button_4, player_1_button_3, player_1_button_2, player_1_button_1}),
   .joystick_player1_start(player_1_start),
   .joystick_player1_coin(player_1_coin),
   .joystick_player1_pause(player_1_pause),
@@ -488,7 +494,7 @@ Main main (
   .joystick_player2_down(player_2_down),
   .joystick_player2_left(player_2_left),
   .joystick_player2_right(player_2_right),
-  .joystick_player2_buttons({player_2_button_3, player_2_button_2, player_2_button_1}),
+  .joystick_player2_buttons({player_2_button_4, player_2_button_3, player_2_button_2, player_2_button_1}),
   .joystick_player2_start(player_2_start),
   .joystick_player2_coin(player_2_coin),
   .joystick_player2_pause(player_2_pause),

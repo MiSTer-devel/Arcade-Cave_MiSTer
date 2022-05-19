@@ -52,5 +52,5 @@
     <part>03</part>
   </rom>
 
-  <buttons names="Main Shot,Power Shot,Guard Barrier,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />
+  <buttons names="Main Shot,Power Shot,Guard Barrier,-,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />
 </misterromdescription>

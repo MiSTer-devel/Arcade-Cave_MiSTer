@@ -56,7 +56,7 @@ class PlayerIO extends Bundle {
 
 object PlayerIO {
   /** The number of buttons */
-  val BUTTON_COUNT = 3
+  val BUTTON_COUNT = 4
 
   def apply() = new PlayerIO
 }
