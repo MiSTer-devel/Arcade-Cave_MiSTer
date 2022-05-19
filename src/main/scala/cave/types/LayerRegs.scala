@@ -37,8 +37,8 @@ import axon.types.UVec2
 import cave.Config
 import chisel3._
 
-/** Represents a layer descriptor. */
-class Layer extends Bundle {
+/** A bundle that contains the decoded layer registers. */
+class LayerRegs extends Bundle {
   /** Priority */
   val priority = UInt(Config.PRIO_WIDTH.W)
   /** Tile size (8x8 or 16x16) */
@@ -57,7 +57,7 @@ class Layer extends Bundle {
   val scroll = UVec2(Config.LAYER_SCROLL_WIDTH.W)
 }
 
-object Layer {
+object LayerRegs {
   /**
    * Decodes a layer from the given data.
    *
@@ -75,11 +75,11 @@ object Layer {
    *      | ---- ---- ---- --xx | priority
    * }}}
    *
-   * @param data The layer data.
+   * @param data The layer registers data.
    */
-  def decode(data: Bits): Layer = {
+  def decode(data: Bits): LayerRegs = {
     val words = Util.decode(data, 3, 16)
-    val layer = Wire(new Layer)
+    val layer = Wire(new LayerRegs)
     layer.priority := words(2)(1, 0)
     layer.tileSize := words(1)(13)
     layer.enable := !words(2)(4)

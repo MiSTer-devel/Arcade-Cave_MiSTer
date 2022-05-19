@@ -207,7 +207,7 @@ class Cave extends Module {
     gpu.io.layerCtrl(i).enable := io.options.layerEnable.layer(i)
     gpu.io.layerCtrl(i).rowScrollEnable := io.options.rowScrollEnable
     gpu.io.layerCtrl(i).rowSelectEnable := io.options.rowSelectEnable
-    gpu.io.layerCtrl(i).regs := withClock(io.video.clock) { ShiftRegister(Layer.decode(layerRegs(i).io.dout), 2) }
+    gpu.io.layerCtrl(i).regs := withClock(io.video.clock) { ShiftRegister(LayerRegs.decode(layerRegs(i).io.dout), 2) }
     gpu.io.layerCtrl(i).vram8x8 <> vram8x8(i).io.portB
     gpu.io.layerCtrl(i).vram16x16 <> vram16x16(i).io.portB
     gpu.io.layerCtrl(i).lineRam <> lineRam(i).io.portB

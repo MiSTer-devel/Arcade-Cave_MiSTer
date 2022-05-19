@@ -47,7 +47,7 @@ class LayerCtrlIO extends Bundle {
   /** Enable the row select effect */
   val rowSelectEnable = Input(Bool())
   /** Layer registers port */
-  val regs = Input(new Layer)
+  val regs = Input(new LayerRegs)
   /** 8x8 VRAM port */
   val vram8x8 = ReadMemIO(Config.LAYER_8x8_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
   /** 16x16 VRAM port */
