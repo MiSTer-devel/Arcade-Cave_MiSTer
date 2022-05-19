@@ -160,7 +160,7 @@ class MemMap(cpu: CPUIO) {
      * @param f The getter function.
      * @param g The setter function.
      */
-    def rw(f: (UInt, UInt) => UInt)(g: (UInt, UInt, UInt) => Unit): Unit = {
+    def rw(f: (UInt, UInt) => UInt)(g: (UInt, UInt, Bits) => Unit): Unit = {
       when(cs) {
         when(readStrobe) {
           dinReg := f(addr, offset)
@@ -188,7 +188,7 @@ class MemMap(cpu: CPUIO) {
      *
      * @param f The setter function.
      */
-    def w(f: (UInt, UInt, UInt) => Unit): Unit = {
+    def w(f: (UInt, UInt, Bits) => Unit): Unit = {
       when(cs && writeStrobe) {
         f(addr, offset, cpu.dout)
         dtackReg := true.B
