@@ -356,6 +356,7 @@ class Cave extends Module {
     vramMap(0x700000, vram8x8(2).io.portA, vram16x16(2).io.portA, lineRam(2).io.portA)
     vregMap(0x800000)
     map(0x800000 to 0x800007).r(irqCause)
+    map(0x800f00 to 0x800f03).nopr() // access occurs during attract loop
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
     map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
