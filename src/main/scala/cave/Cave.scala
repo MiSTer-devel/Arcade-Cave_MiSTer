@@ -99,6 +99,9 @@ class Cave extends Module {
   cpu.io.ipl := iplReg
   cpu.io.din := 0.U
 
+  // Set program ROM interface defaults
+  io.rom.progRom.default()
+
   // EEPROM
   val eeprom = Module(new EEPROM)
   eeprom.io.mem <> io.rom.eeprom
@@ -108,6 +111,7 @@ class Cave extends Module {
   eeprom.io.serial.cs := RegEnable(cs, false.B, eepromMem.wr)
   eeprom.io.serial.sck := RegEnable(sck, false.B, eepromMem.wr)
   eeprom.io.serial.sdi := RegEnable(sdi, false.B, eepromMem.wr)
+  eepromMem.default()
 
   // Main RAM
   val mainRam = Module(new SinglePortRam(
@@ -244,9 +248,15 @@ class Cave extends Module {
     agalletIrq := false.B
   }
 
-  // Set memory interface defaults, the actual values are assigned in the memory map
-  io.rom.progRom.default()
-  eepromMem.default()
+  // IRQ cause handler
+  val irqCause = { (_: UInt, offset: UInt) =>
+    val a = offset === 0.U && agalletIrq
+    val b = unknownIrq
+    val c = videoIrq
+    when(offset === 4.U) { videoIrq := false.B }
+    when(offset === 6.U) { unknownIrq := false.B }
+    Cat(!a, !b, !c)
+  }
 
   // Set input ports
   val (input0, input1) = Cave.encodePlayers(io.gameConfig.index, io.joystick, eeprom)
@@ -258,10 +268,10 @@ class Cave extends Module {
   /**
    * Maps video RAM to the given base address.
    *
-   * @param baseAddr The base memory address.
-   * @param vram8x8 The 8x8 VRAM memory interface.
+   * @param baseAddr  The base memory address.
+   * @param vram8x8   The 8x8 VRAM memory interface.
    * @param vram16x16 The 16x16 VRAM memory interface.
-   * @param lineRam The line RAM memory interface.
+   * @param lineRam   The line RAM memory interface.
    */
   def vramMap(baseAddr: Int, vram8x8: ReadWriteMemIO, vram16x16: ReadWriteMemIO, lineRam: ReadWriteMemIO): Unit = {
     map((baseAddr + 0x0000) to (baseAddr + 0x0fff)).readWriteMem(vram16x16)
@@ -276,14 +286,6 @@ class Cave extends Module {
    * @param baseAddr The base memory address.
    */
   def vregMap(baseAddr: Int): Unit = {
-    map((baseAddr + 0x00) to (baseAddr + 0x07)).r { (_, offset) =>
-      val a = offset === 0.U && agalletIrq
-      val b = unknownIrq
-      val c = videoIrq
-      when(offset === 4.U) { videoIrq := false.B }
-      when(offset === 6.U) { unknownIrq := false.B }
-      Cat(!a, !b, !c)
-    }
     map((baseAddr + 0x00) to (baseAddr + 0x0f)).writeMem(spriteRegs.io.mem.asWriteMemIO)
     map(baseAddr + 0x08).w { (_, _, _) => io.spriteFrameBufferSwap := true.B }
     map((baseAddr + 0x0a) to (baseAddr + 0x7f)).noprw()
@@ -304,6 +306,7 @@ class Cave extends Module {
     map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
     map(0x710c12 to 0x710c1f).noprw() // unused
     vregMap(0x800000)
+    map(0x800000 to 0x800007).r(irqCause)
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
     map(0xb00000).r { (_, _) => input0 }
@@ -331,6 +334,7 @@ class Cave extends Module {
     // DoDonPachi only uses 8x8 VRAM for layer 2, with no line RAM
     map(0x700000 to 0x70ffff).readWriteMemT(vram8x8(2).io.portA)(a => a(12, 0))
     vregMap(0x800000)
+    map(0x800000 to 0x800007).r(irqCause)
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
     map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
@@ -350,6 +354,7 @@ class Cave extends Module {
     vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
     vramMap(0x700000, vram8x8(2).io.portA, vram16x16(2).io.portA, lineRam(2).io.portA)
     vregMap(0x800000)
+    map(0x800000 to 0x800007).r(irqCause)
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
     map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
@@ -365,6 +370,7 @@ class Cave extends Module {
     map(0x200000 to 0x20ffff).readWriteMem(mainRam.io)
     map(0x210000 to 0x2fffff).nopr() // access occurs for Guwange (Special)
     vregMap(0x300000)
+    map(0x300000 to 0x300007).r(irqCause)
     map(0x300080 to 0x3fffff).nopr() // access occurs for Guwange (Special)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     map(0x410000 to 0x4fffff).nopr() // access occurs for Guwange (Special)
@@ -392,6 +398,7 @@ class Cave extends Module {
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     vramMap(0x500000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
     vregMap(0x600000)
+    map(0x600000 to 0x600007).r(irqCause)
     map(0x700000 to 0x700005).readWriteMem(layerRegs(0).io.mem)
     map(0x800000 to 0x80ffff).readWriteMem(paletteRam.io.portA)
     map(0x900000).r { (_, _) => input0 }
