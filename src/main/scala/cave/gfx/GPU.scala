@@ -49,8 +49,6 @@ class GPU extends Module {
     val options = OptionsIO()
     /** Video port */
     val video = Flipped(VideoIO())
-    /** Video registers */
-    val videoRegs = Input(new VideoRegs)
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
     /** Layer control ports */
@@ -70,27 +68,28 @@ class GPU extends Module {
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
   spriteProcessor.io.ctrl <> io.spriteCtrl
-  spriteProcessor.io.videoRegs := io.videoRegs
   spriteProcessor.io.frameBuffer <> io.spriteFrameBuffer
 
   withClockAndReset(io.video.clock, io.video.reset) {
+    val offset = io.spriteCtrl.regs.layerOffset
+
     // Layer 0 processor
     val layer0Processor = Module(new TilemapProcessor)
     layer0Processor.io.video <> io.video
     layer0Processor.io.ctrl <> io.layerCtrl(0)
-    layer0Processor.io.offset := GPU.layerOffset(0, io.layerCtrl, io.videoRegs)
+    layer0Processor.io.offset := GPU.layerOffset(0, offset, io.layerCtrl)
 
     // Layer 1 processor
     val layer1Processor = Module(new TilemapProcessor)
     layer1Processor.io.video <> io.video
     layer1Processor.io.ctrl <> io.layerCtrl(1)
-    layer1Processor.io.offset := GPU.layerOffset(1, io.layerCtrl, io.videoRegs)
+    layer1Processor.io.offset := GPU.layerOffset(1, offset, io.layerCtrl)
 
     // Layer 2 processor
     val layer2Processor = Module(new TilemapProcessor)
     layer2Processor.io.video <> io.video
     layer2Processor.io.ctrl <> io.layerCtrl(2)
-    layer2Processor.io.offset := GPU.layerOffset(2, io.layerCtrl, io.videoRegs)
+    layer2Processor.io.offset := GPU.layerOffset(2, offset, io.layerCtrl)
 
     // Color mixer
     val colorMixer = Module(new ColorMixer)
@@ -121,16 +120,16 @@ object GPU {
    * Calculates the offset adjustment for a layer.
    *
    * @param index     The index of the layer.
+   * @param offset    The offset of the layer.
    * @param layerCtrl The layer controls.
-   * @param videoRegs The video registers.
    * @return An offset value.
    */
-  def layerOffset(index: Int, layerCtrl: Vec[LayerCtrlIO], videoRegs: VideoRegs): UVec2 = {
+  def layerOffset(index: Int, offset: UVec2, layerCtrl: Vec[LayerCtrlIO]): UVec2 = {
     // Each layer is horizontally offset by one pixel with respect to the previous layer. There is
     // an additional 8 pixel horizontal offset for layers with small (i.e. 8x8) tiles.
     val x = Mux(layerCtrl(index).regs.tileSize, (0x13 - (index + 1)).U, (0x13 - (index + 1 + 8)).U)
     val y = 0x1ee.U
-    videoRegs.layerOffset + UVec2(x, y)
+    offset + UVec2(x, y)
   }
 
   /**

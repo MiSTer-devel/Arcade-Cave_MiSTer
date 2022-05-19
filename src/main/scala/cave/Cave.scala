@@ -188,16 +188,15 @@ class Cave extends Module {
     regs
   }
 
-  // Video registers
-  val videoRegs = Module(new RegisterFile(Config.VIDEO_REGS_COUNT))
-  videoRegs.io.mem.default()
+  // Sprite registers
+  val spriteRegs = Module(new RegisterFile(Config.VIDEO_REGS_COUNT))
+  spriteRegs.io.mem.default()
 
   // Graphics processor
   val gpu = Module(new GPU)
   gpu.io.gameConfig <> io.gameConfig
   gpu.io.options <> io.options
   gpu.io.video <> io.video
-  gpu.io.videoRegs := VideoRegs.decode(videoRegs.io.dout)
   gpu.io.paletteRam <> paletteRam.io.portB
   0.until(Config.LAYER_COUNT).foreach { i =>
     gpu.io.layerCtrl(i).format := io.gameConfig.layer(i).format
@@ -216,6 +215,7 @@ class Cave extends Module {
   gpu.io.spriteCtrl.flip := io.options.flip
   gpu.io.spriteCtrl.rotate := io.options.rotate
   gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
+  gpu.io.spriteCtrl.regs := SpriteRegs.decode(spriteRegs.io.dout)
   gpu.io.spriteCtrl.vram <> spriteRam.io.portB
   gpu.io.spriteCtrl.tileRom <> io.rom.spriteTileRom
   gpu.io.spriteLineBuffer <> io.spriteLineBuffer
@@ -271,7 +271,7 @@ class Cave extends Module {
   }
 
   /**
-   * Maps video registers to the given base address.
+   * Maps sprite registers to the given base address.
    *
    * @param baseAddr The base memory address.
    */
@@ -284,7 +284,7 @@ class Cave extends Module {
       when(offset === 6.U) { unknownIrq := false.B }
       Cat(!a, !b, !c)
     }
-    map((baseAddr + 0x00) to (baseAddr + 0x0f)).writeMem(videoRegs.io.mem.asWriteMemIO)
+    map((baseAddr + 0x00) to (baseAddr + 0x0f)).writeMem(spriteRegs.io.mem.asWriteMemIO)
     map(baseAddr + 0x08).w { (_, _, _) => io.spriteFrameBufferSwap := true.B }
     map((baseAddr + 0x0a) to (baseAddr + 0x7f)).noprw()
   }

@@ -37,22 +37,22 @@ import axon.types.UVec2
 import cave.Config
 import chisel3._
 
-/** A bundle that represents the video registers. */
-class VideoRegs extends Bundle {
+/** A bundle that represents the sprite registers. */
+class SpriteRegs extends Bundle {
   /** Layer offset */
   val layerOffset = UVec2(Config.LAYER_SCROLL_WIDTH.W)
-  /** Sprite VRAM bank */
-  val spriteBank = UInt(VideoRegs.SPRITE_BANK_WIDTH.W)
+  /** Sprite bank */
+  val bank = UInt(SpriteRegs.SPRITE_BANK_WIDTH.W)
   /** Sprite fixed-point position format  */
-  val spriteFixed = Bool()
+  val fixed = Bool()
 }
 
-object VideoRegs {
+object SpriteRegs {
   /** The width of the sprite bank */
   val SPRITE_BANK_WIDTH = 2
 
   /**
-   * Decodes the video registers from the given data.
+   * Decodes the sprite registers from the given data.
    *
    * {{{
    * word   bits                  description
@@ -65,14 +65,14 @@ object VideoRegs {
    *    5 | --xx ---- ---- ---- | sprite position format
    * }}}
    *
-   * @param data The video registers data.
+   * @param data The sprite registers data.
    */
-  def decode(data: Bits): VideoRegs = {
+  def decode(data: Bits): SpriteRegs = {
     val words = Util.decode(data, 8, 16)
-    val videoRegs = Wire(new VideoRegs)
+    val videoRegs = Wire(new SpriteRegs)
     videoRegs.layerOffset := UVec2(words(0)(8, 0), words(1)(8, 0))
-    videoRegs.spriteBank := words(4)(1, 0)
-    videoRegs.spriteFixed := words(5)(13, 12).orR
+    videoRegs.bank := words(4)(1, 0)
+    videoRegs.fixed := words(5)(13, 12).orR
     videoRegs
   }
 }

@@ -49,8 +49,6 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   val io = IO(new Bundle {
     /** Control port */
     val ctrl = SpriteCtrlIO()
-    /** Video registers */
-    val videoRegs = Input(new VideoRegs)
     /** Frame buffer port */
     val frameBuffer = new SpriteFrameBufferIO
     /** Debug port */
@@ -76,7 +74,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   val is8BPP = io.ctrl.format === Config.GFX_FORMAT_8BPP.U
 
   // Decode the sprite
-  val sprite = Sprite.decode(io.ctrl.vram.dout, io.ctrl.zoom, io.videoRegs.spriteFixed)
+  val sprite = Sprite.decode(io.ctrl.vram.dout, io.ctrl.zoom, io.ctrl.regs.fixed)
 
   // Wires
   val effectiveRead = Wire(Bool())
@@ -115,7 +113,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
 
   // Set sprite RAM address. The sprite counter is padded to 10-bits (1024) to handle a lower
   // maximum sprite count during testing.
-  val spriteRamAddr = io.videoRegs.spriteBank ## spriteCounter.pad(10)
+  val spriteRamAddr = io.ctrl.regs.bank ## spriteCounter.pad(10)
 
   // Set tile ROM address
   val tileRomAddr = (spriteReg.code + tileCounter) << Mux(is8BPP, 8.U, 7.U)

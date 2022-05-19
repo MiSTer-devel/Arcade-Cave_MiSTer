@@ -34,6 +34,7 @@ package cave.types
 
 import axon.mem.ReadMemIO
 import cave.Config
+import cave.gfx.SpriteRegs
 import chisel3._
 
 /** A bundle that contains control signals for the sprite processor. */
@@ -52,6 +53,8 @@ class SpriteCtrlIO extends Bundle {
   val rotate = Input(Bool())
   /** Enable sprite scaling */
   val zoom = Input(Bool())
+  /** Sprite registers */
+  val regs = Input(new SpriteRegs)
   /** VRAM port */
   val vram = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
   /** Tile ROM port */
