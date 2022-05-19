@@ -42,10 +42,13 @@ class VideoRegs extends Bundle {
   /** Layer offset */
   val layerOffset = UVec2(Config.LAYER_SCROLL_WIDTH.W)
   /** Sprite VRAM bank */
-  val spriteBank = Bool()
+  val spriteBank = UInt(VideoRegs.SPRITE_BANK_WIDTH.W)
 }
 
 object VideoRegs {
+  /** The width of the sprite bank */
+  val SPRITE_BANK_WIDTH = 2
+
   /**
    * Decodes the video registers from the given data.
    *
@@ -65,7 +68,7 @@ object VideoRegs {
     val words = Util.decode(data, 8, 16)
     val videoRegs = Wire(new VideoRegs)
     videoRegs.layerOffset := UVec2(words(0)(8, 0), words(1)(8, 0))
-    videoRegs.spriteBank := words(4)(0)
+    videoRegs.spriteBank := words(4)(1, 0)
     videoRegs
   }
 }

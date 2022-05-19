@@ -50,7 +50,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
     /** Control port */
     val ctrl = SpriteCtrlIO()
     /** Sprite bank */
-    val bank = Input(Bool())
+    val bank = Input(UInt(VideoRegs.SPRITE_BANK_WIDTH.W))
     /** Frame buffer port */
     val frameBuffer = new SpriteFrameBufferIO
     /** Debug port */
@@ -113,8 +113,8 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   // Set effective read flag
   effectiveRead := tileRomRead && !io.ctrl.tileRom.waitReq
 
-  // Set the sprite RAM address. The sprite counter is padded to 10-bits (1024) to handle a lower
-  // maximum sprite count (during testing).
+  // Set sprite RAM address. The sprite counter is padded to 10-bits (1024) to handle a lower
+  // maximum sprite count during testing.
   val spriteRamAddr = io.bank ## spriteCounter.pad(10)
 
   // Set tile ROM address
