@@ -34,7 +34,6 @@ package cave.types
 
 import axon.mem.ReadMemIO
 import cave.Config
-import cave.gfx.SpriteRegs
 import chisel3._
 
 /** A bundle that contains control signals for the sprite processor. */

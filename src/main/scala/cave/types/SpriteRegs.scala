@@ -30,14 +30,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave.gfx
+package cave.types
 
 import axon.Util
 import axon.types.UVec2
 import cave.Config
 import chisel3._
 
-/** A bundle that represents the sprite registers. */
+/** A bundle that contains the decoded sprite registers. */
 class SpriteRegs extends Bundle {
   /** Layer offset */
   val layerOffset = UVec2(Config.LAYER_SCROLL_WIDTH.W)
