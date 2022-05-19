@@ -74,7 +74,8 @@ class MemSys extends Module {
     outAddrWidth = Config.ddrConfig.addrWidth,
     outDataWidth = Config.ddrConfig.dataWidth,
     lineWidth = 1,
-    depth = 1
+    depth = 1,
+    swapEndianness = true
   )))
   ddrDownloadCache.io.enable := true.B
   ddrDownloadCache.io.in <> io.ioctl.asAsyncReadWriteMemIO(IOCTL.ROM_INDEX)
@@ -88,7 +89,8 @@ class MemSys extends Module {
     outDataWidth = Config.sdramConfig.dataWidth,
     lineWidth = Config.sdramConfig.burstLength,
     depth = 1,
-    wrapping = true
+    wrapping = true,
+    swapEndianness = true
   )))
   sdramDownloadCache.io.enable := true.B
 
@@ -100,8 +102,7 @@ class MemSys extends Module {
     outDataWidth = Config.sdramConfig.dataWidth,
     lineWidth = Config.sdramConfig.burstLength,
     depth = 256,
-    wrapping = true,
-    swapEndianness = true
+    wrapping = true
   )))
   progRomCache.io.enable := readyReg
   progRomCache.io.in.asAsyncReadMemIO <> io.rom.progRom
@@ -127,8 +128,7 @@ class MemSys extends Module {
     outDataWidth = Config.sdramConfig.dataWidth,
     lineWidth = Config.sdramConfig.burstLength,
     depth = 4,
-    wrapping = true,
-    swapEndianness = true
+    wrapping = true
   )))
   eepromCache.io.enable := readyReg
   eepromCache.io.in <> io.rom.eeprom

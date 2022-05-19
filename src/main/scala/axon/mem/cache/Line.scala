@@ -52,7 +52,7 @@ class Line(private val config: Config) extends Bundle {
   def inWords: Vec[Bits] = {
     val ws: Seq[Bits] = Util.decode(words.asUInt, config.inWords * inByteWidth, 8)
       .grouped(inByteWidth)
-      .map { b => if (config.swapEndianness) Cat(b) else Cat(b.reverse) }
+      .map { b => if (config.swapEndianness) Cat(b.reverse) else Cat(b) }
       .toSeq
     VecInit(ws)
   }

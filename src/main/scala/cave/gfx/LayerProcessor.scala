@@ -192,8 +192,8 @@ object LayerProcessor {
    *             data.
    */
   private def decode4BPP(data: Bits, word: Bool): Seq[Bits] = {
-    val bits = Mux(word, data.head(Config.TILE_ROM_DATA_WIDTH / 2), data.tail(Config.TILE_ROM_DATA_WIDTH / 2))
-    Seq(6, 7, 4, 5, 2, 3, 0, 1)
+    val bits = Mux(word, data.tail(Config.TILE_ROM_DATA_WIDTH / 2), data.head(Config.TILE_ROM_DATA_WIDTH / 2))
+    Seq(0, 1, 2, 3, 4, 5, 6, 7)
       // Decode data into nibbles
       .reverseIterator.map(Util.decode(bits, 8, 4).apply)
       // Pad nibbles into 8-bit pixels
@@ -208,7 +208,7 @@ object LayerProcessor {
    * @param data The 64-bit tile ROM data.
    */
   private def decode8BPP(data: Bits): Seq[Bits] =
-    Seq(12, 14, 13, 15, 8, 10, 9, 11, 4, 6, 5, 7, 0, 2, 1, 3)
+    Seq(2, 0, 3, 1, 6, 4, 7, 5, 10, 8, 11, 9, 14, 12, 15, 13)
       // Decode data into nibbles
       .reverseIterator.map(Util.decode(data, 16, 4).apply)
       // Join high/low nibbles into 8-bit pixels
