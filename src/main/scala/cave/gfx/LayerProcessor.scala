@@ -41,12 +41,12 @@ import chisel3._
 import chisel3.util._
 
 /**
- * The tilemap processor renders tilemap layers.
+ * The layer processor renders tilemap layers.
  *
  * Tilemap layers are 512x512 pixels, and are composed of either 8x8 or 16x16 tiles with a color
  * depth of either 4 or 8 bits-per-pixel.
  */
-class TilemapProcessor extends Module {
+class LayerProcessor extends Module {
   val io = IO(new Bundle {
     /** Video port */
     val video = Input(new VideoIO)
@@ -82,7 +82,7 @@ class TilemapProcessor extends Module {
   }
 
   // Pixel offset
-  val offset = TilemapProcessor.tileOffset(io.ctrl, pos_)
+  val offset = LayerProcessor.tileOffset(io.ctrl, pos_)
 
   // Latch signals
   val latchTile = io.video.clockEnable && Mux(io.ctrl.regs.tileSize, offset.x === 10.U, offset.x === 2.U)
@@ -90,7 +90,7 @@ class TilemapProcessor extends Module {
   val latchPix = io.video.clockEnable && offset.x(2, 0) === 7.U
 
   // Set layer RAM address
-  val layerRamAddr = TilemapProcessor.tileAddr(io.ctrl, pos_)
+  val layerRamAddr = LayerProcessor.tileAddr(io.ctrl, pos_)
 
   // Decode tile
   val tile = Mux(io.ctrl.regs.tileSize,
@@ -102,7 +102,7 @@ class TilemapProcessor extends Module {
   val tileReg = RegEnable(tile, latchTile)
   val priorityReg = RegEnable(tileReg.priority, latchColor)
   val colorReg = RegEnable(tileReg.colorCode, latchColor)
-  val pixReg = RegEnable(TilemapProcessor.decodePixels(io.ctrl.tileRom.dout, io.ctrl.format, offset), latchPix)
+  val pixReg = RegEnable(LayerProcessor.decodePixels(io.ctrl.tileRom.dout, io.ctrl.format, offset), latchPix)
 
   // Palette entry
   val pen = PaletteEntry(priorityReg, colorReg, pixReg(offset.x(2, 0)))
@@ -115,11 +115,11 @@ class TilemapProcessor extends Module {
   io.ctrl.vram16x16.rd := true.B // read-only
   io.ctrl.vram16x16.addr := layerRamAddr
   io.ctrl.tileRom.rd := tileRomRead
-  io.ctrl.tileRom.addr := TilemapProcessor.tileRomAddr(io.ctrl, tileReg.code, offset)
+  io.ctrl.tileRom.addr := LayerProcessor.tileRomAddr(io.ctrl, tileReg.code, offset)
   io.pen := Mux(layerEnable, pen, PaletteEntry.zero)
 }
 
-object TilemapProcessor {
+object LayerProcessor {
   /**
    * Calculate the VRAM address for a tile.
    *
