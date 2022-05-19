@@ -195,6 +195,18 @@ class MemMap(cpu: CPUIO) {
       }
     }
 
+    /**
+     * Maps the address range to a stubbed memory device.
+     *
+     * The memory device is stubbed by reading and writing to a single register. This is useful
+     * for handling ranges of the memory map that are only checked during boot, but are ignored
+     * the rest of the time.
+     */
+    def readWriteStub(): Unit = {
+      val tmp = Reg(UInt())
+      rw((_, _) => tmp)((_, _, data) => tmp := data)
+    }
+
     /** Ignores write access for the address range. */
     def nopr(): Unit = {
       r((_, _) => 0.U)
