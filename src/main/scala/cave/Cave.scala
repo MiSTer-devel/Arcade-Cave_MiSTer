@@ -301,8 +301,8 @@ class Cave extends Module {
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     vramMap(0x500000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
     vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
-    vramMap(0x710000, vram8x8(2).io.portA, vram16x16(2).io.portA, lineRam(2).io.portA)
     map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
+    map(0x710c12 to 0x710c1f).noprw() // unused
     vregMap(0x800000)
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
