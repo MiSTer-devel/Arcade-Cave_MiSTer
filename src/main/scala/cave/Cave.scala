@@ -276,8 +276,9 @@ class Cave extends Module {
   def vramMap(baseAddr: Int, vram8x8: ReadWriteMemIO, vram16x16: ReadWriteMemIO, lineRam: ReadWriteMemIO): Unit = {
     map((baseAddr + 0x0000) to (baseAddr + 0x0fff)).readWriteMem(vram16x16)
     map((baseAddr + 0x1000) to (baseAddr + 0x17ff)).readWriteMem(lineRam)
-    map((baseAddr + 0x1800) to (baseAddr + 0x3fff)).noprw()
+    map((baseAddr + 0x1800) to (baseAddr + 0x3fff)).readWriteStub()
     map((baseAddr + 0x4000) to (baseAddr + 0x7fff)).readWriteMem(vram8x8)
+    map((baseAddr + 0x8000) to (baseAddr + 0xffff)).readWriteStub()
   }
 
   /**
@@ -364,6 +365,29 @@ class Cave extends Module {
     map(0xe00000).writeMem(eepromMem)
   }
 
+  // Gaia Crusaders
+  when(io.gameConfig.index === GameConfig.GAIA.U) {
+    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom)(addr => addr ## 0.U)
+    map(0x00057e to 0x000581).nopw() // access occurs during boot
+    map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
+    map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
+    map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
+    vramMap(0x500000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
+    vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
+    vramMap(0x700000, vram8x8(2).io.portA, vram16x16(2).io.portA, lineRam(2).io.portA)
+    vregMap(0x800000)
+    map(0x800000 to 0x800007).r(irqCause)
+    map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
+    map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
+    map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
+    map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
+    map(0xd00010).r { (_, _) => input0 }
+    map(0xd00010).nopw() // coin counter
+    map(0xd00012).r { (_, _) => input1 }
+    map(0xd00014).r { (_, _) => 0xfffb.U } // dips
+    map(0xd00014).nopw() // watchdog
+  }
+
   // Guwange
   when(io.gameConfig.index === GameConfig.GUWANGE.U) {
     map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
@@ -420,15 +444,18 @@ object Cave {
     val coin1 = Util.pulseSync(Config.PLAYER_COIN_PULSE_WIDTH, joystick.player1.coin)
     val coin2 = Util.pulseSync(Config.PLAYER_COIN_PULSE_WIDTH, joystick.player2.coin)
 
-    val left = Mux(gameIndex === GameConfig.GUWANGE.U,
-      Cat(~joystick.player2.buttons(2, 0), ~joystick.player2.right, ~joystick.player2.left, ~joystick.player2.down, ~joystick.player2.up, ~joystick.player2.start, ~joystick.player1.buttons(2, 0), ~joystick.player1.right, ~joystick.player1.left, ~joystick.player1.down, ~joystick.player1.up, ~joystick.player1.start),
-      Cat("b111111".U, ~joystick.service1, ~coin1, ~joystick.player1.start, ~joystick.player1.buttons(2, 0), ~joystick.player1.right, ~joystick.player1.left, ~joystick.player1.down, ~joystick.player1.up)
-    )
+    val default1 = Cat("b111111".U, ~joystick.service1, ~coin1, ~joystick.player1.start, ~joystick.player1.buttons(2, 0), ~joystick.player1.right, ~joystick.player1.left, ~joystick.player1.down, ~joystick.player1.up)
+    val default2 = Cat("b1111".U, eeprom.io.serial.sdo, "b11".U, ~coin2, ~joystick.player2.start, ~joystick.player2.buttons(2, 0), ~joystick.player2.right, ~joystick.player2.left, ~joystick.player2.down, ~joystick.player2.up)
 
-    val right = Mux(gameIndex === GameConfig.GUWANGE.U,
-      Cat("b11111111".U, eeprom.io.serial.sdo, "b1111".U, ~joystick.service1, ~coin2, ~coin1),
-      Cat("b1111".U, eeprom.io.serial.sdo, "b11".U, ~coin2, ~joystick.player2.start, ~joystick.player2.buttons(2, 0), ~joystick.player2.right, ~joystick.player2.left, ~joystick.player2.down, ~joystick.player2.up)
-    )
+    val left = MuxLookup(gameIndex, default1, Seq(
+      GameConfig.GAIA.U -> Cat(~joystick.player2.buttons(3, 0), ~joystick.player2.right, ~joystick.player2.left, ~joystick.player2.down, ~joystick.player2.up, ~joystick.player1.buttons(3, 0), ~joystick.player1.right, ~joystick.player1.left, ~joystick.player1.down, ~joystick.player1.up),
+      GameConfig.GUWANGE.U -> Cat(~joystick.player2.buttons(2, 0), ~joystick.player2.right, ~joystick.player2.left, ~joystick.player2.down, ~joystick.player2.up, ~joystick.player2.start, ~joystick.player1.buttons(2, 0), ~joystick.player1.right, ~joystick.player1.left, ~joystick.player1.down, ~joystick.player1.up, ~joystick.player1.start),
+    ))
+
+    val right = MuxLookup(gameIndex, default2, Seq(
+      GameConfig.GAIA.U -> Cat("b1111111111".U, ~joystick.player2.start, ~joystick.player1.start, "b1".U, ~joystick.service1, ~coin2, ~coin1),
+      GameConfig.GUWANGE.U -> Cat("b11111111".U, eeprom.io.serial.sdo, "b1111".U, ~joystick.service1, ~coin2, ~coin1),
+    ))
 
     (left, right)
   }

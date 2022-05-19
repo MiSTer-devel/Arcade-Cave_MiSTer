@@ -1,0 +1,43 @@
+<misterromdescription>
+  <name>Gaia Crusaders</name>
+  <mameversion>0226</mameversion>
+  <setname>gaia</setname>
+  <year>1999</year>
+  <manufacturer>CAVE</manufacturer>
+  <category>Fighting</category>
+  <rbf>cave</rbf>
+
+  <!-- ROM data -->
+  <rom index="0" zip="gaia.zip" md5="none" address="0x30000000">
+    <!-- main CPU -->
+    <interleave output="16">
+      <part name="prg1.127" crc="47b904b2" map="01" />
+      <part name="prg2.128" crc="469b7794" map="10" />
+    </interleave>
+
+    <!-- sprites -->
+    <part name="obj1.736" crc="f4f84e5d" />
+    <part name="obj2.738" crc="15c2a9ce" />
+
+    <!-- layer 0 -->
+    <part name="bg1.989" crc="013a693d" />
+
+    <!-- layer 1 -->
+    <part name="bg2.995" crc="783cc62f" />
+
+    <!-- layer 2 -->
+    <part name="bg3.998" crc="bcd61d1c" />
+
+    <!-- samples -->
+    <part name="snd1.447" crc="92770a52" />
+    <part name="snd2.454" crc="329ae1cf" />
+    <part name="snd3.455" crc="4048d64e" />
+  </rom>
+
+  <!-- select game -->
+  <rom index="1">
+    <part>06</part>
+  </rom>
+
+  <buttons names="B0,B1,B2,B3,Start,Coin,Pause,Service" default="A,B,X,Y,R,L,Start" />
+</misterromdescription>

@@ -32,6 +32,7 @@
 
 package cave.types
 
+import axon.types.OptionsIO
 import cave.Config
 import chisel3._
 import chisel3.util._
@@ -39,7 +40,7 @@ import chisel3.util._
 /** Represents a game configuration. */
 class GameConfig extends Bundle {
   /** Game index */
-  val index = UInt(4.W)
+  val index = UInt(OptionsIO.GAME_INDEX_WIDTH.W)
   /** Program ROM offset */
   val progRomOffset = UInt(32.W)
   /** Sound ROM offset */
@@ -79,6 +80,8 @@ object GameConfig {
   val UOPOKO = 4
   /** Guwange */
   val GUWANGE = 5
+  /** Gaia Crusaders */
+  val GAIA = 6
 
   def apply() = new GameConfig
 
@@ -91,6 +94,7 @@ object GameConfig {
     MuxLookup(index, ddonpach, Seq(
       DFEVERON.U -> dfeveron,
       ESPRADE.U -> esprade,
+      GAIA.U -> gaia,
       GUWANGE.U -> guwange,
       UOPOKO.U -> uopoko
     ))
@@ -150,6 +154,25 @@ object GameConfig {
     wire.layer(0).romOffset := 0x01100000.U
     wire.layer(1).romOffset := 0x01900000.U
     wire.layer(2).romOffset := 0x02100000.U
+    wire
+  }
+
+  private def gaia = {
+    val wire = Wire(new GameConfig)
+    wire.index := GAIA.U
+    wire.progRomOffset := 0x00000000.U
+    wire.soundRomOffset := 0x01500000.U
+    wire.eepromOffset := 0x00000000.U // no EEPROM
+    wire.granularity := 256.U
+    wire.sprite.format := Config.GFX_FORMAT_4BPP.U
+    wire.sprite.zoom := true.B
+    wire.sprite.romOffset := 0x00100000.U
+    wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
+    wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
+    wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
+    wire.layer(0).romOffset := 0x00900000.U
+    wire.layer(1).romOffset := 0x00d00000.U
+    wire.layer(2).romOffset := 0x01100000.U
     wire
   }
 

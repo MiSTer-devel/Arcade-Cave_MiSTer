@@ -192,7 +192,7 @@ localparam CONF_STR = {
   "P2OF,Row Select,On,Off;",
   "P2OG,Sprite Framebuffer,On,Off;",
   "P2OH,System Framebuffer,On,Off;",
-  "P2OIL,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.,Puzzle Uo Poko,Guwange;",
+  "P2OIL,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.,Puzzle Uo Poko,Guwange,Gaia;",
   "-;",
   "R0,Reset;",
   "J,B0,B1,B2,B3,Start,Coin,Pause,Service;",
