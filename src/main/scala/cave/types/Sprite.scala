@@ -87,11 +87,12 @@ object Sprite {
    *
    * @param data   The sprite data.
    * @param zoomed A boolean value indicating whether the sprite is zoomed.
+   * @param fixed  A boolean value indicating whether the sprite position is in fixed-point format.
    * @return The decoded sprite.
    */
-  def decode(data: Bits, zoomed: Bool): Sprite = {
+  def decode(data: Bits, zoomed: Bool, fixed: Bool): Sprite = {
     val words = Util.decode(data, 8, 16)
-    Mux(zoomed, decodeZoomedSprite(words), decodeSprite(words))
+    Mux(zoomed, decodeZoomedSprite(words, fixed), decodeSprite(words, fixed))
   }
 
   /**
@@ -111,15 +112,18 @@ object Sprite {
    *    4 | xxxx xxxx ---- ---- | tile columns
    *      | ---- ---- xxxx xxxx | tile rows
    * }}}
+   *
+   * @param words The sprite data.
+   * @param fixed A boolean value indicating whether the sprite position is in fixed-point format.
    */
-  private def decodeSprite(words: Seq[Bits]): Sprite = {
+  private def decodeSprite(words: Seq[Bits], fixed: Bool): Sprite = {
     val sprite = Wire(new Sprite)
     sprite.priority := words(0)(5, 4)
     sprite.colorCode := words(0)(13, 8)
     sprite.code := words(0)(1, 0) ## words(1)(15, 0)
     sprite.flipX := words(0)(3)
     sprite.flipY := words(0)(2)
-    sprite.pos := SVec2(words(2)(9, 0) ## 0.U(8.W), words(3)(9, 0) ## 0.U(8.W))
+    sprite.pos := decodePosition(words(2), words(3), fixed)
     sprite.cols := words(4)(15, 8)
     sprite.rows := words(4)(7, 0)
     sprite.zoom := UVec2(0x100.U, 0x100.U)
@@ -145,18 +149,36 @@ object Sprite {
    *    6 | xxxx xxxx ---- ---- | tile columns
    *      | ---- ---- xxxx xxxx | tile rows
    * }}}
+   *
+   * @param words The sprite data.
+   * @param fixed A boolean value indicating whether the sprite position is in fixed-point format.
    */
-  private def decodeZoomedSprite(words: Seq[Bits]): Sprite = {
+  private def decodeZoomedSprite(words: Seq[Bits], fixed: Bool): Sprite = {
     val sprite = Wire(new Sprite)
     sprite.priority := words(2)(5, 4)
     sprite.colorCode := words(2)(13, 8)
     sprite.code := words(2)(1, 0) ## words(3)(15, 0)
     sprite.flipX := words(2)(3)
     sprite.flipY := words(2)(2)
-    sprite.pos := SVec2(words(0) ## 0.U(2.W), words(1) ## 0.U(2.W))
+    sprite.pos := decodePosition(words(0), words(1), fixed)
     sprite.cols := words(6)(15, 8)
     sprite.rows := words(6)(7, 0)
     sprite.zoom := UVec2(words(4), words(5))
     sprite
   }
+
+  /**
+   * Decodes a sprite position, formatted as a S9.6 fixed-point number or 10-bit signed integer,
+   * into an 18-bit signed vector.
+   *
+   * @param x     The raw X value.
+   * @param y     The raw Y value.
+   * @param fixed A boolean value indicating whether the sprite position is in fixed-point format.
+   * @return A signed vector.
+   */
+  private def decodePosition(x: Bits, y: Bits, fixed: Bool): SVec2 = Mux(
+    fixed,
+    SVec2(x ## 0.U(2.W), y ## 0.U(2.W)),
+    SVec2(x(9, 0) ## 0.U(8.W), y(9, 0) ## 0.U(8.W))
+  )
 }

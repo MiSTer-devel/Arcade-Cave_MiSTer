@@ -51,6 +51,8 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
     val ctrl = SpriteCtrlIO()
     /** Sprite bank */
     val bank = Input(UInt(VideoRegs.SPRITE_BANK_WIDTH.W))
+    /** Sprite fixed-point position format format */
+    val fixed = Input(Bool())
     /** Frame buffer port */
     val frameBuffer = new SpriteFrameBufferIO
     /** Debug port */
@@ -76,7 +78,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   val is8BPP = io.ctrl.format === Config.GFX_FORMAT_8BPP.U
 
   // Decode the sprite
-  val sprite = Sprite.decode(io.ctrl.vram.dout, io.ctrl.zoom)
+  val sprite = Sprite.decode(io.ctrl.vram.dout, io.ctrl.zoom, io.fixed)
 
   // Wires
   val effectiveRead = Wire(Bool())

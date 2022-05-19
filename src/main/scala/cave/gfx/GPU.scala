@@ -71,6 +71,7 @@ class GPU extends Module {
   val spriteProcessor = Module(new SpriteProcessor)
   spriteProcessor.io.ctrl <> io.spriteCtrl
   spriteProcessor.io.bank := io.videoRegs.spriteBank
+  spriteProcessor.io.fixed := io.videoRegs.spriteFixed
   spriteProcessor.io.frameBuffer <> io.spriteFrameBuffer
 
   withClockAndReset(io.video.clock, io.video.reset) {

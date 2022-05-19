@@ -43,6 +43,8 @@ class VideoRegs extends Bundle {
   val layerOffset = UVec2(Config.LAYER_SCROLL_WIDTH.W)
   /** Sprite VRAM bank */
   val spriteBank = UInt(VideoRegs.SPRITE_BANK_WIDTH.W)
+  /** Sprite fixed-point position format  */
+  val spriteFixed = Bool()
 }
 
 object VideoRegs {
@@ -59,7 +61,8 @@ object VideoRegs {
    *      | -xxx xxxx xxxx xxxx | layer offset x
    *    1 | x--- ---- ---- ---- | flip y
    *      | -xxx xxxx xxxx xxxx | layer offset y
-   *    4 | ---- ---- ---  --xx | sprite bank
+   *    4 | ---- ---- ---- --xx | sprite bank
+   *    5 | --xx ---- ---- ---- | sprite position format
    * }}}
    *
    * @param data The video registers data.
@@ -69,6 +72,7 @@ object VideoRegs {
     val videoRegs = Wire(new VideoRegs)
     videoRegs.layerOffset := UVec2(words(0)(8, 0), words(1)(8, 0))
     videoRegs.spriteBank := words(4)(1, 0)
+    videoRegs.spriteFixed := words(5)(13, 12).orR
     videoRegs
   }
 }
