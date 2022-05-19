@@ -40,7 +40,13 @@ import cave.types._
 import chisel3._
 import chisel3.util._
 
-/** Graphics processing unit (GPU). */
+/**
+ * The graphics processing unit (GPU) handles rendering the sprite and tilemap layers.
+ *
+ * For each pixel on the screen, the palette entry outputs from all layers are mixed together to
+ * yield a final palette entry. This value is then used to look up the actual pixel color in the
+ * palette RAM.
+ */
 class GPU extends Module {
   val io = IO(new Bundle {
     /** Game config port */
@@ -49,8 +55,6 @@ class GPU extends Module {
     val options = OptionsIO()
     /** Video port */
     val video = Flipped(VideoIO())
-    /** Palette RAM port */
-    val paletteRam = new PaletteRamIO
     /** Layer control ports */
     val layerCtrl = Vec(Config.LAYER_COUNT, LayerCtrlIO())
     /** Sprite control port */
@@ -61,6 +65,8 @@ class GPU extends Module {
     val spriteFrameBuffer = new SpriteFrameBufferIO
     /** System frame buffer port */
     val systemFrameBuffer = new SystemFrameBufferIO
+    /** Palette RAM port */
+    val paletteRam = new PaletteRamIO
     /** RGB output */
     val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
   })

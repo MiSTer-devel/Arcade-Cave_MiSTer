@@ -201,7 +201,6 @@ class Cave extends Module {
   gpu.io.gameConfig <> io.gameConfig
   gpu.io.options <> io.options
   gpu.io.video <> io.video
-  gpu.io.paletteRam <> paletteRam.io.portB
   0.until(Config.LAYER_COUNT).foreach { i =>
     gpu.io.layerCtrl(i).format := io.gameConfig.layer(i).format
     gpu.io.layerCtrl(i).enable := io.options.layerEnable.layer(i)
@@ -225,6 +224,7 @@ class Cave extends Module {
   gpu.io.spriteLineBuffer <> io.spriteLineBuffer
   gpu.io.spriteFrameBuffer <> io.spriteFrameBuffer
   gpu.io.systemFrameBuffer <> io.systemFrameBuffer
+  gpu.io.paletteRam <> paletteRam.io.portB
   gpu.io.rgb <> io.rgb
 
   // YMZ280B
