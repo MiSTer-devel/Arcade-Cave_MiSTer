@@ -12,28 +12,28 @@
         <option value="cave.MemSysTest" />
         <option value="cave.fb.PageFlipperTest" />
         <option value="cave.types.RegisterFileTest" />
-        <option value="cave.gfx.SpriteDecoderTest" />
-        <option value="cave.gfx.SpriteProcessorTest" />
-        <option value="cave.gfx.TilemapProcessorTest" />
         <option value="cave.gfx.SpriteBlitterTest" />
-        <option value="axon.DataFreezerTest" />
+        <option value="cave.gfx.SpriteDecoderTest" />
+        <option value="cave.gfx.LayerProcessorTest" />
+        <option value="cave.gfx.SpriteProcessorTest" />
         <option value="axon.UtilTest" />
+        <option value="axon.DataFreezerTest" />
         <option value="axon.mem.DDRTest" />
         <option value="axon.mem.CacheTest" />
         <option value="axon.mem.SDRAMTest" />
         <option value="axon.mem.EEPROMTest" />
         <option value="axon.mem.MemArbiterTest" />
-        <option value="axon.util.CounterTest" />
+        <option value="axon.mem.BurstReadDMATest" />
+        <option value="axon.mem.BurstWriteDMATest" />
         <option value="axon.util.PISOTest" />
+        <option value="axon.util.CounterTest" />
         <option value="axon.cpu.MemMapTest" />
-        <option value="axon.dma.ReadDMATest" />
-        <option value="axon.dma.WriteDMATest" />
         <option value="axon.gfx.VideoTimingTest" />
-        <option value="axon.snd.AudioPipelineTest" />
-        <option value="axon.snd.ChannelControllerTest" />
         <option value="axon.snd.LERPTest" />
         <option value="axon.snd.ADPCMTest" />
         <option value="axon.snd.YMZ280BTest" />
+        <option value="axon.snd.AudioPipelineTest" />
+        <option value="axon.snd.ChannelControllerTest" />
       </list>
     </option>
     <option name="searchTest" value="In whole project" />
