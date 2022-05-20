@@ -41,7 +41,7 @@
     <patch offset="0x1300002">ff ff</patch>
     <patch offset="0x1300008">00 04</patch>
 
-    <-- trainer ->
+    <!-- trainer -->
     <patch offset="0x00000B02">4E 71 4E 71</patch>
     <patch offset="0x00005410">60 00 00 0C</patch>
     <patch offset="0x0000552E">4E F9 00 09 81 2A</patch>
