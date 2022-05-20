@@ -39,13 +39,20 @@
     <part>06</part>
   </rom>
 
-  <buttons names="B0,B1,B2,B3,Start,Coin,Pause,Service" default="A,B,X,Y,R,L,Start" />
+  <buttons names="Punch,Kick,Jump,Magic,Start,Coin,Pause,Service" default="A,B,X,Y,R,L,Start" />
 
   <!-- DIPs -->
-  <switches default="FB,FF">
-    <dip bits="0" name="Cabinet" ids="Cocktail,Upright" />
-    <dip bits="1" name="Demo Sounds" ids="Off,On" />
-    <dip bits="2" name="Language" ids="English,Japanese" />
-    <dip bits="3,4,5" name="Coinage" ids="0,1,2,3,4,5,6,7" />
-  </switches>
+    <switches default="ff,ff">
+        <!-- DSW -->
+        <dip name="Flip Screen" bits="0" ids="On,Off"/>
+        <dip name="Demo Sounds" bits="1" ids="Off,On"/>
+        <dip name="Language" bits="2" ids="English,Japanese"/>
+        <dip name="Coinage" bits="3,5" ids="2/1,4/1,3/1,2/3,2/1,1/3,1/2,1/1"/>
+        <dip name="Free Play" bits="6" ids="On,Off"/>
+        <dip name="Allow Continue" bits="7" ids="Off,On"/>
+        <dip name="Lives" bits="8,9" ids="2,1,4,3"/>
+        <dip name="Bonus Life" bits="10" ids="Off,150k/300k,150k/350k,150k/350k,150k/400k,150k/400k,150k/400k,200k/500k,200k/500k"/>
+        <dip name="Damage" bits="11,12" ids="+3,+2,+1,+0"/>
+        <dip name="Difficulty" bits="13,15" ids="Hardest,Hard 2,Very Hard,Medium Hard,Hard 1,Easy,Very Easy,Medium"/>
+    </switches>
 </misterromdescription>
