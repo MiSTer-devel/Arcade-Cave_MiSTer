@@ -63,11 +63,8 @@ class MemSys extends Module {
     val ready = Output(Bool())
   })
 
-  // The ready register is asserted when the memory system is ready.
-  val readyReg = RegInit(false.B)
-
-  // The DDR download cache is used to buffer ROM data, so that complete words can be written to
-  // memory.
+  // The DDR download cache is used to buffer ROM data from the IOCTL, so that complete words are
+  // written to memory.
   val ddrDownloadCache = Module(new Cache(cache.Config(
     inAddrWidth = IOCTL.ADDR_WIDTH,
     inDataWidth = IOCTL.DATA_WIDTH,
@@ -80,8 +77,8 @@ class MemSys extends Module {
   ddrDownloadCache.io.enable := true.B
   ddrDownloadCache.io.in <> io.ioctl.rom
 
-  // The SDRAM download cache is used to buffer download data, so that complete words can be written
-  // to memory.
+  // The SDRAM download cache is used to buffer ROM data from the copy DMA, so that complete words
+  // are written to memory.
   val sdramDownloadCache = Module(new Cache(cache.Config(
     inAddrWidth = Config.ddrConfig.addrWidth,
     inDataWidth = Config.ddrConfig.dataWidth,
@@ -104,7 +101,7 @@ class MemSys extends Module {
     depth = 256,
     wrapping = true
   )))
-  progRomCache.io.enable := readyReg
+  progRomCache.io.enable := io.ready
   progRomCache.io.in.asAsyncReadMemIO <> io.rom.progRom
 
   // Sound ROM cache
@@ -117,7 +114,7 @@ class MemSys extends Module {
     depth = 64,
     wrapping = true
   )))
-  soundRomCache.io.enable := readyReg
+  soundRomCache.io.enable := io.ready
   soundRomCache.io.in.asAsyncReadMemIO <> io.rom.soundRom
 
   // EEPROM cache
@@ -130,7 +127,7 @@ class MemSys extends Module {
     depth = 4,
     wrapping = true
   )))
-  eepromCache.io.enable := readyReg
+  eepromCache.io.enable := io.ready
   eepromCache.io.in <> io.rom.eeprom
 
   // Layer tile ROM cache
@@ -144,15 +141,18 @@ class MemSys extends Module {
       depth = 16,
       wrapping = true
     )))
-    c.io.enable := readyReg
+    c.io.enable := io.ready
     c.io.in.asAsyncReadMemIO <> io.rom.layerTileRom(i)
     c
   }
 
-  // Copy download data from DDR to SDRAM
+  // Copy ROM data from DDR to SDRAM
   val copyDownloadDma = Module(new BurstReadDMA(Config.copyDownloadDmaConfig))
-  copyDownloadDma.io.start := Util.falling(io.ioctl.download)
+  copyDownloadDma.io.start := !io.ready && Util.falling(io.ioctl.download)
   copyDownloadDma.io.out <> sdramDownloadCache.io.in.asAsyncWriteMemIO
+
+  // Latch ready flag when the copy DMA has finished
+  io.ready := Util.latchSync(Util.falling(copyDownloadDma.io.busy))
 
   // DDR arbiter
   val ddrArbiter = Module(new MemArbiter(6, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
@@ -176,14 +176,4 @@ class MemSys extends Module {
     layerRomCache(1).io.out.mapAddr(_ + io.gameConfig.layer(1).romOffset),
     layerRomCache(2).io.out.mapAddr(_ + io.gameConfig.layer(2).romOffset)
   ) <> io.sdram
-
-  // Toggle ready register
-  when(Util.rising(io.ioctl.download)) {
-    readyReg := false.B
-  }.elsewhen(Util.falling(copyDownloadDma.io.busy)) {
-    readyReg := true.B
-  }
-
-  // Outputs
-  io.ready := readyReg
 }

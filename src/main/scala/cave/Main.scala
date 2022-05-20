@@ -82,8 +82,8 @@ class Main extends Module {
     val led = mister.LEDIO()
   })
 
-  // The game configuration register is latched when data is written to the download port (i.e. the
-  // game index is set by the MRA file).
+  // The game configuration register is latched when data is written to the IOCTL (i.e. the game
+  // index is set by the MRA file).
   val gameConfigReg = {
     val gameConfig = Reg(GameConfig())
     val latched = RegInit(false.B)
