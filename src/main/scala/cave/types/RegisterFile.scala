@@ -32,29 +32,29 @@
 
 package cave.types
 
-import axon.cpu.m68k.CPU
 import axon.mem.ReadWriteMemIO
 import chisel3._
 import chisel3.util._
 
 /**
- * A set of registers.
+ * A set of registers, presented as a synchronous read/write memory device.
  *
- * @param numRegs The number of registers in the register file.
+ * @param dataWidth The width of the data bus.
+ * @param depth The number of registers in the register file.
  */
-class RegisterFile(numRegs: Int) extends Module {
+class RegisterFile(dataWidth: Int, depth: Int) extends Module {
   /** The width of the address bus. */
-  val ADDR_WIDTH = log2Up(numRegs)
+  val ADDR_WIDTH = log2Up(depth)
 
   val io = IO(new Bundle {
     /** Memory port */
-    val mem = Flipped(ReadWriteMemIO(ADDR_WIDTH, CPU.DATA_WIDTH))
+    val mem = Flipped(ReadWriteMemIO(ADDR_WIDTH, dataWidth))
     /** Output data port */
-    val dout = Output(Bits((CPU.DATA_WIDTH * numRegs).W))
+    val dout = Output(Bits((dataWidth * depth).W))
   })
 
   // Data registers
-  val regs = Reg(Vec(numRegs, Bits(CPU.DATA_WIDTH.W)))
+  val regs = Reg(Vec(depth, Bits(dataWidth.W)))
 
   // Alias the current data register
   val data = regs(io.mem.addr)

@@ -39,7 +39,7 @@ import org.scalatest.matchers.should.Matchers
 
 class RegisterFileTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   it should "allow writing masked bytes" in {
-    test(new RegisterFile(3)) { dut =>
+    test(new RegisterFile(16, 3)) { dut =>
       dut.io.mem.wr.poke(true)
       dut.io.mem.rd.poke(true)
 
@@ -70,7 +70,7 @@ class RegisterFileTest extends AnyFlatSpec with ChiselScalatestTester with Match
   }
 
   it should "output the registers" in {
-    test(new RegisterFile(3)) { dut =>
+    test(new RegisterFile(16, 3)) { dut =>
       dut.io.mem.wr.poke(true)
       dut.io.mem.mask.poke(3)
 

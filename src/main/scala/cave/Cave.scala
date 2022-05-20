@@ -187,13 +187,13 @@ class Cave extends Module {
 
   // Layer registers
   val layerRegs = 0.until(Config.LAYER_COUNT).map { _ =>
-    val regs = Module(new RegisterFile(Config.LAYER_REGS_COUNT))
+    val regs = Module(new RegisterFile(CPU.DATA_WIDTH, Config.LAYER_REGS_COUNT))
     regs.io.mem.default()
     regs
   }
 
   // Sprite registers
-  val spriteRegs = Module(new RegisterFile(Config.VIDEO_REGS_COUNT))
+  val spriteRegs = Module(new RegisterFile(CPU.DATA_WIDTH, Config.VIDEO_REGS_COUNT))
   spriteRegs.io.mem.default()
 
   // Graphics processor
