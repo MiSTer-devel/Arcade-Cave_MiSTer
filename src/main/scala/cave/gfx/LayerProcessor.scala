@@ -89,6 +89,10 @@ class LayerProcessor extends Module {
   val latchColor = io.video.clockEnable && Mux(io.ctrl.regs.tileSize, offset.x === 15.U, offset.x === 7.U)
   val latchPix = io.video.clockEnable && offset.x(2, 0) === 7.U
 
+  // Set line RAM address
+  // TODO: This should be calculated differently for Sailor Moon.
+  val lineRamAddr = Mux(io.ctrl.regs.flipY, pos.y + 1.U, pos.y - 1.U)
+
   // Set layer RAM address
   val layerRamAddr = LayerProcessor.tileAddr(io.ctrl, pos_)
 
@@ -109,7 +113,7 @@ class LayerProcessor extends Module {
 
   // Outputs
   io.ctrl.lineRam.rd := true.B // read-only
-  io.ctrl.lineRam.addr := pos.y
+  io.ctrl.lineRam.addr := lineRamAddr
   io.ctrl.vram8x8.rd := true.B // read-only
   io.ctrl.vram8x8.addr := layerRamAddr
   io.ctrl.vram16x16.rd := true.B // read-only
