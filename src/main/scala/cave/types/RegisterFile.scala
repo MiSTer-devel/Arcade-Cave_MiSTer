@@ -40,7 +40,7 @@ import chisel3.util._
  * A set of registers, presented as a synchronous read/write memory device.
  *
  * @param dataWidth The width of the data bus.
- * @param depth The number of registers in the register file.
+ * @param depth     The number of registers in the register file.
  */
 class RegisterFile(dataWidth: Int, depth: Int) extends Module {
   /** The width of the address bus. */
@@ -49,8 +49,8 @@ class RegisterFile(dataWidth: Int, depth: Int) extends Module {
   val io = IO(new Bundle {
     /** Memory port */
     val mem = Flipped(ReadWriteMemIO(ADDR_WIDTH, dataWidth))
-    /** Output data port */
-    val dout = Output(Bits((dataWidth * depth).W))
+    /** Registers port */
+    val regs: Vec[Bits] = Output(Vec(depth, Bits(dataWidth.W)))
   })
 
   // Data registers
@@ -72,5 +72,5 @@ class RegisterFile(dataWidth: Int, depth: Int) extends Module {
 
   // Outputs
   io.mem.dout := data
-  io.dout := regs.asUInt
+  io.regs := regs
 }

@@ -32,7 +32,6 @@
 
 package cave.types
 
-import axon.Util
 import axon.types.UVec2
 import cave.Config
 import chisel3._
@@ -59,7 +58,7 @@ class LayerRegs extends Bundle {
 
 object LayerRegs {
   /**
-   * Decodes a layer from the given data.
+   * Decodes the layer registers from the given data.
    *
    * {{{
    * word   bits                  description
@@ -75,19 +74,18 @@ object LayerRegs {
    *      | ---- ---- ---- --xx | priority
    * }}}
    *
-   * @param data The layer registers data.
+   * @param regs The layer registers data.
    */
-  def decode(data: Bits): LayerRegs = {
-    val words = Util.decode(data, 3, 16)
+  def decode(regs: Vec[Bits]): LayerRegs = {
     val layer = Wire(new LayerRegs)
-    layer.priority := words(2)(1, 0)
-    layer.tileSize := words(1)(13)
-    layer.enable := !words(2)(4)
-    layer.flipX := !words(0)(15)
-    layer.flipY := !words(1)(15)
-    layer.rowScrollEnable := words(0)(14)
-    layer.rowSelectEnable := words(1)(14)
-    layer.scroll := UVec2(words(0)(8, 0), words(1)(8, 0))
+    layer.priority := regs(2)(1, 0)
+    layer.tileSize := regs(1)(13)
+    layer.enable := !regs(2)(4)
+    layer.flipX := !regs(0)(15)
+    layer.flipY := !regs(1)(15)
+    layer.rowScrollEnable := regs(0)(14)
+    layer.rowSelectEnable := regs(1)(14)
+    layer.scroll := UVec2(regs(0)(8, 0), regs(1)(8, 0))
     layer
   }
 }

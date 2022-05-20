@@ -32,7 +32,6 @@
 
 package cave.types
 
-import axon.Util
 import axon.types.UVec2
 import cave.Config
 import chisel3._
@@ -65,14 +64,13 @@ object SpriteRegs {
    *    5 | --xx ---- ---- ---- | sprite position format
    * }}}
    *
-   * @param data The sprite registers data.
+   * @param regs The sprite registers data.
    */
-  def decode(data: Bits): SpriteRegs = {
-    val words = Util.decode(data, 8, 16)
+  def decode(regs: Vec[Bits]): SpriteRegs = {
     val videoRegs = Wire(new SpriteRegs)
-    videoRegs.layerOffset := UVec2(words(0)(8, 0), words(1)(8, 0))
-    videoRegs.bank := words(4)(1, 0)
-    videoRegs.fixed := words(5)(13, 12).orR
+    videoRegs.layerOffset := UVec2(regs(0)(8, 0), regs(1)(8, 0))
+    videoRegs.bank := regs(4)(1, 0)
+    videoRegs.fixed := regs(5)(13, 12).orR
     videoRegs
   }
 }
