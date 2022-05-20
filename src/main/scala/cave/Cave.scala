@@ -378,7 +378,7 @@ class Cave extends Module {
     map(0xd00010).r { (_, _) => input0 }
     map(0xd00010).nopw() // coin counter
     map(0xd00012).r { (_, _) => input1 }
-    map(0xd00014).r { (_, _) => 0xfffb.U } // dips
+    map(0xd00014).r { (_, _) => io.dips(0) }
     map(0xd00014).nopw() // watchdog
   }
 

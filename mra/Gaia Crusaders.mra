@@ -40,4 +40,12 @@
   </rom>
 
   <buttons names="B0,B1,B2,B3,Start,Coin,Pause,Service" default="A,B,X,Y,R,L,Start" />
+
+  <!-- DIPs -->
+  <switches default="FB,FF">
+    <dip bits="0" name="Cabinet" ids="Cocktail,Upright" />
+    <dip bits="1" name="Demo Sounds" ids="Off,On" />
+    <dip bits="2" name="Language" ids="English,Japanese" />
+    <dip bits="3,4,5" name="Coinage" ids="0,1,2,3,4,5,6,7" />
+  </switches>
 </misterromdescription>
