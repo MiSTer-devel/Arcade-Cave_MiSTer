@@ -32,9 +32,14 @@
 
 package cave
 
+import axon.cpu.m68k.CPU
+import chisel3._
 import axon.mem._
 
 package object types {
+  /** DIP switches IO */
+  def DIPIO(): Vec[UInt] = Input(Vec(4, Bits(CPU.DATA_WIDTH.W)))
+
   /** Program ROM IO */
   class ProgRomIO extends AsyncReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH)
 

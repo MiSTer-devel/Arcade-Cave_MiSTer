@@ -33,6 +33,7 @@
 package cave
 
 import axon._
+import axon.cpu.m68k.CPU
 import axon.gfx._
 import axon.mem._
 import axon.mem.ddr.DDR
@@ -99,6 +100,10 @@ class Main extends Module {
     gameConfig
   }
 
+  // Connect IOCTL to DIPs register file
+  val dips = Module(new RegisterFile(CPU.DATA_WIDTH, 4))
+  dips.io.mem <> io.ioctl.asReadWriteMemIO(IOCTL.DIP_INDEX)
+
   // DDR controller
   val ddr = Module(new DDR(Config.ddrConfig))
   ddr.io.ddr <> io.ddr
@@ -126,6 +131,7 @@ class Main extends Module {
   val cave = withReset(io.cpuReset || !memSys.io.ready) { Module(new Cave) }
   cave.io.gameConfig <> gameConfigReg
   cave.io.options <> io.options
+  cave.io.dips := dips.io.regs
   cave.io.joystick <> io.joystick
   cave.io.audio <> io.audio
   cave.io.video <> videoSys.io.video

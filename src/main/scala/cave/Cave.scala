@@ -54,6 +54,8 @@ class Cave extends Module {
     val gameConfig = Input(GameConfig())
     /** Options port */
     val options = OptionsIO()
+    /** DIPs port */
+    val dips = DIPIO()
     /** Joystick port */
     val joystick = JoystickIO()
     /** Video port */

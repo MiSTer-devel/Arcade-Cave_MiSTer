@@ -194,6 +194,8 @@ localparam CONF_STR = {
   "P2OH,System Framebuffer,On,Off;",
   "P2OIL,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.,Puzzle Uo Poko,Guwange,Gaia;",
   "-;",
+  "DIP;",
+  "-;",
   "R0,Reset;",
   "J,B0,B1,B2,B3,Start,Coin,Pause,Service;",
   "V,v",`BUILD_DATE," by nullobject;"
