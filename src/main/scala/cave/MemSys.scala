@@ -66,8 +66,8 @@ class MemSys extends Module {
   // The ready register is asserted when the memory system is ready.
   val readyReg = RegInit(false.B)
 
-  // The DDR download cache is used to buffer download data, so that complete words can be written
-  // to memory.
+  // The DDR download cache is used to buffer ROM data, so that complete words can be written to
+  // memory.
   val ddrDownloadCache = Module(new Cache(cache.Config(
     inAddrWidth = IOCTL.ADDR_WIDTH,
     inDataWidth = IOCTL.DATA_WIDTH,
@@ -78,7 +78,7 @@ class MemSys extends Module {
     swapEndianness = true
   )))
   ddrDownloadCache.io.enable := true.B
-  ddrDownloadCache.io.in <> io.ioctl.asAsyncReadWriteMemIO(IOCTL.ROM_INDEX)
+  ddrDownloadCache.io.in <> io.ioctl.rom
 
   // The SDRAM download cache is used to buffer download data, so that complete words can be written
   // to memory.

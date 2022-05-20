@@ -33,7 +33,6 @@
 package cave
 
 import axon._
-import axon.cpu.m68k.CPU
 import axon.gfx._
 import axon.mem._
 import axon.mem.ddr.DDR
@@ -101,8 +100,8 @@ class Main extends Module {
   }
 
   // Connect IOCTL to DIPs register file
-  val dips = Module(new RegisterFile(CPU.DATA_WIDTH, 4))
-  dips.io.mem <> io.ioctl.asReadWriteMemIO(IOCTL.DIP_INDEX)
+  val dips = Module(new RegisterFile(IOCTL.DATA_WIDTH, 4))
+  dips.io.mem <> io.ioctl.dips.mapAddr { a => (a >> 1).asUInt } // convert from byte address
 
   // DDR controller
   val ddr = Module(new DDR(Config.ddrConfig))
