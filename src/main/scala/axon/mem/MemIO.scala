@@ -282,6 +282,7 @@ class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, da
     mem.rd := rd
     mem.wr := wr
     mem.addr := f(addr)
+    mem.mask := mask
     mem.din := din
     dout := mem.dout
     mem
