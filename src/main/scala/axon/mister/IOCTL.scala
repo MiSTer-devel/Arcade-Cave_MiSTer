@@ -32,7 +32,7 @@
 
 package axon.mister
 
-import axon.mem.AsyncReadWriteMemIO
+import axon.mem.{AsyncReadWriteMemIO, ReadWriteMemIO}
 import chisel3._
 import chisel3.util._
 
@@ -56,6 +56,23 @@ class IOCTL extends Bundle {
   val din = Output(Bits(IOCTL.DATA_WIDTH.W))
   /** Output data bus */
   val dout = Input(Bits(IOCTL.DATA_WIDTH.W))
+
+  /**
+   * Converts the download interface to a synchronous read-write memory interface.
+   *
+   * @param index The download index to connect the memory interface.
+   */
+  def asReadWriteMemIO(index: Int): ReadWriteMemIO = {
+    val wire = Wire(ReadWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
+    wire.rd := false.B
+    wire.wr := download && wr && this.index === index.U
+    waitReq := false.B
+    wire.addr := addr
+    wire.mask := Fill(wire.maskWidth, 1.U)
+    wire.din := dout
+    din := 0.U
+    wire
+  }
 
   /**
    * Converts the download interface to an asynchronous read-write memory interface.
