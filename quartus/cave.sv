@@ -166,8 +166,8 @@ assign AUDIO_MIX = 0;
 
 assign BUTTONS = 0;
 
-assign VIDEO_ARX = (!aspect_ratio) ? (orientation  ? 12'd3 : 12'd4) : (aspect_ratio - 1'd1);
-assign VIDEO_ARY = (!aspect_ratio) ? (orientation  ? 12'd4 : 12'd3) : 12'd0;
+assign VIDEO_ARX = (!aspect_ratio) ? (orientation ? 12'd3 : 12'd4) : (aspect_ratio - 1'd1);
+assign VIDEO_ARY = (!aspect_ratio) ? (orientation ? 12'd4 : 12'd3) : 12'd0;
 
 `include "build_id.v"
 localparam CONF_STR = {

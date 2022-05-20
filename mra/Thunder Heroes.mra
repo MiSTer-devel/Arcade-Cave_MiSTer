@@ -41,8 +41,8 @@
 
   <buttons names="B0,B1,B2,B3,Start,Coin,Pause,Service" default="A,B,X,Y,R,L,Start" />
 
+  <!-- DIPs -->
   <switches default="ff,ff">
-    <!-- DSW -->
     <dip name="Flip Screen" bits="0" ids="On,Off"/>
     <dip name="Demo Sounds" bits="1" ids="Off,On"/>
     <dip name="Language" bits="2" ids="English,Chinese"/>
