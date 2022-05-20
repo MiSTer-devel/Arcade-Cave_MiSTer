@@ -361,7 +361,7 @@ class Cave extends Module {
 
   // Gaia Crusaders
   when(io.gameConfig.index === GameConfig.GAIA.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom)(addr => addr ## 0.U)
+    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
     map(0x00057e to 0x000581).nopw() // access occurs during boot
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x300003).readWriteMem(ymz.io.cpu)
