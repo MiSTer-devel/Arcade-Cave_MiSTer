@@ -1,7 +1,8 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="MemSysTest" type="ScalaTestRunConfiguration" factoryName="ScalaTest" show_console_on_std_err="false" show_console_on_std_out="false">
-    <module name="cave-chisel" />
+    <module name="cave" />
     <option name="allowRunningInParallel" value="false" />
+    <option name="projectPathOnTarget" />
     <option name="selectedOptions">
       <list />
     </option>

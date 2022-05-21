@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/cave-chisel.iml" filepath="$PROJECT_DIR$/.idea/modules/cave-chisel.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/cave-chisel-build.iml" filepath="$PROJECT_DIR$/.idea/modules/cave-chisel-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/cave.iml" filepath="$PROJECT_DIR$/.idea/modules/cave.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/cave-build.iml" filepath="$PROJECT_DIR$/.idea/modules/cave-build.iml" />
     </modules>
   </component>
 </project>

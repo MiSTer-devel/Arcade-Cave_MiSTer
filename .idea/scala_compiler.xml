@@ -12,7 +12,7 @@
         <parameter value="-Xsource:2.11" />
       </parameters>
     </profile>
-    <profile name="sbt 3" modules="cave-chisel">
+    <profile name="sbt 3" modules="cave,cave-chisel">
       <option name="reflectiveCalls" value="true" />
       <option name="deprecationWarnings" value="true" />
       <option name="featureWarnings" value="true" />

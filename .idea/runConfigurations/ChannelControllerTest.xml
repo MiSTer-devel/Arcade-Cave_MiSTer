@@ -1,7 +1,8 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="ChannelControllerTest" type="ScalaTestRunConfiguration" factoryName="ScalaTest" nameIsGenerated="true" show_console_on_std_err="false" show_console_on_std_out="false">
-    <module name="cave-chisel" />
+    <module name="cave" />
     <option name="allowRunningInParallel" value="false" />
+    <option name="projectPathOnTarget" />
     <option name="selectedOptions">
       <list />
     </option>
