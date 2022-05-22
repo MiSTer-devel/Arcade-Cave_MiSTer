@@ -17,7 +17,6 @@
         <option value="cave.gfx.LayerProcessorTest" />
         <option value="cave.gfx.SpriteProcessorTest" />
         <option value="axon.UtilTest" />
-        <option value="axon.DataFreezerTest" />
         <option value="axon.mem.DDRTest" />
         <option value="axon.mem.CacheTest" />
         <option value="axon.mem.SDRAMTest" />
