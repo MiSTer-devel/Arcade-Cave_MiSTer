@@ -1,5 +1,5 @@
 <misterromdescription>
-  <name>Dangun Feveron</name>
+  <name>Fever SOS</name>
   <mameversion>0226</mameversion>
   <setname>dfeveron</setname>
   <year>1998</year>
@@ -8,11 +8,11 @@
   <rbf>cave</rbf>
 
   <!-- ROM data -->
-  <rom index="0" zip="dfeveron.zip|feversos.zip" md5="none" address="0x30000000">
+  <rom index="0" zip="feversos.zip" md5="none" address="0x30000000">
     <!-- main CPU -->
     <interleave output="16">
-      <part name="cv01-u34.bin" crc="be87f19d" map="01" />
-      <part name="cv01-u33.bin" crc="e53a7db3" map="10" />
+      <part name="cv01-u34.sos" crc="24ef3ce6" map="01" />
+      <part name="cv01-u33.sos" crc="64ff73fd" map="10" />
     </interleave>
 
     <!-- sprites -->
@@ -29,7 +29,7 @@
     <part name="cv01-u19.bin" crc="5f5514da" />
 
     <!-- eeprom -->
-    <part name="eeprom-dfeveron.bin" crc="c3174959" />
+    <part name="eeprom-feversos.bin" crc="d80303aa" />
 
     <!-- enable C button in EEPROM -->
     <patch offset="0x1100002">11 11</patch>
