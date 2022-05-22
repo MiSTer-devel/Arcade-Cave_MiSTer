@@ -30,10 +30,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave.types
+package cave
 
 import axon.types.OptionsIO
-import cave.Config
 import chisel3._
 import chisel3.util._
 
