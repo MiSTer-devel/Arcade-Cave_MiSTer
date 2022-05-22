@@ -6,26 +6,25 @@ This project contains the MiSTer core for Cave's first-generation 68k arcade har
 
 ## Supported Games
 
-| Title | Status | Released |
-|------|---------|----------|
-[**Do Donpachi**](https://en.wikipedia.org/wiki/DoDonPachi) | Implemented | Yes |
-[**ESP Ra. De.**](https://en.wikipedia.org/wiki/ESP_Ra.De.) | Implemented | Yes |
-[**Dangun Feveron**](https://en.wikipedia.org/wiki/Dangun_Feveron) | Implemented | Yes |
-[**Uo Poko**](https://en.wikipedia.org/wiki/Puzzle_Uo_Poko) | Implemented | Yes |
-[**Gunwange**](https://en.wikipedia.org/wiki/Guwange) | [**Beta (Available in Patreon)**](https://www.patreon.com/nullobject) | No |
-[**Air Gallet**](https://en.wikipedia.org/wiki/Air_Gallet) | **W.I.P** | No |
-[**Donpachi**](https://en.wikipedia.org/wiki/DonPachi) | N/A | No |
-[**Gaia Crusaiders**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=gaia&arcade_only=0&autosearch=1) | N/A | No |
-[**Hotdog Storm**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=hotdogst&arcade_only=0&autosearch=1) | N/A | No |
-[**Koro Koro Quest**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=korokoro&arcade_only=0&autosearch=1) | N/A | No |
-[**Mazinger Z**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=mazinger&arcade_only=0&autosearch=1) | N/A | No |
-[**Gogetsuji Legends**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=plegends&arcade_only=0&autosearch=1) | N/A | No |
-[**Power Instinct 2**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=pwrinst2&arcade_only=0&autosearch=1) | N/A | No |
-[**Saikyou Densetsu**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=plegendsj&arcade_only=0&autosearch=1) | N/A | No |
-[**Pretty Soldier Sailor Moon**](https://en.wikipedia.org/wiki/Pretty_Soldier_Sailor_Moon_(arcade_game)) | N/A | No |
-[**The Ninja Master**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=metmqstr&arcade_only=0&autosearch=1) | N/A | No |
-[**Thunder Heroes**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=theroes&arcade_only=0&autosearch=1) | N/A | No |
-
+| Title                                                                                                                 | Status        |
+|-----------------------------------------------------------------------------------------------------------------------|---------------|
+| [**Do Donpachi**](https://en.wikipedia.org/wiki/DoDonPachi)                                                           | Public        |
+| [**ESP Ra. De.**](https://en.wikipedia.org/wiki/ESP_Ra.De.)                                                           | Public        |
+| [**Dangun Feveron**](https://en.wikipedia.org/wiki/Dangun_Feveron)                                                    | Public        |
+| [**Uo Poko**](https://en.wikipedia.org/wiki/Puzzle_Uo_Poko)                                                           | Public        |
+| [**Gunwange**](https://en.wikipedia.org/wiki/Guwange)                                                                 | Public        |
+| [**Gaia Crusaiders**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=gaia&arcade_only=0&autosearch=1)       | Private beta  |
+| [**Thunder Heroes**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=theroes&arcade_only=0&autosearch=1)     | Private beta  |
+| [**Air Gallet**](https://en.wikipedia.org/wiki/Air_Gallet)                                                            | Unimplemented |
+| [**Donpachi**](https://en.wikipedia.org/wiki/DonPachi)                                                                | Unimplemented |
+| [**Hotdog Storm**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=hotdogst&arcade_only=0&autosearch=1)      | Unimplemented |
+| [**Koro Koro Quest**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=korokoro&arcade_only=0&autosearch=1)   | Unimplemented |
+| [**Mazinger Z**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=mazinger&arcade_only=0&autosearch=1)        | Unimplemented |
+| [**Gogetsuji Legends**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=plegends&arcade_only=0&autosearch=1) | Unimplemented |
+| [**Power Instinct 2**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=pwrinst2&arcade_only=0&autosearch=1)  | Unimplemented |
+| [**Saikyou Densetsu**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=plegendsj&arcade_only=0&autosearch=1) | Unimplemented |
+| [**Pretty Soldier Sailor Moon**](https://en.wikipedia.org/wiki/Pretty_Soldier_Sailor_Moon_(arcade_game))              | Unimplemented |
+| [**The Ninja Master**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=metmqstr&arcade_only=0&autosearch=1)  | Unimplemented |
 
 ## Credits
 
@@ -35,94 +34,17 @@ This project is based on the [prior work](https://gitlab.com/rwk-source/cave_1st
 
 I would also like to give a massive shout out to all my Patreon supporters. Your support keeps me working on these games, and helps bring them to everybody in the MiSTer community.
 
-Special thanks to:
+Special thanks to my top-tier Patrons:
 
-<table>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/avatar.png" width="100px;" /></td>
-    <td>Arjan de Lang</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/avatar.png" width="100px;" /></td>
-    <td>Benjamin Walker</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/birdybro.jpeg" width="100px;" /></td>
-    <td>birdybro</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/christopher-gelatt.png" width="100px;" /></td>
-    <td>Christopher Gelatt</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/christopher-tuckwell.jpeg" width="100px;" /></td>
-    <td>Christopher Tuckwell</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/colin-edwards.jpeg" width="100px;" /></td>
-    <td>Colin Edwards</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/dorkocity.png" width="100px;" /></td>
-    <td>Dorkocity</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/avatar.png" width="100px;" /></td>
-    <td>Evan</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/hexxellor.jpg" width="100px;" /></td>
-    <td>Hexxellor</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/avatar.png" width="100px;" /></td>
-    <td>Iker Sanz</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/avatar.png" width="100px;" /></td>
-    <td>Jeremy Rayner</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/jon-girard.jpg" width="100px;" /></td>
-    <td>Jon Girard</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/keith-stack.png" width="100px;" /></td>
-    <td>Keith Stack</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/lakeside.jpeg" width="100px;" /></td>
-    <td>Lakeside</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/loopfz.jpeg" width="100px;" /></td>
-    <td>loopfz</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/matt-postema.png" width="100px;" /></td>
-    <td>Matt Postema</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/avatar.png" width="100px;" /></td>
-    <td>Raoul van Prooijen</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/skeeter.png" width="100px;" /></td>
-    <td>Skeeter</td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/raw/master/doc/springah.jpeg" width="100px;" /></td>
-    <td>springah</td>
-  </tr>
-</table>
+Sherwood Hachtman, J, Michael Lawlor, TheDirtyScreech, Christopher R, Bitmap Bureau, Jason Philp, cbab, Magnus Aspling, Keith Stack, Andy Palmer, Jeremy Rayner, raoulvp, Hexxellor, Dorkocity, loopfz, Benjamin Walker, Adrian Longland, Lakeside, Christopher Tuckwell, Christopher Gelatt, 80's spaceman, Shane Lynch
 
 Thanks to:
 
-.Poly-Play., 3style, Abmahnanwalt, Adam Davis, Adam Kessell, Adrian Longland, Adrian Nabarro, AHMAD ALHAMLI, Akai Futari, AL1138, Alan Shurvinton, Alex Urbano, Allen Tipper, Amador, Amosfear, Andrew Francomb, Andrew Moore, Andy Palmer, Andyways, Angelo Kanaris, Anthony Foderaro, Anton Gale, Antonio Bellotta, Artemio Urbina, Arturo Sanchez, Ben, Ben Cooper, Ben Toman, Benjamin Leggett, BigJazzyJay, Brian Shiver, C, Cave Hermit, Charles, Chris B, Chris Mawman, Chris23235, Christa Isobel Lee, Christian Bailey, Christian Keilback, Christopher Brown, Christopher Harvey, Cody E, CoffeePope, CoinopFL, Collin Jacobs, Craig Somerfield, Dang Myang, Daniel GarcÃ­a Mercadal, Danilo Dellafrana, dannahan, Darren Newman, Darren Wootton, David Becerro Recio, David Delabassee, David Hiles, David Jones, David Phillips, David Rhodus, David Williams, Devon Nelson, DJ Psyko-M1, Don Gafford, dot_lvl, Dyllon Moseychuck, Eagles5420, Ed Balan, Elbert Howson, Erik Krogh, Farquaad56, Fay Dek, Filip Kindt, FiRez, Francisco Rego, Funkycochise, ganondork, Gillaxian, GJM777, Gladius, Greg Schexnayder, Hardyhell, Herbert Krammer, Hotrod1178, Humanoide70, hyp36rmax, Ian Court, Ion Myke, Ishmael Hallin, Jacob Munford, Jakub Hajda, James, Jim Wehrfritz, Jockel, Joe Gillian, Johan SjÃ¶strand, John Perry, John Schaeffer, John Stringer, Jon Anderson, Jonathan Brochu, Jonathan Loor, Jonathan Tuttle, Josep BarbiÃ© i Viudes, Joseph Milazzo, Joseph Sarrapere, Joshua Benton, Joshua Jodoin, Josiah Wilson, JPS (RetroFPGA), Juan Carlos Pastor (Denymetanol), Juan Manuel Sandoval Jr, Kanzeon1, Karl Lurman, Keith Gordon, Keith Kelly, Kester Weeks, Kevin McQuillen, ktown, lamarax, Larry, Laurent Cooper, Lee Grocott, LFT, loloC2C, Louis Zezeran, Lucian, Ludovic Germaneau, Luis F Giron, Manuel Antoni, Marco Tavian, Mark Paterson, Martin Ansin, Martin Mantua, Marvin Blauth, Mat Azel, Matsu, Matt Charlesworth, Matt Hargett, Matt Vande Vorde, Matthew, Matthew Belshan, Matthew Diggens, Matthew Humphrey, Matthew Yeary, mattyhochs, Max L Schultz, Maxime Coeur, mbd, Memmaker, MichaÃ«l Larouche, Michael Anderson, Michael Bachmann, Michael Brillant, Michael Fuerst, Michael Rea, Michael Yount, Michal Flisowski, Michele Fornasini, Miguel Candelario, Mike Canney, Mike Parks, Milo Andrew Rodriguez, Mister JBAM, modsbox, Monokrom, Motte -, MrX-8B, Murray Melvin, mutman, nakedarthur, Naku aka Ben, Nathan Michael Hardie, Niall O'Higgins, Nico Stamp, NINE, nonamebear, OLESCHOOL GAMERS, ordigdug, Owlnonymous, Patrick W., Per Sweden, Peter Antoniew, Peter Brown, Phil Fleabag, Phil Piwonka, Philip Lawson, Philip Meilleur, Phillip McMahon, Porkchop Express, QcRetro, Rachael Netz, raised by games, RandomRetro, Report2Marty, Ricardo Arcos, Richard Simpson, Robert Douglas, Roberto Pedroni, RoC, Ross Jolet, rsn8887, Ryan Fig, Ryan Reinbold, Sagat Steiner, Sampo Peltonen, Samuel Warner, Sassbasket Silvercloud, Scott Taylor, Sebastien COCHET, Serge.EXE, Shane Lynch, Shaneus, Shannon Birt, Shawn Pascuttini, ShootTheCore, Shunsuke Takeichi, Silvio Samadelli, Simon Coong, simon van den bon, Slick Sic, StalkS, Steven LeMaire, Steven Yedwab, SteveP, Teo, the Chuckwagon, The Electric Underground, timelord_engineer, Timothy Q Pham, Tony Galvan, Tony Peters, Tony Tang, Travis Brown, Trifle, Turboman UK, VampierMSX, Victor Bly, Victor Lindo, Vincent Bijwaard, Xzarian, yavimaya, yoaarond, Zakk, Zichio
+sixtyfps, Jeremy , Johan , Alfonso Clemente, Josh Mayer, Joost Peters, Kike Alcor, Frank Reyes, Niko, Joseph , Norman Walz, Cory Stargel, Mike Chapa, [mRg], marumusisan , richard thompson, Sam Matthews, Jeremy Riley, Raul3D, J Z, Arthur Fung, ItsACerealWow , Jon , Jonathan Garrard, Ryley, Corey Mark, dishwasherlove , Paul Houbart, fierman, Eugenio, Jaeson DeLeon, Jason Baker, Mike G, Ralph Barbagallo, Alexander Facchini, BinaryLuke, James Boone, Brock Lathrop, Castorgroup, The Collector, Hasan Tasdemir, Shaun Leach, Jan Paul, bnjc, Mahendra T., Ian Buer, Francois P, Nicolas VAILLANT, Dionys Descois, Pat Jones, CookSomeSoup, Dave Nice, Jimnakkum, Mark Alvarez, Magus Incognito, Josh Yates-Walker, Simon Rodemann, ItsBobDudes, 홍대 문, Brian Bickell, RayGun, Oriez, chackokhan, Mo Roy, James Jefferies, Mike Puelinckx, Chris Moon, Matt McCarthy, Aurich Lawson, freddie duron, Andrew Hannan, Roberto, Matt Richenburg, sascha matzke, Mist Sonata, "", Akshay Wadekar, Jeff Stanifer, David Nissen Schmidt, Paul Morales, Etik, Tymour Azzam, Arthur Carra, villainmarks, Psamtik , David Moylan, Allan Locso, Richard Thompson, Tyrone Cheng, Jay Lanagan, G Foyle, Andrea Bogazzi, IndieRetroHack , b garcia, Elio Berrios, Guy B, JSwan, Jonathan McDougall, twiiins, Martin Donlon, Amir Kavehrad, Alan Steremberg, Andre Bergei, Stefan Krueger, Denis Brækhus, Josh, Bakaskal, Colton Taylor, KanedaGTTurbo, Connor Stevens, Thomas Oskam, Edwin Fisher, Shannon King, Kevin Phelps, David Gralnik, jklax, Mike Stimpson, SwedishGojira , Nick Catto, OzMiSTerMods, Kelly Greenidge, BigJuffer, PaulieWalnuts, Scott Dowdle, Kinnon Yee, Barry Porch, 형 동바, Daniel Bauza, jbrlll, Martin Birkeldh, Torren Beitler, Negativeions, Tsht , Hung Ta, mpong , Meanderthal, yomitron, Adrian , Ulrich Straller, Erhune , ParkNangJung, Guillermo Izard, Matthew Hutchinson, Adrian Bledsoe, CyberpunkDre, Stephane Tremblay, Michael Deutsch, Grant King, Nailbomb , Michele Fiordispina, Adam Pita, Johan Smolinski, Balthasar Schopman, Dan Doyle, Darren Chell, M, Chris Marshall, Karl Lurman, Gillaxian, Jordon Phillips, Hayden Brown, Niall O'Higgins, Erik Krogh, Christian Keilback, Laurent Cooper, Tony Tang, Spiff , Phil Piwonka, Sipan Calli, Larry , SteveP, Matt Hargett, Arturo Sanchez, lamarax, Adrian Nabarro, 8PercentAndroid , Ben Cooper, James , Todd Lemons, Gladius, RetroRGB , Christa Isobel Lee, Rachael Netz, Report2Marty , David Becerro Recio, Peter Antoniew, Phil Fleabag, nakedarthur, Anthony Foderaro, Ian Court, Alex Limi, Matt Vande Vorde, lynn minmei, Keith Gordon, Michele Fornasini, Oliver Wndmth, the Chuckwagon, Tonton Kaloun, Matsu, Michael Brillant, Matthew Belshan, type78 , Vincent Bijwaard, Zakk, AL1138, krivx , Craig Somerfield, Hentai Joe, Steven , Jonathan Tuttle, Joshua Jodoin, it290, Lucian , Roberto Pedroni, Serge.EXE, Shannon Birt, Robert Dickenson, Richard Simpson, Adam Kessell, Klaus Wolf, dot_lvl , Ed Balan, Robert Douglas, Bradon Kanyid, RandomRetro, Nicholas Murray, Andyways , Nikolay Ivanchev, Scott Taylor, Josiah Wilson, hyp36rmax, Ben, Steven LeMaire, Chris Mawman, modsbox, Collin Jacobs, Darren Wootton, Fay Dek, Anton Gale, Steven Yedwab, Michael Anderson, Matthew Chretien, Owlnonymous , Quentin Sykes, Peter Brown, Charles , Trifle, Angelo Kanaris, Silvio Samadelli, AHMAD ALHAMLI, SteelRush , Rubèn Celada, felleg, odinmma ofili, SJohansson , Victor Lindo, Keith Stebor, ARCADEAGES , Ben Toman, loloC2C , Ronan Amicel, Magnus Kvevlander, SmoMo, Ludovic Germaneau, BigJazzyJay, Rob Shaw, Jim Wehrfritz, Xtro, Jockel, MrX-8B , Ruben Johnson, David Jones, Benjamin Leggett, ShootTheCore , Henry R, Miguel Candelario, Matt Postema, ganondork, Cody E, Marvin Blauth, Arjan de Lang, Tony Peters, Shaneus , DarkStar7 , Samuli Tuomola, Jeffrey Skube, Vlad Bogdalik, Darren Newman, Michael Packard, Porkchop Express, Keith F. Kelly, Humanoide70 , Mingus, Ross Jolet, Mike Holzinger, Matthew, emceebois , John Stringer, Allen Tipper, Johan Sjöstrand, Roland , Kevin Igoe, Steven Hertz, Ulf Skutnabba
 
 ...and the rest of my supporters :sparkling_heart:
 
-The table template and attached image credit goes to [**atrac17**](https://github.com/atrac17)
+The table template and attached image credit goes to [**atrac17**](https://github.com/atrac17).
 
 ## Development
 
@@ -132,11 +54,11 @@ To compile this core you will need a working Scala environment and Intel Quartus
 
 Compile the core:
 
-    $ make build
+    make build
 
 Program the DE10-Nano:
 
-    $ make program
+    make program
 
 ## License
 
