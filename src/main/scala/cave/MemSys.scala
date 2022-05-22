@@ -98,7 +98,7 @@ class MemSys extends Module {
     outAddrWidth = Config.sdramConfig.addrWidth,
     outDataWidth = Config.sdramConfig.dataWidth,
     lineWidth = Config.sdramConfig.burstLength,
-    depth = 256,
+    depth = 512,
     wrapping = true
   )))
   progRomCache.io.enable := io.ready
