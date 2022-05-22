@@ -1,0 +1,9 @@
+# Default ignored files
+/dataSources.local.xml
+/libraries/
+/modules/
+/modules.xml
+/shelf/
+/uiDesigner.xml
+/workspace.xml
+/*.iml
