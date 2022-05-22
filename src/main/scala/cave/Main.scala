@@ -41,7 +41,6 @@ import axon.mister._
 import axon.snd._
 import axon.types._
 import cave.fb._
-import cave.types._
 import chisel3._
 import chisel3.experimental.FlatIO
 import chisel3.stage._
