@@ -30,7 +30,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave.types
+package cave.gfx
 
 import axon.types.UVec2
 import cave.Config

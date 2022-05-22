@@ -30,40 +30,62 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave.types
+package cave.gfx
 
-import axon.Util
+import axon.types.UVec2
 import cave.Config
 import chisel3._
 
-/** A line effect contains the row-scroll/row-select values for a scanline. */
-class LineEffect extends Bundle {
-  /** Row select */
-  val rowSelect = UInt(Config.LAYER_SCROLL_WIDTH.W)
-  /** Row scroll */
-  val rowScroll = UInt(Config.LAYER_SCROLL_WIDTH.W)
+/** A bundle that contains the decoded layer registers. */
+class LayerRegs extends Bundle {
+  /** Priority */
+  val priority = UInt(Config.PRIO_WIDTH.W)
+  /** Tile size (8x8 or 16x16) */
+  val tileSize = Bool()
+  /** Enable flag */
+  val enable = Bool()
+  /** Horizontal flip */
+  val flipX = Bool()
+  /** Vertical flip */
+  val flipY = Bool()
+  /** Row scroll enable */
+  val rowScrollEnable = Bool()
+  /** Row select enable */
+  val rowSelectEnable = Bool()
+  /** Scroll position */
+  val scroll = UVec2(Config.LAYER_SCROLL_WIDTH.W)
 }
 
-object LineEffect {
-  def apply() = new LineEffect
-
+object LayerRegs {
   /**
-   * Decodes a line effect from the given data.
+   * Decodes the layer registers from the given data.
    *
    * {{{
    * word   bits                  description
    * -----+-fedc-ba98-7654-3210-+----------------
-   *    0 | xxxx xxxx xxxx xxxx | row scroll
-   *    1 | xxxx xxxx xxxx xxxx | row select
+   *    0 | x--- ---- ---- ---- | flip x
+   *      | -x-- ---- ---- ---- | row scroll enable
+   *      | ---- ---x xxxx xxxx | scroll x
+   *    1 | x--- ---- ---- ---- | flip y
+   *      | -x-- ---- ---- ---- | row select enable
+   *      | --x- ---- ---- ---- | tile size
+   *      | ---- ---x xxxx xxxx | scroll y
+   *    2 | ---- ---- ---x ---- | enable
+   *      | ---- ---- ---- --xx | priority
    * }}}
    *
-   * @param data The line effect data.
+   * @param regs The layer registers data.
    */
-  def decode(data: Bits): LineEffect = {
-    val words = Util.decode(data, 2, 16)
-    val lineEffect = Wire(new LineEffect)
-    lineEffect.rowScroll := words(0)
-    lineEffect.rowSelect := words(1)
-    lineEffect
+  def decode(regs: Vec[Bits]): LayerRegs = {
+    val layer = Wire(new LayerRegs)
+    layer.priority := regs(2)(1, 0)
+    layer.tileSize := regs(1)(13)
+    layer.enable := !regs(2)(4)
+    layer.flipX := !regs(0)(15)
+    layer.flipY := !regs(1)(15)
+    layer.rowScrollEnable := regs(0)(14)
+    layer.rowSelectEnable := regs(1)(14)
+    layer.scroll := UVec2(regs(0)(8, 0), regs(1)(8, 0))
+    layer
   }
 }

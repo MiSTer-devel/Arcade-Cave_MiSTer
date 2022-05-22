@@ -30,68 +30,40 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave.types
+package cave.gfx
 
 import axon.Util
 import cave.Config
 import chisel3._
 
-/** Represents a tile descriptor. */
-class Tile extends Bundle {
-  /** Priority */
-  val priority = UInt(Config.PRIO_WIDTH.W)
-  /** Color code */
-  val colorCode = UInt(Config.PALETTE_WIDTH.W)
-  /** Tile code */
-  val code = UInt(Tile.CODE_WIDTH.W)
+/** A line effect contains the row-scroll/row-select values for a scanline. */
+class LineEffect extends Bundle {
+  /** Row select */
+  val rowSelect = UInt(Config.LAYER_SCROLL_WIDTH.W)
+  /** Row scroll */
+  val rowScroll = UInt(Config.LAYER_SCROLL_WIDTH.W)
 }
 
-object Tile {
-  /** The width of the tile code */
-  val CODE_WIDTH = 18
+object LineEffect {
+  def apply() = new LineEffect
 
   /**
-   * Decodes a 16x16 tile from the given data.
+   * Decodes a line effect from the given data.
    *
    * {{{
    * word   bits                  description
    * -----+-fedc-ba98-7654-3210-+----------------
-   *    0 | xx-- ---- ---- ---  | priority
-   *      | --xx xxxx ---- ---- | color
-   *    1 | xxxx xxxx xxxx xxxx | code
+   *    0 | xxxx xxxx xxxx xxxx | row scroll
+   *    1 | xxxx xxxx xxxx xxxx | row select
    * }}}
    *
-   * @param data The tile data.
+   * @param data The line effect data.
    */
-  def decode16x16(data: Bits): Tile = {
+  def decode(data: Bits): LineEffect = {
     val words = Util.decode(data, 2, 16)
-    val tile = Wire(new Tile)
-    tile.priority := words(0)(15, 14)
-    tile.colorCode := words(0)(13, 8)
-    tile.code := words(1)(15, 0)
-    tile
-  }
-
-  /**
-   * Decodes a 8x8 tile from the given data.
-   *
-   * {{{
-   * word   bits                  description
-   * -----+-fedc-ba98-7654-3210-+----------------
-   *    0 | xx-- ---- ---- ---  | priority
-   *      | --xx xxxx ---- ---- | color
-   *      | ---- ---- ---- --xx | code hi
-   *    1 | xxxx xxxx xxxx xxxx | code lo
-   * }}}
-   *
-   * @param data The tile data.
-   */
-  def decode8x8(data: Bits): Tile = {
-    val words = Util.decode(data, 2, 16)
-    val tile = Wire(new Tile)
-    tile.priority := words(0)(15, 14)
-    tile.colorCode := words(0)(13, 8)
-    tile.code := words(0)(1, 0) ## words(1)(15, 0)
-    tile
+    val lineEffect = Wire(new LineEffect)
+    lineEffect.rowScroll := words(0)
+    lineEffect.rowSelect := words(1)
+    lineEffect
   }
 }
