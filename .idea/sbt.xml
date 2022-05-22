@@ -8,6 +8,7 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/axon" />
             <option value="$PROJECT_DIR$/project" />
           </set>
         </option>
