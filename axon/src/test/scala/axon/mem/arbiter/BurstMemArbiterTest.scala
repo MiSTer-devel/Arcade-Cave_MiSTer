@@ -30,15 +30,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.mem
+package axon.mem.arbiter
 
 import chiseltest._
-import org.scalatest._
-import flatspec.AnyFlatSpec
-import matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
-  private def mkMemArbiter = new MemArbiter(2, 8, 8)
+class BurstMemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+  private def mkMemArbiter = new BurstMemArbiter(2, 8, 8)
 
   it should "mux the request to the input port with the highest priority" in {
     test(mkMemArbiter) { dut =>
@@ -132,7 +131,6 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
       dut.io.in(0).valid.expect(false)
       dut.io.in(1).valid.expect(true)
       dut.io.in(1).dout.expect(3)
-      dut.io.out.valid.poke(false)
     }
   }
 
@@ -166,6 +164,7 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
       dut.io.in(0).wr.poke(true)
       dut.io.busy.expect(false)
       dut.clock.step()
+      dut.io.in(0).wr.poke(false)
       dut.io.out.burstDone.poke(true)
       dut.io.busy.expect(true)
       dut.clock.step()
@@ -173,7 +172,7 @@ class MemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
     }
   }
 
-  it should "not assert the busy signal for a request with unit burst length" in {
+  it should "not assert the busy signal for requests with unit burst length" in {
     test(mkMemArbiter) { dut =>
       dut.io.in(0).wr.poke(true)
       dut.io.out.burstDone.poke(true)

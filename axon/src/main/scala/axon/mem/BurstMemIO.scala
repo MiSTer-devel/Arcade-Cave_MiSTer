@@ -35,12 +35,18 @@ package axon.mem
 import chisel3._
 import chisel3.util._
 
-/** Defines signals required for a burst memory device. */
+/** Defines signals required for a burst memory. */
 trait BurstIO {
   /** The number of words to transfer during a burst. */
   val burstLength = Output(UInt(8.W))
   /** A flag indicating whether a burst has finished. */
   val burstDone = Input(Bool())
+}
+
+/** Defines interface conversion methods. */
+trait ConvertBurstMemIO {
+  /** Converts the interface to read-write. */
+  def asBurstReadWriteMemIO: BurstReadWriteMemIO
 }
 
 /**
@@ -49,7 +55,7 @@ trait BurstIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addrWidth, dataWidth) with BurstIO {
+class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addrWidth, dataWidth) with BurstIO with ConvertBurstMemIO {
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
   /** Converts the interface to read-write. */
@@ -124,7 +130,7 @@ object BurstReadMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(addrWidth, dataWidth) with BurstIO {
+class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(addrWidth, dataWidth) with BurstIO with ConvertBurstMemIO {
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
   /** Converts the interface to read-write. */
@@ -177,7 +183,7 @@ object BurstWriteMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWriteMemIO(addrWidth, dataWidth) with BurstIO {
+class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWriteMemIO(addrWidth, dataWidth) with BurstIO with ConvertBurstMemIO {
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
   /** Converts the interface to read-only. */
@@ -209,6 +215,9 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
     din := mem.din
     mem
   }
+
+  /** Converts the interface to read-write. */
+  def asBurstReadWriteMemIO: BurstReadWriteMemIO = this
 
   /** Sets default values for all the signals. */
   override def default() = {

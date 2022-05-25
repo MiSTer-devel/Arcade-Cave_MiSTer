@@ -30,9 +30,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.mem
+package axon.dma
 
-import axon.mem.dma.{Config, BurstWriteDMA}
+import axon.mem.dma.{BurstWriteDMA, Config}
 import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

@@ -105,17 +105,6 @@ object Util {
     }
 
   /**
-   * Creates a bitmask with the given number of lower bits masked off (set to zero). All other bits
-   * are set to one.
-   *
-   * @param n     The number of lower bits to be masked off.
-   * @param width The width in bits.
-   */
-  def bitmask(n: Int, width: Int): UInt = (~((1.U(width.W) << n).asUInt - 1.U)).asUInt
-
-  def bitmask(n: UInt, width: Int): UInt = (~((1.U(width.W) << n).asUInt - 1.U)).asUInt
-
-  /**
    * Pads the words packed into a bitvector value.
    *
    * @param bits      The value.

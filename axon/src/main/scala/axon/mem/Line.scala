@@ -30,7 +30,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.mem.cache
+package axon.mem
 
 import axon.Util
 import chisel3._
@@ -42,19 +42,27 @@ import chisel3.util._
  *
  * A cache line can also be represented a vector of input words, by rearranging the byte grouping.
  *
- * @param config The cache configuration.
+ * @param inDataWidth    The width of the input data bus.
+ * @param outDataWidth   The width of the output data bus.
+ * @param lineWidth      The number of words in a cache line.
+ * @param swapEndianness A boolean indicating whether the endianness of the input words should be
+ *                       swapped.
  */
-class Line(private val config: Config) extends Bundle {
-  private val inByteWidth = config.inDataWidth / 8
+class Line(private val inDataWidth: Int,
+           private val outDataWidth: Int,
+           private val lineWidth: Int,
+           private val swapEndianness: Boolean) extends Bundle {
+  private val inByteWidth = inDataWidth / 8
+  private val numInWords = outDataWidth * lineWidth / inDataWidth
 
   /** The cache line data */
-  val words: Vec[Bits] = Vec(config.lineWidth, Bits(config.outDataWidth.W))
+  val words: Vec[Bits] = Vec(lineWidth, Bits(outDataWidth.W))
 
   /** Returns the cache line represented as a vector input words */
   def inWords: Vec[Bits] = {
-    val ws: Seq[Bits] = Util.decode(words.asUInt, config.inWords * inByteWidth, 8)
+    val ws: Seq[Bits] = Util.decode(words.asUInt, numInWords * inByteWidth, 8)
       .grouped(inByteWidth)
-      .map { b => if (config.swapEndianness) Cat(b.reverse) else Cat(b) }
+      .map { b => if (swapEndianness) Cat(b.reverse) else Cat(b) }
       .toSeq
     VecInit(ws)
   }
