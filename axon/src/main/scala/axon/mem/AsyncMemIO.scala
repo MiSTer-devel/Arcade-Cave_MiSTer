@@ -54,6 +54,29 @@ trait ValidIO {
 class AsyncReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth, dataWidth) with WaitIO with ValidIO {
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
+  /** Converts the interface to synchronous read-only. */
+  def asReadMemIO: ReadMemIO = {
+    val mem = Wire(Flipped(ReadMemIO(this)))
+    mem.rd := rd
+    waitReq := false.B
+    valid := true.B
+    mem.addr := addr
+    dout := mem.dout
+    mem
+  }
+
+  /** Converts the interface to synchronous read-write. */
+  override def asReadWriteMemIO: ReadWriteMemIO = {
+    val mem = Wire(Flipped(ReadWriteMemIO(this)))
+    mem.rd := rd
+    mem.wr := false.B
+    waitReq := false.B
+    mem.addr := addr
+    mem.mask := DontCare
+    mem.din := DontCare
+    mem
+  }
+
   /**
    * Maps the address using the given function.
    *
@@ -65,17 +88,6 @@ class AsyncReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth
     waitReq := mem.waitReq
     valid := mem.valid
     mem.addr := f(addr)
-    dout := mem.dout
-    mem
-  }
-
-  /** Converts the interface to synchronous read-write. */
-  def asReadMemIO: ReadMemIO = {
-    val mem = Wire(Flipped(ReadMemIO(this)))
-    mem.rd := rd
-    waitReq := false.B
-    valid := true.B
-    mem.addr := addr
     dout := mem.dout
     mem
   }
@@ -96,6 +108,18 @@ object AsyncReadMemIO {
 class AsyncWriteMemIO(addrWidth: Int, dataWidth: Int) extends WriteMemIO(addrWidth, dataWidth) with WaitIO {
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
+  /** Converts the interface to synchronous read-write. */
+  override def asReadWriteMemIO: ReadWriteMemIO = {
+    val mem = Wire(Flipped(ReadWriteMemIO(this)))
+    mem.rd := false.B
+    mem.wr := wr
+    waitReq := false.B
+    mem.addr := addr
+    mem.mask := mask
+    mem.din := din
+    mem
+  }
+
   /**
    * Maps the address using the given function.
    *
@@ -106,18 +130,6 @@ class AsyncWriteMemIO(addrWidth: Int, dataWidth: Int) extends WriteMemIO(addrWid
     mem.wr := wr
     waitReq := mem.waitReq
     mem.addr := f(addr)
-    mem.mask := mask
-    mem.din := din
-    mem
-  }
-
-  /** Converts the interface to synchronous read-write. */
-  def asReadWriteMemIO: ReadWriteMemIO = {
-    val mem = Wire(Flipped(ReadWriteMemIO(this)))
-    mem.rd := false.B
-    mem.wr := wr
-    waitReq := false.B
-    mem.addr := addr
     mem.mask := mask
     mem.din := din
     mem
@@ -190,27 +202,41 @@ object AsyncReadWriteMemIO {
   def apply(config: BusConfig) = new AsyncReadWriteMemIO(config)
 
   /**
-   * Demultiplexes requests from a single read-write memory interface to multiple read-write memory
-   * interfaces. The request is routed to the interface matching a given key.
+   * Multiplexes requests from multiple read-write memory interface to a single read-write memory
+   * interface. The request is routed to the memory interface with the highest priority.
    *
-   * @param key  The key to used to select the interface.
-   * @param outs A list of key-interface pairs.
+   * @param in A list of enable-interface pairs.
    */
-  def demux[K <: UInt](key: K, outs: Seq[(K, AsyncReadWriteMemIO)]): AsyncReadWriteMemIO = {
-    val mem = Wire(chiselTypeOf(outs.head._2))
-    outs.foreach { case (k, out) =>
-      out.rd := k === key && mem.rd
-      out.wr := k === key && mem.wr
-      out.addr := mem.addr
-      out.mask := mem.mask
-      out.din := mem.din
+  def mux1H(in: Seq[(Bool, AsyncReadWriteMemIO)]): AsyncReadWriteMemIO = {
+    val mem = Wire(chiselTypeOf(in.head._2))
+    mem.rd := Mux1H(in.map(a => a._1 -> a._2.rd))
+    mem.wr := Mux1H(in.map(a => a._1 -> a._2.wr))
+    mem.addr := Mux1H(in.map(a => a._1 -> a._2.addr))
+    mem.mask := Mux1H(in.map(a => a._1 -> a._2.mask))
+    mem.din := Mux1H(in.map(a => a._1 -> a._2.din))
+    for ((selected, port) <- in) {
+      port.waitReq := !selected || mem.waitReq
+      port.valid := selected && mem.valid
+      port.dout := mem.dout
     }
-    val waitReqMap = outs.map(a => a._1 -> a._2.waitReq)
-    val validMap = outs.map(a => a._1 -> a._2.valid)
-    val doutMap = outs.map(a => a._1 -> a._2.dout)
-    mem.waitReq := MuxLookup(key, 0.U, waitReqMap)
-    mem.valid := MuxLookup(key, 0.U, validMap)
-    mem.dout := MuxLookup(key, 0.U, doutMap)
     mem
   }
+
+  /**
+   * Multiplexes requests from multiple read-write memory interface to a single read-write memory
+   * interfaces. The request is routed to the first enabled interface.
+   *
+   * @param sel A list of enable signals.
+   * @param in  A list of read-write memory interfaces.
+   */
+  def mux1H(sel: Seq[Bool], in: Seq[AsyncReadWriteMemIO]): AsyncReadWriteMemIO = mux1H(sel zip in)
+
+  /**
+   * Multiplexes requests from multiple read-write memory interface to a single read-write memory
+   * interfaces. The request is routed to indexed interface.
+   *
+   * @param index An index signal.
+   * @param in    A list of read-write memory interfaces.
+   */
+  def mux1H(index: UInt, in: Seq[AsyncReadWriteMemIO]): AsyncReadWriteMemIO = mux1H(in.indices.map(index(_)), in)
 }

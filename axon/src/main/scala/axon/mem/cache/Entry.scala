@@ -34,16 +34,34 @@ package axon.mem.cache
 
 import chisel3._
 
-/** Represents an entry stored in the cache. */
+/**
+ * Represents an entry stored in the cache.
+ *
+ * @param config The cache configuration.
+ */
 class Entry(private val config: Config) extends Bundle {
-  /** The cache line */
-  val line = new Line(config)
-  /** The most significant bits of the address */
-  val tag = UInt(config.tagWidth.W)
   /** Flag to indicate whether the cache entry is valid */
   val valid = Bool()
   /** Flag to indicate whether the cache entry is dirty */
   val dirty = Bool()
+  /** The most significant bits of the address */
+  val tag = UInt(config.tagWidth.W)
+  /** The cache line */
+  val line = new Line(config)
+
+  /**
+   * Determines whether the cache entry matches a given memory address.
+   *
+   * @param addr The memory address.
+   */
+  def isHit(addr: Address): Bool = valid && this.tag === addr.tag
+
+  /**
+   * Determines whether the cache entry should be evicted for a given memory address.
+   *
+   * @param addr The memory address.
+   */
+  def isDirty(addr: Address): Bool = dirty && this.tag =/= addr.tag
 
   /**
    * Returns the input word at the given offset.
@@ -65,11 +83,15 @@ class Entry(private val config: Config) extends Bundle {
    * @param tag    The cache line tag value.
    * @param offset The address offset.
    * @param data   The data to be written.
+   * @return A cache entry.
    */
-  def fill(tag: UInt, offset: UInt, data: Bits): Unit = {
-    line.words(offset) := data
-    this.tag := tag
-    valid := true.B
+  def fill(tag: UInt, offset: UInt, data: Bits): Entry = {
+    val entry = Wire(new Entry(config))
+    entry := this
+    entry.line.words(offset) := data
+    entry.tag := tag
+    entry.valid := true.B
+    entry
   }
 
   /**
@@ -77,11 +99,28 @@ class Entry(private val config: Config) extends Bundle {
    *
    * @param offset The address offset.
    * @param data   The data to be written.
+   * @return A cache entry.
    */
-  def merge(offset: UInt, data: Bits): Unit = {
+  def merge(offset: UInt, data: Bits): Entry = {
     val words = WireInit(line.inWords)
     words(offset) := data
-    line.words := words.asTypeOf(chiselTypeOf(line.words))
-    dirty := true.B
+
+    val entry = Wire(new Entry(config))
+    entry := this
+    entry.line.words := words.asTypeOf(chiselTypeOf(line.words))
+    entry.dirty := true.B
+    entry
+  }
+}
+
+object Entry {
+  /**
+   * Creates an empty cache entry.
+   *
+   * @param config The cache configuration.
+   * @return A cache entry.
+   */
+  def zero(config: Config): Entry = {
+    0.U.asTypeOf(new Entry(config))
   }
 }

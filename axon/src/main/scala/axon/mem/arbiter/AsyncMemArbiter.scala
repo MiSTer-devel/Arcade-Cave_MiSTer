@@ -30,8 +30,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.mem
+package axon.mem.arbiter
 
+import axon.mem.AsyncReadWriteMemIO
 import chisel3._
 import chisel3.util._
 
@@ -42,16 +43,16 @@ import chisel3.util._
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class MemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
+class AsyncMemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
   val io = IO(new Bundle {
     /** Asserted when the arbiter has a pending request */
     val busy = Output(Bool())
     /** One-hot vector indicating which output was chosen */
     val chosen = Output(UInt(n.W))
     /** Input ports */
-    val in = Flipped(Vec(n, BurstReadWriteMemIO(addrWidth, dataWidth)))
+    val in = Flipped(Vec(n, AsyncReadWriteMemIO(addrWidth, dataWidth)))
     /** Output port */
-    val out = BurstReadWriteMemIO(addrWidth, dataWidth)
+    val out = AsyncReadWriteMemIO(addrWidth, dataWidth)
   })
 
   /**
@@ -62,7 +63,7 @@ class MemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
    * @param in The list of input ports.
    * @return The output port.
    */
-  def connect(in: BurstReadWriteMemIO*): BurstReadWriteMemIO = {
+  def connect(in: AsyncReadWriteMemIO*): AsyncReadWriteMemIO = {
     assert(in.length == n, s"There must be exactly $n input ports")
     in.zipWithIndex.foreach { case (port, i) => port <> io.in(i) }
     io.out
@@ -82,7 +83,7 @@ class MemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
   val effectiveRequest = !busyReg && index.orR && !io.out.waitReq
 
   // Toggle the busy register
-  when(io.out.burstDone) {
+  when(io.out.valid) {
     busyReg := false.B
   }.elsewhen(effectiveRequest) {
     busyReg := true.B
@@ -92,7 +93,7 @@ class MemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
   // Outputs
   io.busy := busyReg
   io.chosen := chosen
-  io.out <> BurstReadWriteMemIO.mux1H(chosen, io.in)
+  io.out <> AsyncReadWriteMemIO.mux1H(chosen, io.in)
 
-  printf(p"MemArbiter(chosen: $chosen, busy: $busyReg)\n")
+  printf(p"AsyncMemArbiter(chosen: $chosen, busy: $busyReg)\n")
 }

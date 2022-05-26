@@ -43,9 +43,9 @@ import chisel3.util.log2Ceil
  * @param outDataWidth   The width of the output data bus.
  * @param lineWidth      The number of words in a cache line.
  * @param depth          The number of entries in the cache.
- * @param wrapping       A boolean indicating whether burst wrapping should be enabled for the cache.
- *                       When a wrapping burst reaches a burst boundary, the address wraps back to the
- *                       previous burst boundary.
+ * @param wrapping       A boolean indicating whether burst wrapping should be enabled for the
+ *                       cache. When a wrapping burst reaches a burst boundary, the address wraps
+ *                       back to the previous burst boundary.
  * @param swapEndianness A boolean indicating whether the endianness of the input words should be
  *                       swapped.
  */

@@ -35,7 +35,11 @@ package axon.mem.cache
 import chisel3._
 import chisel3.util.log2Ceil
 
-/** Represents the location of a word stored in the cache. */
+/**
+ * Represents the location of a word stored in the cache.
+ *
+ * @param config The cache configuration.
+ */
 class Address(private val config: Config) extends Bundle {
   /** The most significant bits of the address */
   val tag = UInt(config.tagWidth.W)
@@ -47,14 +51,15 @@ class Address(private val config: Config) extends Bundle {
 
 object Address {
   /**
-   * Constructs a cache address.
+   * Creates a cache address.
    *
+   * @param config The cache configuration.
    * @param tag    The tag value.
    * @param index  The index value.
    * @param offset The offset value.
-   * @param config The cache configuration.
+   * @return A cache address.
    */
-  def apply(tag: UInt, index: UInt, offset: UInt)(config: Config): Address = {
+  def apply(config: Config, tag: UInt, index: UInt, offset: UInt): Address = {
     val wire = Wire(new Address(config))
     wire.tag := tag
     wire.index := index
@@ -63,11 +68,12 @@ object Address {
   }
 
   /**
-   * Constructs a cache address from a byte address.
+   * Creates a cache address from a byte address.
    *
-   * @param addr   The byte address.
    * @param config The cache configuration.
+   * @param addr   The byte address.
+   * @return A cache address.
    */
-  def apply(addr: UInt)(config: Config): Address =
+  def apply(config: Config, addr: UInt): Address =
     (addr >> log2Ceil(config.outBytes)).asTypeOf(new Address(config))
 }

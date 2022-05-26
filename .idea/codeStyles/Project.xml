@@ -15,6 +15,7 @@
       <option name="TYPE_ANNOTATION_STRUCTURAL_TYPE" value="false" />
     </ScalaCodeStyleSettings>
     <codeStyleSettings language="Scala">
+      <option name="BLANK_LINES_AROUND_METHOD_IN_INTERFACE" value="0" />
       <option name="KEEP_SIMPLE_BLOCKS_IN_ONE_LINE" value="true" />
     </codeStyleSettings>
   </code_scheme>

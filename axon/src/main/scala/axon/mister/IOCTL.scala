@@ -32,7 +32,7 @@
 
 package axon.mister
 
-import axon.mem.{AsyncReadWriteMemIO, ReadWriteMemIO}
+import axon.mem._
 import chisel3._
 import chisel3.util._
 
@@ -57,10 +57,9 @@ class IOCTL extends Bundle {
   /** Output data bus */
   val dout = Input(Bits(IOCTL.DATA_WIDTH.W))
 
-  /** Converts DIP switch data to a synchronous read-write memory interface. */
-  def dips: ReadWriteMemIO = {
-    val wire = Wire(ReadWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
-    wire.rd := false.B
+  /** Converts DIP switch data to a synchronous write-only memory interface. */
+  def dips: WriteMemIO = {
+    val wire = Wire(WriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
     wire.wr := download && wr && this.index === IOCTL.DIP_INDEX.U && !addr(IOCTL.ADDR_WIDTH - 1, 3).orR // ignore higher addresses
     waitReq := false.B
     wire.addr := addr
@@ -70,16 +69,28 @@ class IOCTL extends Bundle {
     wire
   }
 
-  /** Converts ROM data to an asynchronous read-write memory interface. */
-  def rom: AsyncReadWriteMemIO = {
-    val wire = Wire(AsyncReadWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
-    wire.rd := false.B
+  /** Converts ROM data to an asynchronous write-only memory interface. */
+  def rom: AsyncWriteMemIO = {
+    val wire = Wire(AsyncWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
     wire.wr := download && wr && this.index === IOCTL.ROM_INDEX.U
     waitReq := wire.waitReq
     wire.addr := addr
     wire.mask := Fill(wire.maskWidth, 1.U)
     wire.din := dout
     din := 0.U
+    wire
+  }
+
+  /** Converts NVRAM data to an asynchronous read-write memory interface. */
+  def nvram: AsyncReadWriteMemIO = {
+    val wire = Wire(AsyncReadWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
+    wire.rd := upload && rd && this.index === IOCTL.NVRAM_INDEX.U
+    wire.wr := download && wr && this.index === IOCTL.NVRAM_INDEX.U
+    waitReq := wire.waitReq
+    wire.addr := addr
+    wire.mask := Fill(wire.maskWidth, 1.U)
+    wire.din := dout
+    din := wire.dout
     wire
   }
 }
