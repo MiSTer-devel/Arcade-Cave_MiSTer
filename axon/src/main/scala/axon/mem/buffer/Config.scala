@@ -30,43 +30,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.mem
-
-import axon.Util
-import chisel3._
-import chisel3.util._
+package axon.mem.buffer
 
 /**
- * A cache line is stored internally as a vector of words that has the same width as the output data
- * bus.
+ * Represents a buffer configuration.
  *
- * A cache line can also be represented a vector of input words, by rearranging the byte grouping.
- *
+ * @param inAddrWidth    The width of the input address bus.
  * @param inDataWidth    The width of the input data bus.
+ * @param outAddrWidth   The width of the output address bus.
  * @param outDataWidth   The width of the output data bus.
- * @param lineWidth      The number of words in a cache line.
- * @param swapEndianness A boolean indicating whether the endianness of the input words should be
+ * @param burstLength    The number of words to transfer during a burst.
+ * @param bigEndian A boolean indicating whether the endianness of the input words should be
  *                       swapped.
  */
-class Line(private val inDataWidth: Int,
-           private val outDataWidth: Int,
-           private val lineWidth: Int,
-           private val swapEndianness: Boolean) extends Bundle {
-  private val inByteWidth = inDataWidth / 8
-  private val numInWords = outDataWidth * lineWidth / inDataWidth
-
-  /** The cache line data */
-  val words: Vec[Bits] = Vec(lineWidth, Bits(outDataWidth.W))
-
-  /** Returns the cache line represented as a vector input words */
-  def inWords: Vec[Bits] = {
-    val ws: Seq[Bits] = Util.decode(words.asUInt, numInWords * inByteWidth, 8)
-      .grouped(inByteWidth)
-      .map { b => if (swapEndianness) Cat(b.reverse) else Cat(b) }
-      .toSeq
-    VecInit(ws)
-  }
-
-  /** The output words in the cache line */
-  def outWords: Vec[Bits] = words
+case class Config(inAddrWidth: Int,
+                  inDataWidth: Int,
+                  outAddrWidth: Int,
+                  outDataWidth: Int,
+                  burstLength: Int,
+                  bigEndian: Boolean = false) {
+  /** The number of input words in a cache line */
+  val inWords = outDataWidth * burstLength / inDataWidth
+  /** The number of bytes in an input word */
+  val inBytes = inDataWidth / 8
+  /** The number of bytes in an output word */
+  val outBytes = outDataWidth / 8
 }

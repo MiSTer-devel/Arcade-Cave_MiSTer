@@ -75,10 +75,23 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       io.b := VecInit(Util.decode(io.a, 4, 4))
     }) { dut =>
       dut.io.a.poke(0x1234)
-      dut.io.b(3).expect(1.U)
-      dut.io.b(2).expect(2.U)
-      dut.io.b(1).expect(3.U)
-      dut.io.b(0).expect(4.U)
+      dut.io.b(0).expect(4)
+      dut.io.b(1).expect(3)
+      dut.io.b(2).expect(2)
+      dut.io.b(3).expect(1)
+    }
+  }
+
+  "swapEndianness" should "reverse the byte ordering" in {
+    test(new Module {
+      val io = IO(new Bundle {
+        val a = Input(UInt(32.W))
+        val b = Output(UInt(32.W))
+      })
+      io.b := Util.swapEndianness(io.a)
+    }) { dut =>
+      dut.io.a.poke(0x12345678)
+      dut.io.b.expect(0x78563412)
     }
   }
 
@@ -163,15 +176,15 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
     }) { dut =>
       dut.io.a.poke(1)
       dut.io.b.poke(true)
-      dut.io.c.expect(1.U)
+      dut.io.c.expect(1)
       dut.clock.step()
       dut.io.a.poke(0)
-      dut.io.c.expect(1.U)
+      dut.io.c.expect(1)
       dut.clock.step()
-      dut.io.c.expect(1.U)
+      dut.io.c.expect(1)
       dut.io.b.poke(false)
       dut.clock.step()
-      dut.io.c.expect(0.U)
+      dut.io.c.expect(0)
     }
   }
 
@@ -233,17 +246,17 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
     }) { dut =>
       dut.io.a.poke(1)
       dut.io.b.poke(true)
-      dut.io.d.expect(1.U)
+      dut.io.d.expect(1)
       dut.clock.step()
       dut.io.a.poke(2)
       dut.io.b.poke(false)
-      dut.io.d.expect(1.U)
+      dut.io.d.expect(1)
       dut.clock.step()
       dut.io.c.poke(true)
-      dut.io.d.expect(2.U)
+      dut.io.d.expect(2)
       dut.clock.step()
       dut.io.c.poke(false)
-      dut.io.d.expect(2.U)
+      dut.io.d.expect(2)
     }
   }
 
