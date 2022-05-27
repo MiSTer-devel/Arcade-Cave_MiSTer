@@ -52,5 +52,8 @@
     <part>03</part>
   </rom>
 
+  <!-- NVRAM -->
+  <nvram index="2" size="128" />
+
   <buttons names="Main Shot,Power Shot,Guard Barrier,-,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />
 </misterromdescription>

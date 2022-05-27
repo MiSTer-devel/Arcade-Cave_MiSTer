@@ -33,5 +33,8 @@
     <part>04</part>
   </rom>
 
+  <!-- NVRAM -->
+  <nvram index="2" size="128" />
+
   <buttons names="-,-,-,-,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />
 </misterromdescription>
