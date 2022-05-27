@@ -34,7 +34,7 @@ package cave
 
 import axon.Util
 import axon.mem._
-import axon.mem.arbiter.BurstMemArbiter
+import axon.mem.arbiter.{AsyncMemArbiter, BurstMemArbiter}
 import axon.mem.buffer.BurstBuffer
 import axon.mem.cache.{ReadCache, ReadWriteCache}
 import axon.mem.dma.BurstReadDMA
@@ -129,7 +129,6 @@ class MemSys extends Module {
     wrapping = true
   )))
   eepromCache.io.enable := io.ready
-  eepromCache.io.in <> io.rom.eeprom
 
   // Layer tile ROM cache
   val layerRomCache = 0.until(Config.LAYER_COUNT).map { i =>
@@ -169,6 +168,10 @@ class MemSys extends Module {
     layerRomCache(1).io.out.mapAddr(_ + io.gameConfig.layer(1).romOffset),
     layerRomCache(2).io.out.mapAddr(_ + io.gameConfig.layer(2).romOffset)
   ) <> io.sdram
+
+  // NVRAM arbiter
+  val nvramArbiter = Module(new AsyncMemArbiter(2, Config.EEPROM_ADDR_WIDTH, Config.EEPROM_DATA_WIDTH))
+  nvramArbiter.connect(io.ioctl.nvram, io.rom.eeprom) <> eepromCache.io.in
 
   // Latch ready flag when the copy DMA has finished
   io.ready := Util.latchSync(Util.falling(copyDma.io.busy))
