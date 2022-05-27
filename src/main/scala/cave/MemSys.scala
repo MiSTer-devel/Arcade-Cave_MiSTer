@@ -89,7 +89,7 @@ class MemSys extends Module {
 
   // Copies ROM data from DDR to SDRAM
   val copyDma = Module(new BurstReadDMA(Config.copyDownloadDmaConfig))
-  copyDma.io.start := !io.ready && Util.falling(io.ioctl.download)
+  copyDma.io.start := !io.ready && Util.falling(io.ioctl.download) && io.ioctl.index === IOCTL.ROM_INDEX.U
   copyDma.io.out <> sdramDownloadBuffer.io.in
 
   // Program ROM cache
