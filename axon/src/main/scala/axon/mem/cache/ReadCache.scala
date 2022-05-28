@@ -37,21 +37,21 @@ import chisel3._
 import chisel3.util._
 
 /**
- * A 2-way set-associative cache memory.
+ * A 2-way set-associative read-only cache memory.
  *
  * A cache can be used to speed up access to a high latency memory device (e.g. SDRAM), by keeping a
  * copy of frequently accessed data.
  *
- * Cache entries are stored in BRAM, which means that reading/writing to a memory address that is
- * already stored in the cache (cache hit) only takes one clock cycle.
+ * Cache entries are stored in BRAM, which means that reading a memory address that is already
+ * stored in the cache (cache hit) only takes one clock cycle.
  *
- * Reading/writing to memory address that isn't stored in the cache (cache miss) is slower, as the
+ * Reading a memory address that isn't stored in the cache (cache miss) is slower, as the
  * data must first be fetched from the high latency memory device (line fill). Although, subsequent
  * reads/writes to the same address will be much faster.
  *
  * @param config The cache configuration.
  */
-class CacheMem(config: Config) extends Module {
+class ReadCache(config: Config) extends Module {
   // Sanity check
   assert(config.inDataWidth >= 8, "Input data width must be at least 8")
   assert(config.outDataWidth >= 8, "Output data width must be at least 8")
@@ -60,18 +60,15 @@ class CacheMem(config: Config) extends Module {
     /** Enable the cache */
     val enable = Input(Bool())
     /** Input port */
-    val in = Flipped(AsyncReadWriteMemIO(config.inAddrWidth, config.inDataWidth))
+    val in = Flipped(AsyncReadMemIO(config.inAddrWidth, config.inDataWidth))
     /** Output port */
-    val out = BurstReadWriteMemIO(config.outAddrWidth, config.outDataWidth)
+    val out = BurstReadMemIO(config.outAddrWidth, config.outDataWidth)
     /** Debug port */
     val debug = Output(new Bundle {
       val idle = Bool()
       val check = Bool()
       val fill = Bool()
       val fillWait = Bool()
-      val evict = Bool()
-      val evictWait = Bool()
-      val merge = Bool()
       val write = Bool()
       val lru = Bits(config.depth.W)
     })
@@ -79,7 +76,7 @@ class CacheMem(config: Config) extends Module {
 
   // States
   object State {
-    val init :: idle :: check :: fill :: fillWait :: evict :: evictWait :: merge :: write :: Nil = Enum(9)
+    val init :: idle :: check :: fill :: fillWait :: write :: Nil = Enum(6)
   }
 
   // State register
@@ -96,11 +93,10 @@ class CacheMem(config: Config) extends Module {
   }
 
   // Cache request
-  val request = MemRequest(io.in.rd, io.in.wr, Address(config, io.in.addr))
+  val request = MemRequest(io.in.rd, false.B, Address(config, io.in.addr))
   val requestReg = RegEnable(request, start)
 
   // Data registers
-  val dataReg = RegEnable(io.in.din, start)
   val doutReg = Reg(Bits(config.inDataWidth.W))
   val validReg = RegNext(false.B)
 
@@ -135,11 +131,7 @@ class CacheMem(config: Config) extends Module {
   }
 
   // Assert the burst counter enable signal as words are bursted from memory
-  val burstCounterEnable = {
-    val fill = stateReg === State.fillWait && io.out.valid
-    val evict = (stateReg === State.evict || stateReg === State.evictWait) && !io.out.waitReq
-    fill || evict
-  }
+  val burstCounterEnable = stateReg === State.fillWait && io.out.valid
 
   // Counters
   val (initCounter, initCounterWrap) = Counter(stateReg === State.init, config.depth)
@@ -147,13 +139,11 @@ class CacheMem(config: Config) extends Module {
 
   // Control signals
   start := io.enable && request.valid && stateReg === State.idle
+  val waitReq = !(io.enable && stateReg === State.idle)
   val hitA = cacheEntryA.isHit(requestReg.addr)
   val hitB = cacheEntryB.isHit(requestReg.addr)
   val hit = hitA || hitB
   val miss = !hit
-  val dirtyA = cacheEntryA.isDirty(requestReg.addr)
-  val dirtyB = cacheEntryB.isDirty(requestReg.addr)
-  val dirty = (!wayReg && dirtyA) || (wayReg && dirtyB)
 
   // For a wrapping burst, the word done signal is asserted as soon as enough output words have
   // been bursted to fill an input word. Otherwise, for a non-wrapping burst we need to wait until
@@ -166,14 +156,12 @@ class CacheMem(config: Config) extends Module {
 
   // Calculate the output byte address
   val outAddr = {
-    val fillAddr = if (!config.wrapping) {
+    val addr = if (!config.wrapping) {
       Address(config, requestReg.addr.tag, requestReg.addr.index, 0.U)
     } else {
       requestReg.addr
     }
-    val evictAddr = Address(config, cacheEntryReg.tag, requestReg.addr.index, 0.U)
-    val addr = Mux(stateReg === State.fill, fillAddr, evictAddr).asUInt
-    (addr << log2Ceil(config.outBytes)).asUInt
+    (addr.asUInt << log2Ceil(config.outBytes)).asUInt
   }
 
   // Latch current cache way when a request is started
@@ -188,31 +176,16 @@ class CacheMem(config: Config) extends Module {
     validReg := requestReg.rd && wordDone
   }
 
-  // Merge the input data with the cache entry
-  when(stateReg === State.merge) {
-    stateReg := State.write
-    cacheEntryReg := cacheEntryReg.merge(offsetReg, dataReg)
-  }
-
   def onHit() = {
-    when(requestReg.rd) {
-      stateReg := State.idle
-      doutReg := Mux(hitA, cacheEntryA.inWord(offsetReg), cacheEntryB.inWord(offsetReg))
-      validReg := true.B
-    }.otherwise {
-      stateReg := State.merge
-    }
+    stateReg := State.idle
+    doutReg := Mux(hitA, cacheEntryA.inWord(offsetReg), cacheEntryB.inWord(offsetReg))
+    validReg := true.B
     lruReg := lruReg.bitSet(requestReg.addr.index, hitA)
     nextWay := !hitA
   }
 
   def onMiss() = {
     stateReg := State.fill
-    lruReg := lruReg.bitSet(requestReg.addr.index, !wayReg)
-  }
-
-  def onDirty() = {
-    stateReg := State.evict
     lruReg := lruReg.bitSet(requestReg.addr.index, !wayReg)
   }
 
@@ -230,7 +203,7 @@ class CacheMem(config: Config) extends Module {
 
     // Check cache entry
     is(State.check) {
-      when(hit) { onHit() }.elsewhen(dirty) { onDirty() }.elsewhen(miss) { onMiss() }
+      when(hit) { onHit() }.elsewhen(miss) { onMiss() }
     }
 
     // Fill a cache line
@@ -240,47 +213,26 @@ class CacheMem(config: Config) extends Module {
 
     // Wait for a line file
     is(State.fillWait) {
-      when(burstCounterWrap) {
-        stateReg := Mux(requestReg.wr, State.merge, State.write)
-      }
+      when(burstCounterWrap) { stateReg := State.write }
     }
-
-    // Evict a dirty cache entry
-    is(State.evict) {
-      when(!io.out.waitReq) { stateReg := State.evictWait }
-    }
-
-    // Wait for an eviction
-    is(State.evictWait) {
-      when(burstCounterWrap) { stateReg := State.fill }
-    }
-
-    // Merge a word with the cache line
-    is(State.merge) { stateReg := State.write }
 
     // Write cache entry
     is(State.write) { stateReg := State.idle }
   }
 
   // Outputs
-  io.in.waitReq := stateReg =/= State.idle
+  io.in.waitReq := waitReq
   io.in.valid := validReg
   io.in.dout := doutReg
   io.out.rd := stateReg === State.fill
-  io.out.wr := stateReg === State.evict || stateReg === State.evictWait
   io.out.burstLength := config.lineWidth.U
   io.out.addr := outAddr
-  io.out.mask := Fill(config.outBytes, 1.U)
-  io.out.din := cacheEntryReg.outWord(burstCounter)
   io.debug.idle := stateReg === State.idle
   io.debug.check := stateReg === State.check
   io.debug.fill := stateReg === State.fill
   io.debug.fillWait := stateReg === State.fillWait
-  io.debug.evict := stateReg === State.evict
-  io.debug.evictWait := stateReg === State.evictWait
-  io.debug.merge := stateReg === State.merge
   io.debug.write := stateReg === State.write
   io.debug.lru := lruReg
 
-  printf(p"CacheMem(state: $stateReg, way: $wayReg, lru: 0x${ Hexadecimal(lruReg) }, hitA: $hitA, hitB: $hitB, dirtyA: $dirtyA, dirtyB: $dirtyB, tag: 0x${ Hexadecimal(requestReg.addr.tag) }, index: ${ requestReg.addr.index }, offset: $offsetReg, wordsA: 0x${ Hexadecimal(cacheEntryA.line.inWords.asUInt) } (0x${ Hexadecimal(cacheEntryA.tag) }), wordsB: 0x${ Hexadecimal(cacheEntryB.line.inWords.asUInt) } (0x${ Hexadecimal(cacheEntryB.tag) }))\n")
+  printf(p"CacheMem(state: $stateReg, way: $wayReg, lru: 0x${ Hexadecimal(lruReg) }, hitA: $hitA, hitB: $hitB, tag: 0x${ Hexadecimal(requestReg.addr.tag) }, index: ${ requestReg.addr.index }, offset: $offsetReg, wordsA: 0x${ Hexadecimal(cacheEntryA.line.inWords.asUInt) } (0x${ Hexadecimal(cacheEntryA.tag) }), wordsB: 0x${ Hexadecimal(cacheEntryB.line.inWords.asUInt) } (0x${ Hexadecimal(cacheEntryB.tag) }))\n")
 }

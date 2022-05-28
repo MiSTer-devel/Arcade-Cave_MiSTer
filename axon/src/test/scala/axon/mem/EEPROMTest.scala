@@ -249,7 +249,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
     test(new EEPROM) { dut =>
       read(dut, 0x12)
       dut.io.mem.rd.expect(true)
-      dut.io.mem.addr.expect(0x24.U)
+      dut.io.mem.addr.expect(0x24)
       readBit(dut) shouldBe false // dummy bit
       dut.io.mem.valid.poke(true)
       dut.io.mem.dout.poke(0x8421)
@@ -281,8 +281,8 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
       write(dut, 0x12)
       writeBits(dut, 0x1234.U(16.W))
       dut.io.mem.wr.expect(true)
-      dut.io.mem.addr.expect(0x24.U)
-      dut.io.mem.din.expect(0x1234.U)
+      dut.io.mem.addr.expect(0x24)
+      dut.io.mem.din.expect(0x1234)
     }
   }
 
@@ -293,8 +293,8 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
       writeBits(dut, 0x1234.U(16.W))
       for (n <- 0 to 63) {
         dut.io.mem.wr.expect(true)
-        dut.io.mem.addr.expect((n << 1).U)
-        dut.io.mem.din.expect(0x1234.U)
+        dut.io.mem.addr.expect(n << 1)
+        dut.io.mem.din.expect(0x1234)
         dut.clock.step()
       }
     }
@@ -307,8 +307,8 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
       enableWrite(dut)
       erase(dut, 0x12)
       dut.io.mem.wr.expect(true)
-      dut.io.mem.addr.expect(0x24.U)
-      dut.io.mem.din.expect(0xffff.U)
+      dut.io.mem.addr.expect(0x24)
+      dut.io.mem.din.expect(0xffff)
     }
   }
 
@@ -318,8 +318,8 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
       eraseAll(dut)
       for (n <- 0 to 63) {
         dut.io.mem.wr.expect(true)
-        dut.io.mem.addr.expect((n << 1).U)
-        dut.io.mem.din.expect(0xffff.U)
+        dut.io.mem.addr.expect(n << 1)
+        dut.io.mem.din.expect(0xffff)
         dut.clock.step()
       }
     }

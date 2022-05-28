@@ -30,40 +30,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.mem
+package axon.mem.buffer
 
+import axon.Util
 import chisel3._
 
 /**
- * This module wraps an external single-port ROM module.
+ * A cache line is stored internally as a vector of words that has the same width as the output data
+ * bus.
  *
- * @param addrWidth The width of the address bus.
- * @param dataWidth The width of the data bus.
+ * A cache line can also be represented a vector of input words, by rearranging the byte grouping.
+ *
+ * @param config The buffer configuration.
  */
-class SinglePortRom(addrWidth: Int, dataWidth: Int, depth: Int, initFile: String) extends Module {
-  val io = IO(Flipped(ReadMemIO(addrWidth, dataWidth)))
+class Line(private val config: Config) extends Bundle {
+  /** The cache line data */
+  val words: Vec[Bits] = Vec(config.burstLength, Bits(config.outDataWidth.W))
 
-  class WrappedSinglePortRam extends BlackBox(
-    Map(
-      "ADDR_WIDTH" -> addrWidth,
-      "DATA_WIDTH" -> dataWidth,
-      "DEPTH" -> depth,
-      "INIT_FILE" -> initFile
-    )
-  ) {
-    val io = IO(new Bundle {
-      val clk = Input(Clock())
-      val rd = Input(Bool())
-      val addr = Input(UInt(addrWidth.W))
-      val dout = Output(Bits(dataWidth.W))
-    })
-
-    override def desiredName = "single_port_rom"
+  /** Returns the cache line represented as a vector input words */
+  def inWords: Vec[Bits] = {
+    val ws = Util.decode(words.asUInt, config.inWords, config.inDataWidth)
+    VecInit(ws)
   }
 
-  val rom = Module(new WrappedSinglePortRam)
-  rom.io.clk := clock
-  rom.io.rd := io.rd
-  rom.io.addr := io.addr
-  io.dout := rom.io.dout
+  /** The output words in the cache line */
+  def outWords: Vec[Bits] = words
 }

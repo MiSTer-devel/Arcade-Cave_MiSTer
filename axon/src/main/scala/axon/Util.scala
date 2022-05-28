@@ -105,13 +105,22 @@ object Util {
     }
 
   /**
+   * Reverses the byte ordering of the given value.
+   *
+   * @param bits The value to reverse.
+   */
+  def swapEndianness(bits: Bits): Bits = {
+    assert(bits.getWidth % 8 == 0, "Input data width must be divisible by 8")
+    decode(bits, bits.getWidth / 8, 8).reduce(_ ## _)
+  }
+
+  /**
    * Pads the words packed into a bitvector value.
    *
    * @param bits      The value.
    * @param n         The number of words.
    * @param fromWidth The width of the source words.
    * @param toWidth   The width of the destination words.
-   * @return
    */
   def padWords(bits: Bits, n: Int, fromWidth: Int, toWidth: Int): Bits =
     Cat(Util.decode(bits, n, fromWidth).map(_.pad(toWidth)).reverse)

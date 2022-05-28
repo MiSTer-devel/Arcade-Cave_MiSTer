@@ -57,41 +57,45 @@ class IOCTL extends Bundle {
   /** Output data bus */
   val dout = Input(Bits(IOCTL.DATA_WIDTH.W))
 
-  /** Converts DIP switch data to a synchronous write-only memory interface. */
-  def dips: WriteMemIO = {
-    val wire = Wire(WriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
-    wire.wr := download && wr && this.index === IOCTL.DIP_INDEX.U && !addr(IOCTL.ADDR_WIDTH - 1, 3).orR // ignore higher addresses
-    waitReq := false.B
-    wire.addr := addr
-    wire.mask := Fill(wire.maskWidth, 1.U)
-    wire.din := dout
-    din := 0.U
-    wire
-  }
-
   /** Converts ROM data to an asynchronous write-only memory interface. */
   def rom: AsyncWriteMemIO = {
-    val wire = Wire(AsyncWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
-    wire.wr := download && wr && this.index === IOCTL.ROM_INDEX.U
-    waitReq := wire.waitReq
-    wire.addr := addr
-    wire.mask := Fill(wire.maskWidth, 1.U)
-    wire.din := dout
+    val writeEnable = download && this.index === IOCTL.ROM_INDEX.U
+    val mem = Wire(AsyncWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
+    mem.wr := writeEnable && wr
+    waitReq := writeEnable && mem.waitReq
+    mem.addr := addr
+    mem.mask := Fill(mem.maskWidth, 1.U)
+    mem.din := dout
     din := 0.U
-    wire
+    mem
   }
 
   /** Converts NVRAM data to an asynchronous read-write memory interface. */
   def nvram: AsyncReadWriteMemIO = {
-    val wire = Wire(AsyncReadWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
-    wire.rd := upload && rd && this.index === IOCTL.NVRAM_INDEX.U
-    wire.wr := download && wr && this.index === IOCTL.NVRAM_INDEX.U
-    waitReq := wire.waitReq
-    wire.addr := addr
-    wire.mask := Fill(wire.maskWidth, 1.U)
-    wire.din := dout
-    din := wire.dout
-    wire
+    val readEnable = upload && this.index === IOCTL.NVRAM_INDEX.U
+    val writeEnable = download && this.index === IOCTL.NVRAM_INDEX.U
+    val mem = Wire(AsyncReadWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
+    mem.rd := readEnable && rd
+    mem.wr := writeEnable && wr
+    waitReq := (readEnable || writeEnable) && mem.waitReq
+    mem.addr := addr
+    mem.mask := Fill(mem.maskWidth, 1.U)
+    mem.din := dout
+    din := RegEnable(mem.dout, mem.valid)
+    mem
+  }
+
+  /** Converts DIP switch data to a synchronous write-only memory interface. */
+  def dips: AsyncWriteMemIO = {
+    val writeEnable = download && this.index === IOCTL.DIP_INDEX.U && !addr(IOCTL.ADDR_WIDTH - 1, 3).orR // ignore higher addresses
+    val mem = Wire(AsyncWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
+    mem.wr := writeEnable && wr
+    waitReq := writeEnable && mem.waitReq
+    mem.addr := addr
+    mem.mask := Fill(mem.maskWidth, 1.U)
+    mem.din := dout
+    din := 0.U
+    mem
   }
 }
 

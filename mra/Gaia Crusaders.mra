@@ -39,6 +39,9 @@
     <part>06</part>
   </rom>
 
+  <!-- NVRAM -->
+  <nvram index="2" size="128" />
+
   <buttons names="Punch,Kick,Jump,Magic,Start,Coin,Pause,Service" default="A,B,X,Y,R,L,Start" />
 
   <!-- DIPs -->

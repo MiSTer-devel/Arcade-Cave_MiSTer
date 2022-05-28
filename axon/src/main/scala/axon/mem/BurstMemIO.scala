@@ -258,6 +258,7 @@ object BurstReadWriteMemIO {
    * @param in A list of enable-interface pairs.
    */
   def mux1H(in: Seq[(Bool, BurstReadWriteMemIO)]): BurstReadWriteMemIO = {
+    val anySelected = in.map(_._1).reduce(_ || _)
     val mem = Wire(chiselTypeOf(in.head._2))
     mem.rd := Mux1H(in.map(a => a._1 -> a._2.rd))
     mem.wr := Mux1H(in.map(a => a._1 -> a._2.wr))
@@ -266,7 +267,7 @@ object BurstReadWriteMemIO {
     mem.mask := Mux1H(in.map(a => a._1 -> a._2.mask))
     mem.din := Mux1H(in.map(a => a._1 -> a._2.din))
     for ((selected, port) <- in) {
-      port.waitReq := !selected || mem.waitReq
+      port.waitReq := (anySelected && !selected) || mem.waitReq
       port.valid := selected && mem.valid
       port.burstDone := selected && mem.burstDone
       port.dout := mem.dout

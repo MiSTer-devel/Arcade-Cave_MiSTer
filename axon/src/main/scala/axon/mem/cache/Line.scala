@@ -34,7 +34,6 @@ package axon.mem.cache
 
 import axon.Util
 import chisel3._
-import chisel3.util._
 
 /**
  * A cache line is stored internally as a vector of words that has the same width as the output data
@@ -45,17 +44,12 @@ import chisel3.util._
  * @param config The cache configuration.
  */
 class Line(private val config: Config) extends Bundle {
-  private val inByteWidth = config.inDataWidth / 8
-
   /** The cache line data */
   val words: Vec[Bits] = Vec(config.lineWidth, Bits(config.outDataWidth.W))
 
   /** Returns the cache line represented as a vector input words */
   def inWords: Vec[Bits] = {
-    val ws: Seq[Bits] = Util.decode(words.asUInt, config.inWords * inByteWidth, 8)
-      .grouped(inByteWidth)
-      .map { b => if (config.swapEndianness) Cat(b.reverse) else Cat(b) }
-      .toSeq
+    val ws = Util.decode(words.asUInt, config.inWords, config.inDataWidth)
     VecInit(ws)
   }
 

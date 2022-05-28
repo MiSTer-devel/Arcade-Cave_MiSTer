@@ -34,8 +34,9 @@ package cave
 
 import axon.Util
 import axon.mem._
-import axon.mem.arbiter.BurstMemArbiter
-import axon.mem.cache.CacheMem
+import axon.mem.arbiter.{AsyncMemArbiter, BurstMemArbiter}
+import axon.mem.buffer.BurstBuffer
+import axon.mem.cache.{ReadCache, ReadWriteCache}
 import axon.mem.dma.BurstReadDMA
 import axon.mister._
 import cave.types._
@@ -66,33 +67,33 @@ class MemSys extends Module {
 
   // The DDR download buffer is used to buffer ROM data from the IOCTL, so that complete words are
   // written to memory.
-  val ddrDownloadBuffer = Module(new BurstBuffer(
+  val ddrDownloadBuffer = Module(new BurstBuffer(buffer.Config(
     inAddrWidth = IOCTL.ADDR_WIDTH,
     inDataWidth = IOCTL.DATA_WIDTH,
     outAddrWidth = Config.ddrConfig.addrWidth,
     outDataWidth = Config.ddrConfig.dataWidth,
     burstLength = 1
-  ))
+  )))
   ddrDownloadBuffer.io.in <> io.ioctl.rom
 
   // The SDRAM download buffer is used to buffer ROM data from the copy DMA, so that complete words
   // are written to memory.
-  val sdramDownloadBuffer = Module(new BurstBuffer(
+  val sdramDownloadBuffer = Module(new BurstBuffer(buffer.Config(
     inAddrWidth = Config.ddrConfig.addrWidth,
     inDataWidth = Config.ddrConfig.dataWidth,
     outAddrWidth = Config.sdramConfig.addrWidth,
     outDataWidth = Config.sdramConfig.dataWidth,
     burstLength = Config.sdramConfig.burstLength
-  ))
+  )))
   sdramDownloadBuffer.io.in <> io.ioctl.rom
 
   // Copies ROM data from DDR to SDRAM
   val copyDma = Module(new BurstReadDMA(Config.copyDownloadDmaConfig))
-  copyDma.io.start := !io.ready && Util.falling(io.ioctl.download)
+  copyDma.io.start := !io.ready && Util.falling(io.ioctl.download) && io.ioctl.index === IOCTL.ROM_INDEX.U
   copyDma.io.out <> sdramDownloadBuffer.io.in
 
   // Program ROM cache
-  val progRomCache = Module(new CacheMem(cache.Config(
+  val progRomCache = Module(new ReadCache(cache.Config(
     inAddrWidth = Config.PROG_ROM_ADDR_WIDTH,
     inDataWidth = Config.PROG_ROM_DATA_WIDTH,
     outAddrWidth = Config.sdramConfig.addrWidth,
@@ -102,10 +103,10 @@ class MemSys extends Module {
     wrapping = true
   )))
   progRomCache.io.enable := io.ready
-  progRomCache.io.in.asAsyncReadMemIO <> io.rom.progRom
+  progRomCache.io.in <> io.rom.progRom
 
   // Sound ROM cache
-  val soundRomCache = Module(new CacheMem(cache.Config(
+  val soundRomCache = Module(new ReadCache(cache.Config(
     inAddrWidth = Config.SOUND_ROM_ADDR_WIDTH,
     inDataWidth = Config.SOUND_ROM_DATA_WIDTH,
     outAddrWidth = Config.sdramConfig.addrWidth,
@@ -115,10 +116,10 @@ class MemSys extends Module {
     wrapping = true
   )))
   soundRomCache.io.enable := io.ready
-  soundRomCache.io.in.asAsyncReadMemIO <> io.rom.soundRom
+  soundRomCache.io.in <> io.rom.soundRom
 
   // EEPROM cache
-  val eepromCache = Module(new CacheMem(cache.Config(
+  val eepromCache = Module(new ReadWriteCache(cache.Config(
     inAddrWidth = Config.EEPROM_ADDR_WIDTH,
     inDataWidth = Config.EEPROM_DATA_WIDTH,
     outAddrWidth = Config.sdramConfig.addrWidth,
@@ -128,11 +129,10 @@ class MemSys extends Module {
     wrapping = true
   )))
   eepromCache.io.enable := io.ready
-  eepromCache.io.in <> io.rom.eeprom
 
   // Layer tile ROM cache
   val layerRomCache = 0.until(Config.LAYER_COUNT).map { i =>
-    val c = Module(new CacheMem(cache.Config(
+    val c = Module(new ReadCache(cache.Config(
       inAddrWidth = Config.TILE_ROM_ADDR_WIDTH,
       inDataWidth = Config.TILE_ROM_DATA_WIDTH,
       outAddrWidth = Config.sdramConfig.addrWidth,
@@ -142,7 +142,7 @@ class MemSys extends Module {
       wrapping = true
     )))
     c.io.enable := io.ready
-    c.io.in.asAsyncReadMemIO <> io.rom.layerTileRom(i)
+    c.io.in <> io.rom.layerTileRom(i)
     c
   }
 
@@ -168,6 +168,10 @@ class MemSys extends Module {
     layerRomCache(1).io.out.mapAddr(_ + io.gameConfig.layer(1).romOffset),
     layerRomCache(2).io.out.mapAddr(_ + io.gameConfig.layer(2).romOffset)
   ) <> io.sdram
+
+  // NVRAM arbiter
+  val nvramArbiter = Module(new AsyncMemArbiter(2, Config.EEPROM_ADDR_WIDTH, Config.EEPROM_DATA_WIDTH))
+  nvramArbiter.connect(io.ioctl.nvram, io.rom.eeprom) <> eepromCache.io.in
 
   // Latch ready flag when the copy DMA has finished
   io.ready := Util.latchSync(Util.falling(copyDma.io.busy))

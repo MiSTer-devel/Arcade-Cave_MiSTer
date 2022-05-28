@@ -41,24 +41,27 @@ class BurstMemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Ma
 
   it should "mux the request to the input port with the highest priority" in {
     test(mkMemArbiter) { dut =>
-      // read 0+1
+      // read 0
       dut.io.in(0).rd.poke(true)
       dut.io.in(0).addr.poke(1)
-      dut.io.in(1).rd.poke(true)
+      dut.io.in(1).wr.poke(true)
       dut.io.in(1).addr.poke(2)
       dut.io.out.rd.expect(true)
+      dut.io.out.wr.expect(false)
       dut.io.out.addr.expect(1)
       dut.io.chosen.expect(1)
 
-      // read 1
+      // write 1
       dut.io.in(0).rd.poke(false)
-      dut.io.out.rd.expect(true)
+      dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(true)
       dut.io.out.addr.expect(2)
       dut.io.chosen.expect(2)
 
       // done
-      dut.io.in(1).rd.poke(false)
+      dut.io.in(1).wr.poke(false)
       dut.io.out.rd.expect(false)
+      dut.io.out.wr.expect(false)
       dut.io.out.addr.expect(0)
       dut.io.chosen.expect(0)
     }
@@ -94,6 +97,16 @@ class BurstMemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Ma
       dut.io.in(1).waitReq.expect(false)
       dut.io.out.waitReq.poke(true)
       dut.io.in(0).waitReq.expect(true)
+      dut.io.in(1).waitReq.expect(true)
+    }
+  }
+
+  it should "assert not the wait signal when there are no requests" in {
+    test(mkMemArbiter) { dut =>
+      dut.io.in(0).waitReq.expect(false)
+      dut.io.in(1).waitReq.expect(false)
+      dut.io.in(0).rd.poke(true)
+      dut.io.in(0).waitReq.expect(false)
       dut.io.in(1).waitReq.expect(true)
     }
   }
@@ -161,10 +174,10 @@ class BurstMemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Ma
 
   it should "assert the busy signal for pending requests" in {
     test(mkMemArbiter) { dut =>
-      dut.io.in(0).wr.poke(true)
+      dut.io.in(0).rd.poke(true)
       dut.io.busy.expect(false)
       dut.clock.step()
-      dut.io.in(0).wr.poke(false)
+      dut.io.in(0).rd.poke(false)
       dut.io.out.burstDone.poke(true)
       dut.io.busy.expect(true)
       dut.clock.step()
@@ -174,7 +187,7 @@ class BurstMemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Ma
 
   it should "not assert the busy signal for requests with unit burst length" in {
     test(mkMemArbiter) { dut =>
-      dut.io.in(0).wr.poke(true)
+      dut.io.in(0).rd.poke(true)
       dut.io.out.burstDone.poke(true)
       dut.io.busy.expect(false)
       dut.clock.step()
