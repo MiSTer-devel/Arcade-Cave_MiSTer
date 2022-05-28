@@ -217,8 +217,6 @@ class Cave extends Module {
   gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
   gpu.io.spriteCtrl.enable := io.options.layerEnable.sprite
   gpu.io.spriteCtrl.start := Util.falling(vBlank)
-  gpu.io.spriteCtrl.flip := io.options.flip
-  gpu.io.spriteCtrl.rotate := io.options.rotate
   gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
   gpu.io.spriteCtrl.regs := SpriteRegs.decode(spriteRegs.io.regs)
   gpu.io.spriteCtrl.vram <> spriteRam.io.portB

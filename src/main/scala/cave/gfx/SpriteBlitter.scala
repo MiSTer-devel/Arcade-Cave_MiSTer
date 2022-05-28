@@ -43,10 +43,10 @@ import chisel3.util._
 class SpriteBlitterConfig extends Bundle {
   /** Sprite */
   val sprite = new Sprite
-  /** Asserted when the layer is flipped */
-  val flip = Bool()
-  /** Asserted when the layer is rotated */
-  val rotate = Bool()
+  /** Horizontal flip */
+  val flipX = Bool()
+  /** Vertical flip */
+  val flipY = Bool()
 }
 
 /** The sprite blitter copies a sprite to the frame buffer. */
@@ -106,7 +106,7 @@ class SpriteBlitter extends Module {
   io.config.ready := configReady
   io.pixelData.ready := pixelDataReady
   io.frameBuffer.wr := RegNext(visible)
-  io.frameBuffer.addr := RegNext(GPU.frameBufferAddr(posReg, configReg.flip))
+  io.frameBuffer.addr := RegNext(GPU.frameBufferAddr(posReg, configReg.flipX))
   io.frameBuffer.mask := 0.U
   io.frameBuffer.din := RegNext(penReg.asUInt)
   io.busy := RegNext(busyReg) // delayed to align with the other signals
