@@ -72,8 +72,8 @@ object SpriteRegs {
    */
   def decode(data: Vec[Bits]): SpriteRegs = {
     val regs = Wire(new SpriteRegs)
-    regs.flipX := !data(0)(15)
-    regs.flipY := !data(1)(15)
+    regs.flipX := data(0)(15)
+    regs.flipY := data(1)(15)
     regs.layerOffset := UVec2(data(0)(8, 0), data(1)(8, 0))
     regs.bank := data(4)(1, 0)
     regs.fixed := data(5)(13, 12).orR
