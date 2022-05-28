@@ -74,18 +74,18 @@ object LayerRegs {
    *      | ---- ---- ---- --xx | priority
    * }}}
    *
-   * @param regs The layer registers data.
+   * @param data The layer registers data.
    */
-  def decode(regs: Vec[Bits]): LayerRegs = {
-    val layer = Wire(new LayerRegs)
-    layer.priority := regs(2)(1, 0)
-    layer.tileSize := regs(1)(13)
-    layer.enable := !regs(2)(4)
-    layer.flipX := !regs(0)(15)
-    layer.flipY := !regs(1)(15)
-    layer.rowScrollEnable := regs(0)(14)
-    layer.rowSelectEnable := regs(1)(14)
-    layer.scroll := UVec2(regs(0)(8, 0), regs(1)(8, 0))
-    layer
+  def decode(data: Vec[Bits]): LayerRegs = {
+    val regs = Wire(new LayerRegs)
+    regs.priority := data(2)(1, 0)
+    regs.tileSize := data(1)(13)
+    regs.enable := !data(2)(4)
+    regs.flipX := !data(0)(15)
+    regs.flipY := !data(1)(15)
+    regs.rowScrollEnable := data(0)(14)
+    regs.rowSelectEnable := data(1)(14)
+    regs.scroll := UVec2(data(0)(8, 0), data(1)(8, 0))
+    regs
   }
 }
