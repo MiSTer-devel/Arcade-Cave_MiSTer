@@ -127,18 +127,6 @@ object GPU {
   def screenSize: UVec2 = UVec2(Config.SCREEN_WIDTH.U, Config.SCREEN_HEIGHT.U)
 
   /**
-   * Transforms a pixel position to a frame buffer memory address.
-   *
-   * @param pos The pixel position.
-   * @return A memory address.
-   */
-  def frameBufferAddr(pos: UVec2): UInt = {
-    val x = pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0)
-    val y = pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
-    (y * Config.SCREEN_WIDTH.U) + x
-  }
-
-  /**
    * Transforms a pixel position to a frame buffer memory address, applying the optional flip
    * transform.
    *
