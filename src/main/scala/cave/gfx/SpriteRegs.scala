@@ -38,8 +38,8 @@ import chisel3._
 
 /** A bundle that contains the decoded sprite registers. */
 class SpriteRegs extends Bundle {
-  /** Layer offset */
-  val layerOffset = UVec2(Config.LAYER_SCROLL_WIDTH.W)
+  /** Sprite offset */
+  val offset = UVec2(Config.LAYER_SCROLL_WIDTH.W)
   /** Sprite bank */
   val bank = UInt(SpriteRegs.SPRITE_BANK_WIDTH.W)
   /** Sprite fixed-point position format  */
@@ -61,11 +61,11 @@ object SpriteRegs {
    * word   bits                  description
    * -----+-fedc-ba98-7654-3210-+----------------
    *    0 | x--- ---- ---- ---- | flip x
-   *      | -xxx xxxx xxxx xxxx | layer offset x
+   *      | -xxx xxxx xxxx xxxx | offset x
    *    1 | x--- ---- ---- ---- | flip y
-   *      | -xxx xxxx xxxx xxxx | layer offset y
-   *    4 | ---- ---- ---- --xx | sprite bank
-   *    5 | --xx ---- ---- ---- | sprite position format
+   *      | -xxx xxxx xxxx xxxx | offset y
+   *    4 | ---- ---- ---- --xx | bank
+   *    5 | --xx ---- ---- ---- | position format
    * }}}
    *
    * @param data The sprite registers data.
@@ -74,7 +74,7 @@ object SpriteRegs {
     val regs = Wire(new SpriteRegs)
     regs.flipX := data(0)(15)
     regs.flipY := data(1)(15)
-    regs.layerOffset := UVec2(data(0)(8, 0), data(1)(8, 0))
+    regs.offset := UVec2(data(0)(8, 0), data(1)(8, 0))
     regs.bank := data(4)(1, 0)
     regs.fixed := data(5)(13, 12).orR
     regs

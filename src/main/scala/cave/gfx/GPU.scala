@@ -81,19 +81,19 @@ class GPU extends Module {
     val layer0Processor = Module(new LayerProcessor(0))
     layer0Processor.io.video <> io.video
     layer0Processor.io.ctrl <> io.layerCtrl(0)
-    layer0Processor.io.offset := io.spriteCtrl.regs.layerOffset
+    layer0Processor.io.spriteOffset := io.spriteCtrl.regs.offset
 
     // Layer 1 processor
     val layer1Processor = Module(new LayerProcessor(1))
     layer1Processor.io.video <> io.video
     layer1Processor.io.ctrl <> io.layerCtrl(1)
-    layer1Processor.io.offset := io.spriteCtrl.regs.layerOffset
+    layer1Processor.io.spriteOffset := io.spriteCtrl.regs.offset
 
     // Layer 2 processor
     val layer2Processor = Module(new LayerProcessor(2))
     layer2Processor.io.video <> io.video
     layer2Processor.io.ctrl <> io.layerCtrl(2)
-    layer2Processor.io.offset := io.spriteCtrl.regs.layerOffset
+    layer2Processor.io.spriteOffset := io.spriteCtrl.regs.offset
 
     // Color mixer
     val colorMixer = Module(new ColorMixer)
