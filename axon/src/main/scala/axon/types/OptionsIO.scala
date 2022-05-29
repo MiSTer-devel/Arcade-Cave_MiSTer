@@ -46,6 +46,8 @@ class OptionsIO extends Bundle {
   val flip = Input(Bool())
   /** Video compatibility (60Hz) mode */
   val compatibility = Input(Bool())
+  /** Service mode */
+  val service = Input(Bool())
   /** Layer enable flags */
   val layerEnable = Input(new Bundle {
     /** Enable the sprite layer */

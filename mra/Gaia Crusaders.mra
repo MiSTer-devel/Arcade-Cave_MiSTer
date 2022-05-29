@@ -42,7 +42,7 @@
   <!-- NVRAM -->
   <nvram index="2" size="128" />
 
-  <buttons names="Punch,Kick,Jump,Magic,Start,Coin,Pause,Service" default="A,B,X,Y,R,L,Start" />
+  <buttons names="Punch,Kick,Jump,Magic,Start,Coin,Pause" default="A,B,X,Y,R,L,Start" />
 
   <!-- DIPs -->
   <switches default="ff,ff">

@@ -66,8 +66,10 @@ object Config {
   /** The number of registers in the DIPs register file */
   val DIPS_DEPTH = 4
 
-  /** The width of the pulse generated when a player presses the coin button */
-  val PLAYER_COIN_PULSE_WIDTH = (100000000 / CLOCK_PERIOD).ceil.toInt // 100ms
+  /** The width of the pulse generated when a coin is inserted */
+  val COIN_PULSE_WIDTH = (100000000D / CLOCK_PERIOD).ceil.toInt // 100ms
+  /** The width of the pulse generated when the service button is pressed */
+  val SERVICE_PULSE_WIDTH = (2500000000D / CLOCK_PERIOD).ceil.toInt // 2500ms
 
   /** The width of the program ROM address bus */
   val PROG_ROM_ADDR_WIDTH = 20 // 1MB
@@ -187,7 +189,7 @@ object Config {
   /** YMZ280B configuration */
   val ymzConfig = YMZ280BConfig(
     clockFreq = CLOCK_FREQ,
-    sampleFreq = 88200
+    sampleFreq = 88200 // Hz
   )
 
   /** DDR configuration */

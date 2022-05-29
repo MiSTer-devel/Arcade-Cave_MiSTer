@@ -181,6 +181,7 @@ localparam CONF_STR = {
   "O57,Scandoubler,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
   "O8,Refresh rate,57Hz,60Hz;",
   "-;",
+  "T9,Service mode;",
   "DIP;",
   "P1,Debug;",
   "P1OA,Sprites,On,Off;",
@@ -195,7 +196,7 @@ localparam CONF_STR = {
   "P1OIL,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.,Puzzle Uo Poko,Guwange,Gaia;",
   "-;",
   "R0,Reset;",
-  "J,B0,B1,B2,B3,Start,Coin,Pause,Service;",
+  "J,B0,B1,B2,B3,Start,Coin,Pause;",
   "V,v",`BUILD_DATE," by nullobject;"
 };
 
@@ -300,7 +301,7 @@ hps_io #(.CONF_STR(CONF_STR), .WIDE(1)) hps_io (
 
   .buttons(buttons),
   .status(status),
-  .status_menumask({sdram_available, direct_video}),
+  .status_menumask({direct_video}),
   .forced_scandoubler(forced_scandoubler),
   .new_vmode(new_vmode),
   .gamma_bus(gamma_bus),
@@ -387,8 +388,6 @@ reg key_1     = 0;
 reg key_2     = 0;
 reg key_5     = 0;
 reg key_6     = 0;
-reg key_9     = 0;
-reg key_0     = 0;
 reg key_a     = 0;
 reg key_s     = 0;
 reg key_q     = 0;
@@ -417,8 +416,6 @@ always @(posedge clk_sys) begin
       'h1E: key_2     <= pressed;
       'h2E: key_5     <= pressed;
       'h36: key_6     <= pressed;
-      'h46: key_9     <= pressed;
-      'h45: key_0     <= pressed;
       'h1C: key_a     <= pressed;
       'h1B: key_s     <= pressed;
       'h15: key_q     <= pressed;
@@ -454,8 +451,6 @@ wire player_2_button_4 = key_w     | joystick_1[7];
 wire player_2_start    = key_2     | joystick_1[8];
 wire player_2_coin     = key_6     | joystick_1[9];
 wire player_2_pause    =             joystick_1[10];
-wire service_1         = key_9     | joystick_0[11];
-wire service_2         = key_0     | joystick_1[11];
 
 ////////////////////////////////////////////////////////////////////////////////
 // MAIN
@@ -486,6 +481,7 @@ Main main (
   .options_rotate(status[3]),
   .options_flip(status[4]),
   .options_compatibility(status[8]),
+  .options_service(status[9]),
   .options_layerEnable_sprite(~status[10]),
   .options_layerEnable_layer_0(~status[11]),
   .options_layerEnable_layer_1(~status[12]),
@@ -512,8 +508,6 @@ Main main (
   .joystick_player2_start(player_2_start),
   .joystick_player2_coin(player_2_coin),
   .joystick_player2_pause(player_2_pause),
-  .joystick_service1(service_1),
-  .joystick_service2(service_2),
   // Video signals
   .video_clockEnable(ce_pix),
   .video_changeMode(new_vmode),

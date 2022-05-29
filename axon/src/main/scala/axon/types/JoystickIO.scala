@@ -34,16 +34,12 @@ package axon.types
 
 import chisel3._
 
-/** An interface that contains the player controls and service buttons. */
+/** An interface that contains the player controls. */
 class JoystickIO extends Bundle {
   /** Player 1 input */
   val player1 = PlayerIO()
   /** Player 2 input */
   val player2 = PlayerIO()
-  /** Service button 1 */
-  val service1 = Input(Bool())
-  /** Service button 2 */
-  val service2 = Input(Bool())
 }
 
 object JoystickIO {

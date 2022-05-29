@@ -425,18 +425,23 @@ class Cave extends Module {
 
 object Cave {
   /**
-   * Encodes the joystick IO into bitvector values.
+   * Encodes the player inputs and EEPROM data.
    *
    * @param gameIndex The game index.
-   * @param joystick  The joystick interface.
-   * @param eeprom    The eeprom interface.
-   * @return A pair of bitvectors representing the player inputs.
+   * @param options   The options port.
+   * @param joystick  The joystick port.
+   * @param eeprom    The eeprom port.
+   * @return A tuple representing the left and right player inputs.
    */
-  private def encodePlayers(gameIndex: UInt, joystick: JoystickIO, eeprom: EEPROM): (UInt, UInt) = {
-    val coin1 = Util.pulseSync(Config.PLAYER_COIN_PULSE_WIDTH, joystick.player1.coin)
-    val coin2 = Util.pulseSync(Config.PLAYER_COIN_PULSE_WIDTH, joystick.player2.coin)
+  private def encodePlayers(gameIndex: UInt, options: OptionsIO, joystick: JoystickIO, eeprom: EEPROM): (UInt, UInt) = {
+    // Trigger coin pulse
+    val coin1 = Util.pulseSync(Config.COIN_PULSE_WIDTH, joystick.player1.coin)
+    val coin2 = Util.pulseSync(Config.COIN_PULSE_WIDTH, joystick.player2.coin)
 
-    val default1 = Cat("b111111".U, ~joystick.service1, ~coin1, ~joystick.player1.start, ~joystick.player1.buttons(2, 0), ~joystick.player1.right, ~joystick.player1.left, ~joystick.player1.down, ~joystick.player1.up)
+    // Trigger service button press
+    val service = Util.pulseSync(Config.SERVICE_PULSE_WIDTH, options.service)
+
+    val default1 = Cat("b111111".U, ~service, ~coin1, ~joystick.player1.start, ~joystick.player1.buttons(2, 0), ~joystick.player1.right, ~joystick.player1.left, ~joystick.player1.down, ~joystick.player1.up)
     val default2 = Cat("b1111".U, eeprom.io.serial.sdo, "b11".U, ~coin2, ~joystick.player2.start, ~joystick.player2.buttons(2, 0), ~joystick.player2.right, ~joystick.player2.left, ~joystick.player2.down, ~joystick.player2.up)
 
     val left = MuxLookup(gameIndex, default1, Seq(
@@ -445,8 +450,8 @@ object Cave {
     ))
 
     val right = MuxLookup(gameIndex, default2, Seq(
-      GameConfig.GAIA.U -> Cat("b1111111111".U, ~joystick.player2.start, ~joystick.player1.start, "b1".U, ~joystick.service1, ~coin2, ~coin1),
-      GameConfig.GUWANGE.U -> Cat("b11111111".U, eeprom.io.serial.sdo, "b1111".U, ~joystick.service1, ~coin2, ~coin1),
+      GameConfig.GAIA.U -> Cat("b1111111111".U, ~joystick.player2.start, ~joystick.player1.start, "b1".U, ~service, ~coin2, ~coin1),
+      GameConfig.GUWANGE.U -> Cat("b11111111".U, eeprom.io.serial.sdo, "b1111".U, ~service, ~coin2, ~coin1),
     ))
 
     (left, right)

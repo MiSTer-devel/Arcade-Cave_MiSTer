@@ -55,5 +55,5 @@
   <!-- NVRAM -->
   <nvram index="2" size="128" />
 
-  <buttons names="Main Shot,Power Shot,Guard Barrier,-,Start,Coin,Pause,Service" default="A,B,X,R,L,Start" />
+  <buttons names="Main Shot,Power Shot,Guard Barrier,-,Start,Coin,Pause" default="A,B,X,R,L,Start" />
 </misterromdescription>
