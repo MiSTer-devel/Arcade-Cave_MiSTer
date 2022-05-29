@@ -54,10 +54,10 @@ class Cave extends Module {
     val gameConfig = Input(GameConfig())
     /** Options port */
     val options = OptionsIO()
-    /** DIPs port */
-    val dips = DIPIO()
     /** Joystick port */
-    val joystick = JoystickIO()
+    val joystick = Vec(2, JoystickIO())
+    /** DIP switches port */
+    val dips = DIPIO()
     /** Video port */
     val video = Flipped(VideoIO())
     /** Audio port */
@@ -90,7 +90,7 @@ class Cave extends Module {
   val agalletIrq = RegInit(false.B)
   val unknownIrq = RegInit(false.B)
   val iplReg = RegInit(0.U)
-  val pauseReg = Util.toggle(Util.rising(io.joystick.player1.pause || io.joystick.player2.pause))
+  val pauseReg = Util.toggle(Util.rising(io.joystick(0).pause || io.joystick(1).pause))
 
   // M68K CPU
   val cpu = Module(new CPU(Config.CPU_CLOCK_DIV))
@@ -258,8 +258,8 @@ class Cave extends Module {
     Cat(!a, !b, !c)
   }
 
-  // Set input ports
-  val (input0, input1) = Cave.encodePlayers(io.gameConfig.index, io.joystick, eeprom)
+  // Set player input ports
+  val (input0, input1) = Cave.encodePlayers(io.gameConfig.index, io.options, io.joystick, eeprom)
 
   // Set sprite frame buffer signals
   io.spriteFrameBufferReady := Util.falling(gpu.io.spriteCtrl.busy)
@@ -433,24 +433,24 @@ object Cave {
    * @param eeprom    The eeprom port.
    * @return A tuple representing the left and right player inputs.
    */
-  private def encodePlayers(gameIndex: UInt, options: OptionsIO, joystick: JoystickIO, eeprom: EEPROM): (UInt, UInt) = {
+  private def encodePlayers(gameIndex: UInt, options: OptionsIO, joystick: Vec[JoystickIO], eeprom: EEPROM): (UInt, UInt) = {
     // Trigger coin pulse
-    val coin1 = Util.pulseSync(Config.COIN_PULSE_WIDTH, joystick.player1.coin)
-    val coin2 = Util.pulseSync(Config.COIN_PULSE_WIDTH, joystick.player2.coin)
+    val coin1 = Util.pulseSync(Config.COIN_PULSE_WIDTH, joystick(0).coin)
+    val coin2 = Util.pulseSync(Config.COIN_PULSE_WIDTH, joystick(1).coin)
 
     // Trigger service button press
     val service = Util.pulseSync(Config.SERVICE_PULSE_WIDTH, options.service)
 
-    val default1 = Cat("b111111".U, ~service, ~coin1, ~joystick.player1.start, ~joystick.player1.buttons(2, 0), ~joystick.player1.right, ~joystick.player1.left, ~joystick.player1.down, ~joystick.player1.up)
-    val default2 = Cat("b1111".U, eeprom.io.serial.sdo, "b11".U, ~coin2, ~joystick.player2.start, ~joystick.player2.buttons(2, 0), ~joystick.player2.right, ~joystick.player2.left, ~joystick.player2.down, ~joystick.player2.up)
+    val default1 = Cat("b111111".U, ~service, ~coin1, ~joystick(0).start, ~joystick(0).buttons(2, 0), ~joystick(0).right, ~joystick(0).left, ~joystick(0).down, ~joystick(0).up)
+    val default2 = Cat("b1111".U, eeprom.io.serial.sdo, "b11".U, ~coin2, ~joystick(1).start, ~joystick(1).buttons(2, 0), ~joystick(1).right, ~joystick(1).left, ~joystick(1).down, ~joystick(1).up)
 
     val left = MuxLookup(gameIndex, default1, Seq(
-      GameConfig.GAIA.U -> Cat(~joystick.player2.buttons(3, 0), ~joystick.player2.right, ~joystick.player2.left, ~joystick.player2.down, ~joystick.player2.up, ~joystick.player1.buttons(3, 0), ~joystick.player1.right, ~joystick.player1.left, ~joystick.player1.down, ~joystick.player1.up),
-      GameConfig.GUWANGE.U -> Cat(~joystick.player2.buttons(2, 0), ~joystick.player2.right, ~joystick.player2.left, ~joystick.player2.down, ~joystick.player2.up, ~joystick.player2.start, ~joystick.player1.buttons(2, 0), ~joystick.player1.right, ~joystick.player1.left, ~joystick.player1.down, ~joystick.player1.up, ~joystick.player1.start),
+      GameConfig.GAIA.U -> Cat(~joystick(1).buttons(3, 0), ~joystick(1).right, ~joystick(1).left, ~joystick(1).down, ~joystick(1).up, ~joystick(0).buttons(3, 0), ~joystick(0).right, ~joystick(0).left, ~joystick(0).down, ~joystick(0).up),
+      GameConfig.GUWANGE.U -> Cat(~joystick(1).buttons(2, 0), ~joystick(1).right, ~joystick(1).left, ~joystick(1).down, ~joystick(1).up, ~joystick(1).start, ~joystick(0).buttons(2, 0), ~joystick(0).right, ~joystick(0).left, ~joystick(0).down, ~joystick(0).up, ~joystick(0).start),
     ))
 
     val right = MuxLookup(gameIndex, default2, Seq(
-      GameConfig.GAIA.U -> Cat("b1111111111".U, ~joystick.player2.start, ~joystick.player1.start, "b1".U, ~service, ~coin2, ~coin1),
+      GameConfig.GAIA.U -> Cat("b1111111111".U, ~joystick(1).start, ~joystick(0).start, "b1".U, ~service, ~coin2, ~coin1),
       GameConfig.GUWANGE.U -> Cat("b11111111".U, eeprom.io.serial.sdo, "b1111".U, ~service, ~coin2, ~coin1),
     ))
 

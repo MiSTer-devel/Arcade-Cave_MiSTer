@@ -66,7 +66,7 @@ class Main extends Module {
     /** Options port */
     val options = OptionsIO()
     /** Joystick port */
-    val joystick = JoystickIO()
+    val joystick = Vec(2, JoystickIO())
     /** IOCTL port */
     val ioctl = IOCTL()
     /** Frame buffer control port */

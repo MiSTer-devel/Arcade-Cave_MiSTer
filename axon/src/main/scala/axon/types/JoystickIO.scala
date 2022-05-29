@@ -34,14 +34,29 @@ package axon.types
 
 import chisel3._
 
-/** An interface that contains the player controls. */
+/** A bundle that contains the joystick signals. */
 class JoystickIO extends Bundle {
-  /** Player 1 input */
-  val player1 = PlayerIO()
-  /** Player 2 input */
-  val player2 = PlayerIO()
+  /** Player up */
+  val up = Input(Bool())
+  /** Player down */
+  val down = Input(Bool())
+  /** Player left */
+  val left = Input(Bool())
+  /** Player right */
+  val right = Input(Bool())
+  /** Player buttons */
+  val buttons = Input(Bits(JoystickIO.BUTTON_COUNT.W))
+  /** Player start */
+  val start = Input(Bool())
+  /** Player coin */
+  val coin = Input(Bool())
+  /** Player pause */
+  val pause = Input(Bool())
 }
 
 object JoystickIO {
+  /** The number of buttons */
+  val BUTTON_COUNT = 4
+
   def apply() = new JoystickIO
 }
