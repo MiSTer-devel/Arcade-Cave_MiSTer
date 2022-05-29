@@ -46,13 +46,13 @@ import chisel3.util._
  * Tilemap layers are 512x512 pixels, and are composed of either 8x8 or 16x16 tiles with a color
  * depth of either 4 or 8 bits-per-pixel.
  */
-class LayerProcessor extends Module {
+class LayerProcessor(index: Int) extends Module {
   val io = IO(new Bundle {
     /** Video port */
     val video = Input(new VideoIO)
     /** Layer control port */
     val ctrl = LayerCtrlIO()
-    /** Layer offset */
+    /** Global layer offset */
     val offset = Input(UVec2(Config.LAYER_SCROLL_WIDTH.W))
     /** Palette entry output */
     val pen = Output(new PaletteEntry)
@@ -71,8 +71,18 @@ class LayerProcessor extends Module {
   // in the original arcade hardware.
   val tileRomRead = layerEnable && !io.video.vBlank
 
+  // Layer offset
+  val layerOffset = LayerProcessor.layerOffset(index, io.ctrl)
+
   // Apply the scroll and layer offsets to get the final pixel position
-  val pos = io.video.pos + io.ctrl.regs.scroll - io.offset
+  val pos = {
+    val normal = io.video.pos + io.ctrl.regs.scroll - io.offset - layerOffset
+    val flipped = GPU.screenSize - io.video.pos + io.ctrl.regs.scroll - io.offset + layerOffset
+    UVec2(
+      Mux(io.ctrl.regs.flipX, flipped.x, normal.x),
+      Mux(io.ctrl.regs.flipY, flipped.y, normal.y),
+    )
+  }
 
   // Apply line effects
   val pos_ = {
@@ -81,13 +91,22 @@ class LayerProcessor extends Module {
     UVec2(x, y)
   }
 
-  // Pixel offset
-  val offset = LayerProcessor.tileOffset(io.ctrl, pos_)
+  // Tile offset
+  val tileOffset = LayerProcessor.tileOffset(io.ctrl, pos_)
 
   // Latch signals
-  val latchTile = io.video.clockEnable && Mux(io.ctrl.regs.tileSize, offset.x === 10.U, offset.x === 2.U)
-  val latchColor = io.video.clockEnable && Mux(io.ctrl.regs.tileSize, offset.x === 15.U, offset.x === 7.U)
-  val latchPix = io.video.clockEnable && offset.x(2, 0) === 7.U
+  val latchTile = io.video.clockEnable && Mux(io.ctrl.regs.flipX,
+    tileOffset.x === 5.U,
+    Mux(io.ctrl.regs.tileSize, tileOffset.x === 10.U, tileOffset.x === 2.U)
+  )
+  val latchColor = io.video.clockEnable && Mux(io.ctrl.regs.flipX,
+    tileOffset.x === 0.U,
+    Mux(io.ctrl.regs.tileSize, tileOffset.x === 15.U, tileOffset.x === 7.U)
+  )
+  val latchPix = io.video.clockEnable && Mux(io.ctrl.regs.flipX,
+    tileOffset.x(2, 0) === 0.U,
+    tileOffset.x(2, 0) === 7.U
+  )
 
   // Set line RAM address
   // TODO: This should be calculated differently for Sailor Moon.
@@ -106,10 +125,10 @@ class LayerProcessor extends Module {
   val tileReg = RegEnable(tile, latchTile)
   val priorityReg = RegEnable(tileReg.priority, latchColor)
   val colorReg = RegEnable(tileReg.colorCode, latchColor)
-  val pixReg = RegEnable(LayerProcessor.decodePixels(io.ctrl.tileRom.dout, io.ctrl.format, offset), latchPix)
+  val pixReg = RegEnable(LayerProcessor.decodePixels(io.ctrl.tileRom.dout, io.ctrl.format, tileOffset), latchPix)
 
   // Palette entry
-  val pen = PaletteEntry(priorityReg, colorReg, pixReg(offset.x(2, 0)))
+  val pen = PaletteEntry(priorityReg, colorReg, pixReg(tileOffset.x(2, 0)))
 
   // Outputs
   io.ctrl.lineRam.rd := true.B // read-only
@@ -119,21 +138,42 @@ class LayerProcessor extends Module {
   io.ctrl.vram16x16.rd := true.B // read-only
   io.ctrl.vram16x16.addr := layerRamAddr
   io.ctrl.tileRom.rd := tileRomRead
-  io.ctrl.tileRom.addr := LayerProcessor.tileRomAddr(io.ctrl, tileReg.code, offset)
+  io.ctrl.tileRom.addr := LayerProcessor.tileRomAddr(io.ctrl, tileReg.code, tileOffset)
   io.pen := Mux(layerEnable, pen, PaletteEntry.zero)
 }
 
 object LayerProcessor {
   /**
-   * Calculate the VRAM address for a tile.
+   * Calculates the offset adjustment for a layer.
+   *
+   * Each layer is horizontally offset by one pixel with respect to the previous layer. There is
+   * also an additional 8 pixel horizontal offset for layers with small (i.e. 8x8) tiles.
+   *
+   * Finally, there is a two pixel offset applied to flipped layers.
+   *
+   * @param index The index of the layer.
+   * @param ctrl  The layer control.
+   * @return An offset value.
+   */
+  def layerOffset(index: Int, ctrl: LayerCtrlIO): UVec2 = {
+    val x = Mux(ctrl.regs.tileSize, (0x13 - (index + 1)).U, (0x13 - (index + 1 + 8)).U)
+    val y = 0x1ee.U
+    UVec2(
+      Mux(ctrl.regs.flipX, x + 1.U, x),
+      Mux(ctrl.regs.flipY, y + 1.U, y)
+    )
+  }
+
+  /**
+   * Calculates the VRAM address for the next tile.
    *
    * @param ctrl The layer control bundle.
    * @param pos  The absolute position of the pixel in the tilemap.
    * @return A memory address.
    */
   private def tileAddr(ctrl: LayerCtrlIO, pos: UVec2): UInt = {
-    val large = pos.y(8, 4) ## (pos.x(8, 4) + 1.U)
-    val small = pos.y(8, 3) ## (pos.x(8, 3) + 1.U)
+    val large = pos.y(8, 4) ## (pos.x(8, 4) + Mux(ctrl.regs.flipX, 0x1f.U, 1.U))
+    val small = pos.y(8, 3) ## (pos.x(8, 3) + Mux(ctrl.regs.flipX, 0x3f.U, 1.U))
     Mux(ctrl.regs.tileSize, large, small)
   }
 
