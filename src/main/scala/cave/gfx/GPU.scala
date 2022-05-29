@@ -77,31 +77,22 @@ class GPU extends Module {
   spriteProcessor.io.frameBuffer <> io.spriteFrameBuffer
 
   withClockAndReset(io.video.clock, io.video.reset) {
-    // Layer 0 processor
-    val layer0Processor = Module(new LayerProcessor(0))
-    layer0Processor.io.video <> io.video
-    layer0Processor.io.ctrl <> io.layerCtrl(0)
-    layer0Processor.io.spriteOffset := io.spriteCtrl.regs.offset
-
-    // Layer 1 processor
-    val layer1Processor = Module(new LayerProcessor(1))
-    layer1Processor.io.video <> io.video
-    layer1Processor.io.ctrl <> io.layerCtrl(1)
-    layer1Processor.io.spriteOffset := io.spriteCtrl.regs.offset
-
-    // Layer 2 processor
-    val layer2Processor = Module(new LayerProcessor(2))
-    layer2Processor.io.video <> io.video
-    layer2Processor.io.ctrl <> io.layerCtrl(2)
-    layer2Processor.io.spriteOffset := io.spriteCtrl.regs.offset
+    // Layer processors
+    val layerProcessor = 0.until(Config.LAYER_COUNT).map { i =>
+      val p = Module(new LayerProcessor(i))
+      p.io.video <> io.video
+      p.io.ctrl <> io.layerCtrl(i)
+      p.io.spriteOffset := io.spriteCtrl.regs.offset
+      p
+    }
 
     // Color mixer
     val colorMixer = Module(new ColorMixer)
     colorMixer.io.gameConfig <> io.gameConfig
     colorMixer.io.spritePen := io.spriteLineBuffer.dout.asTypeOf(new PaletteEntry)
-    colorMixer.io.layer0Pen := layer0Processor.io.pen
-    colorMixer.io.layer1Pen := layer1Processor.io.pen
-    colorMixer.io.layer2Pen := layer2Processor.io.pen
+    colorMixer.io.layer0Pen := layerProcessor(0).io.pen
+    colorMixer.io.layer1Pen := layerProcessor(1).io.pen
+    colorMixer.io.layer2Pen := layerProcessor(2).io.pen
     colorMixer.io.paletteRam <> io.paletteRam
 
     // Read next pixel from the sprite line buffer

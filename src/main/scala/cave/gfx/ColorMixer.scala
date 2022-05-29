@@ -108,7 +108,7 @@ object ColorMixer {
    * @param granularity The number of colors per palette.
    * @return A memory address.
    */
-  private def paletteRamAddr(pen: PaletteEntry, bank: UInt, granularity: UInt) =
+  private def paletteRamAddr(pen: PaletteEntry, bank: UInt, granularity: UInt): UInt =
     MuxLookup(granularity, bank ## pen.palette ## pen.color, Seq(
       16.U -> bank ## pen.palette ## pen.color(3, 0),
       64.U -> bank ## pen.palette ## pen.color(5, 0)
