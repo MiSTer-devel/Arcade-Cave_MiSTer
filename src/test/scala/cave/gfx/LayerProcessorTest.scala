@@ -40,7 +40,7 @@ import matchers.should.Matchers
 
 class LayerProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   it should "load tiles from VRAM" in {
-    test(new LayerProcessor) { dut =>
+    test(new LayerProcessor(0)) { dut =>
       dut.io.ctrl.regs.tileSize.poke(false)
       dut.io.video.pos.x.poke(0)
       dut.io.ctrl.vram16x16.addr.expect(0x01)
@@ -52,7 +52,7 @@ class LayerProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Mat
   }
 
   it should "load line effects from VRAM" in {
-    test(new LayerProcessor) { dut =>
+    test(new LayerProcessor(0)) { dut =>
       dut.io.video.hSync.poke(true.B)
       dut.clock.step()
       dut.io.video.hSync.poke(false.B)
