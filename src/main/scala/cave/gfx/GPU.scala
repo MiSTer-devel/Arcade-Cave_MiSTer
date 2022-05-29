@@ -77,25 +77,23 @@ class GPU extends Module {
   spriteProcessor.io.frameBuffer <> io.spriteFrameBuffer
 
   withClockAndReset(io.video.clock, io.video.reset) {
-    val offset = io.spriteCtrl.regs.layerOffset
-
     // Layer 0 processor
-    val layer0Processor = Module(new LayerProcessor)
+    val layer0Processor = Module(new LayerProcessor(0))
     layer0Processor.io.video <> io.video
     layer0Processor.io.ctrl <> io.layerCtrl(0)
-    layer0Processor.io.offset := GPU.layerOffset(0, offset, io.layerCtrl)
+    layer0Processor.io.offset := io.spriteCtrl.regs.layerOffset
 
     // Layer 1 processor
-    val layer1Processor = Module(new LayerProcessor)
+    val layer1Processor = Module(new LayerProcessor(1))
     layer1Processor.io.video <> io.video
     layer1Processor.io.ctrl <> io.layerCtrl(1)
-    layer1Processor.io.offset := GPU.layerOffset(1, offset, io.layerCtrl)
+    layer1Processor.io.offset := io.spriteCtrl.regs.layerOffset
 
     // Layer 2 processor
-    val layer2Processor = Module(new LayerProcessor)
+    val layer2Processor = Module(new LayerProcessor(2))
     layer2Processor.io.video <> io.video
     layer2Processor.io.ctrl <> io.layerCtrl(2)
-    layer2Processor.io.offset := GPU.layerOffset(2, offset, io.layerCtrl)
+    layer2Processor.io.offset := io.spriteCtrl.regs.layerOffset
 
     // Color mixer
     val colorMixer = Module(new ColorMixer)
@@ -123,44 +121,25 @@ class GPU extends Module {
 
 object GPU {
   /**
-   * Calculates the offset adjustment for a layer.
+   * Screen size vector.
    *
-   * @param index     The index of the layer.
-   * @param offset    The offset of the layer.
-   * @param layerCtrl The layer controls.
-   * @return An offset value.
-   */
-  def layerOffset(index: Int, offset: UVec2, layerCtrl: Vec[LayerCtrlIO]): UVec2 = {
-    // Each layer is horizontally offset by one pixel with respect to the previous layer. There is
-    // an additional 8 pixel horizontal offset for layers with small (i.e. 8x8) tiles.
-    val x = Mux(layerCtrl(index).regs.tileSize, (0x13 - (index + 1)).U, (0x13 - (index + 1 + 8)).U)
-    val y = 0x1ee.U
-    offset + UVec2(x, y)
-  }
-
-  /**
-   * Transforms a pixel position to a frame buffer memory address.
-   *
-   * @param pos The pixel position.
-   * @return A memory address.
-   */
-  def frameBufferAddr(pos: UVec2): UInt = {
-    val x = pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0)
-    val y = pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
-    (y * Config.SCREEN_WIDTH.U) + x
-  }
+   * @return A vector representing the screen size. */
+  def screenSize: UVec2 = UVec2(Config.SCREEN_WIDTH.U, Config.SCREEN_HEIGHT.U)
 
   /**
    * Transforms a pixel position to a frame buffer memory address, applying the optional flip
    * transform.
    *
-   * @param pos The pixel position.
+   * @param pos  The pixel position.
+   * @param flip Flips the horizontal axis when asserted.
    * @return A memory address.
    */
-  def frameBufferAddr(pos: SVec2): UInt = {
+  def frameBufferAddr(pos: SVec2, flip: Bool): UInt = {
     val x = pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0)
     val y = pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
-    (y * Config.SCREEN_WIDTH.U) + x
+    val x_ = (Config.SCREEN_WIDTH - 1).U - x
+    val y_ = (Config.SCREEN_HEIGHT - 1).U - y
+    Mux(flip, (y_ * Config.SCREEN_WIDTH.U) + x_, (y * Config.SCREEN_WIDTH.U) + x)
   }
 
   /**

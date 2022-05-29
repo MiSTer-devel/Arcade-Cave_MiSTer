@@ -44,6 +44,10 @@ class SpriteRegs extends Bundle {
   val bank = UInt(SpriteRegs.SPRITE_BANK_WIDTH.W)
   /** Sprite fixed-point position format  */
   val fixed = Bool()
+  /** Horizontal flip */
+  val flipX = Bool()
+  /** Vertical flip */
+  val flipY = Bool()
 }
 
 object SpriteRegs {
@@ -64,13 +68,15 @@ object SpriteRegs {
    *    5 | --xx ---- ---- ---- | sprite position format
    * }}}
    *
-   * @param regs The sprite registers data.
+   * @param data The sprite registers data.
    */
-  def decode(regs: Vec[Bits]): SpriteRegs = {
-    val videoRegs = Wire(new SpriteRegs)
-    videoRegs.layerOffset := UVec2(regs(0)(8, 0), regs(1)(8, 0))
-    videoRegs.bank := regs(4)(1, 0)
-    videoRegs.fixed := regs(5)(13, 12).orR
-    videoRegs
+  def decode(data: Vec[Bits]): SpriteRegs = {
+    val regs = Wire(new SpriteRegs)
+    regs.flipX := data(0)(15)
+    regs.flipY := data(1)(15)
+    regs.layerOffset := UVec2(data(0)(8, 0), data(1)(8, 0))
+    regs.bank := data(4)(1, 0)
+    regs.fixed := data(5)(13, 12).orR
+    regs
   }
 }

@@ -47,10 +47,6 @@ class SpriteCtrlIO extends Bundle {
   val start = Input(Bool())
   /** Asserted when the sprite processor is busy */
   val busy = Output(Bool())
-  /** Flip the layer */
-  val flip = Input(Bool())
-  /** Rotate the layer 90 degrees */
-  val rotate = Input(Bool())
   /** Enable sprite scaling */
   val zoom = Input(Bool())
   /** Sprite registers */
