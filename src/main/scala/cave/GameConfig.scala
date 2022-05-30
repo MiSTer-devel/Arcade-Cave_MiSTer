@@ -122,18 +122,18 @@ object GameConfig {
     val wire = Wire(new GameConfig)
     wire.index := DDONPACH.U
     wire.progRomOffset := 0x00000000.U
-    wire.soundRomOffset := 0x00f00000.U
-    wire.eepromOffset := 0x01300000.U
+    wire.soundRomOffset := 0x00100000.U
+    wire.eepromOffset := 0x00500000.U
     wire.granularity := 256.U
     wire.sprite.format := Config.GFX_FORMAT_4BPP_MSB.U
     wire.sprite.zoom := false.B
-    wire.sprite.romOffset := 0x00100000.U
+    wire.sprite.romOffset := 0x00b00080.U
     wire.layer(0).format := Config.GFX_FORMAT_4BPP.U
     wire.layer(1).format := Config.GFX_FORMAT_4BPP.U
     wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
-    wire.layer(0).romOffset := 0x00900000.U
-    wire.layer(1).romOffset := 0x00b00000.U
-    wire.layer(2).romOffset := 0x00d00000.U
+    wire.layer(0).romOffset := 0x00500080.U
+    wire.layer(1).romOffset := 0x00700080.U
+    wire.layer(2).romOffset := 0x00900080.U
     wire
   }
 
