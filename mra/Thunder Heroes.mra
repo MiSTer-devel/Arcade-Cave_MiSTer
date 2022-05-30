@@ -9,15 +9,16 @@
 
   <!-- ROM data -->
   <rom index="0" zip="theroes.zip" md5="none" address="0x30000000">
-    <!-- main CPU -->
+    <!-- prog ROM -->
     <interleave output="16">
       <part name="t-hero-epm1.u0127" crc="09db7195" map="01" />
       <part name="t-hero-epm0.u0129" crc="2d4e3310" map="10" />
     </interleave>
 
-    <!-- sprites -->
-    <part name="t-hero-obj1.u0736" crc="35090f7c" />
-    <part name="t-hero-obj2.u0738" crc="71605108" />
+    <!-- sound ROM -->
+    <part name="crvsaders-snd1.u0447" crc="92770a52" />
+    <part name="crvsaders-snd2.u0454" crc="329ae1cf" />
+    <part name="t-hero-snd3.u0455" crc="52b0b2c0" />
 
     <!-- layer 0 -->
     <part name="t-hero-bg1.u0999" crc="47b0fb40" />
@@ -28,10 +29,9 @@
     <!-- layer 2 -->
     <part name="t-hero-bg3.u0998" crc="08eb5604" />
 
-    <!-- samples -->
-    <part name="crvsaders-snd1.u0447" crc="92770a52" />
-    <part name="crvsaders-snd2.u0454" crc="329ae1cf" />
-    <part name="t-hero-snd3.u0455" crc="52b0b2c0" />
+    <!-- sprites -->
+    <part name="t-hero-obj1.u0736" crc="35090f7c" />
+    <part name="t-hero-obj2.u0738" crc="71605108" />
   </rom>
 
   <!-- select game -->
