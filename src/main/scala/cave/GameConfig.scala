@@ -179,18 +179,18 @@ object GameConfig {
     val wire = Wire(new GameConfig)
     wire.index := GUWANGE.U
     wire.progRomOffset := 0x00000000.U
-    wire.soundRomOffset := 0x03100000.U
-    wire.eepromOffset := 0x03500000.U
+    wire.soundRomOffset := 0x00100000.U
+    wire.eepromOffset := 0x00500000.U
     wire.granularity := 256.U
     wire.sprite.format := Config.GFX_FORMAT_8BPP.U
     wire.sprite.zoom := true.B
-    wire.sprite.romOffset := 0x00100000.U
+    wire.sprite.romOffset := 0x01500080.U
     wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
-    wire.layer(0).romOffset := 0x02100000.U
-    wire.layer(1).romOffset := 0x02900000.U
-    wire.layer(2).romOffset := 0x02d00000.U
+    wire.layer(0).romOffset := 0x00500080.U
+    wire.layer(1).romOffset := 0x00d00080.U
+    wire.layer(2).romOffset := 0x01100080.U
     wire
   }
 
