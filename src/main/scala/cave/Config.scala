@@ -198,7 +198,6 @@ object Config {
   /** SDRAM configuration */
   val sdramConfig = sdram.Config(
     clockFreq = CLOCK_FREQ,
-    colWidth = 10,
     burstLength = 4
   )
 
@@ -231,7 +230,7 @@ object Config {
   )
 
   /** Copy download DMA configuration */
-  val copyDownloadDmaConfig = dma.Config(depth = 0x800000, burstLength = 16) // 64MB
+  val copyDownloadDmaConfig = dma.Config(depth = 0x400000, burstLength = 16) // 32MB
 
   /** Sprite frame buffer DMA configuration */
   val spriteFrameBufferDmaConfig = dma.Config(

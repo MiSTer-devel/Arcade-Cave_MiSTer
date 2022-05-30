@@ -205,7 +205,7 @@ localparam CONF_STR = {
 ////////////////////////////////////////////////////////////////////////////////
 
 wire pll_sys_locked, pll_video_locked;
-wire clk_sys, clk_sdram, clk_video;
+wire clk_sys, clk_video;
 wire rst_sys, rst_video, rst_cpu;
 reg  rst_pll;
 
@@ -235,19 +235,17 @@ pll_sys pll_sys (
   .refclk(CLK_50M),
   .rst(rst_pll),
   .locked(pll_sys_locked),
-  .outclk_0(clk_sys),
-  .outclk_1(clk_sdram)
+  .outclk_0(clk_sys)
 );
 
 pll_video pll_video (
   .refclk(CLK_50M),
   .rst(rst_pll),
   .locked(pll_video_locked),
-  .outclk_0(clk_video),
+  .outclk_0(clk_video)
 );
 
 assign DDRAM_CLK = clk_sys;
-assign SDRAM_CLK = clk_sdram;
 assign CLK_VIDEO = clk_video;
 
 reset_ctrl reset_sys_ctrl (
@@ -266,6 +264,31 @@ reset_ctrl reset_video_ctrl (
   .clk(clk_video),
   .rst_i(RESET | ~pll_video_locked),
   .rst_o(rst_video)
+);
+
+altddio_out
+#(
+  .extend_oe_disable("OFF"),
+  .intended_device_family("Cyclone V"),
+  .invert_output("OFF"),
+  .lpm_hint("UNUSED"),
+  .lpm_type("altddio_out"),
+  .oe_reg("UNREGISTERED"),
+  .power_up_high("OFF"),
+  .width(1)
+)
+sdramclk_ddr
+(
+  .datain_h(1'b0),
+  .datain_l(1'b1),
+  .outclock(clk_sys),
+  .dataout(SDRAM_CLK),
+  .aclr(1'b0),
+  .aset(1'b0),
+  .oe(1'b1),
+  .outclocken(1'b1),
+  .sclr(1'b0),
+  .sset(1'b0)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
