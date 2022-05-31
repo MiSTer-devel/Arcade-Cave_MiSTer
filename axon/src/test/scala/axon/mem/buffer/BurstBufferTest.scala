@@ -42,8 +42,7 @@ trait BurstBufferTestHelpers {
     inAddrWidth = 8,
     inDataWidth = 8,
     outAddrWidth = 8,
-    outDataWidth = 16,
-    burstLength = 1
+    outDataWidth = 16
   )
 
   protected def mkBuffer(config: Config) = new BurstBuffer(config)

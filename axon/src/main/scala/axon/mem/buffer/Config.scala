@@ -32,27 +32,19 @@
 
 package axon.mem.buffer
 
+import axon.mem.LineConfig
+
 /**
  * Represents a buffer configuration.
  *
- * @param inAddrWidth    The width of the input address bus.
- * @param inDataWidth    The width of the input data bus.
- * @param outAddrWidth   The width of the output address bus.
- * @param outDataWidth   The width of the output data bus.
- * @param burstLength    The number of words to transfer during a burst.
- * @param bigEndian A boolean indicating whether the endianness of the input words should be
- *                       swapped.
+ * @param inAddrWidth  The width of the input address bus.
+ * @param inDataWidth  The width of the input data bus.
+ * @param outAddrWidth The width of the output address bus.
+ * @param outDataWidth The width of the output data bus.
+ * @param burstLength  The number of words to transfer during a burst.
  */
-case class Config(inAddrWidth: Int,
-                  inDataWidth: Int,
-                  outAddrWidth: Int,
-                  outDataWidth: Int,
-                  burstLength: Int,
-                  bigEndian: Boolean = false) {
-  /** The number of input words in a cache line */
-  val inWords = outDataWidth * burstLength / inDataWidth
-  /** The number of bytes in an input word */
-  val inBytes = inDataWidth / 8
-  /** The number of bytes in an output word */
-  val outBytes = outDataWidth / 8
-}
+case class Config(override val inAddrWidth: Int,
+                  override val inDataWidth: Int,
+                  override val outAddrWidth: Int,
+                  override val outDataWidth: Int,
+                  burstLength: Int = 1) extends LineConfig(inAddrWidth, inDataWidth, outAddrWidth, outDataWidth, burstLength)

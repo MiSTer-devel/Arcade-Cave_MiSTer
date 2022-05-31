@@ -32,7 +32,7 @@
 
 package axon.mem.buffer
 
-import axon.mem.{AsyncWriteMemIO, BurstWriteMemIO}
+import axon.mem._
 import axon.util.Counter
 import chisel3._
 import chisel3.util._

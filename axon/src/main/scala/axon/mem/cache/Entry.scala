@@ -33,6 +33,7 @@
 package axon.mem.cache
 
 import axon.Util
+import axon.mem.Line
 import chisel3._
 
 /**
