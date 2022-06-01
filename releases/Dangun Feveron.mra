@@ -31,6 +31,14 @@
     <part name="cv01-u25.bin" crc="a6f6a95d" />
     <part name="cv01-u26.bin" crc="32edb62a" />
 
+    <!-- skip CRC -->
+    <patch offset="0x00008d94">60 00 00 ce</patch>
+    <!-- skip slow loops -->
+    <patch offset="0x00008cca">4e 71 4e 71</patch>
+    <patch offset="0x00008cd2">4e 71 4e 71</patch>
+    <patch offset="0x00008f10">4e 71 4e 71 </patch>
+    <patch offset="0x00008f14">4e 71 4e 71</patch>
+
     <!-- enable C button in EEPROM -->
     <patch offset="0x00500002">11 11</patch>
     <patch offset="0x00500008">00 04</patch>
