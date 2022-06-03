@@ -466,7 +466,7 @@ object Cave {
     ))
 
     val right = MuxLookup(gameIndex, default2, Seq(
-      GameConfig.GAIA.U -> Cat("b1111111111".U, ~joystick(1).start, ~joystick(0).start, "b1".U, ~service, ~coin2, ~coin1),
+      GameConfig.GAIA.U -> Cat("b0000111111".U, ~joystick(1).start, ~joystick(0).start, "b1".U, ~service, ~coin2, ~coin1),
       GameConfig.GUWANGE.U -> Cat("b11111111".U, eeprom.io.serial.sdo, "b1111".U, ~service, ~coin2, ~coin1),
     ))
 
