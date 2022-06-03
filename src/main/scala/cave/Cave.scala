@@ -282,11 +282,12 @@ class Cave extends Module {
   }
 
   /**
-   * Maps sprite registers to the given base address.
+   * Maps video registers to the given base address.
    *
    * @param baseAddr The base memory address.
    */
   def vregMap(baseAddr: Int): Unit = {
+    map((baseAddr + 0x00) to (baseAddr + 0x07)).r(irqCause)
     map((baseAddr + 0x00) to (baseAddr + 0x0f)).writeMem(spriteRegs.io.mem.asWriteMemIO)
     map(baseAddr + 0x08).w { (_, _, _) => io.spriteFrameBufferSwap := true.B }
     map((baseAddr + 0x0a) to (baseAddr + 0x7f)).noprw()
@@ -307,7 +308,6 @@ class Cave extends Module {
     map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
     map(0x710c12 to 0x710c1f).noprw() // unused
     vregMap(0x800000)
-    map(0x800000 to 0x800007).r(irqCause)
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
     map(0xb00000).r { (_, _) => input0 }
@@ -326,7 +326,6 @@ class Cave extends Module {
     vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
     map(0x700000 to 0x70ffff).readWriteMemT(vram8x8(2).io.portA)(a => a(12, 0)) // layer 2 is 8x8 only
     vregMap(0x800000)
-    map(0x800000 to 0x800007).r(irqCause)
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
     map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
@@ -346,7 +345,6 @@ class Cave extends Module {
     vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
     vramMap(0x700000, vram8x8(2).io.portA, vram16x16(2).io.portA, lineRam(2).io.portA)
     vregMap(0x800000)
-    map(0x800000 to 0x800007).r(irqCause)
     map(0x800f00 to 0x800f03).nopr() // access occurs during attract loop
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
@@ -368,7 +366,6 @@ class Cave extends Module {
     vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
     vramMap(0x700000, vram8x8(2).io.portA, vram16x16(2).io.portA, lineRam(2).io.portA)
     vregMap(0x800000)
-    map(0x800000 to 0x800007).r(irqCause)
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
     map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
@@ -386,7 +383,6 @@ class Cave extends Module {
     map(0x200000 to 0x20ffff).readWriteMem(mainRam.io)
     map(0x210000 to 0x2fffff).nopr() // access occurs for Guwange (Special)
     vregMap(0x300000)
-    map(0x300000 to 0x300007).r(irqCause)
     map(0x300080 to 0x3fffff).nopr() // access occurs for Guwange (Special)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     map(0x410000 to 0x4fffff).nopr() // access occurs for Guwange (Special)
@@ -414,7 +410,6 @@ class Cave extends Module {
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     vramMap(0x500000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
     vregMap(0x600000)
-    map(0x600000 to 0x600007).r(irqCause)
     map(0x700000 to 0x700005).readWriteMem(layerRegs(0).io.mem)
     map(0x800000 to 0x80ffff).readWriteMem(paletteRam.io.portA)
     map(0x900000).r { (_, _) => input0 }
