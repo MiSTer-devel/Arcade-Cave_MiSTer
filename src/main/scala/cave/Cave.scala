@@ -315,6 +315,27 @@ class Cave extends Module {
     map(0xc00000).writeMem(eepromMem)
   }
 
+  // DonPachi
+  when(io.gameConfig.index === GameConfig.DONPACHI.U) {
+    map(0x000000 to 0x07ffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
+    map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
+    vramMap(0x200000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
+    vramMap(0x300000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
+    map(0x400000 to 0x40ffff).readWriteMemT(vram8x8(2).io.portA)(a => a(12, 0)) // layer 2 is 8x8 only
+    map(0x500000 to 0x50ffff).readWriteMem(spriteRam.io.portA)
+    map(0x600000 to 0x600005).readWriteMem(layerRegs(1).io.mem)
+    map(0x700000 to 0x700005).readWriteMem(layerRegs(0).io.mem)
+    map(0x800000 to 0x800005).readWriteMem(layerRegs(2).io.mem)
+    vregMap(0x900000)
+    map(0xa08000 to 0xa08fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
+    map(0xb00000 to 0xb00003).noprw() // OKI 0
+    map(0xb00010 to 0xb00013).noprw() // OKI 1
+    map(0xb00020 to 0xb0002f).nopw() // OKI bank
+    map(0xc00000).r { (_, _) => input0 }
+    map(0xc00002).r { (_, _) => input1 }
+    map(0xd00000).writeMem(eepromMem)
+  }
+
   // DoDonPachi
   when(io.gameConfig.index === GameConfig.DDONPACH.U) {
     map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address

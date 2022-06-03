@@ -90,8 +90,9 @@ object GameConfig {
    * @param index The game index.
    */
   def apply(index: UInt): GameConfig = {
-    MuxLookup(index, ddonpach, Seq(
-      DFEVERON.U -> dfeveron,
+    MuxLookup(index, dfeveron, Seq(
+      DDONPACH.U -> ddonpach,
+      DONPACHI.U -> donpachi,
       ESPRADE.U -> esprade,
       GAIA.U -> gaia,
       GUWANGE.U -> guwange,
@@ -134,6 +135,25 @@ object GameConfig {
     wire.sprite.format := Config.GFX_FORMAT_4BPP_MSB.U
     wire.sprite.zoom := false.B
     wire.sprite.romOffset := 0x00b00080.U
+    wire
+  }
+
+  private def donpachi = {
+    val wire = Wire(new GameConfig)
+    wire.index := DONPACHI.U
+    wire.granularity := 16.U
+    wire.progRomOffset := 0x00000000.U
+    wire.eepromOffset := 0x00080000.U
+    wire.soundRomOffset := 0x00080080.U
+    wire.layer(0).format := Config.GFX_FORMAT_4BPP.U
+    wire.layer(1).format := Config.GFX_FORMAT_4BPP.U
+    wire.layer(2).format := Config.GFX_FORMAT_4BPP.U
+    wire.layer(0).romOffset := 0x00380080.U
+    wire.layer(1).romOffset := 0x00480080.U
+    wire.layer(2).romOffset := 0x00580080.U
+    wire.sprite.format := Config.GFX_FORMAT_4BPP_MSB.U
+    wire.sprite.zoom := false.B
+    wire.sprite.romOffset := 0x005c0080.U
     wire
   }
 
