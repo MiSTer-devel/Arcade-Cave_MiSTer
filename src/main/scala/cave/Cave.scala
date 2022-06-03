@@ -295,7 +295,7 @@ class Cave extends Module {
 
   // Access to 0x11xxxx appears during the service menu. It must be ignored, otherwise the service
   // menu freezes.
-  map(0x110000 to 0x2fffff).noprw()
+  map(0x110000 to 0x1fffff).noprw()
 
   // Dangun Feveron
   when(io.gameConfig.index === GameConfig.DFEVERON.U) {
