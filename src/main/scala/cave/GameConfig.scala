@@ -44,10 +44,10 @@ class GameConfig extends Bundle {
   val granularity = UInt(9.W)
   /** Program ROM offset */
   val progRomOffset = UInt(32.W)
-  /** Sound ROM offset */
-  val soundRomOffset = UInt(32.W)
   /** EEPROM offset */
   val eepromOffset = UInt(32.W)
+  /** Sound ROM offset */
+  val soundRomOffset = UInt(32.W)
   /** Layer configuration */
   val layer = Vec(Config.LAYER_COUNT, new Bundle {
     /** Layer graphics format */
@@ -104,8 +104,8 @@ object GameConfig {
     wire.index := DFEVERON.U
     wire.granularity := 16.U
     wire.progRomOffset := 0x00000000.U
-    wire.soundRomOffset := 0x00100000.U
-    wire.eepromOffset := 0x00500000.U
+    wire.eepromOffset := 0x00100000.U
+    wire.soundRomOffset := 0x00100080.U
     wire.layer(0).format := Config.GFX_FORMAT_4BPP.U
     wire.layer(1).format := Config.GFX_FORMAT_4BPP.U
     wire.layer(2).format := Config.GFX_FORMAT_UNKNOWN.U
@@ -123,8 +123,8 @@ object GameConfig {
     wire.index := DDONPACH.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
-    wire.soundRomOffset := 0x00100000.U
-    wire.eepromOffset := 0x00500000.U
+    wire.eepromOffset := 0x00100000.U
+    wire.soundRomOffset := 0x00100080.U
     wire.layer(0).format := Config.GFX_FORMAT_4BPP.U
     wire.layer(1).format := Config.GFX_FORMAT_4BPP.U
     wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
@@ -142,8 +142,8 @@ object GameConfig {
     wire.index := ESPRADE.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
-    wire.soundRomOffset := 0x00100000.U
-    wire.eepromOffset := 0x00500000.U
+    wire.eepromOffset := 0x00100000.U
+    wire.soundRomOffset := 0x00100080.U
     wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
@@ -161,8 +161,8 @@ object GameConfig {
     wire.index := GAIA.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
-    wire.soundRomOffset := 0x00100000.U
     wire.eepromOffset := 0.U // no EEPROM
+    wire.soundRomOffset := 0x00100000.U
     wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
@@ -180,8 +180,8 @@ object GameConfig {
     wire.index := GUWANGE.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
-    wire.soundRomOffset := 0x00100000.U
-    wire.eepromOffset := 0x00500000.U
+    wire.eepromOffset := 0x00100000.U
+    wire.soundRomOffset := 0x00100080.U
     wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
@@ -199,8 +199,8 @@ object GameConfig {
     wire.index := UOPOKO.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
-    wire.soundRomOffset := 0x00100000.U
-    wire.eepromOffset := 0x00300000.U
+    wire.eepromOffset := 0x00100000.U
+    wire.soundRomOffset := 0x00100080.U
     wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(1).format := Config.GFX_FORMAT_UNKNOWN.U
     wire.layer(2).format := Config.GFX_FORMAT_UNKNOWN.U

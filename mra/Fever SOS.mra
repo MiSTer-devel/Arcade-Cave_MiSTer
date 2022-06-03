@@ -15,11 +15,11 @@
       <part name="cv01-u33.sos" crc="64ff73fd" map="10" />
     </interleave>
 
-    <!-- sound ROM -->
-    <part name="cv01-u19.bin" crc="5f5514da" />
-
     <!-- EEPROM -->
     <part name="eeprom-feversos.bin" crc="d80303aa" />
+
+    <!-- sound ROM -->
+    <part name="cv01-u19.bin" crc="5f5514da" />
 
     <!-- layer 0 -->
     <part name="cv01-u50.bin" crc="7a344417" />
@@ -32,8 +32,8 @@
     <part name="cv01-u26.bin" crc="32edb62a" />
 
     <!-- enable C button in EEPROM -->
-    <patch offset="0x00500002">11 11</patch>
-    <patch offset="0x00500008">00 04</patch>
+    <patch offset="0x00100002">11 11</patch>
+    <patch offset="0x00100008">00 04</patch>
   </rom>
 
   <!-- select game -->

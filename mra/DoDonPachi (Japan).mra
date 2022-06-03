@@ -15,12 +15,12 @@
       <part name="u26.bin" crc="4f3a914a" map="10" />
     </interleave>
 
+    <!-- EEPROM -->
+    <part name="eeprom-ddonpach.bin" crc="315fb546" />
+
     <!-- sound ROM -->
     <part name="u6.bin" crc="9dfdafaf" />
     <part name="u7.bin" crc="795b17d5" />
-
-    <!-- EEPROM -->
-    <part name="eeprom-ddonpach.bin" crc="315fb546" />
 
     <!-- layer 0 -->
     <part name="u60.bin" crc="903096a7" />
@@ -43,8 +43,8 @@
     <patch offset="0x000054EC">60 00 00 50</patch>
 
     <!-- enable C button in EEPROM -->
-    <patch offset="0x00500002">ff ff</patch>
-    <patch offset="0x00500008">00 04</patch>
+    <patch offset="0x00100002">ff ff</patch>
+    <patch offset="0x00100008">00 04</patch>
   </rom>
 
   <!-- select game -->
