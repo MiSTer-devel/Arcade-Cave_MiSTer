@@ -76,15 +76,17 @@ object Config {
   /** The width of the program ROM data bus */
   val PROG_ROM_DATA_WIDTH = 16
 
-  /** The width of the sound ROM address bus */
-  val SOUND_ROM_ADDR_WIDTH = 25
-  /** The width of the sound ROM data bus */
-  val SOUND_ROM_DATA_WIDTH = 8
-
   /** The width of the EEPROM address bus */
   val EEPROM_ADDR_WIDTH = 7 // 256B
   /** The width of the EEPROM data bus */
   val EEPROM_DATA_WIDTH = 16
+
+  /** The width of the sound ROM address bus */
+  val SOUND_ROM_ADDR_WIDTH = 25
+  /** The width of the sound ROM data bus */
+  val SOUND_ROM_DATA_WIDTH = 8
+  /** The number of sound ROMs */
+  val SOUND_ROM_COUNT = 2
 
   /** The width of the tile ROM address bus */
   val TILE_ROM_ADDR_WIDTH = 32
@@ -185,6 +187,7 @@ object Config {
   val GFX_FORMAT_4BPP_MSB = 2
   /** 8BPP graphics format */
   val GFX_FORMAT_8BPP = 3
+
 
   /** YMZ280B configuration */
   val ymzConfig = YMZ280BConfig(

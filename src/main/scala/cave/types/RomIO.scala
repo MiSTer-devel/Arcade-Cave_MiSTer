@@ -40,7 +40,7 @@ class RomIO extends Bundle {
   /** Program ROM port */
   val progRom = new ProgRomIO
   /** Sound ROM port */
-  val soundRom = new SoundRomIO
+  val soundRom = Vec(Config.SOUND_ROM_COUNT, new SoundRomIO)
   /** EEPROM port */
   val eeprom = new EEPROMIO
   /** Layer tile ROM port */

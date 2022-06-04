@@ -106,17 +106,20 @@ class MemSys extends Module {
   progRomCache.io.in <> io.rom.progRom
 
   // Sound ROM cache
-  val soundRomCache = Module(new ReadCache(cache.Config(
-    inAddrWidth = Config.SOUND_ROM_ADDR_WIDTH,
-    inDataWidth = Config.SOUND_ROM_DATA_WIDTH,
-    outAddrWidth = Config.sdramConfig.addrWidth,
-    outDataWidth = Config.sdramConfig.dataWidth,
-    lineWidth = Config.sdramConfig.burstLength,
-    depth = 32,
-    wrapping = true
-  )))
-  soundRomCache.io.enable := io.ready
-  soundRomCache.io.in <> io.rom.soundRom
+  val soundRomCache = 0.until(Config.SOUND_ROM_COUNT).map { i =>
+    val c = Module(new ReadCache(cache.Config(
+      inAddrWidth = Config.SOUND_ROM_ADDR_WIDTH,
+      inDataWidth = Config.SOUND_ROM_DATA_WIDTH,
+      outAddrWidth = Config.sdramConfig.addrWidth,
+      outDataWidth = Config.sdramConfig.dataWidth,
+      lineWidth = Config.sdramConfig.burstLength,
+      depth = 32,
+      wrapping = true
+    )))
+    c.io.enable := io.ready
+    c.io.in <> io.rom.soundRom(i)
+    c
+  }
 
   // EEPROM cache
   val eepromCache = Module(new ReadWriteCache(cache.Config(
@@ -158,12 +161,13 @@ class MemSys extends Module {
   ) <> io.ddr
 
   // SDRAM arbiter
-  val sdramArbiter = Module(new BurstMemArbiter(7, Config.sdramConfig.addrWidth, Config.sdramConfig.dataWidth))
+  val sdramArbiter = Module(new BurstMemArbiter(8, Config.sdramConfig.addrWidth, Config.sdramConfig.dataWidth))
   sdramArbiter.connect(
     sdramDownloadBuffer.io.out,
     progRomCache.io.out.mapAddr(_ + io.gameConfig.progRomOffset),
-    soundRomCache.io.out.mapAddr(_ + io.gameConfig.soundRomOffset),
     eepromCache.io.out.mapAddr(_ + io.gameConfig.eepromOffset),
+    soundRomCache(0).io.out.mapAddr(_ + io.gameConfig.sound(0).romOffset),
+    soundRomCache(1).io.out.mapAddr(_ + io.gameConfig.sound(1).romOffset),
     layerRomCache(0).io.out.mapAddr(_ + io.gameConfig.layer(0).romOffset),
     layerRomCache(1).io.out.mapAddr(_ + io.gameConfig.layer(1).romOffset),
     layerRomCache(2).io.out.mapAddr(_ + io.gameConfig.layer(2).romOffset)
