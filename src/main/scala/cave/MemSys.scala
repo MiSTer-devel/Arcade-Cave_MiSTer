@@ -113,7 +113,7 @@ class MemSys extends Module {
       outAddrWidth = Config.sdramConfig.addrWidth,
       outDataWidth = Config.sdramConfig.dataWidth,
       lineWidth = Config.sdramConfig.burstLength,
-      depth = 32,
+      depth = 8,
       wrapping = true
     )))
     c.io.enable := io.ready
