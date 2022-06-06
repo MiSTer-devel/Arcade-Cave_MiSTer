@@ -78,27 +78,28 @@ class Cave extends Module {
     val spriteFrameBufferSwap = Output(Bool())
   })
 
-  // Wires
-  val intAck = Wire(Bool())
-
   // A write-only memory interface is used to connect the CPU to the EEPROM
   val eepromMem = Wire(WriteMemIO(CPU.ADDR_WIDTH, CPU.DATA_WIDTH))
 
-  // Registers
+  // Synchronize vertical blank into system clock domain
   val vBlank = ShiftRegister(io.video.vBlank, 2)
+
+  // Toggle pause register
+  val pauseReg = Util.toggle(Util.rising(io.joystick(0).pause || io.joystick(1).pause))
+
+  // IRQ signals
   val videoIrq = RegInit(false.B)
   val agalletIrq = RegInit(false.B)
   val unknownIrq = RegInit(false.B)
-  val iplReg = RegInit(0.U)
-  val pauseReg = Util.toggle(Util.rising(io.joystick(0).pause || io.joystick(1).pause))
+  val soundIrq = WireInit(false.B)
 
   // M68K CPU
   val cpu = Module(new CPU(Config.CPU_CLOCK_DIV))
   val map = new MemMap(cpu.io)
   cpu.io.halt := pauseReg
   cpu.io.dtack := false.B
-  cpu.io.vpa := intAck // autovectored interrupts
-  cpu.io.ipl := iplReg
+  cpu.io.vpa := cpu.io.as && cpu.io.fc === 7.U // autovectored interrupts
+  cpu.io.ipl := videoIrq || soundIrq || unknownIrq
   cpu.io.din := 0.U
 
   // Set program ROM interface defaults
@@ -232,13 +233,7 @@ class Cave extends Module {
   ymz.io.cpu.default()
   ymz.io.mem <> io.rom.soundRom
   io.audio <> RegEnable(ymz.io.audio.bits, ymz.io.audio.valid)
-  val soundIrq = ymz.io.irq
-
-  // Interrupt acknowledge
-  intAck := cpu.io.as && cpu.io.fc === 7.U
-
-  // Set and clear interrupt priority level register
-  when(videoIrq || soundIrq || unknownIrq) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
+  soundIrq := ymz.io.irq
 
   // Toggle video IRQ
   when(Util.rising(vBlank)) {
