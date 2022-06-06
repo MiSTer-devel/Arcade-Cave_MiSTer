@@ -161,6 +161,7 @@ assign USER_OUT = '1;
 assign {UART_RTS, UART_TXD, UART_DTR} = 0;
 assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
 
+assign AUDIO_R   = AUDIO_L;
 assign AUDIO_S   = 1;
 assign AUDIO_MIX = 0;
 
@@ -584,8 +585,7 @@ Main main (
   .rgb_g(g),
   .rgb_b(b),
   // Audio output
-  .audio_left(AUDIO_L),
-  .audio_right(AUDIO_R),
+  .audio(AUDIO_L),
   // LEDs
   .led_power(LED_POWER[0]),
   .led_disk(LED_DISK[0]),

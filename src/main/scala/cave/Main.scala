@@ -38,7 +38,6 @@ import axon.mem._
 import axon.mem.ddr.DDR
 import axon.mem.sdram.{SDRAM, SDRAMIO}
 import axon.mister._
-import axon.snd._
 import axon.types._
 import cave.fb._
 import chisel3._
@@ -72,7 +71,7 @@ class Main extends Module {
     /** Frame buffer control port */
     val frameBufferCtrl = FrameBufferCtrlIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
     /** Audio port */
-    val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
+    val audio = Output(SInt(Config.ymzConfig.sampleWidth.W))
     /** Video port */
     val video = VideoIO()
     /** RGB output */

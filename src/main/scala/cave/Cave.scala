@@ -61,7 +61,7 @@ class Cave extends Module {
     /** Video port */
     val video = Flipped(VideoIO())
     /** Audio port */
-    val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
+    val audio = Output(SInt(Config.ymzConfig.sampleWidth.W))
     /** RGB output */
     val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
     /** ROM port */
@@ -233,7 +233,7 @@ class Cave extends Module {
   ymz.io.cpu.default()
   ymz.io.mem <> io.rom.soundRom(0)
   io.rom.soundRom(1).default()
-  io.audio <> RegEnable(ymz.io.audio.bits, ymz.io.audio.valid)
+  io.audio <> RegEnable(ymz.io.audio.bits.left, ymz.io.audio.valid)
   soundIrq := ymz.io.irq
 
   // Toggle video IRQ
