@@ -45,14 +45,34 @@ trait ValidIO {
   val valid = Input(Bool())
 }
 
+/** Defines interface conversion methods. */
+trait ConvertAsyncMemIO {
+  /** Converts the interface to read-write. */
+  def asAsyncReadWriteMemIO: AsyncReadWriteMemIO
+}
+
 /**
  * A flow control interface for reading from asynchronous memory.
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class AsyncReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth, dataWidth) with WaitIO with ValidIO {
+class AsyncReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth, dataWidth) with WaitIO with ValidIO with ConvertAsyncMemIO {
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
+
+  /** Converts the interface to read-write. */
+  def asAsyncReadWriteMemIO: AsyncReadWriteMemIO = {
+    val mem = Wire(Flipped(AsyncReadWriteMemIO(this)))
+    mem.rd := rd
+    mem.wr := false.B
+    waitReq := mem.waitReq
+    valid := mem.valid
+    mem.addr := addr
+    mem.mask := DontCare
+    mem.din := DontCare
+    dout := mem.dout
+    mem
+  }
 
   /** Converts the interface to synchronous read-only. */
   def asReadMemIO: ReadMemIO = {
@@ -97,6 +117,25 @@ object AsyncReadMemIO {
   def apply(addrWidth: Int, dataWidth: Int) = new AsyncReadMemIO(addrWidth, dataWidth)
 
   def apply(config: BusConfig) = new AsyncReadMemIO(config)
+
+  /**
+   * Multiplexes requests from multiple read-only memory interface to a single read-only memory
+   * interface. The request is routed to the memory interface with the highest priority.
+   *
+   * @param in A list of enable-interface pairs.
+   */
+  def mux1H(in: Seq[(Bool, AsyncReadMemIO)]): AsyncReadMemIO = {
+    val anySelected = in.map(_._1).reduce(_ || _)
+    val mem = Wire(chiselTypeOf(in.head._2))
+    mem.rd := Mux1H(in.map(a => a._1 -> a._2.rd))
+    mem.addr := Mux1H(in.map(a => a._1 -> a._2.addr))
+    for ((selected, port) <- in) {
+      port.waitReq := (anySelected && !selected) || mem.waitReq
+      port.valid := selected && mem.valid
+      port.dout := mem.dout
+    }
+    mem
+  }
 }
 
 /**
@@ -105,8 +144,20 @@ object AsyncReadMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class AsyncWriteMemIO(addrWidth: Int, dataWidth: Int) extends WriteMemIO(addrWidth, dataWidth) with WaitIO {
+class AsyncWriteMemIO(addrWidth: Int, dataWidth: Int) extends WriteMemIO(addrWidth, dataWidth) with WaitIO with ConvertAsyncMemIO {
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
+
+  /** Converts the interface to read-write. */
+  def asAsyncReadWriteMemIO: AsyncReadWriteMemIO = {
+    val mem = Wire(Flipped(AsyncReadWriteMemIO(this)))
+    mem.rd := false.B
+    mem.wr := wr
+    waitReq := mem.waitReq
+    mem.addr := addr
+    mem.mask := mask
+    mem.din := din
+    mem
+  }
 
   /** Converts the interface to synchronous read-write. */
   override def asReadWriteMemIO: ReadWriteMemIO = {
@@ -148,7 +199,7 @@ object AsyncWriteMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class AsyncReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends ReadWriteMemIO(addrWidth, dataWidth) with WaitIO with ValidIO {
+class AsyncReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends ReadWriteMemIO(addrWidth, dataWidth) with WaitIO with ValidIO with ConvertAsyncMemIO {
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
   /** Converts the interface to asynchronous read-only. */
@@ -176,6 +227,9 @@ class AsyncReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends ReadWriteMemIO
     din := mem.din
     mem
   }
+
+  /** Converts the interface to read-write. */
+  def asAsyncReadWriteMemIO: AsyncReadWriteMemIO = this
 
   /**
    * Maps the address using the given function.

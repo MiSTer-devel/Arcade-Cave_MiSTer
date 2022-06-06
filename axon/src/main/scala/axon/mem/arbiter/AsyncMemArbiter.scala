@@ -32,7 +32,7 @@
 
 package axon.mem.arbiter
 
-import axon.mem.AsyncReadWriteMemIO
+import axon.mem.{AsyncReadWriteMemIO, ConvertAsyncMemIO}
 import chisel3._
 import chisel3.util._
 
@@ -63,9 +63,9 @@ class AsyncMemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
    * @param in The list of input ports.
    * @return The output port.
    */
-  def connect(in: AsyncReadWriteMemIO*): AsyncReadWriteMemIO = {
+  def connect(in: ConvertAsyncMemIO*): AsyncReadWriteMemIO = {
     assert(in.length == n, s"There must be exactly $n input ports")
-    in.zipWithIndex.foreach { case (port, i) => port <> io.in(i) }
+    in.zipWithIndex.foreach { case (port, i) => port.asAsyncReadWriteMemIO <> io.in(i) }
     io.out
   }
 
@@ -80,12 +80,12 @@ class AsyncMemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
   val chosen = Mux(busyReg, indexReg, index)
 
   // Assert the effective request signal when a request is accepted by the output port
-  val effectiveRead = !busyReg && io.out.rd && !io.out.waitReq
+  val effectiveRequest = !busyReg && io.out.rd && !io.out.waitReq
 
   // Toggle the busy register
   when(io.out.valid) {
     busyReg := false.B
-  }.elsewhen(effectiveRead) {
+  }.elsewhen(effectiveRequest) {
     busyReg := true.B
     indexReg := index
   }

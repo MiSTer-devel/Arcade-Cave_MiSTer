@@ -30,38 +30,50 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.snd
+package axon.snd.ymz
 
 import chisel3._
-import chisel3.util._
+import chiseltest._
+import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-/** Represents the utility register. */
-class UtilReg extends Bundle {
-  /** IRQ mask */
-  val irqMask = Bits(8.W)
-  /** Flags */
-  val flags = new Bundle {
-    /** Key on enable */
-    val keyOnEnable = Bool()
-    /** Memory enable */
-    val memEnable = Bool()
-    /** IRQ enable */
-    val irqEnable = Bool()
+class LERPTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+  it should "interpolate sample values" in {
+    test(new LERP) { dut =>
+      dut.io.samples(0).poke(0)
+      dut.io.samples(1).poke(16)
+
+      dut.io.index.poke(0)
+      dut.io.out.expect(0.S)
+
+      dut.io.index.poke(64)
+      dut.io.out.expect(4.S)
+
+      dut.io.index.poke(128)
+      dut.io.out.expect(8.S)
+
+      dut.io.index.poke(192)
+      dut.io.out.expect(12.S)
+
+      dut.io.index.poke(256)
+      dut.io.out.expect(16.S)
+    }
   }
-}
 
-object UtilReg {
-  /**
-   * Decodes a utility register from the given register file.
-   *
-   * @param registerFile The register file.
-   */
-  def fromRegisterFile(registerFile: Vec[UInt]): UtilReg = {
-    Cat(
-      registerFile(0xfe), // IRQ mask
-      registerFile(0xff)(7), // key on enable
-      registerFile(0xff)(6), // memory enable
-      registerFile(0xff)(4), // IRQ enable
-    ).asTypeOf(new UtilReg)
+  it should "handle min/max sample values" in {
+    test(new LERP) { dut =>
+      dut.io.samples(0).poke(-32767)
+      dut.io.samples(1).poke(32767)
+
+      dut.io.index.poke(0)
+      dut.io.out.expect(-32767.S)
+
+      dut.io.index.poke(128)
+      dut.io.out.expect(0.S)
+
+      dut.io.index.poke(256)
+      dut.io.out.expect(32767.S)
+    }
   }
 }

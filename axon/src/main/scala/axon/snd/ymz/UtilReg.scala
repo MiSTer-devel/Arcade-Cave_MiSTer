@@ -30,29 +30,38 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.mem.cache
+package axon.snd.ymz
 
-import axon.Util
 import chisel3._
+import chisel3.util._
 
-/**
- * A cache line is stored internally as a vector of words that has the same width as the output data
- * bus.
- *
- * A cache line can also be represented a vector of input words, by rearranging the byte grouping.
- *
- * @param config The cache configuration.
- */
-class Line(private val config: Config) extends Bundle {
-  /** The cache line data */
-  val words: Vec[Bits] = Vec(config.lineWidth, Bits(config.outDataWidth.W))
-
-  /** Returns the cache line represented as a vector input words */
-  def inWords: Vec[Bits] = {
-    val ws = Util.decode(words.asUInt, config.inWords, config.inDataWidth)
-    VecInit(ws)
+/** Represents the utility register. */
+class UtilReg extends Bundle {
+  /** IRQ mask */
+  val irqMask = Bits(8.W)
+  /** Flags */
+  val flags = new Bundle {
+    /** Key on enable */
+    val keyOnEnable = Bool()
+    /** Memory enable */
+    val memEnable = Bool()
+    /** IRQ enable */
+    val irqEnable = Bool()
   }
+}
 
-  /** The output words in the cache line */
-  def outWords: Vec[Bits] = words
+object UtilReg {
+  /**
+   * Decodes a utility register from the given register file.
+   *
+   * @param registerFile The register file.
+   */
+  def fromRegisterFile(registerFile: Vec[UInt]): UtilReg = {
+    Cat(
+      registerFile(0xfe), // IRQ mask
+      registerFile(0xff)(7), // key on enable
+      registerFile(0xff)(6), // memory enable
+      registerFile(0xff)(4), // IRQ enable
+    ).asTypeOf(new UtilReg)
+  }
 }

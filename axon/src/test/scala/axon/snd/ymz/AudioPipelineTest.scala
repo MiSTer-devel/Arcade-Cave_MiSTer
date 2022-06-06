@@ -30,13 +30,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.snd
+package axon.snd.ymz
 
+import axon.snd.YMZ280BConfig
 import chisel3._
 import chiseltest._
-import org.scalatest._
-import flatspec.AnyFlatSpec
-import matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 trait AudioPipelineTestHelpers {
   protected val config = YMZ280BConfig(clockFreq = 44100, numChannels = 2)

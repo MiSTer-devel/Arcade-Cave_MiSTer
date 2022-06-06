@@ -30,13 +30,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.snd
+package axon.snd.ymz
 
+import axon.snd.YMZ280BConfig
 import chisel3._
 import chiseltest._
-import org.scalatest._
-import flatspec.AnyFlatSpec
-import matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 trait ChannelControllerTestHelpers {
   protected val ymzConfig = YMZ280BConfig(clockFreq = 44100 * 50, numChannels = 1)
@@ -96,7 +96,7 @@ trait ChannelControllerTestHelpers {
     while (!dut.io.debug.done.peekBoolean()) { dut.clock.step() }
 
   protected def waitForMemRead(dut: ChannelController) =
-    while (!dut.io.mem.rd.peekBoolean()) { dut.clock.step() }
+    while (!dut.io.rom.rd.peekBoolean()) { dut.clock.step() }
 
   protected def waitForAudioValid(dut: ChannelController) =
     while (!dut.io.audio.valid.peekBoolean()) { dut.clock.step() }
@@ -193,13 +193,13 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
       // Fetch
       waitForProcess(dut)
       dut.clock.step()
-      dut.io.mem.waitReq.poke(true)
-      dut.io.mem.rd.expect(true)
+      dut.io.rom.waitReq.poke(true)
+      dut.io.rom.rd.expect(true)
       dut.clock.step()
-      dut.io.mem.waitReq.poke(false)
-      dut.io.mem.rd.expect(true)
+      dut.io.rom.waitReq.poke(false)
+      dut.io.rom.rd.expect(true)
       dut.clock.step()
-      dut.io.mem.rd.expect(false)
+      dut.io.rom.rd.expect(false)
     }
   }
 
@@ -207,20 +207,20 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
-      dut.io.mem.valid.poke(true)
+      dut.io.rom.valid.poke(true)
       startChannel(dut, index = 0, pitch = 127, startAddress = 1)
 
       for (n <- Seq(1, 1, 2, 2)) {
         // Fetch
         waitForProcess(dut)
         dut.clock.step()
-        dut.io.mem.rd.expect(true)
-        dut.io.mem.addr.expect(n.U)
+        dut.io.rom.rd.expect(true)
+        dut.io.rom.addr.expect(n.U)
         waitForNext(dut)
 
         // No fetch
         waitForProcess(dut)
-        dut.io.mem.rd.expect(false)
+        dut.io.rom.rd.expect(false)
         waitForNext(dut)
       }
     }
@@ -230,7 +230,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
-      dut.io.mem.valid.poke(true)
+      dut.io.rom.valid.poke(true)
       startChannel(dut, index = 0, pitch = 127)
 
       // Process
@@ -266,10 +266,10 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
 
       // Fetch
       waitForMemRead(dut)
-      dut.io.mem.valid.poke(true)
-      dut.io.mem.dout.poke(0x12)
+      dut.io.rom.valid.poke(true)
+      dut.io.rom.dout.poke(0x12)
       waitForNext(dut)
-      dut.io.mem.valid.poke(false)
+      dut.io.rom.valid.poke(false)
 
       // Valid
       waitForAudioValid(dut)
@@ -279,10 +279,10 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
 
       // Fetch
       waitForMemRead(dut)
-      dut.io.mem.valid.poke(true)
-      dut.io.mem.dout.poke(0x12)
+      dut.io.rom.valid.poke(true)
+      dut.io.rom.dout.poke(0x12)
       waitForNext(dut)
-      dut.io.mem.valid.poke(false)
+      dut.io.rom.valid.poke(false)
 
       // Valid
       waitForAudioValid(dut)
@@ -292,10 +292,10 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
 
       // Fetch
       waitForMemRead(dut)
-      dut.io.mem.valid.poke(true)
-      dut.io.mem.dout.poke(0x12)
+      dut.io.rom.valid.poke(true)
+      dut.io.rom.dout.poke(0x12)
       waitForNext(dut)
-      dut.io.mem.valid.poke(false)
+      dut.io.rom.valid.poke(false)
 
       // Valid
       waitForAudioValid(dut)
@@ -305,10 +305,10 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
 
       // Fetch
       waitForMemRead(dut)
-      dut.io.mem.valid.poke(true)
-      dut.io.mem.dout.poke(0x12)
+      dut.io.rom.valid.poke(true)
+      dut.io.rom.dout.poke(0x12)
       waitForNext(dut)
-      dut.io.mem.valid.poke(false)
+      dut.io.rom.valid.poke(false)
 
       // Valid
       waitForAudioValid(dut)
@@ -318,10 +318,10 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
 
       // Fetch
       waitForMemRead(dut)
-      dut.io.mem.valid.poke(true)
-      dut.io.mem.dout.poke(0x12)
+      dut.io.rom.valid.poke(true)
+      dut.io.rom.dout.poke(0x12)
       waitForNext(dut)
-      dut.io.mem.valid.poke(false)
+      dut.io.rom.valid.poke(false)
 
       // Valid
       waitForAudioValid(dut)
@@ -331,10 +331,10 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
 
       // Fetch
       waitForMemRead(dut)
-      dut.io.mem.valid.poke(true)
-      dut.io.mem.dout.poke(0x12)
+      dut.io.rom.valid.poke(true)
+      dut.io.rom.dout.poke(0x12)
       waitForNext(dut)
-      dut.io.mem.valid.poke(false)
+      dut.io.rom.valid.poke(false)
 
       // Valid
       waitForAudioValid(dut)
@@ -352,19 +352,19 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
 
       // Fetch (channel 0)
       waitForMemRead(dut)
-      dut.io.mem.valid.poke(true)
-      dut.io.mem.dout.poke(0x10)
+      dut.io.rom.valid.poke(true)
+      dut.io.rom.dout.poke(0x10)
       dut.io.index.expect(0.U)
       waitForNext(dut)
-      dut.io.mem.valid.poke(false)
+      dut.io.rom.valid.poke(false)
 
       // Fetch (channel 1)
       waitForMemRead(dut)
-      dut.io.mem.valid.poke(true)
-      dut.io.mem.dout.poke(0x20)
+      dut.io.rom.valid.poke(true)
+      dut.io.rom.dout.poke(0x20)
       dut.io.index.expect(1.U)
       waitForNext(dut)
-      dut.io.mem.valid.poke(false)
+      dut.io.rom.valid.poke(false)
 
       // Valid
       waitForAudioValid(dut)
@@ -383,7 +383,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
-      dut.io.mem.valid.poke(true)
+      dut.io.rom.valid.poke(true)
       startChannel(dut, index = 0, endAddress = 1)
 
       // Done
@@ -434,7 +434,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
-      dut.io.mem.valid.poke(true)
+      dut.io.rom.valid.poke(true)
       startChannel(dut, index = 0, endAddress = 1)
 
       // Status
@@ -457,7 +457,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
-      dut.io.mem.valid.poke(true)
+      dut.io.rom.valid.poke(true)
       startChannel(dut, index = 0, endAddress = 1)
 
       // Status
@@ -478,7 +478,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
-      dut.io.mem.valid.poke(true)
+      dut.io.rom.valid.poke(true)
       startChannel(dut, index = 0, loop = true, loopEndAddr = 1, endAddress = 1)
 
       // Status
@@ -494,7 +494,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
-      dut.io.mem.valid.poke(true)
+      dut.io.rom.valid.poke(true)
       startChannel(dut, index = 0, endAddress = 1)
 
       // Stop
@@ -511,7 +511,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
     test(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
-      dut.io.mem.valid.poke(true)
+      dut.io.rom.valid.poke(true)
       startChannel(dut, index = 0, endAddress = 1)
 
       // Done

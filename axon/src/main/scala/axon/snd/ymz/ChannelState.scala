@@ -30,8 +30,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.snd
+package axon.snd.ymz
 
+import axon.snd.YMZ280BConfig
 import chisel3._
 
 /** Represents the state of a channel. */
