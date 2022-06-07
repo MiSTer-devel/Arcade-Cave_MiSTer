@@ -35,6 +35,7 @@ package cave
 import axon.gfx.VideoTimingConfig
 import axon.mem._
 import axon.snd.YMZ280BConfig
+import cave.snd.OKI6295Config
 import chisel3.util.log2Ceil
 
 object Config {
@@ -188,11 +189,16 @@ object Config {
   /** 8BPP graphics format */
   val GFX_FORMAT_8BPP = 3
 
+  /** The width of audio sample values */
+  val AUDIO_SAMPLE_WIDTH = 16
 
   /** YMZ280B configuration */
-  val ymzConfig = YMZ280BConfig(
-    clockFreq = CLOCK_FREQ,
-    sampleFreq = 88200 // Hz
+  val ymzConfig = YMZ280BConfig(clockFreq = CLOCK_FREQ, sampleFreq = 88200)
+
+  /** OKI6295 configuration */
+  val okiConfig = Seq(
+    OKI6295Config(clockFreq = CLOCK_FREQ, sampleFreq = 1056000),
+    OKI6295Config(clockFreq = CLOCK_FREQ, sampleFreq = 2112000)
   )
 
   /** DDR configuration */

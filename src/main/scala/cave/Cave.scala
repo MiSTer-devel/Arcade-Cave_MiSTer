@@ -39,6 +39,7 @@ import axon.mem._
 import axon.snd._
 import axon.types._
 import cave.gfx._
+import cave.snd.{OKI6295, NMK112}
 import cave.types._
 import chisel3._
 import chisel3.util._
@@ -232,9 +233,29 @@ class Cave extends Module {
   val ymz = Module(new YMZ280B(Config.ymzConfig))
   ymz.io.cpu.default()
   ymz.io.rom <> io.rom.soundRom(0)
-  io.rom.soundRom(1).default()
-  io.audio <> RegEnable(ymz.io.audio.bits.left, ymz.io.audio.valid)
   soundIrq := ymz.io.irq
+
+  // NMK112
+  val nmk = Module(new NMK112)
+  nmk.io.cpu.default()
+  nmk.io.mask := 1.U // disable phrase table bank switching for chip 0 (background music)
+
+  // OKI6295
+  val oki = 0.until(2).map { i =>
+    val oki = Module(new OKI6295(Config.okiConfig(i)))
+    oki.io.cpu.default()
+    oki.io.rom <> io.rom.soundRom(i)
+    nmk.io.addr(i).in := oki.io.rom.addr
+    io.rom.soundRom(i).addr := nmk.io.addr(i).out
+    oki
+  }
+
+  // Mixer
+  io.audio := AudioMixer.sum(Config.AUDIO_SAMPLE_WIDTH,
+    RegEnable(ymz.io.audio.bits.left, ymz.io.audio.valid) -> 1,
+    RegEnable(oki(0).io.audio.bits, oki(0).io.audio.valid) -> 1.6,
+    RegEnable(oki(1).io.audio.bits, oki(1).io.audio.valid) -> 1
+  )
 
   // Toggle video IRQ
   when(Util.rising(vBlank)) {
@@ -324,9 +345,9 @@ class Cave extends Module {
     map(0x800000 to 0x800005).readWriteMem(layerRegs(2).io.mem)
     vregMap(0x900000)
     map(0xa08000 to 0xa08fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
-    map(0xb00000 to 0xb00003).noprw() // OKI 0
-    map(0xb00010 to 0xb00013).noprw() // OKI 1
-    map(0xb00020 to 0xb0002f).nopw() // OKI bank
+    map(0xb00000 to 0xb00003).readWriteMem(oki(0).io.cpu)
+    map(0xb00010 to 0xb00013).readWriteMem(oki(1).io.cpu)
+    map(0xb00020 to 0xb0002f).writeMem(nmk.io.cpu)
     map(0xc00000).r { (_, _) => input0 }
     map(0xc00002).r { (_, _) => input1 }
     map(0xd00000).writeMem(eepromMem)
