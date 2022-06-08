@@ -105,6 +105,18 @@ class MemSys extends Module {
   progRomCache.io.enable := io.ready
   progRomCache.io.in <> io.rom.progRom
 
+  // EEPROM cache
+  val eepromCache = Module(new ReadWriteCache(cache.Config(
+    inAddrWidth = Config.EEPROM_ADDR_WIDTH,
+    inDataWidth = Config.EEPROM_DATA_WIDTH,
+    outAddrWidth = Config.sdramConfig.addrWidth,
+    outDataWidth = Config.sdramConfig.dataWidth,
+    lineWidth = Config.sdramConfig.burstLength,
+    depth = 2,
+    wrapping = true
+  )))
+  eepromCache.io.enable := io.ready
+
   // Sound ROM cache
   val soundRomCache = 0.until(Config.SOUND_ROM_COUNT).map { i =>
     val c = Module(new ReadCache(cache.Config(
@@ -121,19 +133,7 @@ class MemSys extends Module {
     c
   }
 
-  // EEPROM cache
-  val eepromCache = Module(new ReadWriteCache(cache.Config(
-    inAddrWidth = Config.EEPROM_ADDR_WIDTH,
-    inDataWidth = Config.EEPROM_DATA_WIDTH,
-    outAddrWidth = Config.sdramConfig.addrWidth,
-    outDataWidth = Config.sdramConfig.dataWidth,
-    lineWidth = Config.sdramConfig.burstLength,
-    depth = 2,
-    wrapping = true
-  )))
-  eepromCache.io.enable := io.ready
-
-  // Layer tile ROM cache
+  // Layer ROM cache
   val layerRomCache = 0.until(Config.LAYER_COUNT).map { i =>
     val c = Module(new ReadCache(cache.Config(
       inAddrWidth = Config.TILE_ROM_ADDR_WIDTH,
