@@ -44,10 +44,15 @@ class GameConfig extends Bundle {
   val granularity = UInt(9.W)
   /** Program ROM offset */
   val progRomOffset = UInt(32.W)
-  /** Sound ROM offset */
-  val soundRomOffset = UInt(32.W)
   /** EEPROM offset */
   val eepromOffset = UInt(32.W)
+  /** Sound configuration */
+  val sound = Vec(Config.SOUND_ROM_COUNT, new Bundle {
+    /** Sound device */
+    val device = UInt(2.W)
+    /** Sound ROM offset */
+    val romOffset = UInt(32.W)
+  })
   /** Layer configuration */
   val layer = Vec(Config.LAYER_COUNT, new Bundle {
     /** Layer graphics format */
@@ -59,10 +64,10 @@ class GameConfig extends Bundle {
   val sprite = new Bundle {
     /** Sprite graphics format */
     val format = UInt(Config.GFX_FORMAT_WIDTH.W)
-    /** Asserted when sprite scaling is enabled */
-    val zoom = Bool()
     /** Sprite ROM offset */
     val romOffset = UInt(32.W)
+    /** Asserted when sprite scaling is enabled */
+    val zoom = Bool()
   }
 }
 
@@ -90,8 +95,9 @@ object GameConfig {
    * @param index The game index.
    */
   def apply(index: UInt): GameConfig = {
-    MuxLookup(index, ddonpach, Seq(
-      DFEVERON.U -> dfeveron,
+    MuxLookup(index, dfeveron, Seq(
+      DDONPACH.U -> ddonpach,
+      DONPACHI.U -> donpachi,
       ESPRADE.U -> esprade,
       GAIA.U -> gaia,
       GUWANGE.U -> guwange,
@@ -104,8 +110,11 @@ object GameConfig {
     wire.index := DFEVERON.U
     wire.granularity := 16.U
     wire.progRomOffset := 0x00000000.U
-    wire.soundRomOffset := 0x00100000.U
-    wire.eepromOffset := 0x00500000.U
+    wire.eepromOffset := 0x00100000.U
+    wire.sound(0).device := SoundDevice.YMZ280B.U
+    wire.sound(0).romOffset := 0x00100080.U
+    wire.sound(1).device := SoundDevice.DISABLED.U
+    wire.sound(1).romOffset := 0.U // disabled
     wire.layer(0).format := Config.GFX_FORMAT_4BPP.U
     wire.layer(1).format := Config.GFX_FORMAT_4BPP.U
     wire.layer(2).format := Config.GFX_FORMAT_UNKNOWN.U
@@ -113,8 +122,8 @@ object GameConfig {
     wire.layer(1).romOffset := 0x00700080.U
     wire.layer(2).romOffset := 0.U // disabled
     wire.sprite.format := Config.GFX_FORMAT_4BPP.U
-    wire.sprite.zoom := true.B
     wire.sprite.romOffset := 0x00900080.U
+    wire.sprite.zoom := true.B
     wire
   }
 
@@ -123,17 +132,42 @@ object GameConfig {
     wire.index := DDONPACH.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
-    wire.soundRomOffset := 0x00100000.U
-    wire.eepromOffset := 0x00500000.U
+    wire.eepromOffset := 0x00100000.U
+    wire.sound(0).device := SoundDevice.YMZ280B.U
+    wire.sound(0).romOffset := 0x00100080.U
+    wire.sound(1).device := SoundDevice.DISABLED.U
+    wire.sound(1).romOffset := 0.U // disabled
     wire.layer(0).format := Config.GFX_FORMAT_4BPP.U
-    wire.layer(1).format := Config.GFX_FORMAT_4BPP.U
-    wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(0).romOffset := 0x00500080.U
+    wire.layer(1).format := Config.GFX_FORMAT_4BPP.U
     wire.layer(1).romOffset := 0x00700080.U
+    wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(2).romOffset := 0x00900080.U
     wire.sprite.format := Config.GFX_FORMAT_4BPP_MSB.U
-    wire.sprite.zoom := false.B
     wire.sprite.romOffset := 0x00b00080.U
+    wire.sprite.zoom := false.B
+    wire
+  }
+
+  private def donpachi = {
+    val wire = Wire(new GameConfig)
+    wire.index := DONPACHI.U
+    wire.granularity := 16.U
+    wire.progRomOffset := 0x00000000.U
+    wire.eepromOffset := 0x00080000.U
+    wire.sound(0).device := SoundDevice.OKIM6259.U
+    wire.sound(0).romOffset := 0x00080080.U
+    wire.sound(1).device := SoundDevice.OKIM6259.U
+    wire.sound(1).romOffset := 0x00280080.U
+    wire.layer(0).format := Config.GFX_FORMAT_4BPP.U
+    wire.layer(0).romOffset := 0x00380080.U
+    wire.layer(1).format := Config.GFX_FORMAT_4BPP.U
+    wire.layer(1).romOffset := 0x00480080.U
+    wire.layer(2).format := Config.GFX_FORMAT_4BPP.U
+    wire.layer(2).romOffset := 0x00580080.U
+    wire.sprite.format := Config.GFX_FORMAT_4BPP_MSB.U
+    wire.sprite.romOffset := 0x005c0080.U
+    wire.sprite.zoom := false.B
     wire
   }
 
@@ -142,17 +176,20 @@ object GameConfig {
     wire.index := ESPRADE.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
-    wire.soundRomOffset := 0x00100000.U
-    wire.eepromOffset := 0x00500000.U
+    wire.eepromOffset := 0x00100000.U
+    wire.sound(0).device := SoundDevice.YMZ280B.U
+    wire.sound(0).romOffset := 0x00100080.U
+    wire.sound(1).device := SoundDevice.DISABLED.U
+    wire.sound(1).romOffset := 0.U
     wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
-    wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
-    wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(0).romOffset := 0x00500080.U
+    wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(1).romOffset := 0x00d00080.U
+    wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(2).romOffset := 0x01500080.U
     wire.sprite.format := Config.GFX_FORMAT_8BPP.U
-    wire.sprite.zoom := true.B
     wire.sprite.romOffset := 0x01900080.U
+    wire.sprite.zoom := true.B
     wire
   }
 
@@ -161,17 +198,20 @@ object GameConfig {
     wire.index := GAIA.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
-    wire.soundRomOffset := 0x00100000.U
-    wire.eepromOffset := 0.U // no EEPROM
+    wire.eepromOffset := 0.U // disabled
+    wire.sound(0).device := SoundDevice.YMZ280B.U
+    wire.sound(0).romOffset := 0x00100000.U
+    wire.sound(1).device := SoundDevice.DISABLED.U
+    wire.sound(1).romOffset := 0.U // disabled
     wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
-    wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
-    wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(0).romOffset := 0x00d00000.U
+    wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(1).romOffset := 0x01100000.U
+    wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(2).romOffset := 0x01500000.U
     wire.sprite.format := Config.GFX_FORMAT_4BPP.U
-    wire.sprite.zoom := true.B
     wire.sprite.romOffset := 0x01900000.U
+    wire.sprite.zoom := true.B
     wire
   }
 
@@ -180,17 +220,20 @@ object GameConfig {
     wire.index := GUWANGE.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
-    wire.soundRomOffset := 0x00100000.U
-    wire.eepromOffset := 0x00500000.U
+    wire.eepromOffset := 0x00100000.U
+    wire.sound(0).device := SoundDevice.YMZ280B.U
+    wire.sound(0).romOffset := 0x00100080.U
+    wire.sound(1).device := SoundDevice.DISABLED.U
+    wire.sound(1).romOffset := 0.U // disabled
     wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
-    wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
-    wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(0).romOffset := 0x00500080.U
+    wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(1).romOffset := 0x00d00080.U
+    wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(2).romOffset := 0x01100080.U
     wire.sprite.format := Config.GFX_FORMAT_8BPP.U
-    wire.sprite.zoom := true.B
     wire.sprite.romOffset := 0x01500080.U
+    wire.sprite.zoom := true.B
     wire
   }
 
@@ -199,17 +242,20 @@ object GameConfig {
     wire.index := UOPOKO.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
-    wire.soundRomOffset := 0x00100000.U
-    wire.eepromOffset := 0x00300000.U
+    wire.eepromOffset := 0x00100000.U
+    wire.sound(0).device := SoundDevice.YMZ280B.U
+    wire.sound(0).romOffset := 0x00100080.U
+    wire.sound(1).device := SoundDevice.DISABLED.U
+    wire.sound(1).romOffset := 0.U // disabled
     wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
-    wire.layer(1).format := Config.GFX_FORMAT_UNKNOWN.U
-    wire.layer(2).format := Config.GFX_FORMAT_UNKNOWN.U
     wire.layer(0).romOffset := 0x00300080.U
+    wire.layer(1).format := Config.GFX_FORMAT_UNKNOWN.U
     wire.layer(1).romOffset := 0.U // disabled
+    wire.layer(2).format := Config.GFX_FORMAT_UNKNOWN.U
     wire.layer(2).romOffset := 0.U // disabled
     wire.sprite.format := Config.GFX_FORMAT_4BPP.U
-    wire.sprite.zoom := true.B
     wire.sprite.romOffset := 0x00700080.U
+    wire.sprite.zoom := true.B
     wire
   }
 }

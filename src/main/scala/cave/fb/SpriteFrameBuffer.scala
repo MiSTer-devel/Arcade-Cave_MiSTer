@@ -35,9 +35,8 @@ package cave.fb
 import axon.Util
 import axon.gfx.VideoIO
 import axon.mem._
-import axon.mem.dma.{BurstWriteDMA, BurstReadDMA}
-import cave.Config
-import cave.types._
+import axon.mem.dma.{BurstReadDMA, BurstWriteDMA}
+import cave._
 import chisel3._
 import chisel3.util._
 

@@ -32,48 +32,55 @@
 
 package axon.snd
 
-import chisel3._
 import chiseltest._
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
-class LERPTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
-  it should "interpolate sample values" in {
-    test(new LERP) { dut =>
-      dut.io.samples(0).poke(0)
-      dut.io.samples(1).poke(16)
-
-      dut.io.index.poke(0)
-      dut.io.out.expect(0.S)
-
-      dut.io.index.poke(64)
-      dut.io.out.expect(4.S)
-
-      dut.io.index.poke(128)
-      dut.io.out.expect(8.S)
-
-      dut.io.index.poke(192)
-      dut.io.out.expect(12.S)
-
-      dut.io.index.poke(256)
-      dut.io.out.expect(16.S)
+class AudioMixerTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+  it should "sum the audio inputs" in {
+    test(new AudioMixer(16, Seq(ChannelConfig(16, 1), ChannelConfig(16, 0.5), ChannelConfig(16, 0.25)))) { dut =>
+      dut.io.in(0).poke(1)
+      dut.io.in(1).poke(2)
+      dut.io.in(2).poke(4)
+      dut.clock.step()
+      dut.io.out.expect(3)
     }
   }
 
-  it should "handle min/max sample values" in {
-    test(new LERP) { dut =>
-      dut.io.samples(0).poke(-32767)
-      dut.io.samples(1).poke(32767)
+  it should "clips the audio output (8-bit)" in {
+    test(new AudioMixer(8, Seq(ChannelConfig(8, 1), ChannelConfig(8, 1)))) { dut =>
+      dut.io.in(0).poke(127)
+      dut.io.in(1).poke(1)
+      dut.clock.step()
+      dut.io.out.expect(127)
 
-      dut.io.index.poke(0)
-      dut.io.out.expect(-32767.S)
+      dut.io.in(0).poke(-128)
+      dut.io.in(1).poke(-1)
+      dut.clock.step()
+      dut.io.out.expect(-128)
+    }
+  }
 
-      dut.io.index.poke(128)
-      dut.io.out.expect(0.S)
+  it should "clips the audio output (16-bit)" in {
+    test(new AudioMixer(16, Seq(ChannelConfig(16, 1), ChannelConfig(16, 1)))) { dut =>
+      dut.io.in(0).poke(32767)
+      dut.io.in(1).poke(1)
+      dut.clock.step()
+      dut.io.out.expect(32767)
 
-      dut.io.index.poke(256)
-      dut.io.out.expect(32767.S)
+      dut.io.in(0).poke(-32768)
+      dut.io.in(1).poke(-1)
+      dut.clock.step()
+      dut.io.out.expect(-32768)
+    }
+  }
+
+  it should "converts all samples to the output width" in {
+    test(new AudioMixer(9, Seq(ChannelConfig(8, 1)))) { dut =>
+      dut.io.in(0).poke(127)
+      dut.clock.step()
+      dut.io.out.expect(254)
     }
   }
 }

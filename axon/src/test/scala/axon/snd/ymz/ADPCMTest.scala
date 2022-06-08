@@ -30,40 +30,30 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave
+package axon.snd.ymz
 
-import axon.cpu.m68k.CPU
 import chisel3._
-import axon.mem._
+import chiseltest._
+import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-package object types {
-  /** DIP switches IO */
-  def DIPIO(): Vec[UInt] = Input(Vec(4, Bits(CPU.DATA_WIDTH.W)))
+class ADPCMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+  it should "decode sample values" in {
+    test(new ADPCM) { dut =>
+      dut.io.data.poke(8)
+      dut.io.in.step.poke(127)
+      dut.io.in.sample.poke(0)
+      dut.clock.step()
+      dut.io.out.step.expect(127.S)
+      dut.io.out.sample.expect(-16.S)
 
-  /** Program ROM IO */
-  class ProgRomIO extends AsyncReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH)
-
-  /** Sound ROM IO */
-  class SoundRomIO extends AsyncReadMemIO(Config.SOUND_ROM_ADDR_WIDTH, Config.SOUND_ROM_DATA_WIDTH)
-
-  /** EEPROM IO */
-  class EEPROMIO extends AsyncReadWriteMemIO(Config.EEPROM_ADDR_WIDTH, Config.EEPROM_DATA_WIDTH)
-
-  /** Sprite ROM IO */
-  class SpriteRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH)
-
-  /** Layer ROM IO */
-  class LayerRomIO extends AsyncReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH)
-
-  /** Palette RAM IO (GPU-side) */
-  class PaletteRamIO extends ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
-
-  /** Sprite frame buffer IO */
-  class SpriteFrameBufferIO extends WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SPRITE_FRAME_BUFFER_DATA_WIDTH)
-
-  /** Sprite line buffer IO */
-  class SpriteLineBufferIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH_X, Config.SPRITE_FRAME_BUFFER_DATA_WIDTH)
-
-  /** System frame buffer IO */
-  class SystemFrameBufferIO extends WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SYSTEM_FRAME_BUFFER_DATA_WIDTH)
+      dut.io.data.poke(7)
+      dut.io.in.step.poke(127)
+      dut.io.in.sample.poke(-16)
+      dut.clock.step()
+      dut.io.out.step.expect(304.S)
+      dut.io.out.sample.expect(222.S)
+    }
+  }
 }

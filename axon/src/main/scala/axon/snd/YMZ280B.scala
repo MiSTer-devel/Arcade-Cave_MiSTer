@@ -33,6 +33,7 @@
 package axon.snd
 
 import axon.mem.{AsyncReadMemIO, ReadWriteMemIO}
+import axon.snd.ymz._
 import chisel3._
 import chisel3.util._
 
@@ -83,8 +84,8 @@ class YMZ280B(config: YMZ280BConfig) extends Module {
   val io = IO(new Bundle {
     /** CPU port */
     val cpu = Flipped(ReadWriteMemIO(config.cpuAddrWidth, config.cpuDataWidth))
-    /** External memory port */
-    val mem = AsyncReadMemIO(config.memAddrWidth, config.memDataWidth)
+    /** ROM port */
+    val rom = AsyncReadMemIO(config.memAddrWidth, config.memDataWidth)
     /** Audio output */
     val audio = ValidIO(new Audio(config.sampleWidth))
     /** IRQ */
@@ -117,7 +118,7 @@ class YMZ280B(config: YMZ280BConfig) extends Module {
   channelCtrl.io.regs := channelRegs
   channelCtrl.io.enable := utilReg.flags.keyOnEnable
   channelCtrl.io.audio <> io.audio
-  channelCtrl.io.mem <> io.mem
+  channelCtrl.io.rom <> io.rom
 
   // Control signals
   val writeAddr = io.cpu.wr && !io.cpu.addr(0)

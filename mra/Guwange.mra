@@ -15,11 +15,11 @@
       <part name="gu-u0129.bin" crc="6c0e3b93" map="10" />
     </interleave>
 
-    <!-- sound ROM -->
-    <part name="u0462.bin" crc="b3d75691"/>
-
     <!-- EEPROM -->
     <part name="eeprom-guwange.bin" crc="c3174959"/>
+
+    <!-- sound ROM -->
+    <part name="u0462.bin" crc="b3d75691"/>
 
     <!-- layer 0 -->
     <part name="u101.bin" crc="0369491f"/>
@@ -45,8 +45,8 @@
     </interleave>
 
     <!-- enable C button in EEPROM -->
-    <patch offset="0x00500002">11 11</patch>
-    <patch offset="0x00500008">00 04</patch>
+    <patch offset="0x00100002">11 11</patch>
+    <patch offset="0x00100008">00 04</patch>
   </rom>
 
   <!-- select game -->

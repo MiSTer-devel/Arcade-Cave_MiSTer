@@ -30,7 +30,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.snd
+package axon.snd.ymz
 
 import chisel3._
 import chisel3.util._

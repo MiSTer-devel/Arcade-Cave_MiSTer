@@ -30,38 +30,30 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.snd
+package axon.clk
 
 import chisel3._
-import chisel3.util._
 
-/** Represents the utility register. */
-class UtilReg extends Bundle {
-  /** IRQ mask */
-  val irqMask = Bits(8.W)
-  /** Flags */
-  val flags = new Bundle {
-    /** Key on enable */
-    val keyOnEnable = Bool()
-    /** Memory enable */
-    val memEnable = Bool()
-    /** IRQ enable */
-    val irqEnable = Bool()
-  }
+private class ClockDivider(d: Double, width: Int) {
+  val n = ((1 << width) / d).round
+  val next = Wire(UInt((width + 1).W))
+  val counter = RegNext(next.tail(1))
+  val clockEnable = RegNext(next.head(1).asBool)
+  next := counter +& n.U
+
+  printf(p"ClockDivider(counter: 0x${ Hexadecimal(counter) }, cen: $clockEnable )\n")
 }
 
-object UtilReg {
+object ClockDivider {
   /**
-   * Decodes a utility register from the given register file.
+   * Constructs a fractional clock divider.
    *
-   * @param registerFile The register file.
+   * @param d     The divisor.
+   * @param width The width of the counter.
+   * @return A clock enable signal.
    */
-  def fromRegisterFile(registerFile: Vec[UInt]): UtilReg = {
-    Cat(
-      registerFile(0xfe), // IRQ mask
-      registerFile(0xff)(7), // key on enable
-      registerFile(0xff)(6), // memory enable
-      registerFile(0xff)(4), // IRQ enable
-    ).asTypeOf(new UtilReg)
+  def apply(d: Double, width: Int = 16): Bool = {
+    val clockDivider = new ClockDivider(d, width)
+    clockDivider.clockEnable
   }
 }

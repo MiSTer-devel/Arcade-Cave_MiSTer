@@ -35,6 +35,7 @@ package cave
 import axon.gfx.VideoTimingConfig
 import axon.mem._
 import axon.snd.YMZ280BConfig
+import cave.snd.OKIM6295Config
 import chisel3.util.log2Ceil
 
 object Config {
@@ -76,15 +77,17 @@ object Config {
   /** The width of the program ROM data bus */
   val PROG_ROM_DATA_WIDTH = 16
 
-  /** The width of the sound ROM address bus */
-  val SOUND_ROM_ADDR_WIDTH = 25
-  /** The width of the sound ROM data bus */
-  val SOUND_ROM_DATA_WIDTH = 8
-
   /** The width of the EEPROM address bus */
   val EEPROM_ADDR_WIDTH = 7 // 256B
   /** The width of the EEPROM data bus */
   val EEPROM_DATA_WIDTH = 16
+
+  /** The width of the sound ROM address bus */
+  val SOUND_ROM_ADDR_WIDTH = 25
+  /** The width of the sound ROM data bus */
+  val SOUND_ROM_DATA_WIDTH = 8
+  /** The number of sound ROMs */
+  val SOUND_ROM_COUNT = 2
 
   /** The width of the tile ROM address bus */
   val TILE_ROM_ADDR_WIDTH = 32
@@ -186,10 +189,16 @@ object Config {
   /** 8BPP graphics format */
   val GFX_FORMAT_8BPP = 3
 
+  /** The width of audio sample values */
+  val AUDIO_SAMPLE_WIDTH = 16
+
   /** YMZ280B configuration */
-  val ymzConfig = YMZ280BConfig(
-    clockFreq = CLOCK_FREQ,
-    sampleFreq = 88200 // Hz
+  val ymzConfig = YMZ280BConfig(clockFreq = CLOCK_FREQ, sampleFreq = 88200)
+
+  /** OKIM6295 configuration */
+  val okiConfig = Seq(
+    OKIM6295Config(clockFreq = CLOCK_FREQ, sampleFreq = 1056000),
+    OKIM6295Config(clockFreq = CLOCK_FREQ, sampleFreq = 2112000)
   )
 
   /** DDR configuration */

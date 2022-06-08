@@ -30,33 +30,52 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave.types
+package axon.clk
 
-import axon.mem.ReadMemIO
-import cave.Config
-import cave.gfx.SpriteRegs
 import chisel3._
+import chiseltest._
+import org.scalatest._
+import flatspec.AnyFlatSpec
+import matchers.should.Matchers
 
-/** A bundle that contains control signals for the sprite processor. */
-class SpriteCtrlIO extends Bundle {
-  /** Graphics format */
-  val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))
-  /** Enable the layer output */
-  val enable = Input(Bool())
-  /** Start a new frame */
-  val start = Input(Bool())
-  /** Asserted when the sprite processor is busy */
-  val busy = Output(Bool())
-  /** Enable sprite scaling */
-  val zoom = Input(Bool())
-  /** Sprite registers */
-  val regs = Input(new SpriteRegs)
-  /** VRAM port */
-  val vram = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
-  /** Tile ROM port */
-  val tileRom = new SpriteRomIO
-}
+class ClockDividerTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+  it should "divide the clock by 2" in {
+    test(new Module {
+      val io = IO(new Bundle {
+        val clockEnable = Output(Bool())
+      })
+      io.clockEnable := ClockDivider(2)
+    }) { dut =>
+      dut.io.clockEnable.expect(false)
+      dut.clock.step()
+      dut.io.clockEnable.expect(true)
+      dut.clock.step()
+      dut.io.clockEnable.expect(false)
+      dut.clock.step()
+      dut.io.clockEnable.expect(true)
+    }
+  }
 
-object SpriteCtrlIO {
-  def apply() = new SpriteCtrlIO
+  it should "divide the clock by 3" in {
+    test(new Module {
+      val io = IO(new Bundle {
+        val clockEnable = Output(Bool())
+      })
+      io.clockEnable := ClockDivider(3)
+    }) { dut =>
+      dut.io.clockEnable.expect(false)
+      dut.clock.step()
+      dut.io.clockEnable.expect(false)
+      dut.clock.step()
+      dut.io.clockEnable.expect(false)
+      dut.clock.step()
+      dut.io.clockEnable.expect(true)
+      dut.clock.step()
+      dut.io.clockEnable.expect(false)
+      dut.clock.step()
+      dut.io.clockEnable.expect(false)
+      dut.clock.step()
+      dut.io.clockEnable.expect(true)
+    }
+  }
 }

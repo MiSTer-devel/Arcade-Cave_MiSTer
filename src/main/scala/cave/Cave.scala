@@ -39,7 +39,7 @@ import axon.mem._
 import axon.snd._
 import axon.types._
 import cave.gfx._
-import cave.types._
+import cave.snd.{OKIM6295, NMK112}
 import chisel3._
 import chisel3.util._
 
@@ -61,7 +61,7 @@ class Cave extends Module {
     /** Video port */
     val video = Flipped(VideoIO())
     /** Audio port */
-    val audio = Output(new Audio(Config.ymzConfig.sampleWidth))
+    val audio = Output(SInt(Config.ymzConfig.sampleWidth.W))
     /** RGB output */
     val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
     /** ROM port */
@@ -78,27 +78,28 @@ class Cave extends Module {
     val spriteFrameBufferSwap = Output(Bool())
   })
 
-  // Wires
-  val intAck = Wire(Bool())
-
   // A write-only memory interface is used to connect the CPU to the EEPROM
   val eepromMem = Wire(WriteMemIO(CPU.ADDR_WIDTH, CPU.DATA_WIDTH))
 
-  // Registers
+  // Synchronize vertical blank into system clock domain
   val vBlank = ShiftRegister(io.video.vBlank, 2)
+
+  // Toggle pause register
+  val pauseReg = Util.toggle(Util.rising(io.joystick(0).pause || io.joystick(1).pause))
+
+  // IRQ signals
   val videoIrq = RegInit(false.B)
   val agalletIrq = RegInit(false.B)
   val unknownIrq = RegInit(false.B)
-  val iplReg = RegInit(0.U)
-  val pauseReg = Util.toggle(Util.rising(io.joystick(0).pause || io.joystick(1).pause))
+  val soundIrq = WireInit(false.B)
 
   // M68K CPU
   val cpu = Module(new CPU(Config.CPU_CLOCK_DIV))
   val map = new MemMap(cpu.io)
   cpu.io.halt := pauseReg
   cpu.io.dtack := false.B
-  cpu.io.vpa := intAck // autovectored interrupts
-  cpu.io.ipl := iplReg
+  cpu.io.vpa := cpu.io.as && cpu.io.fc === 7.U // autovectored interrupts
+  cpu.io.ipl := videoIrq || soundIrq || unknownIrq
   cpu.io.din := 0.U
 
   // Set program ROM interface defaults
@@ -230,15 +231,42 @@ class Cave extends Module {
   // YMZ280B
   val ymz = Module(new YMZ280B(Config.ymzConfig))
   ymz.io.cpu.default()
-  ymz.io.mem <> io.rom.soundRom
-  io.audio <> RegEnable(ymz.io.audio.bits, ymz.io.audio.valid)
-  val soundIrq = ymz.io.irq
+  ymz.io.rom <> io.rom.soundRom(0)
+  soundIrq := ymz.io.irq
 
-  // Interrupt acknowledge
-  intAck := cpu.io.as && cpu.io.fc === 7.U
+  // OKIM6295
+  val oki = 0.until(2).map { i =>
+    val oki = Module(new OKIM6295(Config.okiConfig(i)))
+    oki.io.cpu.default()
+    oki
+  }
 
-  // Set and clear interrupt priority level register
-  when(videoIrq || soundIrq || unknownIrq) { iplReg := 1.U }.elsewhen(intAck) { iplReg := 0.U }
+  // NMK112
+  val nmk = Module(new NMK112)
+  nmk.io.cpu.default()
+  nmk.io.mask := 1.U // disable phrase table bank switching for chip 0 (background music)
+
+  // Transform OKIM62695 sound ROM addresses using the NMK112 banking controller
+  val okiRom = Seq(
+    oki(0).io.rom.mapAddr(nmk.transform(0)),
+    oki(1).io.rom.mapAddr(nmk.transform(1))
+  )
+
+  // Mux sound ROM 0 access
+  io.rom.soundRom(0) <> AsyncReadMemIO.mux1H(Seq(
+    (io.gameConfig.sound(0).device === SoundDevice.YMZ280B.U) -> ymz.io.rom,
+    (io.gameConfig.sound(0).device === SoundDevice.OKIM6259.U) -> okiRom(0)
+  ))
+
+  // Mux sound ROM 1 access
+  io.rom.soundRom(1) <> okiRom(1)
+
+  // Mixer
+  io.audio := AudioMixer.sum(Config.AUDIO_SAMPLE_WIDTH,
+    RegEnable(ymz.io.audio.bits.left, ymz.io.audio.valid) -> 1,
+    RegEnable(oki(0).io.audio.bits, oki(0).io.audio.valid) -> 1.6,
+    RegEnable(oki(1).io.audio.bits, oki(1).io.audio.valid) -> 1
+  )
 
   // Toggle video IRQ
   when(Util.rising(vBlank)) {
@@ -295,7 +323,7 @@ class Cave extends Module {
 
   // Access to 0x11xxxx appears during the service menu. It must be ignored, otherwise the service
   // menu freezes.
-  map(0x110000 to 0x2fffff).noprw()
+  map(0x110000 to 0x1fffff).noprw()
 
   // Dangun Feveron
   when(io.gameConfig.index === GameConfig.DFEVERON.U) {
@@ -313,6 +341,27 @@ class Cave extends Module {
     map(0xb00000).r { (_, _) => input0 }
     map(0xb00002).r { (_, _) => input1 }
     map(0xc00000).writeMem(eepromMem)
+  }
+
+  // DonPachi
+  when(io.gameConfig.index === GameConfig.DONPACHI.U) {
+    map(0x000000 to 0x07ffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
+    map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
+    vramMap(0x200000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
+    vramMap(0x300000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
+    map(0x400000 to 0x40ffff).readWriteMemT(vram8x8(2).io.portA)(a => a(12, 0)) // layer 2 is 8x8 only
+    map(0x500000 to 0x50ffff).readWriteMem(spriteRam.io.portA)
+    map(0x600000 to 0x600005).readWriteMem(layerRegs(1).io.mem)
+    map(0x700000 to 0x700005).readWriteMem(layerRegs(0).io.mem)
+    map(0x800000 to 0x800005).readWriteMem(layerRegs(2).io.mem)
+    vregMap(0x900000)
+    map(0xa08000 to 0xa08fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
+    map(0xb00000 to 0xb00003).readWriteMem(oki(0).io.cpu)
+    map(0xb00010 to 0xb00013).readWriteMem(oki(1).io.cpu)
+    map(0xb00020 to 0xb0002f).writeMem(nmk.io.cpu)
+    map(0xc00000).r { (_, _) => input0 }
+    map(0xc00002).r { (_, _) => input1 }
+    map(0xd00000).writeMem(eepromMem)
   }
 
   // DoDonPachi
@@ -445,7 +494,7 @@ object Cave {
     ))
 
     val right = MuxLookup(gameIndex, default2, Seq(
-      GameConfig.GAIA.U -> Cat("b1111111111".U, ~joystick(1).start, ~joystick(0).start, "b1".U, ~service, ~coin2, ~coin1),
+      GameConfig.GAIA.U -> Cat("b0000111111".U, ~joystick(1).start, ~joystick(0).start, "b1".U, ~service, ~coin2, ~coin1),
       GameConfig.GUWANGE.U -> Cat("b11111111".U, eeprom.io.serial.sdo, "b1111".U, ~service, ~coin2, ~coin1),
     ))
 

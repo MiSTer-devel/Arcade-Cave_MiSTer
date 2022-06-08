@@ -30,35 +30,50 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave.types
+package axon.snd.ymz
 
-import axon.mem.ReadMemIO
-import cave.Config
-import cave.gfx.LayerRegs
 import chisel3._
+import chiseltest._
+import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-/** A bundle that contains control signals for the layer processor. */
-class LayerCtrlIO extends Bundle {
-  /** Graphics format */
-  val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))
-  /** Enable the layer output */
-  val enable = Input(Bool())
-  /** Enable the row scroll effect */
-  val rowScrollEnable = Input(Bool())
-  /** Enable the row select effect */
-  val rowSelectEnable = Input(Bool())
-  /** Layer registers port */
-  val regs = Input(new LayerRegs)
-  /** 8x8 VRAM port */
-  val vram8x8 = ReadMemIO(Config.LAYER_8x8_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
-  /** 16x16 VRAM port */
-  val vram16x16 = ReadMemIO(Config.LAYER_16x16_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
-  /** Line RAM port */
-  val lineRam = ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
-  /** Tile ROM port */
-  val tileRom = new LayerRomIO
-}
+class LERPTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+  it should "interpolate sample values" in {
+    test(new LERP) { dut =>
+      dut.io.samples(0).poke(0)
+      dut.io.samples(1).poke(16)
 
-object LayerCtrlIO {
-  def apply() = new LayerCtrlIO
+      dut.io.index.poke(0)
+      dut.io.out.expect(0.S)
+
+      dut.io.index.poke(64)
+      dut.io.out.expect(4.S)
+
+      dut.io.index.poke(128)
+      dut.io.out.expect(8.S)
+
+      dut.io.index.poke(192)
+      dut.io.out.expect(12.S)
+
+      dut.io.index.poke(256)
+      dut.io.out.expect(16.S)
+    }
+  }
+
+  it should "handle min/max sample values" in {
+    test(new LERP) { dut =>
+      dut.io.samples(0).poke(-32767)
+      dut.io.samples(1).poke(32767)
+
+      dut.io.index.poke(0)
+      dut.io.out.expect(-32767.S)
+
+      dut.io.index.poke(128)
+      dut.io.out.expect(0.S)
+
+      dut.io.index.poke(256)
+      dut.io.out.expect(32767.S)
+    }
+  }
 }

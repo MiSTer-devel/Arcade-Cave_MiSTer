@@ -35,8 +35,7 @@ package cave.gfx
 import axon.Util
 import axon.gfx.VideoIO
 import axon.types._
-import cave.Config
-import cave.types._
+import cave._
 import chisel3._
 import chisel3.util._
 

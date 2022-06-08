@@ -36,7 +36,6 @@ import axon.Util
 import axon.gfx._
 import axon.types._
 import cave._
-import cave.types._
 import chisel3._
 import chisel3.util._
 

@@ -30,28 +30,34 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.snd
+package cave.gfx
 
+import axon.mem.ReadMemIO
+import cave._
 import chisel3._
 
-/**
- * Interpolates sample values.
- *
- * @param sampleWidth The width of the sample words.
- * @param indexWidth  The width of the interpolation index.
- */
-class LERP(sampleWidth: Int = 16, indexWidth: Int = 9) extends Module {
-  val io = IO(new Bundle {
-    /** Input sample values */
-    val samples = Input(Vec(2, SInt(sampleWidth.W)))
-    /** Interpolation index */
-    val index = Input(UInt(indexWidth.W))
-    /** Output sample value */
-    val out = Output(SInt(sampleWidth.W))
-  })
+/** A bundle that contains control signals for the layer processor. */
+class LayerCtrlIO extends Bundle {
+  /** Graphics format */
+  val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))
+  /** Enable the layer output */
+  val enable = Input(Bool())
+  /** Enable the row scroll effect */
+  val rowScrollEnable = Input(Bool())
+  /** Enable the row select effect */
+  val rowSelectEnable = Input(Bool())
+  /** Layer registers port */
+  val regs = Input(new LayerRegs)
+  /** 8x8 VRAM port */
+  val vram8x8 = ReadMemIO(Config.LAYER_8x8_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
+  /** 16x16 VRAM port */
+  val vram16x16 = ReadMemIO(Config.LAYER_16x16_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
+  /** Line RAM port */
+  val lineRam = ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
+  /** Tile ROM port */
+  val tileRom = new LayerRomIO
+}
 
-  // Calculate interpolated sample value
-  val slope = io.samples(1) -& io.samples(0)
-  val offset = io.index * slope
-  io.out := offset(sampleWidth + indexWidth - 2, indexWidth - 1).asSInt + io.samples(0)
+object LayerCtrlIO {
+  def apply() = new LayerCtrlIO
 }

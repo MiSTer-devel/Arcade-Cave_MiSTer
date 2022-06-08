@@ -33,8 +33,7 @@
 package cave.fb
 
 import axon.mem._
-import cave.Config
-import cave.types.SystemFrameBufferIO
+import cave._
 import chisel3._
 
 /**

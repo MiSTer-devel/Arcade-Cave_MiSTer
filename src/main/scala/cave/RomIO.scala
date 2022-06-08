@@ -30,29 +30,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package axon.mem.cache
+package cave
 
-import axon.Util
 import chisel3._
 
-/**
- * A cache line is stored internally as a vector of words that has the same width as the output data
- * bus.
- *
- * A cache line can also be represented a vector of input words, by rearranging the byte grouping.
- *
- * @param config The cache configuration.
- */
-class Line(private val config: Config) extends Bundle {
-  /** The cache line data */
-  val words: Vec[Bits] = Vec(config.lineWidth, Bits(config.outDataWidth.W))
-
-  /** Returns the cache line represented as a vector input words */
-  def inWords: Vec[Bits] = {
-    val ws = Util.decode(words.asUInt, config.inWords, config.inDataWidth)
-    VecInit(ws)
-  }
-
-  /** The output words in the cache line */
-  def outWords: Vec[Bits] = words
+/** A bundle that contains memory ports for all ROMs. */
+class RomIO extends Bundle {
+  /** Program ROM port */
+  val progRom = new ProgRomIO
+  /** Sound ROM port */
+  val soundRom = Vec(Config.SOUND_ROM_COUNT, new SoundRomIO)
+  /** EEPROM port */
+  val eeprom = new EEPROMIO
+  /** Layer tile ROM port */
+  val layerTileRom = Vec(Config.LAYER_COUNT, new LayerRomIO)
+  /** Sprite tile ROM port */
+  val spriteTileRom = new SpriteRomIO
 }

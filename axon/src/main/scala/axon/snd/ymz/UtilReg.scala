@@ -30,21 +30,38 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave.types
+package axon.snd.ymz
 
-import cave.Config
-import chisel3.{Bundle, Vec}
+import chisel3._
+import chisel3.util._
 
-/** A bundle that contains memory ports for all ROMs. */
-class RomIO extends Bundle {
-  /** Program ROM port */
-  val progRom = new ProgRomIO
-  /** Sound ROM port */
-  val soundRom = new SoundRomIO
-  /** EEPROM port */
-  val eeprom = new EEPROMIO
-  /** Layer tile ROM port */
-  val layerTileRom = Vec(Config.LAYER_COUNT, new LayerRomIO)
-  /** Sprite tile ROM port */
-  val spriteTileRom = new SpriteRomIO
+/** Represents the utility register. */
+class UtilReg extends Bundle {
+  /** IRQ mask */
+  val irqMask = Bits(8.W)
+  /** Flags */
+  val flags = new Bundle {
+    /** Key on enable */
+    val keyOnEnable = Bool()
+    /** Memory enable */
+    val memEnable = Bool()
+    /** IRQ enable */
+    val irqEnable = Bool()
+  }
+}
+
+object UtilReg {
+  /**
+   * Decodes a utility register from the given register file.
+   *
+   * @param registerFile The register file.
+   */
+  def fromRegisterFile(registerFile: Vec[UInt]): UtilReg = {
+    Cat(
+      registerFile(0xfe), // IRQ mask
+      registerFile(0xff)(7), // key on enable
+      registerFile(0xff)(6), // memory enable
+      registerFile(0xff)(4), // IRQ enable
+    ).asTypeOf(new UtilReg)
+  }
 }
