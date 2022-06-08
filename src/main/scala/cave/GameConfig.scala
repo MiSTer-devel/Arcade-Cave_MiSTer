@@ -62,10 +62,10 @@ class GameConfig extends Bundle {
   val sprite = new Bundle {
     /** Sprite graphics format */
     val format = UInt(Config.GFX_FORMAT_WIDTH.W)
-    /** Asserted when sprite scaling is enabled */
-    val zoom = Bool()
     /** Sprite ROM offset */
     val romOffset = UInt(32.W)
+    /** Asserted when sprite scaling is enabled */
+    val zoom = Bool()
   }
 }
 
@@ -118,8 +118,8 @@ object GameConfig {
     wire.layer(1).romOffset := 0x00700080.U
     wire.layer(2).romOffset := 0.U // disabled
     wire.sprite.format := Config.GFX_FORMAT_4BPP.U
-    wire.sprite.zoom := true.B
     wire.sprite.romOffset := 0x00900080.U
+    wire.sprite.zoom := true.B
     wire
   }
 
@@ -132,14 +132,14 @@ object GameConfig {
     wire.sound(0).romOffset := 0x00100080.U
     wire.sound(1).romOffset := 0.U // disabled
     wire.layer(0).format := Config.GFX_FORMAT_4BPP.U
-    wire.layer(1).format := Config.GFX_FORMAT_4BPP.U
-    wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(0).romOffset := 0x00500080.U
+    wire.layer(1).format := Config.GFX_FORMAT_4BPP.U
     wire.layer(1).romOffset := 0x00700080.U
+    wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(2).romOffset := 0x00900080.U
     wire.sprite.format := Config.GFX_FORMAT_4BPP_MSB.U
-    wire.sprite.zoom := false.B
     wire.sprite.romOffset := 0x00b00080.U
+    wire.sprite.zoom := false.B
     wire
   }
 
@@ -152,14 +152,14 @@ object GameConfig {
     wire.sound(0).romOffset := 0x00080080.U
     wire.sound(1).romOffset := 0x00280080.U
     wire.layer(0).format := Config.GFX_FORMAT_4BPP.U
-    wire.layer(1).format := Config.GFX_FORMAT_4BPP.U
-    wire.layer(2).format := Config.GFX_FORMAT_4BPP.U
     wire.layer(0).romOffset := 0x00380080.U
+    wire.layer(1).format := Config.GFX_FORMAT_4BPP.U
     wire.layer(1).romOffset := 0x00480080.U
+    wire.layer(2).format := Config.GFX_FORMAT_4BPP.U
     wire.layer(2).romOffset := 0x00580080.U
     wire.sprite.format := Config.GFX_FORMAT_4BPP_MSB.U
-    wire.sprite.zoom := false.B
     wire.sprite.romOffset := 0x005c0080.U
+    wire.sprite.zoom := false.B
     wire
   }
 
@@ -172,14 +172,14 @@ object GameConfig {
     wire.sound(0).romOffset := 0x00100080.U
     wire.sound(1).romOffset := 0.U // disabled
     wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
-    wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
-    wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(0).romOffset := 0x00500080.U
+    wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(1).romOffset := 0x00d00080.U
+    wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(2).romOffset := 0x01500080.U
     wire.sprite.format := Config.GFX_FORMAT_8BPP.U
-    wire.sprite.zoom := true.B
     wire.sprite.romOffset := 0x01900080.U
+    wire.sprite.zoom := true.B
     wire
   }
 
@@ -192,14 +192,14 @@ object GameConfig {
     wire.sound(0).romOffset := 0x00100000.U
     wire.sound(1).romOffset := 0.U // disabled
     wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
-    wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
-    wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(0).romOffset := 0x00d00000.U
+    wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(1).romOffset := 0x01100000.U
+    wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(2).romOffset := 0x01500000.U
     wire.sprite.format := Config.GFX_FORMAT_4BPP.U
-    wire.sprite.zoom := true.B
     wire.sprite.romOffset := 0x01900000.U
+    wire.sprite.zoom := true.B
     wire
   }
 
@@ -212,14 +212,14 @@ object GameConfig {
     wire.sound(0).romOffset := 0x00100080.U
     wire.sound(1).romOffset := 0.U // disabled
     wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
-    wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
-    wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(0).romOffset := 0x00500080.U
+    wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(1).romOffset := 0x00d00080.U
+    wire.layer(2).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(2).romOffset := 0x01100080.U
     wire.sprite.format := Config.GFX_FORMAT_8BPP.U
-    wire.sprite.zoom := true.B
     wire.sprite.romOffset := 0x01500080.U
+    wire.sprite.zoom := true.B
     wire
   }
 
@@ -232,14 +232,14 @@ object GameConfig {
     wire.sound(0).romOffset := 0x00100080.U
     wire.sound(1).romOffset := 0.U // disabled
     wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
-    wire.layer(1).format := Config.GFX_FORMAT_UNKNOWN.U
-    wire.layer(2).format := Config.GFX_FORMAT_UNKNOWN.U
     wire.layer(0).romOffset := 0x00300080.U
+    wire.layer(1).format := Config.GFX_FORMAT_UNKNOWN.U
     wire.layer(1).romOffset := 0.U // disabled
+    wire.layer(2).format := Config.GFX_FORMAT_UNKNOWN.U
     wire.layer(2).romOffset := 0.U // disabled
     wire.sprite.format := Config.GFX_FORMAT_4BPP.U
-    wire.sprite.zoom := true.B
     wire.sprite.romOffset := 0x00700080.U
+    wire.sprite.zoom := true.B
     wire
   }
 }
