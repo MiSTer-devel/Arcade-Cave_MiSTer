@@ -71,7 +71,7 @@ class Main extends Module {
     /** Frame buffer control port */
     val frameBufferCtrl = FrameBufferCtrlIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
     /** Audio port */
-    val audio = Output(SInt(Config.ymzConfig.sampleWidth.W))
+    val audio = Output(SInt(Config.AUDIO_SAMPLE_WIDTH.W))
     /** Video port */
     val video = VideoIO()
     /** RGB output */
