@@ -30,21 +30,34 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave.types
+package cave.gfx
 
-import cave.Config
-import chisel3.{Bundle, Vec}
+import axon.mem.ReadMemIO
+import cave._
+import chisel3._
 
-/** A bundle that contains memory ports for all ROMs. */
-class RomIO extends Bundle {
-  /** Program ROM port */
-  val progRom = new ProgRomIO
-  /** Sound ROM port */
-  val soundRom = Vec(Config.SOUND_ROM_COUNT, new SoundRomIO)
-  /** EEPROM port */
-  val eeprom = new EEPROMIO
-  /** Layer tile ROM port */
-  val layerTileRom = Vec(Config.LAYER_COUNT, new LayerRomIO)
-  /** Sprite tile ROM port */
-  val spriteTileRom = new SpriteRomIO
+/** A bundle that contains control signals for the layer processor. */
+class LayerCtrlIO extends Bundle {
+  /** Graphics format */
+  val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))
+  /** Enable the layer output */
+  val enable = Input(Bool())
+  /** Enable the row scroll effect */
+  val rowScrollEnable = Input(Bool())
+  /** Enable the row select effect */
+  val rowSelectEnable = Input(Bool())
+  /** Layer registers port */
+  val regs = Input(new LayerRegs)
+  /** 8x8 VRAM port */
+  val vram8x8 = ReadMemIO(Config.LAYER_8x8_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
+  /** 16x16 VRAM port */
+  val vram16x16 = ReadMemIO(Config.LAYER_16x16_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
+  /** Line RAM port */
+  val lineRam = ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
+  /** Tile ROM port */
+  val tileRom = new LayerRomIO
+}
+
+object LayerCtrlIO {
+  def apply() = new LayerCtrlIO
 }

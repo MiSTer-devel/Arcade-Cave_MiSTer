@@ -33,8 +33,7 @@
 package cave.gfx
 
 import axon.util.Counter
-import cave.Config
-import cave.types._
+import cave._
 import chisel3._
 import chisel3.util._
 

@@ -40,7 +40,6 @@ import axon.snd._
 import axon.types._
 import cave.gfx._
 import cave.snd.{OKIM6295, NMK112}
-import cave.types._
 import chisel3._
 import chisel3.util._
 

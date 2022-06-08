@@ -30,11 +30,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave.types
+package cave.gfx
 
 import axon.mem.ReadMemIO
-import cave.Config
-import cave.gfx.SpriteRegs
+import cave._
 import chisel3._
 
 /** A bundle that contains control signals for the sprite processor. */

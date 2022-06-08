@@ -39,7 +39,6 @@ import axon.mem.buffer.BurstBuffer
 import axon.mem.cache.{ReadCache, ReadWriteCache}
 import axon.mem.dma.BurstReadDMA
 import axon.mister._
-import cave.types._
 import chisel3._
 
 /** The memory subsystem routes memory requests to either DDR or SDRAM. */

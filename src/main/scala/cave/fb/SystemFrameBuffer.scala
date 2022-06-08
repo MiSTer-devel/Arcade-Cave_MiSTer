@@ -36,8 +36,7 @@ import axon._
 import axon.gfx.VideoIO
 import axon.mem.BurstWriteMemIO
 import axon.mister.FrameBufferCtrlIO
-import cave.Config
-import cave.types.SystemFrameBufferIO
+import cave._
 import chisel3._
 import chisel3.util.ShiftRegister
 

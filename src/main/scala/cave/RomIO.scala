@@ -32,38 +32,18 @@
 
 package cave
 
-import axon.cpu.m68k.CPU
 import chisel3._
-import axon.mem._
 
-package object types {
-  /** DIP switches IO */
-  def DIPIO(): Vec[UInt] = Input(Vec(4, Bits(CPU.DATA_WIDTH.W)))
-
-  /** Program ROM IO */
-  class ProgRomIO extends AsyncReadMemIO(Config.PROG_ROM_ADDR_WIDTH, Config.PROG_ROM_DATA_WIDTH)
-
-  /** Sound ROM IO */
-  class SoundRomIO extends AsyncReadMemIO(Config.SOUND_ROM_ADDR_WIDTH, Config.SOUND_ROM_DATA_WIDTH)
-
-  /** EEPROM IO */
-  class EEPROMIO extends AsyncReadWriteMemIO(Config.EEPROM_ADDR_WIDTH, Config.EEPROM_DATA_WIDTH)
-
-  /** Sprite ROM IO */
-  class SpriteRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH)
-
-  /** Layer ROM IO */
-  class LayerRomIO extends AsyncReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH)
-
-  /** Palette RAM IO (GPU-side) */
-  class PaletteRamIO extends ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
-
-  /** Sprite frame buffer IO */
-  class SpriteFrameBufferIO extends WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SPRITE_FRAME_BUFFER_DATA_WIDTH)
-
-  /** Sprite line buffer IO */
-  class SpriteLineBufferIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH_X, Config.SPRITE_FRAME_BUFFER_DATA_WIDTH)
-
-  /** System frame buffer IO */
-  class SystemFrameBufferIO extends WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SYSTEM_FRAME_BUFFER_DATA_WIDTH)
+/** A bundle that contains memory ports for all ROMs. */
+class RomIO extends Bundle {
+  /** Program ROM port */
+  val progRom = new ProgRomIO
+  /** Sound ROM port */
+  val soundRom = Vec(Config.SOUND_ROM_COUNT, new SoundRomIO)
+  /** EEPROM port */
+  val eeprom = new EEPROMIO
+  /** Layer tile ROM port */
+  val layerTileRom = Vec(Config.LAYER_COUNT, new LayerRomIO)
+  /** Sprite tile ROM port */
+  val spriteTileRom = new SpriteRomIO
 }
