@@ -39,12 +39,12 @@ import chisel3._
 import chisel3.util.log2Ceil
 
 /**
- * The NMK112 is a custom device that extends the address space of the OKI6295 ADPCM decoder, using
- * bank switching.
+ * The NMK112 is a custom banking controller that extends the address space of the OKIM6295 ADPCM
+ * decoder.
  *
- * It divides the address space of the OKI6295 into four separate 64KB banks, where each bank can be
- * mapped to a different page in the sound ROM. This allows it to simultaneously play four channels,
- * where each channel is loading data from a different bank in the sound ROM.
+ * It divides the address space of the OKIM6295 into four separate 64KB banks, where each bank can
+ * be mapped to a different page in the sound ROM. This allows it to simultaneously play four
+ * channels, where each channel addresses data from a different bank in the sound ROM.
  *
  * {{{
  * 0x00000-0x000ff: phrase table (bank 0)

@@ -39,7 +39,7 @@ import axon.mem._
 import axon.snd._
 import axon.types._
 import cave.gfx._
-import cave.snd.{OKI6295, NMK112}
+import cave.snd.{OKIM6295, NMK112}
 import cave.types._
 import chisel3._
 import chisel3.util._
@@ -240,9 +240,9 @@ class Cave extends Module {
   nmk.io.cpu.default()
   nmk.io.mask := 1.U // disable phrase table bank switching for chip 0 (background music)
 
-  // OKI6295
+  // OKIM6295
   val oki = 0.until(2).map { i =>
-    val oki = Module(new OKI6295(Config.okiConfig(i)))
+    val oki = Module(new OKIM6295(Config.okiConfig(i)))
     oki.io.cpu.default()
     oki.io.rom <> io.rom.soundRom(i)
     nmk.io.addr(i).in := oki.io.rom.addr

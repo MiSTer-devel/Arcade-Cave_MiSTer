@@ -38,7 +38,7 @@ import chisel3._
 import chisel3.util._
 
 /**
- * Represents the OKI6295 configuration.
+ * Represents the OKIM6295 configuration.
  *
  * @param clockFreq    The system clock frequency (Hz).
  * @param sampleFreq   The sample clock frequency (Hz).
@@ -48,7 +48,7 @@ import chisel3.util._
  * @param cpuAddrWidth The width of the CPU address bus.
  * @param cpuDataWidth The width of the CPU data bus.
  */
-case class OKI6295Config(clockFreq: Double,
+case class OKIM6295Config(clockFreq: Double,
                          sampleFreq: Double,
                          sampleWidth: Int = 14,
                          memAddrWidth: Int = 18,
@@ -57,14 +57,14 @@ case class OKI6295Config(clockFreq: Double,
                          cpuDataWidth: Int = 8)
 
 /**
- * The OKI6295 is a 4-channel ADPCM decoder.
+ * The OKIM6295 is a 4-channel ADPCM decoder.
  *
  * It receives commands from the CPU and plays samples stored in an external ROM.
  *
  * @note This module wraps jotego's JT6295 implementation.
  * @see https://github.com/jotego/jt6295
  */
-class OKI6295(config: OKI6295Config) extends Module {
+class OKIM6295(config: OKIM6295Config) extends Module {
   val io = IO(new Bundle {
     /** CPU port */
     val cpu = Flipped(ReadWriteMemIO(config.cpuAddrWidth, config.cpuDataWidth))

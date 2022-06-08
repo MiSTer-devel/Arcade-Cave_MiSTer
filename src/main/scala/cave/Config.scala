@@ -35,7 +35,7 @@ package cave
 import axon.gfx.VideoTimingConfig
 import axon.mem._
 import axon.snd.YMZ280BConfig
-import cave.snd.OKI6295Config
+import cave.snd.OKIM6295Config
 import chisel3.util.log2Ceil
 
 object Config {
@@ -195,10 +195,10 @@ object Config {
   /** YMZ280B configuration */
   val ymzConfig = YMZ280BConfig(clockFreq = CLOCK_FREQ, sampleFreq = 88200)
 
-  /** OKI6295 configuration */
+  /** OKIM6295 configuration */
   val okiConfig = Seq(
-    OKI6295Config(clockFreq = CLOCK_FREQ, sampleFreq = 1056000),
-    OKI6295Config(clockFreq = CLOCK_FREQ, sampleFreq = 2112000)
+    OKIM6295Config(clockFreq = CLOCK_FREQ, sampleFreq = 1056000),
+    OKIM6295Config(clockFreq = CLOCK_FREQ, sampleFreq = 2112000)
   )
 
   /** DDR configuration */
