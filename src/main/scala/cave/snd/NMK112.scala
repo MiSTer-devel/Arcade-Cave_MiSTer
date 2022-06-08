@@ -70,6 +70,18 @@ class NMK112 extends Module {
     val mask = Input(UInt(NMK112.CHIP_COUNT.W))
   })
 
+  /**
+   * Transforms a sound ROM memory address for the given chip, using the current bank settings.
+   *
+   * @param chip The chip index.
+   * @param addr The memory address.
+   * @return A memory address.
+   */
+  def transform(chip: Int)(addr: UInt): UInt = {
+    io.addr(chip).in := addr
+    io.addr(chip).out
+  }
+
   // Page table register
   val pageTableReg = Reg(Vec(NMK112.CHIP_COUNT, Vec(NMK112.BANK_COUNT, UInt(log2Ceil(NMK112.PAGE_COUNT).W))))
 

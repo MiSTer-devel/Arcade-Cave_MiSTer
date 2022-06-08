@@ -235,20 +235,32 @@ class Cave extends Module {
   ymz.io.rom <> io.rom.soundRom(0)
   soundIrq := ymz.io.irq
 
+  // OKIM6295
+  val oki = 0.until(2).map { i =>
+    val oki = Module(new OKIM6295(Config.okiConfig(i)))
+    oki.io.cpu.default()
+    oki
+  }
+
   // NMK112
   val nmk = Module(new NMK112)
   nmk.io.cpu.default()
   nmk.io.mask := 1.U // disable phrase table bank switching for chip 0 (background music)
 
-  // OKIM6295
-  val oki = 0.until(2).map { i =>
-    val oki = Module(new OKIM6295(Config.okiConfig(i)))
-    oki.io.cpu.default()
-    oki.io.rom <> io.rom.soundRom(i)
-    nmk.io.addr(i).in := oki.io.rom.addr
-    io.rom.soundRom(i).addr := nmk.io.addr(i).out
-    oki
-  }
+  // Transform OKIM62695 sound ROM addresses using the NMK112 banking controller
+  val okiRom = Seq(
+    oki(0).io.rom.mapAddr(nmk.transform(0)),
+    oki(1).io.rom.mapAddr(nmk.transform(1))
+  )
+
+  // Mux sound ROM 0 access
+  io.rom.soundRom(0) <> AsyncReadMemIO.mux1H(Seq(
+    (io.gameConfig.sound(0).device === SoundDevice.YMZ280B.U) -> ymz.io.rom,
+    (io.gameConfig.sound(0).device === SoundDevice.OKIM6259.U) -> okiRom(0)
+  ))
+
+  // Mux sound ROM 1 access
+  io.rom.soundRom(1) <> okiRom(1)
 
   // Mixer
   io.audio := AudioMixer.sum(Config.AUDIO_SAMPLE_WIDTH,

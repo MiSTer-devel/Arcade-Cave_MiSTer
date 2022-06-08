@@ -103,7 +103,7 @@ class AsyncReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth
    * @param f The transform function.
    */
   override def mapAddr(f: UInt => UInt): AsyncReadMemIO = {
-    val mem = Wire(chiselTypeOf(this))
+    val mem = Wire(Flipped(AsyncReadMemIO(f(addr).getWidth, this.dataWidth)))
     mem.rd := rd
     waitReq := mem.waitReq
     valid := mem.valid
