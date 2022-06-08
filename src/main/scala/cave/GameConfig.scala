@@ -48,6 +48,8 @@ class GameConfig extends Bundle {
   val eepromOffset = UInt(32.W)
   /** Sound configuration */
   val sound = Vec(Config.SOUND_ROM_COUNT, new Bundle {
+    /** Sound device */
+    val device = UInt(2.W)
     /** Sound ROM offset */
     val romOffset = UInt(32.W)
   })
@@ -109,7 +111,9 @@ object GameConfig {
     wire.granularity := 16.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00100000.U
+    wire.sound(0).device := SoundDevice.YMZ280B.U
     wire.sound(0).romOffset := 0x00100080.U
+    wire.sound(1).device := SoundDevice.DISABLED.U
     wire.sound(1).romOffset := 0.U // disabled
     wire.layer(0).format := Config.GFX_FORMAT_4BPP.U
     wire.layer(1).format := Config.GFX_FORMAT_4BPP.U
@@ -129,7 +133,9 @@ object GameConfig {
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00100000.U
+    wire.sound(0).device := SoundDevice.YMZ280B.U
     wire.sound(0).romOffset := 0x00100080.U
+    wire.sound(1).device := SoundDevice.DISABLED.U
     wire.sound(1).romOffset := 0.U // disabled
     wire.layer(0).format := Config.GFX_FORMAT_4BPP.U
     wire.layer(0).romOffset := 0x00500080.U
@@ -149,7 +155,9 @@ object GameConfig {
     wire.granularity := 16.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00080000.U
+    wire.sound(0).device := SoundDevice.OKIM6259.U
     wire.sound(0).romOffset := 0x00080080.U
+    wire.sound(1).device := SoundDevice.OKIM6259.U
     wire.sound(1).romOffset := 0x00280080.U
     wire.layer(0).format := Config.GFX_FORMAT_4BPP.U
     wire.layer(0).romOffset := 0x00380080.U
@@ -169,8 +177,10 @@ object GameConfig {
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00100000.U
+    wire.sound(0).device := SoundDevice.YMZ280B.U
     wire.sound(0).romOffset := 0x00100080.U
-    wire.sound(1).romOffset := 0.U // disabled
+    wire.sound(1).device := SoundDevice.DISABLED.U
+    wire.sound(1).romOffset := 0.U
     wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(0).romOffset := 0x00500080.U
     wire.layer(1).format := Config.GFX_FORMAT_8BPP.U
@@ -189,7 +199,9 @@ object GameConfig {
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0.U // disabled
+    wire.sound(0).device := SoundDevice.YMZ280B.U
     wire.sound(0).romOffset := 0x00100000.U
+    wire.sound(1).device := SoundDevice.DISABLED.U
     wire.sound(1).romOffset := 0.U // disabled
     wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(0).romOffset := 0x00d00000.U
@@ -209,7 +221,9 @@ object GameConfig {
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00100000.U
+    wire.sound(0).device := SoundDevice.YMZ280B.U
     wire.sound(0).romOffset := 0x00100080.U
+    wire.sound(1).device := SoundDevice.DISABLED.U
     wire.sound(1).romOffset := 0.U // disabled
     wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(0).romOffset := 0x00500080.U
@@ -229,7 +243,9 @@ object GameConfig {
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00100000.U
+    wire.sound(0).device := SoundDevice.YMZ280B.U
     wire.sound(0).romOffset := 0x00100080.U
+    wire.sound(1).device := SoundDevice.DISABLED.U
     wire.sound(1).romOffset := 0.U // disabled
     wire.layer(0).format := Config.GFX_FORMAT_8BPP.U
     wire.layer(0).romOffset := 0x00300080.U
