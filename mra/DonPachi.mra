@@ -35,6 +35,10 @@
     <!-- sprites -->
     <part name="atdp.u44" crc="7189e953" />
     <part name="atdp.u45" crc="6984173f" />
+
+    <!-- enable C button in EEPROM -->
+    <patch offset="0x00080000">00 0c ff ff</patch>
+    <patch offset="0x00080008">00 04</patch>
   </rom>
 
   <!-- select game -->
