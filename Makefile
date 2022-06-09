@@ -1,14 +1,14 @@
 .PHONY: build program test clean
 
 build:
-	sbt compile run
+	./mill cave.run
 	cd quartus; quartus_sh --flow compile cave
 
 program:
 	cd quartus; quartus_pgm -m jtag -c DE-SoC -o "p;output_files/cave.sof@2"
 
 test:
-	sbt test
+	./mill cave.test
 
 clean:
-	rm -rf project/target quartus/rtl/ChiselTop.v quartus/rtl/Main.* quartus/db quartus/incremental_db quartus/output_files target test_run_dir
+	rm -rf out quartus/rtl/ChiselTop.v quartus/rtl/Main.* quartus/db quartus/incremental_db quartus/output_files test_run_dir

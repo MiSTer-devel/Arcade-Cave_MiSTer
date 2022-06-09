@@ -1,4 +1,9 @@
+.bloop
 .bsp
+.idea
+.metals
+.vscode
+out
 project/target
 quartus/*.qws
 quartus/*.qdf
@@ -10,5 +15,4 @@ quartus/incremental_db
 quartus/jtag.cdf
 quartus/output_files
 quartus/rtl/Main.*
-target
 test_run_dir
