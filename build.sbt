@@ -14,9 +14,9 @@ lazy val settings = Seq(
     "-deprecation",
     "-feature",
     "-Xcheckinit",
-    "-P:chiselplugin:genBundleElements",
+    "-P:chiselplugin:genBundleElements"
   ),
-  addCompilerPlugin("edu.berkeley.cs" % "chisel3-plugin" % chiselVersion cross CrossVersion.full),
+  addCompilerPlugin("edu.berkeley.cs" % "chisel3-plugin" % chiselVersion cross CrossVersion.full)
 )
 
 lazy val axon = (project in file("axon"))
