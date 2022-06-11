@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/axon.iml" filepath="$PROJECT_DIR$/.idea/modules/axon.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/cave.iml" filepath="$PROJECT_DIR$/.idea/modules/cave.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/cave-build.iml" filepath="$PROJECT_DIR$/.idea/modules/cave-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/project.cave-build.iml" filepath="$PROJECT_DIR$/.idea/modules/project.cave-build.iml" />
     </modules>
   </component>
 </project>
