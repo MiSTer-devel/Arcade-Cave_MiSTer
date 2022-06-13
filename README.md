@@ -1,6 +1,6 @@
-# Cave 68k
+# Cave 68000
 
-This project contains the MiSTer core for Cave's first-generation 68k arcade hardware.
+This project contains the MiSTer core for Cave's first-generation 68000 arcade hardware.
 
 ![23](https://user-images.githubusercontent.com/32810066/126911397-e54b786a-39ff-4200-8fdb-8750d1b40976.png)
 
@@ -8,15 +8,15 @@ This project contains the MiSTer core for Cave's first-generation 68k arcade har
 
 | Title                                                                                                                 | Status        |
 |-----------------------------------------------------------------------------------------------------------------------|---------------|
-| [**Do Donpachi**](https://en.wikipedia.org/wiki/DoDonPachi)                                                           | Public        |
+| [**DoDonpachi**](https://en.wikipedia.org/wiki/DoDonPachi)                                                            | Public        |
 | [**ESP Ra. De.**](https://en.wikipedia.org/wiki/ESP_Ra.De.)                                                           | Public        |
 | [**Dangun Feveron**](https://en.wikipedia.org/wiki/Dangun_Feveron)                                                    | Public        |
 | [**Uo Poko**](https://en.wikipedia.org/wiki/Puzzle_Uo_Poko)                                                           | Public        |
 | [**Gunwange**](https://en.wikipedia.org/wiki/Guwange)                                                                 | Public        |
-| [**Gaia Crusaiders**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=gaia&arcade_only=0&autosearch=1)       | Private beta  |
+| [**Gaia Crusaders**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=gaia&arcade_only=0&autosearch=1)        | Private beta  |
 | [**Thunder Heroes**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=theroes&arcade_only=0&autosearch=1)     | Private beta  |
+| [**Donpachi**](https://en.wikipedia.org/wiki/DonPachi)                                                                | Private beta  |
 | [**Air Gallet**](https://en.wikipedia.org/wiki/Air_Gallet)                                                            | Unimplemented |
-| [**Donpachi**](https://en.wikipedia.org/wiki/DonPachi)                                                                | Unimplemented |
 | [**Hotdog Storm**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=hotdogst&arcade_only=0&autosearch=1)      | Unimplemented |
 | [**Koro Koro Quest**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=korokoro&arcade_only=0&autosearch=1)   | Unimplemented |
 | [**Mazinger Z**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=mazinger&arcade_only=0&autosearch=1)        | Unimplemented |
