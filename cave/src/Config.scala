@@ -143,8 +143,8 @@ object Config {
   val LAYER_COUNT = 3
   /** The number of layer registers */
   val LAYER_REGS_COUNT = 3
-  /** The number of video registers */
-  val VIDEO_REGS_COUNT = 8
+  /** The number of sprite registers */
+  val SPRITE_REGS_COUNT = 8
 
   /** The number of bits per color channel for the output RGB signal */
   val RGB_OUTPUT_BPP = 8

@@ -194,7 +194,7 @@ class Cave extends Module {
   }
 
   // Sprite registers
-  val spriteRegs = Module(new RegisterFile(CPU.DATA_WIDTH, Config.VIDEO_REGS_COUNT))
+  val spriteRegs = Module(new RegisterFile(CPU.DATA_WIDTH, Config.SPRITE_REGS_COUNT))
   spriteRegs.io.mem.default()
 
   // Graphics processor
