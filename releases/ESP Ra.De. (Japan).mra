@@ -15,11 +15,11 @@
       <part name="u41_ver.2" crc="734b3ef0" map="10" />
     </interleave>
 
-    <!-- sound ROM -->
-    <part name="esp_u19.u19" crc="f54b1cab" />
-
     <!-- EEPROM -->
     <part name="eeprom-esprade.bin" crc="315fb546" />
+
+    <!-- sound ROM -->
+    <part name="esp_u19.u19" crc="f54b1cab" />
 
     <!-- layer 0 -->
     <part name="esp_u54.u54" crc="e7ca6936" />
@@ -43,8 +43,8 @@
     </interleave>
 
     <!-- enable C button in EEPROM -->
-    <patch offset="0x00500002">ff ff</patch>
-    <patch offset="0x00500008">00 04</patch>
+    <patch offset="0x00100002">ff ff</patch>
+    <patch offset="0x00100008">00 04</patch>
   </rom>
 
   <!-- select game -->
