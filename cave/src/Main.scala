@@ -97,8 +97,8 @@ class Main extends Module {
   }
 
   // Connect IOCTL to DIPs register file
-  val dips = Module(new RegisterFile(IOCTL.DATA_WIDTH, Config.DIPS_DEPTH))
-  dips.io.mem <> io.ioctl.dips.mapAddr { a => (a >> 1).asUInt }.asReadWriteMemIO // convert from byte address
+  val dipsRegs = Module(new RegisterFile(IOCTL.DATA_WIDTH, Config.DIPS_REGS_DEPTH))
+  dipsRegs.io.mem <> io.ioctl.dips.mapAddr { a => (a >> 1).asUInt }.asReadWriteMemIO // convert from byte address
 
   // DDR controller
   val ddr = Module(new DDR(Config.ddrConfig))
@@ -127,7 +127,7 @@ class Main extends Module {
   val cave = withReset(io.cpuReset || !memSys.io.ready) { Module(new Cave) }
   cave.io.gameConfig <> gameConfigReg
   cave.io.options <> io.options
-  cave.io.dips := dips.io.regs
+  cave.io.dips := dipsRegs.io.regs
   cave.io.joystick <> io.joystick
   cave.io.audio <> io.audio
   cave.io.video <> videoSys.io.video

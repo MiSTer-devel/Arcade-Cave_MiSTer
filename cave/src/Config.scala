@@ -64,8 +64,8 @@ object Config {
   /** The base address of the IOCTL data stored in DDR. */
   val IOCTL_DOWNLOAD_BASE_ADDR = 0x30000000
 
-  /** The number of registers in the DIPs register file */
-  val DIPS_DEPTH = 4
+  /** The depth of the DIPs register file */
+  val DIPS_REGS_DEPTH = 4
 
   /** The width of the pulse generated when a coin is inserted */
   val COIN_PULSE_WIDTH = (100000000D / CLOCK_PERIOD).ceil.toInt // 100ms
