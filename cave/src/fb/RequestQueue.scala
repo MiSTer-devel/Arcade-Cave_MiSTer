@@ -37,36 +37,38 @@ import cave._
 import chisel3._
 
 /**
- * Queues frame buffer write requests and ensures they are eventually written to DDR memory.
+ * Queues memory write requests and ensures they are eventually written to DDR memory.
  *
  * If the DDR memory is busy, then requests will be queued until they can be completed.
  *
- * @param depth The depth of the queue.
+ * @param addrWidth The width of the address bus.
+ * @param dataWidth The width of the data bus.
+ * @param depth     The depth of the queue.
  */
-class RequestQueue(depth: Int) extends Module {
+class RequestQueue(addrWidth: Int, dataWidth: Int, depth: Int) extends Module {
   val io = IO(new Bundle {
     /** Enable the request queue */
     val enable = Input(Bool())
-    /** The read clock domain */
+    /** Read clock domain */
     val readClock = Input(Clock())
-    /** Frame buffer port */
-    val frameBuffer = Flipped(new SystemFrameBufferIO)
+    /** Memory port */
+    val mem = Flipped(new WriteMemIO(addrWidth, dataWidth))
     /** DDR port */
     val ddr = BurstWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
   })
 
   // FIFO
-  val fifo = Module(new DualClockFIFO(io.frameBuffer.getWidth, depth))
+  val fifo = Module(new DualClockFIFO(io.mem.getWidth, depth))
   fifo.io.readClock := io.readClock
 
-  // Frame buffer -> FIFO
-  fifo.io.enq.valid := io.frameBuffer.wr
-  fifo.io.enq.bits := io.frameBuffer.asUInt
+  // Memory -> FIFO
+  fifo.io.enq.valid := io.mem.wr
+  fifo.io.enq.bits := io.mem.asUInt
 
   // FIFO -> DDR
   io.ddr.wr := io.enable && fifo.io.deq.valid
   fifo.io.deq.ready := !io.ddr.waitReq
-  val request = fifo.io.deq.bits.asTypeOf(new SystemFrameBufferIO)
+  val request = fifo.io.deq.bits.asTypeOf(new WriteMemIO(addrWidth, dataWidth))
   io.ddr.burstLength := 1.U
   io.ddr.addr := request.addr ## 0.U(2.W)
   io.ddr.mask := Mux(request.addr(0), request.mask ## 0.U(4.W), request.mask)
