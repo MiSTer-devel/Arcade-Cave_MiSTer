@@ -1,7 +1,7 @@
 import mill._, scalalib._
 import mill.scalalib.TestModule.ScalaTest
 
-object cave extends ScalaModule { m =>
+trait CommonModule extends ScalaModule { m =>
   def scalaVersion = "2.13.8"
 
   override def scalacOptions = Seq(
@@ -14,7 +14,6 @@ object cave extends ScalaModule { m =>
 
   override def ivyDeps = Agg(
     ivy"edu.berkeley.cs::chisel3:3.5.3",
-    ivy"info.joshbassett::arcadia:1.2.0",
   )
 
   override def scalacPluginIvyDeps = Agg(
@@ -26,4 +25,9 @@ object cave extends ScalaModule { m =>
       ivy"edu.berkeley.cs::chiseltest:0.5.1"
     )
   }
+}
+
+object arcadia extends CommonModule
+object cave extends CommonModule {
+  def moduleDeps = Seq(arcadia)
 }
