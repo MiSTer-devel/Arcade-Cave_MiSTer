@@ -162,6 +162,8 @@ object Config {
   val SYSTEM_FRAME_BUFFER_REQUEST_QUEUE_DEPTH = 16
   /** The width of the sprite frame buffer data bus */
   val SPRITE_FRAME_BUFFER_DATA_WIDTH = 16
+  /** The depth of the sprite frame buffer request queue */
+  val SPRITE_FRAME_BUFFER_REQUEST_QUEUE_DEPTH = 16
 
   /** The width of a priority value */
   val PRIO_WIDTH = 2

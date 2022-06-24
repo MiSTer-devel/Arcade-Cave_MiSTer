@@ -228,7 +228,7 @@ object SpriteProcessor {
     val mem = Wire(new SpriteFrameBufferIO)
     mem.wr := true.B
     mem.addr := addr
-    mem.mask := 0.U
+    mem.mask := 3.U
     mem.din := data
     mem
   }
