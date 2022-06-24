@@ -90,7 +90,8 @@ class SystemFrameBuffer extends Module {
     forceBlank = io.forceBlank
   )
 
-  // Queue frame buffer write requests
+  // Queue frame buffer requests. Requests are written to the queue in the video clock domain, and
+  // read from the queue in the system clock domain
   val queue = withClockAndReset(io.video.clock, io.video.reset) {
     Module(new RequestQueue(
       addrWidth = Config.FRAME_BUFFER_ADDR_WIDTH,
@@ -99,7 +100,7 @@ class SystemFrameBuffer extends Module {
     ))
   }
   queue.io.enable := io.enable
-  queue.io.readClock := clock // requests are read from the queue in the system clock domain
+  queue.io.readClock := clock
   queue.io.mem <> io.frameBuffer
   queue.io.ddr.mapAddr(_ + pageFlipper.io.addrWrite) <> io.ddr
 }
