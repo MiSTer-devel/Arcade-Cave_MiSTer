@@ -34,8 +34,7 @@ package cave
 
 import arcadia.cpu.m68k.CPU
 import arcadia.mem._
-import arcadia.snd.{AudioMixer, YMZ280B}
-import cave.snd.{NMK112, OKIM6295}
+import arcadia.snd._
 import chisel3._
 import chisel3.util._
 

@@ -34,8 +34,7 @@ package cave
 
 import arcadia.gfx.VideoTimingConfig
 import arcadia.mem._
-import arcadia.snd.YMZ280BConfig
-import cave.snd.OKIM6295Config
+import arcadia.snd.{OKIM6295Config, YMZ280BConfig}
 import chisel3.util.log2Ceil
 
 object Config {
