@@ -100,7 +100,7 @@ class GPU extends Module {
 
     // Decode color mixer data and write it to the system frame buffer
     io.systemFrameBuffer.wr := RegNext(io.video.clockEnable && io.video.displayEnable)
-    io.systemFrameBuffer.addr := RegNext(GPU.frameBufferAddr(io.video.pos, io.options.flip, io.options.rotate))
+    io.systemFrameBuffer.addr := RegNext(GPU.frameBufferAddr(io.video.size, io.video.pos, io.options.flip, io.options.rotate))
     io.systemFrameBuffer.mask := 0xf.U // 4 bytes
     io.systemFrameBuffer.din := RegNext(GPU.decodeABGR(colorMixer.io.dout))
 
@@ -111,10 +111,25 @@ class GPU extends Module {
 
 object GPU {
   /**
-   * Screen size vector.
+   * Transforms a pixel position to a frame buffer memory address, applying the flip and rotate
+   * transforms.
    *
-   * @return A vector representing the screen size. */
-  def screenSize: UVec2 = UVec2(Config.SCREEN_WIDTH.U, Config.SCREEN_HEIGHT.U)
+   * @param size   The frame buffer size.
+   * @param pos    The pixel position.
+   * @param flip   Flips the image.
+   * @param rotate Rotates the image 90 degrees.
+   * @return An address value.
+   */
+  def frameBufferAddr(size: UVec2, pos: UVec2, flip: Bool, rotate: Bool): UInt = {
+    val x = pos.x
+    val y = pos.y
+    val x_ = size.x - pos.x - 1.U
+    val y_ = size.y - pos.y - 1.U
+    Mux(rotate,
+      Mux(flip, (x * size.y) + y_, (x_ * size.y) + y),
+      Mux(flip, (y_ * size.x) + x_, (y * size.x) + x)
+    )
+  }
 
   /**
    * Transforms a pixel position to a frame buffer memory address, applying the flip and rotate

@@ -14,7 +14,7 @@ object cave extends ScalaModule { m =>
 
   override def ivyDeps = Agg(
     ivy"edu.berkeley.cs::chisel3:3.5.3",
-    ivy"info.joshbassett::arcadia:1.1.0",
+    ivy"info.joshbassett::arcadia:1.2.0",
   )
 
   override def scalacPluginIvyDeps = Agg(

@@ -68,7 +68,7 @@ class Main extends Module {
     /** IOCTL port */
     val ioctl = IOCTL()
     /** Frame buffer control port */
-    val frameBufferCtrl = FrameBufferCtrlIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
+    val frameBufferCtrl = FrameBufferCtrlIO()
     /** Audio port */
     val audio = Output(SInt(Config.AUDIO_SAMPLE_WIDTH.W))
     /** Video port */
@@ -121,6 +121,7 @@ class Main extends Module {
   val videoSys = Module(new VideoSys)
   videoSys.io.videoClock := io.videoClock
   videoSys.io.videoReset := io.videoReset
+  videoSys.io.ioctl <> io.ioctl
   videoSys.io.options <> io.options
   videoSys.io.video <> io.video
 

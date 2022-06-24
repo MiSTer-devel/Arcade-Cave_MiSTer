@@ -34,7 +34,8 @@ package cave
 
 import arcadia._
 import arcadia.gfx._
-import arcadia.mister.OptionsIO
+import arcadia.mem.RegisterFile
+import arcadia.mister._
 import chisel3._
 import chisel3.util._
 
@@ -48,18 +49,38 @@ class VideoSys extends Module {
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
+    /** IOCTL port */
+    val ioctl = IOCTL()
     /** Options port */
     val options = OptionsIO()
     /** Video port */
     val video = VideoIO()
   })
 
-  val timing = withClockAndReset(io.videoClock, io.videoReset) {
-    // Video timings
-    val originalVideoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
-    val compatibilityVideoTiming = Module(new VideoTiming(Config.compatibilityVideoTimingConfig))
+  // Asserted when the video registers have been written to the IOCTL
+  val videoDownloaded = Util.falling(io.ioctl.download) && io.ioctl.index === IOCTL.VIDEO_INDEX.U
 
-    // Changing the analog video offset during the display region can momentarily alter the screen
+  // Connect IOCTL to video register file
+  val videoRegs = Module(new RegisterFile(IOCTL.DATA_WIDTH, VideoSys.VIDEO_REGS_COUNT))
+  videoRegs.io.mem <> io.ioctl.video
+    .mapAddr { a => (a >> 1).asUInt } // convert from byte address
+    .mapData(Util.swapEndianness) // swap bytes
+    .asReadWriteMemIO
+
+  val timing = withClockAndReset(io.videoClock, io.videoReset) {
+    // Original video timing
+    val originalVideoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
+    originalVideoTiming.io.display := io.video.regs.size
+    originalVideoTiming.io.frontPorch := io.video.regs.frontPorch
+    originalVideoTiming.io.retrace := io.video.regs.retrace
+
+    // Compatibility video timing
+    val compatibilityVideoTiming = Module(new VideoTiming(Config.compatibilityVideoTimingConfig))
+    compatibilityVideoTiming.io.display := UVec2(320.U, 240.U)
+    compatibilityVideoTiming.io.frontPorch := UVec2(30.U, 12.U)
+    compatibilityVideoTiming.io.retrace := UVec2(20.U, 2.U)
+
+    // Changing the CRT offset during the display region can momentarily alter the screen
     // dimensions, which may cause issues with other modules. If we latch the offset during a
     // vertical sync, then we can avoid causing any problems.
     originalVideoTiming.io.offset := RegEnable(io.options.offset, originalVideoTiming.io.timing.vSync)
@@ -76,18 +97,31 @@ class VideoSys extends Module {
     RegNext(timing)
   }
 
-  val video = Wire(new VideoIO)
-  video.clock := io.videoClock
-  video.reset := io.videoReset
-  video.clockEnable := timing.clockEnable
-  video.displayEnable := timing.displayEnable
-  video.changeMode := io.options.compatibility ^ RegNext(io.options.compatibility)
-  video.pos := timing.pos
-  video.hSync := timing.hSync
-  video.vSync := timing.vSync
-  video.hBlank := timing.hBlank
-  video.vBlank := timing.vBlank
-
   // Outputs
-  io.video <> video
+  io.video.clock := io.videoClock
+  io.video.reset := io.videoReset
+  io.video.clockEnable := timing.clockEnable
+  io.video.displayEnable := timing.displayEnable
+  io.video.pos := timing.pos
+  io.video.hSync := timing.hSync
+  io.video.vSync := timing.vSync
+  io.video.hBlank := timing.hBlank
+  io.video.vBlank := timing.vBlank
+  io.video.regs := RegEnable(VideoRegs.decode(videoRegs.io.regs), VideoSys.DEFAULT_REGS, videoDownloaded)
+  io.video.changeMode := videoDownloaded || (io.options.compatibility ^ RegNext(io.options.compatibility))
+}
+
+object VideoSys {
+  /** The number of video registers */
+  val VIDEO_REGS_COUNT = 8
+
+  /** Default video registers */
+  val DEFAULT_REGS = VideoRegs(
+    hSize = Config.SCREEN_WIDTH,
+    vSize = Config.SCREEN_HEIGHT,
+    hFrontPorch = 36,
+    vFrontPorch = 12,
+    hRetrace = 20,
+    vRetrace = 2
+  )
 }

@@ -215,13 +215,7 @@ object Config {
     clockFreq = VIDEO_CLOCK_FREQ,
     clockDiv = VIDEO_CLOCK_DIV,
     hFreq = 15625, // Hz
-    vFreq = 57.444, // Hz
-    hDisplay = SCREEN_WIDTH,
-    vDisplay = SCREEN_HEIGHT,
-    hFrontPorch = 36,
-    vFrontPorch = 12,
-    hRetrace = 20,
-    vRetrace = 2
+    vFreq = 57.444 // Hz
   )
 
   /** Compatibility (60Hz) video timing configuration */
@@ -229,13 +223,7 @@ object Config {
     clockFreq = VIDEO_CLOCK_FREQ,
     clockDiv = VIDEO_CLOCK_DIV,
     hFreq = 15625, // Hz
-    vFreq = 60, // Hz
-    hDisplay = SCREEN_WIDTH,
-    vDisplay = SCREEN_HEIGHT,
-    hFrontPorch = 30,
-    vFrontPorch = 12,
-    hRetrace = 20,
-    vRetrace = 2
+    vFreq = 60 // Hz
   )
 
   /** Copy download DMA configuration */

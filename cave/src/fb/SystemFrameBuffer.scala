@@ -66,7 +66,7 @@ class SystemFrameBuffer extends Module {
     /** Video port */
     val video = Flipped(VideoIO())
     /** Frame buffer control port */
-    val frameBufferCtrl = FrameBufferCtrlIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
+    val frameBufferCtrl = FrameBufferCtrlIO()
     /** Frame buffer port */
     val frameBuffer = Flipped(new SystemFrameBufferIO)
     /** DDR port */
@@ -82,6 +82,8 @@ class SystemFrameBuffer extends Module {
 
   // Configure the MiSTer frame buffer
   io.frameBufferCtrl.configure(
+    width = io.video.size.x,
+    height = io.video.size.y,
     baseAddr = pageFlipper.io.addrRead,
     enable = io.enable,
     rotate = io.rotate,

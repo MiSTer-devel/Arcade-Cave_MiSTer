@@ -75,7 +75,7 @@ class LayerProcessor(index: Int) extends Module {
   // Apply the scroll and layer offsets to get the final pixel position
   val pos = {
     val normal = io.video.pos + io.ctrl.regs.scroll - io.spriteOffset - layerOffset
-    val flipped = GPU.screenSize - io.video.pos + io.ctrl.regs.scroll - io.spriteOffset + layerOffset
+    val flipped = io.video.size - io.video.pos + io.ctrl.regs.scroll - io.spriteOffset + layerOffset
     UVec2(
       Mux(io.ctrl.regs.flipX, flipped.x, normal.x),
       Mux(io.ctrl.regs.flipY, flipped.y, normal.y)
