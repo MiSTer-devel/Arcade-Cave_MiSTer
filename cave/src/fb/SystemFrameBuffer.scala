@@ -82,10 +82,10 @@ class SystemFrameBuffer extends Module {
 
   // Configure the MiSTer frame buffer
   io.frameBufferCtrl.configure(
+    enable = io.enable,
     width = io.video.size.x,
     height = io.video.size.y,
     baseAddr = pageFlipper.io.addrRead,
-    enable = io.enable,
     rotate = io.rotate,
     forceBlank = io.forceBlank
   )
