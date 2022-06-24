@@ -43,9 +43,9 @@ class SpriteBlitterConfig extends Bundle {
   /** Sprite */
   val sprite = new Sprite
   /** Horizontal flip */
-  val flipX = Bool()
+  val hFlip = Bool()
   /** Vertical flip */
-  val flipY = Bool()
+  val vFlip = Bool()
 }
 
 /** The sprite blitter copies a sprite to the frame buffer. */
@@ -105,7 +105,7 @@ class SpriteBlitter extends Module {
   io.config.ready := configReady
   io.pixelData.ready := pixelDataReady
   io.frameBuffer.wr := RegNext(visible)
-  io.frameBuffer.addr := RegNext(GPU.frameBufferAddr(posReg, configReg.flipX, false.B))
+  io.frameBuffer.addr := RegNext(GPU.frameBufferAddr(posReg, configReg.hFlip, false.B))
   io.frameBuffer.mask := 0.U
   io.frameBuffer.din := RegNext(penReg.asUInt)
   io.busy := RegNext(busyReg) // delayed to align with the other signals
@@ -129,8 +129,8 @@ object SpriteBlitter {
     val y = pos.y * sprite.zoom.y
 
     // Flip x/y values
-    val x_ = Mux(sprite.flipX, size.x - x - (1 << Sprite.ZOOM_PRECISION).U, x)
-    val y_ = Mux(sprite.flipY, size.y - y - (1 << Sprite.ZOOM_PRECISION).U, y)
+    val x_ = Mux(sprite.hFlip, size.x - x - (1 << Sprite.ZOOM_PRECISION).U, x)
+    val y_ = Mux(sprite.vFlip, size.y - y - (1 << Sprite.ZOOM_PRECISION).U, y)
 
     // Adjusted sprite pixel position
     val result = sprite.pos + SVec2(x_, y_)

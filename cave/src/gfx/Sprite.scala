@@ -46,9 +46,9 @@ class Sprite extends Bundle {
   /** Sprite code */
   val code = UInt(Sprite.CODE_WIDTH.W)
   /** Horizontal flip */
-  val flipX = Bool()
+  val hFlip = Bool()
   /** Vertical flip */
-  val flipY = Bool()
+  val vFlip = Bool()
   /** Position */
   val pos = SVec2(Sprite.POS_WIDTH.W)
   /** The number of sprite tile columns */
@@ -102,8 +102,8 @@ object Sprite {
    * -----+-fedc-ba98-7654-3210-+----------------
    *    0 | --xx xxxx ---- ---- | color
    *      | ---- ---- --xx ---- | priority
-   *      | ---- ---- ---- x--- | flip x
-   *      | ---- ---- ---- -x-- | flip y
+   *      | ---- ---- ---- x--- | horizontal flip
+   *      | ---- ---- ---- -x-- | vertical flip
    *      | ---- ---- ---- --xx | code hi
    *    1 | xxxx xxxx xxxx xxxx | code lo
    *    2 | ---- --xx xxxx xxxx | x position
@@ -120,8 +120,8 @@ object Sprite {
     sprite.priority := words(0)(5, 4)
     sprite.colorCode := words(0)(13, 8)
     sprite.code := words(0)(1, 0) ## words(1)(15, 0)
-    sprite.flipX := words(0)(3)
-    sprite.flipY := words(0)(2)
+    sprite.hFlip := words(0)(3)
+    sprite.vFlip := words(0)(2)
     sprite.pos := decodePosition(words(2), words(3), fixed)
     sprite.cols := words(4)(15, 8)
     sprite.rows := words(4)(7, 0)
@@ -157,8 +157,8 @@ object Sprite {
     sprite.priority := words(2)(5, 4)
     sprite.colorCode := words(2)(13, 8)
     sprite.code := words(2)(1, 0) ## words(3)(15, 0)
-    sprite.flipX := words(2)(3)
-    sprite.flipY := words(2)(2)
+    sprite.hFlip := words(2)(3)
+    sprite.vFlip := words(2)(2)
     sprite.pos := decodePosition(words(0), words(1), fixed)
     sprite.cols := words(6)(15, 8)
     sprite.rows := words(6)(7, 0)

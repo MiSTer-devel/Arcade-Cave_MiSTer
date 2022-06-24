@@ -131,8 +131,8 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   when(stateReg === State.ready) {
     val config = Wire(new SpriteBlitterConfig)
     config.sprite := spriteReg
-    config.flipX := io.ctrl.regs.flipX
-    config.flipY := io.ctrl.regs.flipY
+    config.hFlip := io.ctrl.regs.hFlip
+    config.vFlip := io.ctrl.regs.vFlip
     blitter.io.config.enq(config)
   } otherwise {
     blitter.io.config.noenq()

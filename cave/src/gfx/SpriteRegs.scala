@@ -45,9 +45,9 @@ class SpriteRegs extends Bundle {
   /** Sprite fixed-point position format  */
   val fixed = Bool()
   /** Horizontal flip */
-  val flipX = Bool()
+  val hFlip = Bool()
   /** Vertical flip */
-  val flipY = Bool()
+  val vFlip = Bool()
 }
 
 object SpriteRegs {
@@ -60,10 +60,10 @@ object SpriteRegs {
    * {{{
    * word   bits                  description
    * -----+-fedc-ba98-7654-3210-+----------------
-   *    0 | x--- ---- ---- ---- | flip x
-   *      | -xxx xxxx xxxx xxxx | offset x
-   *    1 | x--- ---- ---- ---- | flip y
-   *      | -xxx xxxx xxxx xxxx | offset y
+   *    0 | x--- ---- ---- ---- | horizontal flip
+   *      | -xxx xxxx xxxx xxxx | x offset
+   *    1 | x--- ---- ---- ---- | vertical flip
+   *      | -xxx xxxx xxxx xxxx | y offset
    *    4 | ---- ---- ---- --xx | bank
    *    5 | --xx ---- ---- ---- | position format
    * }}}
@@ -73,8 +73,8 @@ object SpriteRegs {
    */
   def decode[T <: Bits](data: Vec[T]): SpriteRegs = {
     val regs = Wire(new SpriteRegs)
-    regs.flipX := data(0)(15)
-    regs.flipY := data(1)(15)
+    regs.hFlip := data(0)(15)
+    regs.vFlip := data(1)(15)
     regs.offset := UVec2(data(0)(8, 0), data(1)(8, 0))
     regs.bank := data(4)(1, 0)
     regs.fixed := data(5)(13, 12).orR
