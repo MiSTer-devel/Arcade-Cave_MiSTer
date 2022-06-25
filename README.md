@@ -15,7 +15,7 @@ This project contains the MiSTer core for Cave's first-generation 68000 arcade h
 | [**Gunwange**](https://en.wikipedia.org/wiki/Guwange)                                                                 | Public        |
 | [**Gaia Crusaders**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=gaia&arcade_only=0&autosearch=1)        | Private beta  |
 | [**Thunder Heroes**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=theroes&arcade_only=0&autosearch=1)     | Private beta  |
-| [**Donpachi**](https://en.wikipedia.org/wiki/DonPachi)                                                                | Private beta  |
+| [**Donpachi**](https://en.wikipedia.org/wiki/DonPachi)                                                                | Public        |
 | [**Air Gallet**](https://en.wikipedia.org/wiki/Air_Gallet)                                                            | Unimplemented |
 | [**Hotdog Storm**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=hotdogst&arcade_only=0&autosearch=1)      | Unimplemented |
 | [**Koro Koro Quest**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=korokoro&arcade_only=0&autosearch=1)   | Unimplemented |
