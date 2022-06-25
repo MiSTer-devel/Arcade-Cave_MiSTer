@@ -1,4 +1,7 @@
-.PHONY: build program test clean
+.PHONY: idea build program test clean
+
+idea:
+	./mill mill.scalalib.GenIdea/idea
 
 build:
 	./mill cave.run
