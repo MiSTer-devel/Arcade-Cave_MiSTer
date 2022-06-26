@@ -41,7 +41,7 @@ import chisel3.util._
  *
  * @param config The SDRAM configuration.
  */
-class SDRAM(val config: Config) extends Module {
+class SDRAM(config: Config) extends Module {
   // Sanity check
   assert(Seq(1, 2, 4, 8).contains(config.burstLength), "SDRAM burst length must be 1, 2, 4, or 8")
 
