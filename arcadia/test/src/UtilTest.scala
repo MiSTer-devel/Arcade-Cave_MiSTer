@@ -108,6 +108,19 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
     }
   }
 
+  "maskBits" should "mask the least significant bits" in {
+    test(new Module {
+      val io = IO(new Bundle {
+        val a = Input(UInt(8.W))
+        val b = Output(UInt(8.W))
+      })
+      io.b := Util.maskBits(io.a, 4)
+    }) { dut =>
+      dut.io.a.poke(0xff)
+      dut.io.b.expect(0xf0)
+    }
+  }
+
   "edge" should "detect edges" in {
     test(new Module {
       val io = IO(new Bundle {
