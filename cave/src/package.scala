@@ -35,12 +35,6 @@ import chisel3._
 import arcadia.mem._
 
 package object cave {
-  /** Sound device enum */
-  object SoundDevice {
-    val DISABLED = 0
-    val YMZ280B = 1
-    val OKIM6259 = 2
-  }
   /** DIP switches IO */
   def DIPIO(): Vec[UInt] = Input(Vec(4, Bits(CPU.DATA_WIDTH.W)))
 
@@ -59,15 +53,22 @@ package object cave {
   /** Layer ROM IO */
   class LayerRomIO extends AsyncReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH)
 
-  /** Palette RAM IO (GPU-side) */
+  /** Palette RAM IO */
   class PaletteRamIO extends ReadMemIO(Config.PALETTE_RAM_GPU_ADDR_WIDTH, Config.PALETTE_RAM_GPU_DATA_WIDTH)
-
-  /** Sprite frame buffer IO */
-  class SpriteFrameBufferIO extends WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SPRITE_FRAME_BUFFER_DATA_WIDTH)
 
   /** Sprite line buffer IO */
   class SpriteLineBufferIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH_X, Config.SPRITE_FRAME_BUFFER_DATA_WIDTH)
 
+  /** Sprite frame buffer IO */
+  class SpriteFrameBufferIO extends WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SPRITE_FRAME_BUFFER_DATA_WIDTH)
+
   /** System frame buffer IO */
   class SystemFrameBufferIO extends WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SYSTEM_FRAME_BUFFER_DATA_WIDTH)
+
+  /** Sound device enum */
+  object SoundDevice {
+    val DISABLED = 0
+    val YMZ280B = 1
+    val OKIM6259 = 2
+  }
 }
