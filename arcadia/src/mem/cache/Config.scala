@@ -61,6 +61,4 @@ case class Config(override val inAddrWidth: Int,
   val offsetWidth = log2Ceil(lineWidth)
   /** The width of a cache tag */
   val tagWidth = inAddrWidth - indexWidth - offsetWidth
-  /** The number of output words that fit into a single input word */
-  val inOutDataWidthRatio = if (inDataWidth > outDataWidth) inDataWidth / outDataWidth else 1
 }

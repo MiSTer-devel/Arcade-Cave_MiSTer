@@ -55,6 +55,8 @@ abstract class LineConfig(val inAddrWidth: Int,
   val inBytes = inDataWidth / 8
   /** The number of bytes in an output word */
   val outBytes = outDataWidth / 8
+  /** The number of output words that fit into a single input word */
+  val inOutDataWidthRatio = if (inDataWidth > outDataWidth) inDataWidth / outDataWidth else 1
 }
 
 /**
