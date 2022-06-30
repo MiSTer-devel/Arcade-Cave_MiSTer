@@ -74,17 +74,6 @@ class AsyncReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth
     mem
   }
 
-  /** Converts the interface to synchronous read-only. */
-  def asReadMemIO: ReadMemIO = {
-    val mem = Wire(Flipped(ReadMemIO(this)))
-    mem.rd := rd
-    waitReq := false.B
-    valid := true.B
-    mem.addr := addr
-    dout := mem.dout
-    mem
-  }
-
   /** Converts the interface to synchronous read-write. */
   override def asReadWriteMemIO: ReadWriteMemIO = {
     val mem = Wire(Flipped(ReadWriteMemIO(this)))
