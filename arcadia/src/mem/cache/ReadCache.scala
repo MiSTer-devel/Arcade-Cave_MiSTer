@@ -93,7 +93,7 @@ class ReadCache(config: Config) extends Module {
   }
 
   // Cache request
-  val request = MemRequest(io.in.rd, false.B, Address(config, io.in.addr))
+  val request = ReadRequest(io.in.rd, Address(config, io.in.addr))
   val requestReg = RegEnable(request, start)
 
   // Data registers
@@ -138,7 +138,7 @@ class ReadCache(config: Config) extends Module {
   val (burstCounter, burstCounterWrap) = Counter(burstCounterEnable, config.lineWidth)
 
   // Control signals
-  start := io.enable && request.valid && stateReg === State.idle
+  start := io.enable && request.rd && stateReg === State.idle
   val waitReq = !(io.enable && stateReg === State.idle)
   val hitA = cacheEntryA.isHit(requestReg.addr)
   val hitB = cacheEntryB.isHit(requestReg.addr)
