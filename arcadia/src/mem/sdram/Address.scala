@@ -49,10 +49,10 @@ object Address {
   /**
    * Converts a byte address to a SDRAM address.
    *
-   * @param addr   The address.
    * @param config The SDRAM configuration.
+   * @param addr   The memory address.
    */
-  def fromByteAddress(addr: UInt)(config: Config) = {
+  def fromByteAddress(config: Config, addr: UInt) = {
     val n = log2Ceil(config.dataWidth / 8)
     (addr >> n).asTypeOf(new Address(config))
   }

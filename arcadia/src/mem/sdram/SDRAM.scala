@@ -88,7 +88,7 @@ class SDRAM(config: Config) extends Module {
   val isReadWrite = io.mem.rd || io.mem.wr
 
   // Request register
-  val request = ReadWriteRequest(io.mem.rd, io.mem.wr, Address.fromByteAddress(io.mem.addr)(config), 0.U, 0.U)
+  val request = ReadWriteRequest(io.mem.rd, io.mem.wr, Address.fromByteAddress(config, io.mem.addr), 0.U, 0.U)
   val requestReg = RegEnable(request, latch)
 
   // SDRAM registers
