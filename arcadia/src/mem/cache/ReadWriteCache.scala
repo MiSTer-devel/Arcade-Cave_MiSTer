@@ -96,11 +96,10 @@ class ReadWriteCache(config: Config) extends Module {
   }
 
   // Cache request
-  val request = MemRequest(io.in.rd, io.in.wr, Address(config, io.in.addr))
+  val request = ReadWriteRequest(io.in.rd, io.in.wr, Address(config, io.in.addr), io.in.din, io.in.mask)
   val requestReg = RegEnable(request, start)
 
   // Data registers
-  val dataReg = RegEnable(io.in.din, start)
   val doutReg = Reg(Bits(config.inDataWidth.W))
   val validReg = RegNext(false.B)
 
@@ -192,7 +191,7 @@ class ReadWriteCache(config: Config) extends Module {
   // Merge the input data with the cache entry
   when(stateReg === State.merge) {
     stateReg := State.write
-    cacheEntryReg := cacheEntryReg.merge(offsetReg, dataReg)
+    cacheEntryReg := cacheEntryReg.merge(offsetReg, requestReg.din)
   }
 
   def onHit() = {
