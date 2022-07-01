@@ -84,6 +84,9 @@ class SDRAM(config: Config) extends Module {
   // Assert the latch signal when a request should be latched
   val latch = stateReg =/= State.active && nextState === State.active
 
+  // Asserted when there is a read or write request
+  val isReadWrite = io.mem.rd || io.mem.wr
+
   // Request register
   val request = ReadWriteRequest(io.mem.rd, io.mem.wr, Address.fromByteAddress(io.mem.addr)(config), 0.U, 0.U)
   val requestReg = RegEnable(request, latch)
@@ -116,7 +119,7 @@ class SDRAM(config: Config) extends Module {
 
   // Deassert the wait signal at the start of a read request, or during a write request
   val waitReq = {
-    val idle = stateReg === State.idle && !request.valid
+    val idle = stateReg === State.idle && !isReadWrite
     val read = latch && request.rd
     val write = (stateReg === State.active && activeDone && requestReg.wr) || (stateReg === State.write && burstBusy)
     !(idle || read || write)
@@ -199,7 +202,7 @@ class SDRAM(config: Config) extends Module {
 
     // Wait for request
     is(State.idle) {
-      when(triggerRefresh) { refresh() }.elsewhen(request.valid) { active() }
+      when(triggerRefresh) { refresh() }.elsewhen(isReadWrite) { active() }
     }
 
     // Activate row
@@ -212,21 +215,21 @@ class SDRAM(config: Config) extends Module {
     // Execute read command
     is(State.read) {
       when(readDone) {
-        when(triggerRefresh) { refresh() }.elsewhen(request.valid) { active() }.otherwise { idle() }
+        when(triggerRefresh) { refresh() }.elsewhen(isReadWrite) { active() }.otherwise { idle() }
       }
     }
 
     // Execute write command
     is(State.write) {
       when(writeDone) {
-        when(triggerRefresh) { refresh() }.elsewhen(request.valid) { active() }.otherwise { idle() }
+        when(triggerRefresh) { refresh() }.elsewhen(isReadWrite) { active() }.otherwise { idle() }
       }
     }
 
     // Execute refresh command
     is(State.refresh) {
       when(refreshDone) {
-        when(request.valid) { active() }.otherwise { idle() }
+        when(isReadWrite) { active() }.otherwise { idle() }
       }
     }
   }

@@ -46,9 +46,6 @@ class ReadWriteRequest[S <: Data, T <: Data](s: S, t: T) extends Bundle {
   val din = Output(t)
   /** Byte mask */
   val mask = Output(UInt((t.getWidth / 8).W))
-
-  /** Returns true if the read or write enable flag is asserted */
-  def valid: Bool = rd || wr
 }
 
 object ReadWriteRequest {
