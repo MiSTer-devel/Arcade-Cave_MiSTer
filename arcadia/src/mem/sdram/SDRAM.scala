@@ -32,7 +32,7 @@
 
 package arcadia.mem.sdram
 
-import arcadia.mem.{BurstReadWriteMemIO, MemRequest}
+import arcadia.mem.{BurstReadWriteMemIO, ReadWriteRequest}
 import chisel3._
 import chisel3.util._
 
@@ -84,7 +84,7 @@ class SDRAM(config: Config) extends Module {
   val latch = stateReg =/= State.active && nextState === State.active
 
   // Request register
-  val request = MemRequest(io.mem.rd, io.mem.wr, Address.fromByteAddress(io.mem.addr)(config))
+  val request = ReadWriteRequest(io.mem.rd, io.mem.wr, Address.fromByteAddress(io.mem.addr)(config), 0.U, 0.U)
   val requestReg = RegEnable(request, latch)
 
   // SDRAM registers
