@@ -33,6 +33,7 @@
 package cave.fb
 
 import arcadia.mem._
+import arcadia.mem.request.WriteRequest
 import chisel3._
 import chisel3.util._
 

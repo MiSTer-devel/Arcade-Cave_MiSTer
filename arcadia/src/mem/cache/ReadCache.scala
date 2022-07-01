@@ -33,6 +33,7 @@
 package arcadia.mem.cache
 
 import arcadia.mem._
+import arcadia.mem.request.ReadRequest
 import chisel3._
 import chisel3.util._
 

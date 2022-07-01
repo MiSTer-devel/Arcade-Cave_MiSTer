@@ -30,12 +30,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package arcadia.mem
+package arcadia.mem.request
 
 import chisel3._
 
-/** Represents a memory write request. */
-class WriteRequest[S <: Data, T <: Data](s: S, t: T) extends Bundle {
+/** Represents a memory request. */
+class ReadWriteRequest[S <: Data, T <: Data](s: S, t: T) extends Bundle {
+  /** Read enable */
+  val rd = Output(Bool())
   /** Write enable */
   val wr = Output(Bool())
   /** Address bus */
@@ -44,38 +46,28 @@ class WriteRequest[S <: Data, T <: Data](s: S, t: T) extends Bundle {
   val din = Output(t)
   /** Byte mask */
   val mask = Output(UInt((t.getWidth / 8).W))
+
+  /** Returns true if the read or write enable flag is asserted */
+  def valid: Bool = rd || wr
 }
 
-object WriteRequest {
+object ReadWriteRequest {
   /**
-   * Creates a write request.
+   * Creates a read-write request.
    *
+   * @param rd   Read enable.
    * @param wr   Write enable.
    * @param addr The memory address.
    * @param din  The data value.
    * @param mask The byte mask.
    */
-  def apply[S <: Data, T <: Data](wr: Bool, addr: S, din: T, mask: UInt): WriteRequest[S, T] = {
-    val req = Wire(new WriteRequest(chiselTypeOf(addr), chiselTypeOf(din)))
+  def apply[S <: Data, T <: Data](rd: Bool, wr: Bool, addr: S, din: T, mask: UInt): ReadWriteRequest[S, T] = {
+    val req = Wire(new ReadWriteRequest(chiselTypeOf(addr), chiselTypeOf(din)))
+    req.rd := rd
     req.wr := wr
     req.addr := addr
     req.din := din
     req.mask := mask
-    req
-  }
-
-  /**
-   * Creates a write request from a write interface.
-   *
-   * @param mem The write interface.
-   * @return A request bundle.
-   */
-  def apply(mem: WriteMemIO): WriteRequest[UInt, Bits] = {
-    val req = Wire(new WriteRequest[UInt, Bits](UInt(mem.addrWidth.W), Bits(mem.dataWidth.W)))
-    req.wr := mem.wr
-    req.addr := mem.addr
-    req.din := mem.din
-    req.mask := mem.mask
     req
   }
 }

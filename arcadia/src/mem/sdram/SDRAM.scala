@@ -32,7 +32,8 @@
 
 package arcadia.mem.sdram
 
-import arcadia.mem.{BurstReadWriteMemIO, ReadWriteRequest}
+import arcadia.mem.BurstReadWriteMemIO
+import arcadia.mem.request.ReadWriteRequest
 import chisel3._
 import chisel3.util._
 
