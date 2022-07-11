@@ -95,5 +95,8 @@ class BurstMemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
   io.chosen := chosen
   io.out <> BurstReadWriteMemIO.mux1H(chosen, io.in)
 
-  printf(p"BurstMemArbiter(chosen: $chosen, busy: $busyReg)\n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"BurstMemArbiter(chosen: $chosen, busy: $busyReg)\n")
+  }
 }

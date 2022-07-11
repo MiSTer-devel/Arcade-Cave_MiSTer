@@ -102,7 +102,10 @@ class SpriteDecoder extends Module {
   io.pixelData.valid := validReg
   io.pixelData.bits := bits
 
-  printf(p"SpriteDecoder(start: $start, ready: $ready, done: $done, pending: $pendingReg, valid: $validReg, toggle: $toggleReg, romReady: ${ io.tileRom.ready }, romValid: ${ io.tileRom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid }), data: 0x${ Hexadecimal(dataReg) })\n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"SpriteDecoder(start: $start, ready: $ready, done: $done, pending: $pendingReg, valid: $validReg, toggle: $toggleReg, romReady: ${ io.tileRom.ready }, romValid: ${ io.tileRom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid }), data: 0x${ Hexadecimal(dataReg) })\n")
+  }
 }
 
 object SpriteDecoder {

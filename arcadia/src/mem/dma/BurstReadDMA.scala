@@ -127,5 +127,8 @@ class BurstReadDMA(config: Config) extends Module {
   io.out.din := fifo.io.deq.bits
   io.out.mask := Fill(io.out.maskWidth, 1.U)
 
-  printf(p"BurstReadDMA(start: ${ io.start }, rdEnable: $readEnableReg, wrEnable: $writeEnableReg, rdPending: $readPendingReg, busy: $busy, read: $read, write: $write, inAddr: 0x${ Hexadecimal(io.in.addr) }, inData: 0x${ Hexadecimal(io.in.dout) }, outAddr: 0x${ Hexadecimal(io.out.addr) }, outData: 0x${ Hexadecimal(io.out.din) }, waitReq: ${ io.in.waitReq }, valid: ${ io.in.valid }, burst: $burstCounter ($burstCounterWrap))\n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"BurstReadDMA(start: ${io.start}, rdEnable: $readEnableReg, wrEnable: $writeEnableReg, rdPending: $readPendingReg, busy: $busy, read: $read, write: $write, inAddr: 0x${Hexadecimal(io.in.addr)}, inData: 0x${Hexadecimal(io.in.dout)}, outAddr: 0x${Hexadecimal(io.out.addr)}, outData: 0x${Hexadecimal(io.out.din)}, waitReq: ${io.in.waitReq}, valid: ${io.in.valid}, burst: $burstCounter ($burstCounterWrap))\n")
+  }
 }

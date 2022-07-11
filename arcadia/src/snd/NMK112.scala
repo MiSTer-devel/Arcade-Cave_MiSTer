@@ -97,7 +97,9 @@ class NMK112 extends Module {
   }
 
   // Debug
-  printf(p"NMK112(table: $pageTableReg)\n")
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"NMK112(table: $pageTableReg)\n")
+  }
 }
 
 object NMK112 {

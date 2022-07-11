@@ -147,5 +147,8 @@ class YMZ280B(config: YMZ280BConfig) extends Module {
   io.debug.utilReg := utilReg
   io.debug.statusReg := statusReg
 
-  printf(p"YMZ280B(addrReg: $addrReg, status: $statusReg)\n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"YMZ280B(addrReg: $addrReg, status: $statusReg)\n")
+  }
 }

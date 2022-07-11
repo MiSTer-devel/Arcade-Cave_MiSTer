@@ -217,5 +217,8 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   io.debug.done := stateReg === State.done
   io.debug.channelReg := channelStateReg
 
-  printf(p"ChannelController(state: $stateReg, index: $channelCounter ($channelCounterWrap), channelState: $channelStateReg, audio: $accumulatorReg ($outputCounterWrap))\n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"ChannelController(state: $stateReg, index: $channelCounter ($channelCounterWrap), channelState: $channelStateReg, audio: $accumulatorReg ($outputCounterWrap))\n")
+  }
 }

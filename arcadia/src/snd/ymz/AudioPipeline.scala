@@ -206,5 +206,8 @@ class AudioPipeline(config: YMZ280BConfig) extends Module {
   io.debug.pan := stateReg === State.pan
   io.debug.done := stateReg === State.done
 
-  printf(p"AudioPipeline(state: $stateReg, pcmData: 0x${ Hexadecimal(pcmDataReg) }, pipelineState: ${ inputReg.state })\n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"AudioPipeline(state: $stateReg, pcmData: 0x${Hexadecimal(pcmDataReg)}, pipelineState: ${inputReg.state})\n")
+  }
 }

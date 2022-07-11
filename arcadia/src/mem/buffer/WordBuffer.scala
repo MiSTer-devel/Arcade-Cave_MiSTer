@@ -92,5 +92,8 @@ class WordBuffer(config: Config) extends Module {
   io.out.mask := maskReg
   io.out.din := lineReg.outWords(0)
 
-  printf(p"WordBuffer(inAddr: 0x${ Hexadecimal(addr) }, outAddr: 0x${ Hexadecimal(io.out.addr) }, mask: ${ Binary(maskReg) }, line: 0x${ Hexadecimal(lineReg.words.asUInt) }, dirty: $dirty)\n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"WordBuffer(inAddr: 0x${Hexadecimal(addr)}, outAddr: 0x${Hexadecimal(io.out.addr)}, mask: ${Binary(maskReg)}, line: 0x${Hexadecimal(lineReg.words.asUInt)}, dirty: $dirty)\n")
+  }
 }

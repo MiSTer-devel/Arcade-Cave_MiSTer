@@ -80,7 +80,10 @@ class PageFlipper(baseAddr: Int) extends Module {
   io.addrRead := baseAddr.U(31, 21) ## rdIndexReg(1, 0) ## 0.U(19.W)
   io.addrWrite := baseAddr.U(31, 21) ## wrIndexReg(1, 0) ## 0.U(19.W)
 
-  printf(p"PageFlipper(rdIndex: $rdIndexReg, wrIndex: $wrIndexReg)\n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"PageFlipper(rdIndex: $rdIndexReg, wrIndex: $wrIndexReg)\n")
+  }
 }
 
 object PageFlipper {

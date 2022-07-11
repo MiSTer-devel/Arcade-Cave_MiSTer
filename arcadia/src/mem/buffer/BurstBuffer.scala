@@ -87,5 +87,8 @@ class BurstBuffer(config: Config) extends Module {
   io.out.din := lineReg.outWords(burstCounter)
   io.out.mask := Fill(config.outBytes, 1.U)
 
-  printf(p"BurstBuffer(busy: $writePendingReg, addr: ${ io.out.addr }, wordCounter: $wordCounter ($wordCounterWrap), burstCounter: $burstCounter ($burstCounterWrap), line: 0x${ Hexadecimal(lineReg.words.asUInt) })\n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"BurstBuffer(busy: $writePendingReg, addr: ${io.out.addr}, wordCounter: $wordCounter ($wordCounterWrap), burstCounter: $burstCounter ($burstCounterWrap), line: 0x${Hexadecimal(lineReg.words.asUInt)})\n")
+  }
 }

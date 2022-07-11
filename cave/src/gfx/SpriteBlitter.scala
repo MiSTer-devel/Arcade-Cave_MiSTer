@@ -110,7 +110,10 @@ class SpriteBlitter extends Module {
   io.frameBuffer.din := RegNext(penReg.asUInt)
   io.busy := RegNext(busyReg) // delayed to align with the other signals
 
-  printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), busy: $busyReg, configReady: $configReady, pixelDataReady: $pixelDataReady, write: ${ io.frameBuffer.wr }, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), busy: $busyReg, configReady: $configReady, pixelDataReady: $pixelDataReady, write: ${ io.frameBuffer.wr }, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
+  }
 }
 
 object SpriteBlitter {

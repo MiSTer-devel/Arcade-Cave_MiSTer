@@ -51,7 +51,10 @@ class Wrapper extends Module {
   map(0x00 to 0x0f).readMem(io.memA)
   map(0x10 to 0x1f).readMemT(io.memB) { _ ## 0.U }
 
-  printf(p"Wrapper(as: ${ io.cpu.as }, dtack: ${ io.cpu.dtack })\n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"Wrapper(as: ${io.cpu.as}, dtack: ${io.cpu.dtack})\n")
+  }
 }
 
 trait MemMapTestHelpers {

@@ -120,5 +120,8 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
   io.timing.hBlank := hBlank
   io.timing.vBlank := vBlank
 
-  printf(p"VideoTiming(pos: (${ pos.x }, ${ pos.y }), width: ${ config.width }, height: ${ config.height }), hBeginDisplay: $hBeginDisplay, vBeginDisplay: $vBeginDisplay, hSync: $hSync , vSync: $vSync \n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"VideoTiming(pos: (${pos.x}, ${pos.y}), width: ${config.width}, height: ${config.height}), hBeginDisplay: $hBeginDisplay, vBeginDisplay: $vBeginDisplay, hSync: $hSync , vSync: $vSync \n")
+  }
 }

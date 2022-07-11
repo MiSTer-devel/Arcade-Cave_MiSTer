@@ -235,5 +235,8 @@ class ReadCache(config: Config) extends Module {
   io.debug.write := stateReg === State.write
   io.debug.lru := lruReg
 
-  printf(p"CacheMem(state: $stateReg, way: $wayReg, lru: 0x${ Hexadecimal(lruReg) }, hitA: $hitA, hitB: $hitB, tag: 0x${ Hexadecimal(requestReg.addr.tag) }, index: ${ requestReg.addr.index }, offset: $offsetReg, wordsA: 0x${ Hexadecimal(cacheEntryA.line.inWords.asUInt) } (0x${ Hexadecimal(cacheEntryA.tag) }), wordsB: 0x${ Hexadecimal(cacheEntryB.line.inWords.asUInt) } (0x${ Hexadecimal(cacheEntryB.tag) }))\n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"CacheMem(state: $stateReg, way: $wayReg, lru: 0x${Hexadecimal(lruReg)}, hitA: $hitA, hitB: $hitB, tag: 0x${Hexadecimal(requestReg.addr.tag)}, index: ${requestReg.addr.index}, offset: $offsetReg, wordsA: 0x${Hexadecimal(cacheEntryA.line.inWords.asUInt)} (0x${Hexadecimal(cacheEntryA.tag)}), wordsB: 0x${Hexadecimal(cacheEntryB.line.inWords.asUInt)} (0x${Hexadecimal(cacheEntryB.tag)}))\n")
+  }
 }

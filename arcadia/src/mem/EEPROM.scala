@@ -211,7 +211,10 @@ class EEPROM extends Module {
   io.debug.shiftIn := stateReg === State.shiftIn
   io.debug.shiftOut := stateReg === State.shiftOut
 
-  printf(p"EEPROM(state: $stateReg, bitCounter: ${ Binary(counterReg) }, addr: 0x${ Hexadecimal(addrReg) }, opcode: ${ Hexadecimal(opcodeReg) }, data: ${ Hexadecimal(dataReg) }, done: $done)\n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"EEPROM(state: $stateReg, bitCounter: ${Binary(counterReg)}, addr: 0x${Hexadecimal(addrReg)}, opcode: ${Hexadecimal(opcodeReg)}, data: ${Hexadecimal(dataReg)}, done: $done)\n")
+  }
 }
 
 object EEPROM {

@@ -92,5 +92,8 @@ class DDR(config: Config) extends Module {
   io.ddr.burstLength := burstLength
   io.debug.burstCounter := burstCounter
 
-  printf(p"DDR(state: $stateReg, counter: $burstCounter ($burstCounterWrap)\n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"DDR(state: $stateReg, counter: $burstCounter ($burstCounterWrap)\n")
+  }
 }

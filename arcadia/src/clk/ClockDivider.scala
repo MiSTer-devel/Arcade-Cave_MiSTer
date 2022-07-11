@@ -41,7 +41,10 @@ private class ClockDivider(d: Double, width: Int) {
   val clockEnable = RegNext(next.head(1).asBool)
   next := counter +& n.U
 
-  printf(p"ClockDivider(counter: 0x${ Hexadecimal(counter) }, cen: $clockEnable )\n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"ClockDivider(counter: 0x${Hexadecimal(counter)}, cen: $clockEnable )\n")
+  }
 }
 
 object ClockDivider {

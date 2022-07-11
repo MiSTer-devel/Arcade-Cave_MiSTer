@@ -207,7 +207,10 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   io.debug.next := stateReg === State.next
   io.debug.done := stateReg === State.done
 
-  printf(p"SpriteProcessor(state: $stateReg, spriteCounter: $spriteCounter ($spriteCounterWrap))\n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"SpriteProcessor(state: $stateReg, spriteCounter: $spriteCounter ($spriteCounterWrap))\n")
+  }
 }
 
 object SpriteProcessor {

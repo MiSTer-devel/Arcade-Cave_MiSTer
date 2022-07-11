@@ -256,5 +256,8 @@ class SDRAM(config: Config) extends Module {
   io.debug.write := stateReg === State.write
   io.debug.refresh := stateReg === State.refresh
 
-  printf(p"SDRAM(state: $stateReg, nextState: $nextState, command: $commandReg, nextCommand: $nextCommand, bank: $bankReg, addr: $addrReg, waitCounter: $waitCounter, wait: $waitReq, valid: $valid, burstDone: $memBurstDone)\n")
+  // Debug
+  if (sys.env.get("DEBUG").contains("1")) {
+    printf(p"SDRAM(state: $stateReg, nextState: $nextState, command: $commandReg, nextCommand: $nextCommand, bank: $bankReg, addr: $addrReg, waitCounter: $waitCounter, wait: $waitReq, valid: $valid, burstDone: $memBurstDone)\n")
+  }
 }
