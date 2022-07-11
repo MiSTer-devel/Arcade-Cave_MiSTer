@@ -70,8 +70,7 @@ class MemSys extends Module {
     inAddrWidth = IOCTL.ADDR_WIDTH,
     inDataWidth = IOCTL.DATA_WIDTH,
     outAddrWidth = Config.ddrConfig.addrWidth,
-    outDataWidth = Config.ddrConfig.dataWidth,
-    burstLength = 1
+    outDataWidth = Config.ddrConfig.dataWidth
   )))
   ddrDownloadBuffer.io.in <> io.ioctl.rom
 
