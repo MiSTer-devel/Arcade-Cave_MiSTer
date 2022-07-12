@@ -42,6 +42,9 @@ import chisel3.util._
  *
  * Tile ROM data is read from a 64-bit FIFO, decoded, and written to another FIFO as 16x8BPP strides
  * of pixel data, to be processed by the sprite blitter.
+ *
+ * The 4BPP sprites require one 64-bit word for every row, and 8BPP sprites require two 64-bit words
+ * to decode a row.
  */
 class SpriteDecoder extends Module {
   val io = IO(new Bundle {
@@ -62,16 +65,8 @@ class SpriteDecoder extends Module {
   val toggleReg = RegInit(false.B)
   val dataReg = Reg(Bits((Config.TILE_ROM_DATA_WIDTH * 2).W))
 
-  // The start flag is asserted when there is no valid pixel data
-  val start = !validReg && !pendingReg
-
-  // The ready flag is asserted when the decoder needs to fetch tile ROM data.
-  //
-  // For 4BPP sprites we need to fetch one 64-bit word for every row, and for 8BPP we need to fetch
-  // two 64-bit words to decode a row.
-  val ready = io.pixelData.ready
-
-  // The done flag is asserted when the decoder has finished decoding a tile
+  // Control signals
+  val start = io.pixelData.ready && !pendingReg
   val done = !is8BPP || toggleReg
 
   // Decode the tile ROM data
@@ -81,7 +76,7 @@ class SpriteDecoder extends Module {
   ))
 
   // Clear registers when starting a new request
-  when(start || ready) {
+  when(start) {
     pendingReg := true.B
     validReg := false.B
     toggleReg := false.B
@@ -104,7 +99,7 @@ class SpriteDecoder extends Module {
 
   // Debug
   if (sys.env.get("DEBUG").contains("1")) {
-    printf(p"SpriteDecoder(start: $start, ready: $ready, done: $done, pending: $pendingReg, valid: $validReg, toggle: $toggleReg, romReady: ${ io.tileRom.ready }, romValid: ${ io.tileRom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid }), data: 0x${ Hexadecimal(dataReg) })\n")
+    printf(p"SpriteDecoder(start: $start, done: $done, pending: $pendingReg, valid: $validReg, toggle: $toggleReg, romReady: ${ io.tileRom.ready }, romValid: ${ io.tileRom.valid }, pixReady: ${ io.pixelData.ready }, pixValid: ${ io.pixelData.valid }), data: 0x${ Hexadecimal(dataReg) })\n")
   }
 }
 

@@ -35,6 +35,7 @@ package cave.fb
 import arcadia.Util
 import arcadia.gfx.VideoIO
 import arcadia.mem._
+import arcadia.mem.arbiter.BurstMemArbiter
 import arcadia.mem.dma.{BurstReadDMA, BurstWriteDMA}
 import cave._
 import chisel3._
@@ -61,26 +62,16 @@ class SpriteFrameBuffer extends Module {
   val io = IO(new Bundle {
     /** Enable the frame buffer */
     val enable = Input(Bool())
-    /** Start copying a frame */
-    val ready = Input(Bool())
     /** Swap the current page */
     val swap = Input(Bool())
     /** Video port */
     val video = Flipped(VideoIO())
-    /** GPU-side */
-    val gpu = new Bundle {
-      /** Line buffer port */
-      val lineBuffer = Flipped(new SpriteLineBufferIO)
-      /** Frame buffer port */
-      val frameBuffer = Flipped(new SpriteFrameBufferIO)
-    }
-    /** DDR-side */
-    val ddr = new Bundle {
-      /** Line buffer port */
-      val lineBuffer = BurstReadMemIO(Config.ddrConfig)
-      /** Frame buffer port */
-      val frameBuffer = BurstWriteMemIO(Config.ddrConfig)
-    }
+    /** Line buffer port */
+    val lineBuffer = Flipped(new SpriteLineBufferIO)
+    /** Frame buffer port */
+    val frameBuffer = Flipped(new SpriteFrameBufferIO)
+    /** DDR port */
+    val ddr = BurstReadWriteMemIO(Config.ddrConfig)
   })
 
   // Line buffer (320x1x16BPP)
@@ -93,25 +84,14 @@ class SpriteFrameBuffer extends Module {
     depthB = Some(Config.SCREEN_WIDTH)
   ))
   lineBuffer.io.clockB := io.video.clock
-  lineBuffer.io.portB <> io.gpu.lineBuffer
-
-  // Frame buffer (320x240x16BPP)
-  val frameBuffer = Module(new DualPortRam(
-    addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH,
-    dataWidthA = Config.SPRITE_FRAME_BUFFER_DATA_WIDTH,
-    depthA = Some(Config.FRAME_BUFFER_DEPTH),
-    addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH - 2,
-    dataWidthB = Config.SPRITE_FRAME_BUFFER_DATA_WIDTH * 4,
-    depthB = Some(Config.FRAME_BUFFER_DEPTH / 4)
-  ))
-  frameBuffer.io.portA <> io.gpu.frameBuffer
+  lineBuffer.io.portB <> io.lineBuffer
 
   // The page flipper uses double buffering for sprites. The pages are swapped at the start of every
   // vertical blank.
   val pageFlipper = Module(new PageFlipper(Config.SPRITE_FRAME_BUFFER_BASE_ADDR))
   pageFlipper.io.mode := false.B
   pageFlipper.io.swapRead := false.B
-  pageFlipper.io.swapWrite := io.swap
+  pageFlipper.io.swapWrite := io.enable && io.swap
 
   // Start line buffer DMA as soon as the current line has finished
   val lineBufferDmaStart = Util.rising(ShiftRegister(io.video.hBlank, 2))
@@ -119,18 +99,36 @@ class SpriteFrameBuffer extends Module {
   // Copy line buffer from DDR memory to BRAM
   val lineBufferDma = Module(new BurstReadDMA(Config.spriteLineBufferDmaConfig))
   lineBufferDma.io.start := io.enable && lineBufferDmaStart
-  lineBufferDma.io.in.mapAddr(
-    _ + pageFlipper.io.addrRead + ((io.video.pos.y + 1.U) * (Config.SCREEN_WIDTH * 2).U) // FIXME: avoid expensive multiply
-  ) <> io.ddr.lineBuffer
-  lineBufferDma.io.out.mapAddr { a =>
-    (a >> 3).asUInt // convert from byte address
-  }.asReadWriteMemIO <> lineBuffer.io.portA
+  lineBufferDma.io.out
+    .mapAddr { a => (a >> 3).asUInt } // convert from byte address
+    .asReadWriteMemIO <> lineBuffer.io.portA
 
-  // Copy frame buffer from BRAM to DDR memory
+  // Queue frame buffer requests
+  val queue = Module(new RequestQueue(
+    inAddrWidth = Config.FRAME_BUFFER_ADDR_WIDTH,
+    inDataWidth = Config.SPRITE_FRAME_BUFFER_DATA_WIDTH,
+    outAddrWidth = Config.ddrConfig.addrWidth,
+    outDataWidth = Config.ddrConfig.dataWidth,
+    depth = Config.SPRITE_FRAME_BUFFER_REQUEST_QUEUE_DEPTH
+  ))
+  queue.io.enable := io.enable
+  queue.io.readClock := clock
+  queue.io.in <> io.frameBuffer
+
+  // Clear frame buffer when the swap signal is asserted
   val frameBufferDma = Module(new BurstWriteDMA(Config.spriteFrameBufferDmaConfig))
-  frameBufferDma.io.start := io.enable && io.ready
-  frameBufferDma.io.in.mapAddr { a =>
-    (a >> 3).asUInt // convert from byte address
-  }.asReadMemIO <> frameBuffer.io.portB
-  frameBufferDma.io.out.mapAddr(_ + pageFlipper.io.addrWrite) <> io.ddr.frameBuffer
+  frameBufferDma.io.start := io.enable && io.swap
+  frameBufferDma.io.in.valid := true.B
+  frameBufferDma.io.in.waitReq := false.B
+  frameBufferDma.io.in.dout := 0.U
+
+  // DDR arbiter
+  val ddrArbiter = Module(new BurstMemArbiter(3, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
+  ddrArbiter.connect(
+    lineBufferDma.io.in.mapAddr {
+      _ + pageFlipper.io.addrRead + ((io.video.pos.y + 1.U) * (Config.SCREEN_WIDTH * 2).U) // FIXME: avoid expensive multiply
+    },
+    frameBufferDma.io.out.mapAddr(_ + pageFlipper.io.addrWrite),
+    queue.io.out.mapAddr(_ + pageFlipper.io.addrWrite)
+  ) <> io.ddr
 }

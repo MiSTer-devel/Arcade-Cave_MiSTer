@@ -60,10 +60,10 @@ package object cave {
   class SpriteLineBufferIO extends ReadMemIO(Config.FRAME_BUFFER_ADDR_WIDTH_X, Config.SPRITE_FRAME_BUFFER_DATA_WIDTH)
 
   /** Sprite frame buffer IO */
-  class SpriteFrameBufferIO extends WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SPRITE_FRAME_BUFFER_DATA_WIDTH)
+  class SpriteFrameBufferIO extends AsyncWriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SPRITE_FRAME_BUFFER_DATA_WIDTH)
 
   /** System frame buffer IO */
-  class SystemFrameBufferIO extends WriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SYSTEM_FRAME_BUFFER_DATA_WIDTH)
+  class SystemFrameBufferIO extends AsyncWriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SYSTEM_FRAME_BUFFER_DATA_WIDTH)
 
   /** Sound device enum */
   object SoundDevice {

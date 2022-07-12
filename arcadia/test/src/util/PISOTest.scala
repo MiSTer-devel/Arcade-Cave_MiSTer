@@ -41,6 +41,7 @@ import matchers.should.Matchers
 class PISOTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   def mkPISO = new Module {
     val io = IO(new Bundle {
+      val rd = Input(Bool())
       val wr = Input(Bool())
       val isEmpty = Output(Bool())
       val isAlmostEmpty = Output(Bool())
@@ -48,6 +49,7 @@ class PISOTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       val dout = Output(UInt(8.W))
     })
     val piso = Module(new PISO(3, UInt(8.W)))
+    piso.io.rd := io.rd
     piso.io.wr := io.wr
     io.isEmpty := piso.io.isEmpty
     io.isAlmostEmpty := piso.io.isAlmostEmpty
@@ -62,6 +64,7 @@ class PISOTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       dut.io.din(2).poke(3)
       dut.io.wr.poke(true)
       dut.clock.step()
+      dut.io.rd.poke(true)
       dut.io.wr.poke(false)
       dut.io.dout.expect(1.U)
       dut.clock.step()
@@ -76,6 +79,7 @@ class PISOTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       dut.io.isEmpty.expect(true)
       dut.io.wr.poke(true)
       dut.clock.step()
+      dut.io.rd.poke(true)
       dut.io.wr.poke(false)
       dut.io.isEmpty.expect(false)
       dut.clock.step(3)
@@ -88,6 +92,7 @@ class PISOTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       dut.io.isAlmostEmpty.expect(false)
       dut.io.wr.poke(true)
       dut.clock.step()
+      dut.io.rd.poke(true)
       dut.io.wr.poke(false)
       dut.io.isAlmostEmpty.expect(false)
       dut.clock.step(2)

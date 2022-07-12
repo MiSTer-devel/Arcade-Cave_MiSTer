@@ -32,7 +32,6 @@
 
 package cave.gfx
 
-import chisel3._
 import chiseltest._
 import org.scalatest._
 import flatspec.AnyFlatSpec
@@ -97,10 +96,9 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.io.config.bits.sprite.zoom.x.poke(0x100)
       dut.io.config.bits.sprite.zoom.y.poke(0x100)
       dut.io.pixelData.valid.poke(true)
+      dut.io.busy.expect(false)
       dut.clock.step()
       dut.io.config.valid.poke(false)
-      dut.io.busy.expect(false)
-      dut.clock.step(2)
       dut.io.busy.expect(true)
       dut.clock.step(256)
       dut.io.busy.expect(false)
@@ -118,30 +116,110 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.io.config.bits.sprite.zoom.y.poke(0x100)
       dut.io.pixelData.valid.poke(true)
       for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1) }
-      dut.clock.step(3)
+      dut.clock.step(2)
+      dut.io.config.valid.poke(false)
+      dut.io.pixelData.valid.poke(false)
 
-      // Pixel 0
+      // pixel 0
       dut.io.frameBuffer.wr.expect(true)
-      dut.io.frameBuffer.addr.expect(0x1410.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      dut.io.frameBuffer.addr.expect(0x1410)
+      dut.io.frameBuffer.din.expect(1)
+      dut.io.frameBuffer.mask.expect(3)
       dut.clock.step()
 
-      // Pixel 1
+      // pixel 1
       dut.io.frameBuffer.wr.expect(true)
-      dut.io.frameBuffer.addr.expect(0x1411.U)
-      dut.io.frameBuffer.din.expect(1.U)
-      dut.clock.step(29)
+      dut.io.frameBuffer.addr.expect(0x1411)
+      dut.io.frameBuffer.din.expect(1)
+      dut.clock.step(13)
 
-      // Pixel 30
+      // pixel 14 (request pixel data)
+      dut.io.pixelData.ready.expect(true)
+      dut.io.pixelData.valid.poke(true)
+      for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(2) }
       dut.io.frameBuffer.wr.expect(true)
-      dut.io.frameBuffer.addr.expect(0x142e.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      dut.io.frameBuffer.addr.expect(0x141e)
+      dut.io.frameBuffer.din.expect(1)
       dut.clock.step()
 
-      // Pixel 31
+      // pixel 15
+      dut.io.pixelData.valid.poke(false)
       dut.io.frameBuffer.wr.expect(true)
-      dut.io.frameBuffer.addr.expect(0x142f.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      dut.io.frameBuffer.addr.expect(0x141f)
+      dut.io.frameBuffer.din.expect(1)
+      dut.clock.step()
+
+      // pixel 16
+      dut.io.frameBuffer.wr.expect(true)
+      dut.io.frameBuffer.addr.expect(0x1420)
+      dut.io.frameBuffer.din.expect(2)
+      dut.clock.step()
+
+      // pixel 17
+      dut.io.frameBuffer.wr.expect(true)
+      dut.io.frameBuffer.addr.expect(0x1421)
+      dut.io.frameBuffer.din.expect(2)
+      dut.clock.step(13)
+
+      // pixel 30
+      dut.io.frameBuffer.wr.expect(true)
+      dut.io.frameBuffer.addr.expect(0x142e)
+      dut.io.frameBuffer.din.expect(2)
+      dut.clock.step()
+
+      // pixel 31
+      dut.io.frameBuffer.wr.expect(true)
+      dut.io.frameBuffer.addr.expect(0x142f)
+      dut.io.frameBuffer.din.expect(2)
+    }
+  }
+
+  it should "wait for the frame buffer" in {
+    test(new SpriteBlitter) { dut =>
+      dut.io.config.valid.poke(true)
+      dut.io.config.bits.sprite.cols.poke(1)
+      dut.io.config.bits.sprite.rows.poke(1)
+      dut.io.config.bits.sprite.zoom.x.poke(0x100)
+      dut.io.config.bits.sprite.zoom.y.poke(0x100)
+      dut.io.pixelData.valid.poke(true)
+      for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1) }
+      dut.clock.step(2)
+      dut.io.config.valid.poke(false)
+      dut.io.pixelData.valid.poke(false)
+
+      // wait
+      dut.io.frameBuffer.waitReq.poke(true)
+      dut.io.frameBuffer.wr.expect(true)
+      dut.io.frameBuffer.addr.expect(0x0)
+      dut.clock.step()
+
+      // pixel 0
+      dut.io.frameBuffer.waitReq.poke(false)
+      dut.io.frameBuffer.wr.expect(true)
+      dut.io.frameBuffer.addr.expect(0x0)
+      dut.clock.step()
+
+      // pixel 1
+      dut.io.frameBuffer.wr.expect(true)
+      dut.io.frameBuffer.addr.expect(0x1)
+      dut.clock.step(13)
+
+      // pixel 14
+      dut.io.frameBuffer.wr.expect(true)
+      dut.io.frameBuffer.addr.expect(0xe)
+      dut.clock.step()
+
+      // wait
+      dut.io.frameBuffer.waitReq.poke(true)
+      dut.io.frameBuffer.wr.expect(true)
+      dut.io.frameBuffer.addr.expect(0xf)
+      dut.clock.step()
+
+      // pixel 15
+      dut.io.frameBuffer.waitReq.poke(false)
+      dut.io.frameBuffer.wr.expect(true)
+      dut.io.frameBuffer.addr.expect(0xf)
+      dut.clock.step()
     }
   }
 
@@ -155,27 +233,31 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.io.config.bits.sprite.hFlip.poke(true)
       dut.io.pixelData.valid.poke(true)
       for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1) }
-      dut.clock.step(3)
+      dut.clock.step(2)
+      dut.io.config.valid.poke(false)
+      dut.io.pixelData.valid.poke(false)
 
-      // Pixel 0
+      // pixel 0
       dut.io.frameBuffer.wr.expect(true)
-      dut.io.frameBuffer.addr.expect(0x0f.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      dut.io.frameBuffer.addr.expect(0xf)
+      dut.io.frameBuffer.din.expect(1)
+      dut.io.frameBuffer.mask.expect(3)
       dut.clock.step()
 
-      // Pixel 1
-      dut.io.frameBuffer.addr.expect(0x0e.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      // pixel 1
+      dut.io.frameBuffer.addr.expect(0xe)
+      dut.io.frameBuffer.din.expect(1)
       dut.clock.step(13)
 
-      // Pixel 14
-      dut.io.frameBuffer.addr.expect(0x01.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      // pixel 14
+      dut.io.frameBuffer.addr.expect(0x1)
+      dut.io.frameBuffer.din.expect(1)
       dut.clock.step()
 
-      // Pixel 15
-      dut.io.frameBuffer.addr.expect(0x00.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      // pixel 15
+      dut.io.frameBuffer.addr.expect(0x0)
+      dut.io.frameBuffer.din.expect(1)
+      dut.clock.step()
     }
   }
 
@@ -189,27 +271,31 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.io.config.bits.sprite.vFlip.poke(true)
       dut.io.pixelData.valid.poke(true)
       for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1) }
-      dut.clock.step(3)
+      dut.clock.step(2)
+      dut.io.config.valid.poke(false)
+      dut.io.pixelData.valid.poke(false)
 
-      // Pixel 0
+      // pixel 0
       dut.io.frameBuffer.wr.expect(true)
-      dut.io.frameBuffer.addr.expect(0x12c0.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      dut.io.frameBuffer.addr.expect(0x12c0)
+      dut.io.frameBuffer.din.expect(1)
+      dut.io.frameBuffer.mask.expect(3)
       dut.clock.step()
 
-      // Pixel 1
-      dut.io.frameBuffer.addr.expect(0x12c1.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      // pixel 1
+      dut.io.frameBuffer.addr.expect(0x12c1)
+      dut.io.frameBuffer.din.expect(1)
       dut.clock.step(13)
 
-      // Pixel 14
-      dut.io.frameBuffer.addr.expect(0x12ce.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      // pixel 14
+      dut.io.frameBuffer.addr.expect(0x12ce)
+      dut.io.frameBuffer.din.expect(1)
       dut.clock.step()
 
-      // Pixel 15
-      dut.io.frameBuffer.addr.expect(0x12cf.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      // pixel 15
+      dut.io.frameBuffer.addr.expect(0x12cf)
+      dut.io.frameBuffer.din.expect(1)
+      dut.clock.step()
     }
   }
 
@@ -224,30 +310,34 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.io.config.bits.sprite.zoom.y.poke(0x100)
       dut.io.pixelData.valid.poke(true)
       for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1) }
-      dut.clock.step(3)
+      dut.clock.step(2)
+      dut.io.config.valid.poke(false)
+      dut.io.pixelData.valid.poke(false)
 
-      // Pixel 0
+      // pixel 0
       dut.io.frameBuffer.wr.expect(true)
-      dut.io.frameBuffer.addr.expect(0x00.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      dut.io.frameBuffer.addr.expect(0x0)
+      dut.io.frameBuffer.din.expect(1)
+      dut.io.frameBuffer.mask.expect(3)
       dut.clock.step()
 
-      // Pixel 1
+      // pixel 1
       dut.io.frameBuffer.wr.expect(true)
-      dut.io.frameBuffer.addr.expect(0x00.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      dut.io.frameBuffer.addr.expect(0x0)
+      dut.io.frameBuffer.din.expect(1)
       dut.clock.step(13)
 
-      // Pixel 14
+      // pixel 14
       dut.io.frameBuffer.wr.expect(true)
-      dut.io.frameBuffer.addr.expect(0x07.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      dut.io.frameBuffer.addr.expect(0x7)
+      dut.io.frameBuffer.din.expect(1)
       dut.clock.step()
 
-      // Pixel 15
+      // pixel 15
       dut.io.frameBuffer.wr.expect(true)
-      dut.io.frameBuffer.addr.expect(0x07.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      dut.io.frameBuffer.addr.expect(0x7)
+      dut.io.frameBuffer.din.expect(1)
+      dut.clock.step()
     }
   }
 
@@ -261,27 +351,31 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.io.config.bits.sprite.hFlip.poke(true)
       dut.io.pixelData.valid.poke(true)
       for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1) }
-      dut.clock.step(3)
+      dut.clock.step(2)
+      dut.io.config.valid.poke(false)
+      dut.io.pixelData.valid.poke(false)
 
-      // Pixel 0
+      // pixel 0
       dut.io.frameBuffer.wr.expect(true)
-      dut.io.frameBuffer.addr.expect(0x0f.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      dut.io.frameBuffer.addr.expect(0xf)
+      dut.io.frameBuffer.din.expect(1)
+      dut.io.frameBuffer.mask.expect(3)
       dut.clock.step()
 
-      // Pixel 1
-      dut.io.frameBuffer.addr.expect(0x0e.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      // pixel 1
+      dut.io.frameBuffer.addr.expect(0xe)
+      dut.io.frameBuffer.din.expect(1)
       dut.clock.step(13)
 
-      // Pixel 14
-      dut.io.frameBuffer.addr.expect(0x08.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      // pixel 14
+      dut.io.frameBuffer.addr.expect(0x8)
+      dut.io.frameBuffer.din.expect(1)
       dut.clock.step()
 
-      // Pixel 15
-      dut.io.frameBuffer.addr.expect(0x07.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      // pixel 15
+      dut.io.frameBuffer.addr.expect(0x7)
+      dut.io.frameBuffer.din.expect(1)
+      dut.clock.step()
     }
   }
 
@@ -296,30 +390,34 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.io.config.bits.sprite.zoom.y.poke(0x100)
       dut.io.pixelData.valid.poke(true)
       for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1) }
-      dut.clock.step(3)
+      dut.clock.step(2)
+      dut.io.config.valid.poke(false)
+      dut.io.pixelData.valid.poke(false)
 
-      // Pixel 0
+      // pixel 0
       dut.io.frameBuffer.wr.expect(true)
-      dut.io.frameBuffer.addr.expect(0x00.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      dut.io.frameBuffer.addr.expect(0x00)
+      dut.io.frameBuffer.din.expect(1)
+      dut.io.frameBuffer.mask.expect(3)
       dut.clock.step()
 
-      // Pixel 1
+      // pixel 1
       dut.io.frameBuffer.wr.expect(true)
-      dut.io.frameBuffer.addr.expect(0x02.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      dut.io.frameBuffer.addr.expect(0x02)
+      dut.io.frameBuffer.din.expect(1)
       dut.clock.step(13)
 
-      // Pixel 14
+      // pixel 14
       dut.io.frameBuffer.wr.expect(true)
-      dut.io.frameBuffer.addr.expect(0x1c.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      dut.io.frameBuffer.addr.expect(0x1c)
+      dut.io.frameBuffer.din.expect(1)
       dut.clock.step()
 
-      // Pixel 15
+      // pixel 15
       dut.io.frameBuffer.wr.expect(true)
-      dut.io.frameBuffer.addr.expect(0x1e.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      dut.io.frameBuffer.addr.expect(0x1e)
+      dut.io.frameBuffer.din.expect(1)
+      dut.clock.step()
     }
   }
 
@@ -333,27 +431,31 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
       dut.io.config.bits.sprite.hFlip.poke(true)
       dut.io.pixelData.valid.poke(true)
       for (n <- 0 to 15) { dut.io.pixelData.bits(n).poke(1) }
-      dut.clock.step(3)
+      dut.clock.step(2)
+      dut.io.config.valid.poke(false)
+      dut.io.pixelData.valid.poke(false)
 
-      // Pixel 0
+      // pixel 0
       dut.io.frameBuffer.wr.expect(true)
-      dut.io.frameBuffer.addr.expect(0xf.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      dut.io.frameBuffer.addr.expect(0x00f)
+      dut.io.frameBuffer.din.expect(1)
+      dut.io.frameBuffer.mask.expect(3)
       dut.clock.step()
 
-      // Pixel 1
-      dut.io.frameBuffer.addr.expect(0xd.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      // pixel 1
+      dut.io.frameBuffer.addr.expect(0x00d)
+      dut.io.frameBuffer.din.expect(1)
       dut.clock.step(13)
 
-      // Pixel 14
-      dut.io.frameBuffer.addr.expect(0x1f3.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      // pixel 14
+      dut.io.frameBuffer.addr.expect(0x1f3)
+      dut.io.frameBuffer.din.expect(1)
       dut.clock.step()
 
-      // Pixel 15
-      dut.io.frameBuffer.addr.expect(0x1f1.U)
-      dut.io.frameBuffer.din.expect(1.U)
+      // pixel 15
+      dut.io.frameBuffer.addr.expect(0x1f1)
+      dut.io.frameBuffer.din.expect(1)
+      dut.clock.step()
     }
   }
 }

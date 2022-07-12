@@ -70,8 +70,6 @@ class Cave extends Module {
     val spriteFrameBuffer = new SpriteFrameBufferIO
     /** System frame buffer port */
     val systemFrameBuffer = new SystemFrameBufferIO
-    /** Asserted when the sprite frame buffer should start copying a frame */
-    val spriteFrameBufferReady = Output(Bool())
     /** Asserted when the current page for the sprite frame buffer should be swapped */
     val spriteFrameBufferSwap = Output(Bool())
   })
@@ -81,6 +79,7 @@ class Cave extends Module {
 
   // Synchronize vertical blank into system clock domain
   val vBlank = ShiftRegister(io.video.vBlank, 2)
+  val vBlankRising = Util.rising(vBlank)
 
   // Toggle pause register
   val pauseReg = Util.toggle(Util.rising(io.joystick(0).pause || io.joystick(1).pause))
@@ -238,7 +237,7 @@ class Cave extends Module {
   soundIrq := sound.io.irq
 
   // Toggle video IRQ
-  when(Util.rising(vBlank)) {
+  when(vBlankRising) {
     videoIrq := true.B
     agalletIrq := true.B
   }.elsewhen(Util.falling(vBlank)) {
@@ -258,9 +257,9 @@ class Cave extends Module {
   // Set player input ports
   val (input0, input1) = Cave.encodePlayers(io.gameConfig.index, io.options, io.joystick, eeprom)
 
-  // Set sprite frame buffer signals
-  io.spriteFrameBufferReady := Util.falling(gpu.io.spriteCtrl.busy)
-  io.spriteFrameBufferSwap := false.B
+  // Swap the sprite frame buffer while the CPU is paused. This allows the GPU to continue rendering
+  // sprites.
+  io.spriteFrameBufferSwap := pauseReg && vBlankRising
 
   /**
    * Maps video RAM to the given base address.

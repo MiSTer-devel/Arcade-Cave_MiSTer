@@ -40,11 +40,9 @@ import chisel3.util._
 /**
  * The sprite processor handles rendering sprites.
  *
- * @param maxSprites       The maximum number of sprites to render.
- * @param clearFrameBuffer Asserted when the frame buffer should be cleared before the sprites are
- *                         rendered.
+ * @param maxSprites The maximum number of sprites to render.
  */
-class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) extends Module {
+class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val io = IO(new Bundle {
     /** Control port */
     val ctrl = SpriteCtrlIO()
@@ -53,7 +51,6 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
     /** Debug port */
     val debug = Output(new Bundle {
       val idle = Bool()
-      val clear = Bool()
       val load = Bool()
       val latch = Bool()
       val check = Bool()
@@ -66,7 +63,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
 
   // States
   object State {
-    val idle :: clear :: load :: latch :: check :: ready :: pending :: next :: done :: Nil = Enum(9)
+    val idle :: load :: latch :: check :: ready :: pending :: next :: done :: Nil = Enum(8)
   }
 
   // Set 8BPP flag
@@ -89,7 +86,6 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   fifo.flush := stateReg === State.idle
 
   // Counters
-  val (clearAddr, clearDone) = Counter.static(Config.SCREEN_WIDTH * Config.SCREEN_HEIGHT, enable = stateReg === State.clear)
   val (spriteCounter, spriteCounterWrap) = Counter.static(maxSprites, stateReg === State.next)
   val (tileCounter, tileCounterWrap) = Counter.dynamic(numTilesReg, effectiveRead)
 
@@ -149,14 +145,7 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   switch(stateReg) {
     // Wait for the start signal
     is(State.idle) {
-      when(io.ctrl.start) {
-        stateReg := (if (clearFrameBuffer) State.clear else State.load)
-      }
-    }
-
-    // Clears the frame buffer
-    is(State.clear) {
-      when(clearDone) { stateReg := Mux(io.ctrl.enable, State.load, State.idle) }
+      when(io.ctrl.start) { stateReg := State.load }
     }
 
     // Load the sprite
@@ -196,9 +185,8 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
   io.ctrl.tileRom.rd := tileRomRead
   io.ctrl.tileRom.addr := tileRomAddr
   io.ctrl.tileRom.burstLength := tileRomBurstLength
-  io.frameBuffer := Mux(stateReg === State.clear, SpriteProcessor.clearMem(clearAddr), blitter.io.frameBuffer)
+  io.frameBuffer <> blitter.io.frameBuffer
   io.debug.idle := stateReg === State.idle
-  io.debug.clear := stateReg === State.clear
   io.debug.load := stateReg === State.load
   io.debug.latch := stateReg === State.latch
   io.debug.check := stateReg === State.check
@@ -216,20 +204,4 @@ class SpriteProcessor(maxSprites: Int = 1024, clearFrameBuffer: Boolean = true) 
 object SpriteProcessor {
   /** The depth of the tile ROM FIFO in words */
   val FIFO_DEPTH = 64
-
-  /**
-   * Returns a virtual write-only memory interface that writes a constant value to the sprite frame
-   * buffer.
-   *
-   * @param addr The memory address.
-   * @param data The constant value.
-   */
-  def clearMem(addr: UInt, data: Bits = 0.U): SpriteFrameBufferIO = {
-    val mem = Wire(new SpriteFrameBufferIO)
-    mem.wr := true.B
-    mem.addr := addr
-    mem.mask := 0.U
-    mem.din := data
-    mem
-  }
 }

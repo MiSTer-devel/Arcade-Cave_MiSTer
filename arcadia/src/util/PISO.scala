@@ -43,6 +43,8 @@ import chisel3._
  */
 class PISO[T <: Data](n: Int, t: T, threshold: Int = 1) extends Module {
   val io = IO(new Bundle {
+    /** Read enable */
+    val rd = Input(Bool())
     /** Write enable */
     val wr = Input(Bool())
     /** Asserted when the PISO is empty */
@@ -67,7 +69,7 @@ class PISO[T <: Data](n: Int, t: T, threshold: Int = 1) extends Module {
   when(io.wr) {
     pisoReg := io.din
     pisoCounterReg := n.U
-  }.elsewhen(!pisoEmpty) {
+  }.elsewhen(io.rd && !pisoEmpty) {
     pisoReg := pisoReg.tail :+ pisoReg.head
     pisoCounterReg := pisoCounterReg - 1.U
   }
