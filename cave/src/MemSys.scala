@@ -54,10 +54,8 @@ class MemSys extends Module {
     val sdram = BurstReadWriteMemIO(Config.sdramConfig)
     /** ROM port */
     val rom = Flipped(new RomIO)
-    /** Sprite line buffer port */
-    val spriteLineBuffer = Flipped(BurstReadMemIO(Config.ddrConfig))
     /** Sprite frame buffer port */
-    val spriteFrameBuffer = Flipped(BurstWriteMemIO(Config.ddrConfig))
+    val spriteFrameBuffer = Flipped(BurstReadWriteMemIO(Config.ddrConfig))
     /** System frame buffer port */
     val systemFrameBuffer = Flipped(BurstReadWriteMemIO(Config.ddrConfig))
     /** Asserted when the memory system is ready */
@@ -148,12 +146,11 @@ class MemSys extends Module {
   }
 
   // DDR arbiter
-  val ddrArbiter = Module(new BurstMemArbiter(6, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
+  val ddrArbiter = Module(new BurstMemArbiter(5, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
   ddrArbiter.connect(
     ddrDownloadBuffer.io.out.mapAddr(_ + Config.IOCTL_DOWNLOAD_BASE_ADDR.U),
     copyDma.io.in.mapAddr(_ + Config.IOCTL_DOWNLOAD_BASE_ADDR.U),
     io.systemFrameBuffer,
-    io.spriteLineBuffer,
     io.spriteFrameBuffer,
     io.rom.spriteTileRom.mapAddr(_ + io.gameConfig.sprite.romOffset + Config.IOCTL_DOWNLOAD_BASE_ADDR.U)
   ) <> io.ddr

@@ -67,6 +67,7 @@ class SpriteBlitter extends Module {
 
   // The PISO is used to buffer a single row of pixels to be copied to the frame buffer
   val piso = Module(new PISO(Config.SPRITE_TILE_SIZE, Bits(Config.SPRITE_TILE_MAX_BPP.W)))
+  piso.io.rd := busyReg && !io.frameBuffer.waitReq
   piso.io.wr := io.pixelData.fire
   piso.io.din := io.pixelData.bits
 
@@ -75,40 +76,42 @@ class SpriteBlitter extends Module {
   val pisoAlmostEmpty = piso.io.isAlmostEmpty
 
   // Counters
-  val (x, xWrap) = Counter.dynamic(configReg.sprite.size.x, enable = busyReg && !pisoEmpty)
+  val (x, xWrap) = Counter.dynamic(configReg.sprite.size.x, enable = busyReg && !pisoEmpty && !io.frameBuffer.waitReq)
   val (y, yWrap) = Counter.dynamic(configReg.sprite.size.y, enable = xWrap)
 
   // Pixel position
-  val posReg = RegNext(SpriteBlitter.pixelPos(configReg.sprite, UVec2(x, y)))
+  val posReg = RegEnable(SpriteBlitter.pixelPos(configReg.sprite, UVec2(x, y)), !io.frameBuffer.waitReq)
 
   // Decode the palette entry for the current pixel
-  val penReg = RegNext(PaletteEntry(configReg.sprite.priority, configReg.sprite.colorCode, piso.io.dout))
+  val pen = PaletteEntry(configReg.sprite.priority, configReg.sprite.colorCode, piso.io.dout)
+  val penReg = RegEnable(pen, !io.frameBuffer.waitReq)
+  val validReg = RegEnable(!pisoEmpty, !io.frameBuffer.waitReq)
+
+  // The visible flag is asserted if the pixel is non-transparent and within the screen bounds
+  val visible = validReg && GPU.isVisible(posReg) && !penReg.isTransparent
 
   // The done flag is asserted when the sprite has finished blitting
   val blitDone = xWrap && yWrap
 
-  // The busy register is set when a configuration is latched, and cleared when a blit has finished
-  when(io.config.fire) { busyReg := true.B }.elsewhen(blitDone) { busyReg := false.B }
+  // The config ready flag is asserted when the blitter is ready to latch a new configuration (i.e.
+  // the blitter is not busy, or a blit has just finished)
+  val configReady = !busyReg || blitDone
 
   // The pixel data ready flag is asserted when the PISO is empty, or will be empty in the next
   // clock cycle
-  val pixelDataReady = io.pixelData.valid && (pisoEmpty || pisoAlmostEmpty)
+  val pixelDataReady = !io.frameBuffer.waitReq && (pisoEmpty || pisoAlmostEmpty)
 
-  // The config ready flag is asserted when the blitter is ready to latch a new configuration (i.e.
-  // the blitter is not busy, or a blit has just finished)
-  val configReady = io.config.valid && (!busyReg || blitDone)
-
-  // Set visible flag
-  val visible = GPU.isVisible(posReg) && !penReg.isTransparent && RegNext(!pisoEmpty)
+  // Toggle busy register
+  when(io.config.fire) { busyReg := true.B }.elsewhen(blitDone) { busyReg := false.B }
 
   // Outputs
   io.config.ready := configReady
   io.pixelData.ready := pixelDataReady
-  io.frameBuffer.wr := RegNext(visible)
-  io.frameBuffer.addr := RegNext(GPU.frameBufferAddr(posReg, configReg.hFlip, false.B))
+  io.frameBuffer.wr := visible
+  io.frameBuffer.addr := GPU.frameBufferAddr(posReg, configReg.hFlip, false.B)
   io.frameBuffer.mask := 3.U
-  io.frameBuffer.din := RegNext(penReg.asUInt)
-  io.busy := RegNext(busyReg) // delayed to align with the other signals
+  io.frameBuffer.din := penReg.asUInt
+  io.busy := busyReg
 
   // Debug
   if (sys.env.get("DEBUG").contains("1")) {

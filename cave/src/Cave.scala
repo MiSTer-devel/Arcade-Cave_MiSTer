@@ -70,8 +70,6 @@ class Cave extends Module {
     val spriteFrameBuffer = new SpriteFrameBufferIO
     /** System frame buffer port */
     val systemFrameBuffer = new SystemFrameBufferIO
-    /** Asserted when the sprite frame buffer should start copying a frame */
-    val spriteFrameBufferReady = Output(Bool())
     /** Asserted when the current page for the sprite frame buffer should be swapped */
     val spriteFrameBufferSwap = Output(Bool())
   })
@@ -261,7 +259,6 @@ class Cave extends Module {
 
   // Swap the sprite frame buffer while the CPU is paused. This allows the GPU to continue rendering
   // sprites.
-  io.spriteFrameBufferReady := Util.falling(gpu.io.spriteCtrl.busy)
   io.spriteFrameBufferSwap := pauseReg && vBlankRising
 
   /**
