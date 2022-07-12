@@ -59,7 +59,7 @@ class MemSys extends Module {
     /** Sprite frame buffer port */
     val spriteFrameBuffer = Flipped(BurstWriteMemIO(Config.ddrConfig))
     /** System frame buffer port */
-    val systemFrameBuffer = Flipped(BurstWriteMemIO(Config.ddrConfig))
+    val systemFrameBuffer = Flipped(BurstReadWriteMemIO(Config.ddrConfig))
     /** Asserted when the memory system is ready */
     val ready = Output(Bool())
   })

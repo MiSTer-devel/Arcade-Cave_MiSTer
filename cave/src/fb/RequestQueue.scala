@@ -58,7 +58,7 @@ class RequestQueue(inAddrWidth: Int, inDataWidth: Int, outAddrWidth: Int, outDat
     /** Read clock domain */
     val readClock = Input(Clock())
     /** Input port */
-    val in = Flipped(new WriteMemIO(inAddrWidth, inDataWidth))
+    val in = Flipped(new AsyncWriteMemIO(inAddrWidth, inDataWidth))
     /** Output port */
     val out = BurstWriteMemIO(outAddrWidth, outDataWidth)
   })
@@ -72,12 +72,13 @@ class RequestQueue(inAddrWidth: Int, inDataWidth: Int, outAddrWidth: Int, outDat
 
   // Input -> FIFO
   fifo.io.enq.valid := io.in.wr
-  fifo.io.enq.bits := io.in.asUInt
+  fifo.io.enq.bits := WriteRequest(io.in).asUInt
+  io.in.waitReq := !fifo.io.enq.ready
 
   // FIFO -> Output
   io.out.wr := io.enable && fifo.io.deq.valid
   fifo.io.deq.ready := !io.out.waitReq
-  val request = fifo.io.deq.bits.asTypeOf(new WriteMemIO(inAddrWidth, inDataWidth))
+  val request = fifo.io.deq.bits.asTypeOf(new WriteRequest(chiselTypeOf(io.in.addr), chiselTypeOf(io.in.din)))
   io.out.burstLength := 1.U
   io.out.addr := request.addr << (3 - log2Ceil(dataWidthRatio)) // convert to byte address
   io.out.din := Cat(Seq.fill(dataWidthRatio) { request.din })
