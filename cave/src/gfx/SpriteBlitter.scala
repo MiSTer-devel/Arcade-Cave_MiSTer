@@ -56,6 +56,8 @@ class SpriteBlitter extends Module {
     val video = Flipped(VideoIO())
     /** Config port */
     val config = DeqIO(new SpriteBlitterConfig)
+    /** Enable flag */
+    val enable = Input(Bool())
     /** Busy flag */
     val busy = Output(Bool())
     /** Pixel data port */
@@ -110,7 +112,7 @@ class SpriteBlitter extends Module {
   // Outputs
   io.config.ready := configReady
   io.pixelData.ready := pixelDataReady
-  io.frameBuffer.wr := visible
+  io.frameBuffer.wr := io.enable && visible
   io.frameBuffer.addr := GPU.frameBufferAddr(posReg, configReg.hFlip, false.B)
   io.frameBuffer.mask := 3.U
   io.frameBuffer.din := penReg.asUInt
