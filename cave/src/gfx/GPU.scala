@@ -112,8 +112,8 @@ class GPU extends Module {
 
 object GPU {
   /**
-   * Transforms a pixel position to a frame buffer memory address, applying the flip and rotate
-   * transforms.
+   * Transforms a position vector to a frame buffer memory address, applying the optional flip
+   * and rotate transforms.
    *
    * @param size   The frame buffer size.
    * @param pos    The pixel position.
@@ -129,26 +129,6 @@ object GPU {
     Mux(rotate,
       Mux(flip, (x * size.y) + y_, (x_ * size.y) + y),
       Mux(flip, (y_ * size.x) + x_, (y * size.x) + x)
-    )
-  }
-
-  /**
-   * Transforms a pixel position to a frame buffer memory address, applying the flip and rotate
-   * transforms.
-   *
-   * @param pos    The pixel position.
-   * @param flip   Flips the image.
-   * @param rotate Rotates the image 90 degrees.
-   * @return An address value.
-   */
-  def frameBufferAddr[T <: Bits with Num[T]](pos: Vec2[T], flip: Bool, rotate: Bool): UInt = {
-    val x = pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0)
-    val y = pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
-    val x_ = (Config.SCREEN_WIDTH - 1).U - x
-    val y_ = (Config.SCREEN_HEIGHT - 1).U - y
-    Mux(rotate,
-      Mux(flip, (x * Config.SCREEN_HEIGHT.U) + y_, (x_ * Config.SCREEN_HEIGHT.U) + y),
-      Mux(flip, (y_ * Config.SCREEN_WIDTH.U) + x_, (y * Config.SCREEN_WIDTH.U) + x)
     )
   }
 
@@ -170,7 +150,7 @@ object GPU {
    * @param data The pixel data.
    * @return A 32-bit pixel value.
    */
-  private def decodeABGR(data: Bits): Bits = {
+  def decodeABGR(data: Bits): Bits = {
     val rgb = decodeRGB(data)
     Cat(rgb.b, rgb.g, rgb.r).pad(32)
   }

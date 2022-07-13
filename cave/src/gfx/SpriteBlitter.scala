@@ -113,7 +113,7 @@ class SpriteBlitter extends Module {
   io.config.ready := configReady
   io.pixelData.ready := pixelDataReady
   io.frameBuffer.wr := io.enable && visible
-  io.frameBuffer.addr := GPU.frameBufferAddr(posReg, configReg.hFlip, false.B)
+  io.frameBuffer.addr := SpriteBlitter.frameBufferAddr(io.video.size, UVec2(posReg.x, posReg.y), configReg.hFlip)
   io.frameBuffer.mask := 3.U
   io.frameBuffer.din := penReg.asUInt
   io.busy := busyReg
@@ -148,6 +148,26 @@ object SpriteBlitter {
 
     // Truncate fractional bits
     result >> Sprite.ZOOM_PRECISION
+  }
+
+  /**
+   * Transforms a pixel position to a frame buffer memory address, applying the optional flip
+   * transform.
+   *
+   * @param size   The frame buffer size.
+   * @param pos    The pixel position.
+   * @param flip   Flips the image.
+   * @return An address value.
+   */
+  def frameBufferAddr(size: UVec2, pos: UVec2, flip: Bool): UInt = {
+    val x = pos.x
+    val y = pos.y
+    val x_ = size.x - pos.x - 1.U
+    val y_ = size.y - pos.y - 1.U
+    Mux(flip,
+      (y_ << log2Ceil(Config.FRAME_BUFFER_WIDTH)).asUInt + x_,
+      (y << log2Ceil(Config.FRAME_BUFFER_WIDTH)).asUInt + x
+    )
   }
 
   /**

@@ -47,7 +47,7 @@ import chisel3.util._
  * The original CAVE arcade hardware has two V53C16256H DRAM chips that are used for the sprite
  * frame buffer (two are required because sprites use double buffering).
  *
- * Unfortunately, there are not enough resources available in the FGPA for us to replicate the
+ * Unfortunately, there are not enough resources available in the FPGA for us to replicate the
  * original design directly in BRAM, so we need to be a bit more creative.
  *
  * The strategy used here is to place the sprite frame buffer in DDR memory. At the beginning of
@@ -74,14 +74,14 @@ class SpriteFrameBuffer extends Module {
     val ddr = BurstReadWriteMemIO(Config.ddrConfig)
   })
 
-  // Line buffer (320x1x16BPP)
+  // Line buffer
   val lineBuffer = Module(new TrueDualPortRam(
     addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH_X - 2,
     dataWidthA = Config.SPRITE_FRAME_BUFFER_DATA_WIDTH * 4,
-    depthA = Some(Config.SCREEN_WIDTH / 4),
+    depthA = Some(Config.FRAME_BUFFER_WIDTH / 4),
     addrWidthB = Config.FRAME_BUFFER_ADDR_WIDTH_X,
     dataWidthB = Config.SPRITE_FRAME_BUFFER_DATA_WIDTH,
-    depthB = Some(Config.SCREEN_WIDTH)
+    depthB = Some(Config.FRAME_BUFFER_WIDTH)
   ))
   lineBuffer.io.clockB := io.video.clock
   lineBuffer.io.portB <> io.lineBuffer
@@ -122,12 +122,13 @@ class SpriteFrameBuffer extends Module {
   frameBufferDma.io.in.waitReq := false.B
   frameBufferDma.io.in.dout := 0.U
 
+  // Calculate line buffer address offset for the next scanline
+  val lineBufferAddrOffset = ((io.video.pos.y + 1.U) << log2Ceil(Config.SPRITE_FRAME_BUFFER_STRIDE)).asUInt
+
   // DDR arbiter
   val ddrArbiter = Module(new BurstMemArbiter(3, Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth))
   ddrArbiter.connect(
-    lineBufferDma.io.in.mapAddr {
-      _ + pageFlipper.io.addrRead + ((io.video.pos.y + 1.U) * (Config.SCREEN_WIDTH * 2).U) // FIXME: avoid expensive multiply
-    },
+    lineBufferDma.io.in.mapAddr(_ + pageFlipper.io.addrRead + lineBufferAddrOffset),
     frameBufferDma.io.out.mapAddr(_ + pageFlipper.io.addrWrite),
     queue.io.out.mapAddr(_ + pageFlipper.io.addrWrite)
   ) <> io.ddr
