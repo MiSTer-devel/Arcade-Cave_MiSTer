@@ -51,9 +51,9 @@ object Config {
   /** CPU clock divider */
   val CPU_CLOCK_DIV = 6 // 16Mhz
 
-  /** The screen width in pixels */
+  /** The width of the screen in pixels */
   val SCREEN_WIDTH = 320
-  /** The screen height in pixels */
+  /** The height of the screen in pixels */
   val SCREEN_HEIGHT = 240
 
   /** The base address of the system frame buffer in DDR. */
@@ -148,12 +148,16 @@ object Config {
   /** The number of bits per color channel for the output RGB signal */
   val RGB_OUTPUT_BPP = 8
 
+  /** The width of the frame buffer in pixels */
+  val FRAME_BUFFER_WIDTH = 512
+  /** The height of the frame buffer in pixels */
+  val FRAME_BUFFER_HEIGHT = 256
   /** The depth of the frame buffer in words */
-  val FRAME_BUFFER_DEPTH = SCREEN_WIDTH * SCREEN_HEIGHT
+  val FRAME_BUFFER_DEPTH = FRAME_BUFFER_WIDTH * FRAME_BUFFER_HEIGHT
   /** The width of the frame buffer X address */
-  val FRAME_BUFFER_ADDR_WIDTH_X = log2Ceil(SCREEN_WIDTH)
+  val FRAME_BUFFER_ADDR_WIDTH_X = log2Ceil(FRAME_BUFFER_WIDTH)
   /** The width of the frame buffer Y address */
-  val FRAME_BUFFER_ADDR_WIDTH_Y = log2Ceil(SCREEN_HEIGHT)
+  val FRAME_BUFFER_ADDR_WIDTH_Y = log2Ceil(FRAME_BUFFER_HEIGHT)
   /** The width of the frame buffer address bus */
   val FRAME_BUFFER_ADDR_WIDTH = log2Ceil(FRAME_BUFFER_DEPTH)
   /** The width of the system frame buffer data bus */
@@ -164,6 +168,8 @@ object Config {
   val SPRITE_FRAME_BUFFER_DATA_WIDTH = 16
   /** The depth of the sprite frame buffer request queue */
   val SPRITE_FRAME_BUFFER_REQUEST_QUEUE_DEPTH = 16
+  /** The width of the sprite frame buffer in bytes */
+  val SPRITE_FRAME_BUFFER_STRIDE = FRAME_BUFFER_WIDTH * SPRITE_FRAME_BUFFER_DATA_WIDTH / 8
 
   /** The width of a priority value */
   val PRIO_WIDTH = 2
@@ -232,13 +238,13 @@ object Config {
 
   /** Sprite frame buffer DMA configuration */
   val spriteFrameBufferDmaConfig = dma.Config(
-    depth = Config.SCREEN_WIDTH * Config.SCREEN_HEIGHT * SPRITE_FRAME_BUFFER_DATA_WIDTH / Config.ddrConfig.dataWidth,
+    depth = Config.FRAME_BUFFER_WIDTH * Config.FRAME_BUFFER_HEIGHT * SPRITE_FRAME_BUFFER_DATA_WIDTH / Config.ddrConfig.dataWidth,
     burstLength = 64
   )
 
   /** Sprite line buffer DMA configuration */
   val spriteLineBufferDmaConfig = dma.Config(
-    depth = Config.SCREEN_WIDTH * SPRITE_FRAME_BUFFER_DATA_WIDTH / Config.ddrConfig.dataWidth,
+    depth = Config.FRAME_BUFFER_WIDTH * SPRITE_FRAME_BUFFER_DATA_WIDTH / Config.ddrConfig.dataWidth,
     burstLength = 16
   )
 }
