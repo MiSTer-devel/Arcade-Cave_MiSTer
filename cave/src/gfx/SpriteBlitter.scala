@@ -33,6 +33,7 @@
 package cave.gfx
 
 import arcadia._
+import arcadia.gfx.VideoIO
 import arcadia.util.{Counter, PISO}
 import cave._
 import chisel3._
@@ -51,6 +52,8 @@ class SpriteBlitterConfig extends Bundle {
 /** The sprite blitter copies a sprite to the frame buffer. */
 class SpriteBlitter extends Module {
   val io = IO(new Bundle {
+    /** Video port */
+    val video = Flipped(VideoIO())
     /** Config port */
     val config = DeqIO(new SpriteBlitterConfig)
     /** Busy flag */

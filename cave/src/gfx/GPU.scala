@@ -72,6 +72,7 @@ class GPU extends Module {
 
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
+  spriteProcessor.io.video <> io.video
   spriteProcessor.io.ctrl <> io.spriteCtrl
   spriteProcessor.io.frameBuffer <> io.spriteFrameBuffer
 
