@@ -44,19 +44,19 @@ import chisel3.util._
 /**
  * The sprite frame buffer used for buffering pixel data rendered by the sprite layer.
  *
- * On the original CAVE arcade hardware, there are two V53C16256H DRAM chips that provide dedicated
- * memory for the sprite frame buffer. There are two of them because double buffering is used.
+ * The original CAVE arcade hardware has two V53C16256H DRAM chips that are used for the sprite
+ * frame buffer (two are required because sprites use double buffering).
  *
  * Unfortunately, there are not enough resources available in the FGPA for us to replicate the
  * original design directly in BRAM, so we need to be a bit more creative.
  *
- * The strategy used here is to implement a single 320x240x16BPP frame buffer in BRAM, which the GPU
- * use for rendering sprites. When a frame is completed, the contents of the frame buffer is copied
- * to DDR memory using a DMA controller.
+ * The strategy used here is to place the sprite frame buffer in DDR memory. At the beginning of
+ * each frame, the frame buffer pages are swapped and the current page is cleared using a DMA
+ * transfer.
  *
- * Meanwhile, the scanline for the current vertical position is copied from DDR memory into a line
- * buffer in BRAM using another DMA controller. The GPU reads the contents of the line buffer to get
- * the pixel at the current horizontal position.
+ * Meanwhile, the current scanline is copied from DDR memory into the line buffer using a DMA
+ * transfer. The GPU then reads the contents of the line buffer to get the sprite pixel at the
+ * current horizontal position.
  */
 class SpriteFrameBuffer extends Module {
   val io = IO(new Bundle {
