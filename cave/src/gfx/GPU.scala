@@ -174,14 +174,4 @@ object GPU {
     val rgb = decodeRGB(data)
     Cat(rgb.b, rgb.g, rgb.r).pad(32)
   }
-
-  /**
-   * Calculates the visibility of a pixel.
-   *
-   * @param pos The pixel position.
-   * @return A boolean value indicating whether the pixel is visible.
-   */
-  def isVisible(pos: SVec2): Bool =
-    Util.between(pos.x, 0 until Config.SCREEN_WIDTH) &&
-      Util.between(pos.y, 0 until Config.SCREEN_HEIGHT)
 }

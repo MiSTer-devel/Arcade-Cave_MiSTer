@@ -93,7 +93,7 @@ class SpriteBlitter extends Module {
   val validReg = RegEnable(!pisoEmpty, !io.frameBuffer.waitReq)
 
   // The visible flag is asserted if the pixel is non-transparent and within the screen bounds
-  val visible = validReg && GPU.isVisible(posReg) && !penReg.isTransparent
+  val visible = validReg && SpriteBlitter.isVisible(posReg) && !penReg.isTransparent
 
   // The done flag is asserted when the sprite has finished blitting
   val blitDone = xWrap && yWrap
@@ -149,4 +149,14 @@ object SpriteBlitter {
     // Truncate fractional bits
     result >> Sprite.ZOOM_PRECISION
   }
+
+  /**
+   * Calculates the visibility of a pixel.
+   *
+   * @param pos The pixel position.
+   * @return A boolean value indicating whether the pixel is visible.
+   */
+  def isVisible(pos: SVec2): Bool =
+    Util.between(pos.x, 0 until Config.SCREEN_WIDTH) &&
+      Util.between(pos.y, 0 until Config.SCREEN_HEIGHT)
 }
