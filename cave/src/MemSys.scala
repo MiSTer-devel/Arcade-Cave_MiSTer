@@ -46,8 +46,15 @@ class MemSys extends Module {
   val io = IO(new Bundle {
     /** Game config port */
     val gameConfig = Input(GameConfig())
-    /** IOCTL port */
-    val ioctl = IOCTL()
+    /** Programming port */
+    val prog = new Bundle {
+      /** ROM download port */
+      val rom = Flipped(AsyncWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
+      /** NVRAM download port */
+      val nvram = Flipped(AsyncReadWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
+      /** Asserted when the ROM has finished downloading */
+      val done = Input(Bool())
+    }
     /** DDR port */
     val ddr = BurstReadWriteMemIO(Config.ddrConfig)
     /** SDRAM port */
@@ -70,7 +77,7 @@ class MemSys extends Module {
     outAddrWidth = Config.ddrConfig.addrWidth,
     outDataWidth = Config.ddrConfig.dataWidth
   )))
-  ddrDownloadBuffer.io.in <> io.ioctl.rom
+  ddrDownloadBuffer.io.in <> io.prog.rom
 
   // The SDRAM download buffer is used to buffer ROM data from the copy DMA, so that complete words
   // are written to memory.
@@ -81,11 +88,11 @@ class MemSys extends Module {
     outDataWidth = Config.sdramConfig.dataWidth,
     burstLength = Config.sdramConfig.burstLength
   )))
-  sdramDownloadBuffer.io.in <> io.ioctl.rom
+  sdramDownloadBuffer.io.in <> io.prog.rom
 
   // Copies ROM data from DDR to SDRAM
   val copyDma = Module(new BurstReadDMA(Config.copyDownloadDmaConfig))
-  copyDma.io.start := !io.ready && Util.falling(io.ioctl.download) && io.ioctl.index === IOCTL.ROM_INDEX.U
+  copyDma.io.start := !io.ready && io.prog.done
   copyDma.io.out <> sdramDownloadBuffer.io.in
 
   // Program ROM cache
@@ -170,7 +177,7 @@ class MemSys extends Module {
 
   // NVRAM arbiter
   val nvramArbiter = Module(new AsyncMemArbiter(2, Config.EEPROM_ADDR_WIDTH, Config.EEPROM_DATA_WIDTH))
-  nvramArbiter.connect(io.ioctl.nvram, io.rom.eeprom) <> eepromCache.io.in
+  nvramArbiter.connect(io.prog.nvram, io.rom.eeprom) <> eepromCache.io.in
 
   // Latch ready flag when the copy DMA has finished
   io.ready := Util.latchSync(Util.falling(copyDma.io.busy))

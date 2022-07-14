@@ -34,7 +34,7 @@ package cave
 
 import arcadia._
 import arcadia.gfx._
-import arcadia.mem.RegisterFile
+import arcadia.mem.{AsyncWriteMemIO, RegisterFile}
 import arcadia.mister._
 import chisel3._
 import chisel3.util._
@@ -49,20 +49,22 @@ class VideoSys extends Module {
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
-    /** IOCTL port */
-    val ioctl = IOCTL()
+    /** Programming port */
+    val prog = new Bundle {
+      /** Video registers download port */
+      val video = Flipped(AsyncWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
+      /** Asserted when the video registers have been downloaded */
+      val done = Input(Bool())
+    }
     /** Options port */
     val options = OptionsIO()
     /** Video port */
     val video = VideoIO()
   })
 
-  // Asserted when the video registers have been written to the IOCTL
-  val videoDownloaded = Util.falling(io.ioctl.download) && io.ioctl.index === IOCTL.VIDEO_INDEX.U
-
   // Connect IOCTL to video register file
   val videoRegs = Module(new RegisterFile(IOCTL.DATA_WIDTH, VideoSys.VIDEO_REGS_COUNT))
-  videoRegs.io.mem <> io.ioctl.video
+  videoRegs.io.mem <> io.prog.video
     .mapAddr { a => (a >> 1).asUInt } // convert from byte address
     .mapData(Util.swapEndianness) // swap bytes
     .asReadWriteMemIO
@@ -107,8 +109,8 @@ class VideoSys extends Module {
   io.video.vSync := timing.vSync
   io.video.hBlank := timing.hBlank
   io.video.vBlank := timing.vBlank
-  io.video.regs := RegEnable(VideoRegs.decode(videoRegs.io.regs), VideoSys.DEFAULT_REGS, videoDownloaded)
-  io.video.changeMode := videoDownloaded || (io.options.compatibility ^ RegNext(io.options.compatibility))
+  io.video.regs := RegEnable(VideoRegs.decode(videoRegs.io.regs), VideoSys.DEFAULT_REGS, io.prog.done)
+  io.video.changeMode := io.prog.done || (io.options.compatibility ^ RegNext(io.options.compatibility))
 }
 
 object VideoSys {

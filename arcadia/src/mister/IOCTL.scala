@@ -57,16 +57,20 @@ class IOCTL extends Bundle {
   /** Output data bus */
   val dout = Input(Bits(IOCTL.DATA_WIDTH.W))
 
+  def default(): Unit = {
+    waitReq := false.B
+    din := 0.U
+  }
+
   /** Converts ROM data to an asynchronous write-only memory interface. */
   def rom: AsyncWriteMemIO = {
     val writeEnable = download && this.index === IOCTL.ROM_INDEX.U
     val mem = Wire(AsyncWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
     mem.wr := writeEnable && wr
-    waitReq := writeEnable && mem.waitReq
+    when(writeEnable) { waitReq := mem.waitReq }
     mem.addr := addr
     mem.mask := Fill(mem.maskWidth, 1.U)
     mem.din := dout
-    din := 0.U
     mem
   }
 
@@ -77,11 +81,11 @@ class IOCTL extends Bundle {
     val mem = Wire(AsyncReadWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
     mem.rd := readEnable && rd
     mem.wr := writeEnable && wr
-    waitReq := (readEnable || writeEnable) && mem.waitReq
+    when(readEnable || writeEnable) { waitReq := mem.waitReq }
     mem.addr := addr
     mem.mask := Fill(mem.maskWidth, 1.U)
     mem.din := dout
-    din := RegEnable(mem.dout, mem.valid)
+    when(readEnable) { din := RegEnable(mem.dout, mem.valid) }
     mem
   }
 
@@ -90,11 +94,10 @@ class IOCTL extends Bundle {
     val writeEnable = download && this.index === IOCTL.DIP_INDEX.U && !addr(IOCTL.ADDR_WIDTH - 1, 3).orR // ignore higher addresses
     val mem = Wire(AsyncWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
     mem.wr := writeEnable && wr
-    waitReq := writeEnable && mem.waitReq
+    when(writeEnable) { waitReq := mem.waitReq }
     mem.addr := addr
     mem.mask := Fill(mem.maskWidth, 1.U)
     mem.din := dout
-    din := 0.U
     mem
   }
 
@@ -103,11 +106,10 @@ class IOCTL extends Bundle {
     val writeEnable = download && this.index === IOCTL.VIDEO_INDEX.U
     val mem = Wire(AsyncWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
     mem.wr := writeEnable && wr
-    waitReq := writeEnable && mem.waitReq
+    when(writeEnable) { waitReq := mem.waitReq }
     mem.addr := addr
     mem.mask := Fill(mem.maskWidth, 1.U)
     mem.din := dout
-    din := 0.U
     mem
   }
 }

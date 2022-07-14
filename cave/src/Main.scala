@@ -76,8 +76,10 @@ class Main extends Module {
     /** RGB output */
     val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
     /** LED port */
-    val led = mister.LEDIO()
+    val led = LEDIO()
   })
+
+  io.ioctl.default()
 
   // The game configuration register is latched when data is written to the IOCTL (i.e. the game
   // index is set by the MRA file).
@@ -113,7 +115,9 @@ class Main extends Module {
   // Memory subsystem
   val memSys = Module(new MemSys)
   memSys.io.gameConfig <> gameConfigReg
-  memSys.io.ioctl <> io.ioctl
+  memSys.io.prog.rom <> io.ioctl.rom
+  memSys.io.prog.nvram <> io.ioctl.nvram
+  memSys.io.prog.done := Util.falling(io.ioctl.download) && io.ioctl.index === IOCTL.ROM_INDEX.U
   memSys.io.ddr <> ddr.io.mem
   memSys.io.sdram <> sdram.io.mem
 
@@ -121,7 +125,8 @@ class Main extends Module {
   val videoSys = Module(new VideoSys)
   videoSys.io.videoClock := io.videoClock
   videoSys.io.videoReset := io.videoReset
-  videoSys.io.ioctl <> io.ioctl
+  videoSys.io.prog.video <> io.ioctl.video
+  videoSys.io.prog.done := Util.falling(io.ioctl.download) && io.ioctl.index === IOCTL.VIDEO_INDEX.U
   videoSys.io.options <> io.options
   videoSys.io.video <> io.video
 
