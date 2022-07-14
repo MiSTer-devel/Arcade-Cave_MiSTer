@@ -65,9 +65,9 @@ class ColorMixer extends Module {
   val paletteRamAddr = MuxLookup(index, 0.U, Seq(
     ColorMixer.Priority.FILL.U -> ColorMixer.paletteRamAddr(backgroundPen, 0.U, io.gameConfig.granularity),
     ColorMixer.Priority.SPRITE.U -> ColorMixer.paletteRamAddr(io.spritePen, 0.U, io.gameConfig.granularity),
-    ColorMixer.Priority.LAYER0.U -> ColorMixer.paletteRamAddr(io.layer0Pen, 1.U, io.gameConfig.granularity),
-    ColorMixer.Priority.LAYER1.U -> ColorMixer.paletteRamAddr(io.layer1Pen, 1.U, io.gameConfig.granularity),
-    ColorMixer.Priority.LAYER2.U -> ColorMixer.paletteRamAddr(io.layer2Pen, 1.U, io.gameConfig.granularity)
+    ColorMixer.Priority.LAYER0.U -> ColorMixer.paletteRamAddr(io.layer0Pen, io.gameConfig.layer(0).paletteBank, io.gameConfig.granularity),
+    ColorMixer.Priority.LAYER1.U -> ColorMixer.paletteRamAddr(io.layer1Pen, io.gameConfig.layer(1).paletteBank, io.gameConfig.granularity),
+    ColorMixer.Priority.LAYER2.U -> ColorMixer.paletteRamAddr(io.layer2Pen, io.gameConfig.layer(2).paletteBank, io.gameConfig.granularity)
   ))
 
   // Outputs
