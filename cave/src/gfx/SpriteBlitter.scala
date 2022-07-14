@@ -93,7 +93,7 @@ class SpriteBlitter extends Module {
   val validReg = RegEnable(!pisoEmpty, !io.frameBuffer.waitReq)
 
   // The visible flag is asserted if the pixel is non-transparent and within the screen bounds
-  val visible = validReg && SpriteBlitter.isVisible(posReg) && !penReg.isTransparent
+  val visible = SpriteBlitter.isVisible(io.video.size, posReg) && validReg && !penReg.isTransparent
 
   // The done flag is asserted when the sprite has finished blitting
   val blitDone = xWrap && yWrap
@@ -113,7 +113,7 @@ class SpriteBlitter extends Module {
   io.config.ready := configReady
   io.pixelData.ready := pixelDataReady
   io.frameBuffer.wr := io.enable && visible
-  io.frameBuffer.addr := SpriteBlitter.frameBufferAddr(io.video.size, UVec2(posReg.x, posReg.y), configReg.hFlip)
+  io.frameBuffer.addr := SpriteBlitter.frameBufferAddr(io.video.size, posReg, configReg.hFlip)
   io.frameBuffer.mask := 3.U
   io.frameBuffer.din := penReg.asUInt
   io.busy := busyReg
@@ -130,8 +130,9 @@ object SpriteBlitter {
    *
    * @param sprite The sprite descriptor.
    * @param pos    The pixel position.
+   * @return An unsigned vector.
    */
-  def pixelPos(sprite: Sprite, pos: UVec2): SVec2 = {
+  def pixelPos(sprite: Sprite, pos: UVec2): UVec2 = {
     // Convert sprite size to fixed-point value
     val size = sprite.size << Sprite.ZOOM_PRECISION
 
@@ -144,19 +145,21 @@ object SpriteBlitter {
     val y_ = Mux(sprite.vFlip, size.y - y - (1 << Sprite.ZOOM_PRECISION).U, y)
 
     // Adjusted sprite pixel position
-    val result = sprite.pos + SVec2(x_, y_)
+    val adjusted = sprite.pos + SVec2(x_, y_)
 
     // Truncate fractional bits
-    result >> Sprite.ZOOM_PRECISION
+    val result = adjusted >> Sprite.ZOOM_PRECISION
+
+    UVec2(result.x, result.y)
   }
 
   /**
    * Transforms a pixel position to a frame buffer memory address, applying the optional flip
    * transform.
    *
-   * @param size   The frame buffer size.
-   * @param pos    The pixel position.
-   * @param flip   Flips the image.
+   * @param size The frame buffer size.
+   * @param pos  The pixel position.
+   * @param flip Flips the image.
    * @return An address value.
    */
   def frameBufferAddr(size: UVec2, pos: UVec2, flip: Bool): UInt = {
@@ -173,10 +176,10 @@ object SpriteBlitter {
   /**
    * Calculates the visibility of a pixel.
    *
-   * @param pos The pixel position.
+   * @param size The frame buffer size.
+   * @param pos  The pixel position.
    * @return A boolean value indicating whether the pixel is visible.
    */
-  def isVisible(pos: SVec2): Bool =
-    Util.between(pos.x, 0 until Config.SCREEN_WIDTH) &&
-      Util.between(pos.y, 0 until Config.SCREEN_HEIGHT)
+  def isVisible(size: UVec2, pos: UVec2): Bool =
+    Util.between(pos.x, 0.U, size.x - 1.U) && Util.between(pos.y, 0.U, size.y - 1.U)
 }
