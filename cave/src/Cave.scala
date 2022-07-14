@@ -80,6 +80,7 @@ class Cave extends Module {
   // Synchronize vertical blank into system clock domain
   val vBlank = ShiftRegister(io.video.vBlank, 2)
   val vBlankRising = Util.rising(vBlank)
+  val vBlankFalling = Util.falling(vBlank)
 
   // Toggle pause register
   val pauseReg = Util.toggle(Util.rising(io.joystick(0).pause || io.joystick(1).pause))
@@ -214,7 +215,7 @@ class Cave extends Module {
   }
   gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
   gpu.io.spriteCtrl.enable := io.options.layerEnable.sprite
-  gpu.io.spriteCtrl.start := Util.falling(vBlank)
+  gpu.io.spriteCtrl.start := vBlankFalling
   gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
   gpu.io.spriteCtrl.regs := SpriteRegs.decode(spriteRegs.io.regs)
   gpu.io.spriteCtrl.vram <> spriteRam.io.portB
