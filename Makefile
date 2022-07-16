@@ -14,7 +14,7 @@ copy:
 	scp quartus/output_files/cave.rbf  root@mister-1:/media/fat/_Arcade/cores
 
 test:
-	./mill cave.test
+	./mill _.test
 
 clean:
 	rm -rf out quartus/rtl/ChiselTop.v quartus/rtl/Main.* quartus/db quartus/incremental_db quartus/output_files test_run_dir
