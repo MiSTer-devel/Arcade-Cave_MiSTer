@@ -36,7 +36,7 @@ import arcadia.Util
 import arcadia.mem._
 import arcadia.mem.arbiter.{AsyncMemArbiter, BurstMemArbiter}
 import arcadia.mem.buffer.BurstBuffer
-import arcadia.mem.cache.{ReadCache, ReadWriteCache}
+import arcadia.mem.cache.{Cache, ReadCache}
 import arcadia.mem.dma.BurstReadDMA
 import arcadia.mister._
 import chisel3._
@@ -109,7 +109,7 @@ class MemSys extends Module {
   progRomCache.io.in <> io.rom.progRom
 
   // EEPROM cache
-  val eepromCache = Module(new ReadWriteCache(cache.Config(
+  val eepromCache = Module(new Cache(cache.Config(
     inAddrWidth = Config.EEPROM_ADDR_WIDTH,
     inDataWidth = Config.EEPROM_DATA_WIDTH,
     outAddrWidth = Config.sdramConfig.addrWidth,

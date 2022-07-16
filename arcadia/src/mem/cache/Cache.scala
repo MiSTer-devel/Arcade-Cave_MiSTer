@@ -52,7 +52,7 @@ import chisel3.util._
  *
  * @param config The cache configuration.
  */
-class ReadWriteCache(config: Config) extends Module {
+class Cache(config: Config) extends Module {
   // Sanity check
   assert(config.inDataWidth >= 8, "Input data width must be at least 8")
   assert(config.outDataWidth >= 8, "Output data width must be at least 8")
