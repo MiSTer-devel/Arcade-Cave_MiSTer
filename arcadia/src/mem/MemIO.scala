@@ -41,6 +41,8 @@ trait BusConfig {
   def addrWidth: Int
   /** The width of the data bus. */
   def dataWidth: Int
+  /** The width of the data mask (i.e. the number of bytes that can be masked when writing data). */
+  def maskWidth = dataWidth / 8
 }
 
 /** Defines interface conversion methods. */
@@ -50,23 +52,12 @@ trait ConvertMemIO {
 }
 
 /**
- * An abstract interface for reading/writing from a memory device.
- *
- * @param addrWidth The width of the address bus.
- * @param dataWidth The width of the data bus.
- */
-abstract class AbstractMemIO protected(val addrWidth: Int, val dataWidth: Int) extends Bundle with BusConfig {
-  /** The width of the data mask (i.e. the number of bytes that can be masked when writing data). */
-  def maskWidth = dataWidth / 8
-}
-
-/**
  * A simple flow control interface for reading from synchronous memory.
  *
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class ReadMemIO(addrWidth: Int, dataWidth: Int) extends AbstractMemIO(addrWidth, dataWidth) with ConvertMemIO {
+class ReadMemIO(val addrWidth: Int, val dataWidth: Int) extends Bundle with BusConfig with ConvertMemIO {
   /** Read enable */
   val rd = Output(Bool())
   /** Address bus */
@@ -188,7 +179,7 @@ object ReadMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class WriteMemIO(addrWidth: Int, dataWidth: Int) extends AbstractMemIO(addrWidth, dataWidth) with ConvertMemIO {
+class WriteMemIO(val addrWidth: Int, val dataWidth: Int) extends Bundle with BusConfig with ConvertMemIO {
   /** Write enable */
   val wr = Output(Bool())
   /** Address bus */
@@ -279,7 +270,7 @@ object WriteMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class MemIO(addrWidth: Int, dataWidth: Int) extends AbstractMemIO(addrWidth, dataWidth) with ConvertMemIO {
+class MemIO(val addrWidth: Int, val dataWidth: Int) extends Bundle with BusConfig with ConvertMemIO {
   /** Read enable */
   val rd = Output(Bool())
   /** Write enable */
