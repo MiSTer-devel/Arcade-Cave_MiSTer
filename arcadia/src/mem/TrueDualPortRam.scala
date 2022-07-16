@@ -59,7 +59,7 @@ class TrueDualPortRam(addrWidthA: Int,
     /** Clock B */
     val clockB = Input(Clock())
     /** Read-write port */
-    val portA = Flipped(ReadWriteMemIO(addrWidthA, dataWidthA))
+    val portA = Flipped(MemIO(addrWidthA, dataWidthA))
     /** Read-only port */
     val portB = Flipped(ReadMemIO(addrWidthB, dataWidthB))
   })

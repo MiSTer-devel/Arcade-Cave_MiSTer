@@ -91,7 +91,7 @@ class MemMap(cpu: CPUIO) {
      *
      * @param mem The memory port.
      */
-    def readWriteMem(mem: ReadWriteMemIO): Unit = readWriteMemT(mem)(identity)
+    def readWriteMem(mem: MemIO): Unit = readWriteMemT(mem)(identity)
 
     /**
      * Maps an address range to the given read-write memory port, with an address transform.
@@ -99,7 +99,7 @@ class MemMap(cpu: CPUIO) {
      * @param mem The memory port.
      * @param f   The address transform function.
      */
-    def readWriteMemT(mem: ReadWriteMemIO)(f: UInt => UInt): Unit = {
+    def readWriteMemT(mem: MemIO)(f: UInt => UInt): Unit = {
       mem.rd := cs && readStrobe
       mem.wr := cs && writeStrobe
       mem.addr := f(cpu.addr)

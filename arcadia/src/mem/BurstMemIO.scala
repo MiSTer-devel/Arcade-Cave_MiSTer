@@ -46,7 +46,7 @@ trait BurstIO {
 /** Defines interface conversion methods. */
 trait ConvertBurstMemIO {
   /** Converts the interface to read-write. */
-  def asBurstReadWriteMemIO: BurstReadWriteMemIO
+  def asBurstReadWriteMemIO: BurstMemIO
 }
 
 /**
@@ -59,8 +59,8 @@ class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addr
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
   /** Converts the interface to read-write. */
-  def asBurstReadWriteMemIO: BurstReadWriteMemIO = {
-    val mem = Wire(Flipped(BurstReadWriteMemIO(this)))
+  def asBurstReadWriteMemIO: BurstMemIO = {
+    val mem = Wire(Flipped(BurstMemIO(this)))
     mem.rd := rd
     mem.wr := false.B
     mem.burstLength := burstLength
@@ -151,8 +151,8 @@ class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(ad
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
   /** Converts the interface to read-write. */
-  def asBurstReadWriteMemIO: BurstReadWriteMemIO = {
-    val mem = Wire(Flipped(BurstReadWriteMemIO(this)))
+  def asBurstReadWriteMemIO: BurstMemIO = {
+    val mem = Wire(Flipped(BurstMemIO(this)))
     mem.rd := false.B
     mem.wr := wr
     mem.burstLength := burstLength
@@ -217,7 +217,7 @@ object BurstWriteMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWriteMemIO(addrWidth, dataWidth) with BurstIO with ConvertBurstMemIO {
+class BurstMemIO(addrWidth: Int, dataWidth: Int) extends AsyncMemIO(addrWidth, dataWidth) with BurstIO with ConvertBurstMemIO {
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
   /** Converts the interface to read-only. */
@@ -251,7 +251,7 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
   }
 
   /** Converts the interface to read-write. */
-  def asBurstReadWriteMemIO: BurstReadWriteMemIO = this
+  def asBurstReadWriteMemIO: BurstMemIO = this
 
   /** Sets default values for all the signals. */
   override def default() = {
@@ -264,8 +264,8 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
    *
    * @param f The transform function.
    */
-  override def mapAddr(f: UInt => UInt): BurstReadWriteMemIO = {
-    val mem = Wire(Flipped(BurstReadWriteMemIO(f(addr).getWidth, this.dataWidth)))
+  override def mapAddr(f: UInt => UInt): BurstMemIO = {
+    val mem = Wire(Flipped(BurstMemIO(f(addr).getWidth, this.dataWidth)))
     mem.rd := rd
     mem.wr := wr
     mem.burstLength := burstLength
@@ -284,8 +284,8 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
    *
    * @param f The transform function.
    */
-  override def mapData(f: Bits => Bits): BurstReadWriteMemIO = {
-    val mem = Wire(Flipped(BurstReadWriteMemIO(this)))
+  override def mapData(f: Bits => Bits): BurstMemIO = {
+    val mem = Wire(Flipped(BurstMemIO(this)))
     mem.rd := rd
     mem.wr := wr
     mem.burstLength := burstLength
@@ -300,10 +300,10 @@ class BurstReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadWrite
   }
 }
 
-object BurstReadWriteMemIO {
-  def apply(addrWidth: Int, dataWidth: Int) = new BurstReadWriteMemIO(addrWidth, dataWidth)
+object BurstMemIO {
+  def apply(addrWidth: Int, dataWidth: Int) = new BurstMemIO(addrWidth, dataWidth)
 
-  def apply(config: BusConfig) = new BurstReadWriteMemIO(config)
+  def apply(config: BusConfig) = new BurstMemIO(config)
 
   /**
    * Multiplexes requests from multiple read-write memory interfaces to a single read-write memory
@@ -311,7 +311,7 @@ object BurstReadWriteMemIO {
    *
    * @param in A list of enable-interface pairs.
    */
-  def mux1H(in: Seq[(Bool, BurstReadWriteMemIO)]): BurstReadWriteMemIO = {
+  def mux1H(in: Seq[(Bool, BurstMemIO)]): BurstMemIO = {
     val anySelected = in.map(_._1).reduce(_ || _)
     val mem = Wire(chiselTypeOf(in.head._2))
     mem.rd := Mux1H(in.map(a => a._1 -> a._2.rd))
@@ -336,7 +336,7 @@ object BurstReadWriteMemIO {
    * @param sel A list of enable signals.
    * @param in  A list of read-write memory interfaces.
    */
-  def mux1H(sel: Seq[Bool], in: Seq[BurstReadWriteMemIO]): BurstReadWriteMemIO = mux1H(sel zip in)
+  def mux1H(sel: Seq[Bool], in: Seq[BurstMemIO]): BurstMemIO = mux1H(sel zip in)
 
   /**
    * Multiplexes requests from multiple read-write memory interface to a single read-write memory
@@ -345,5 +345,5 @@ object BurstReadWriteMemIO {
    * @param index An index signal.
    * @param in    A list of read-write memory interfaces.
    */
-  def mux1H(index: UInt, in: Seq[BurstReadWriteMemIO]): BurstReadWriteMemIO = mux1H(in.indices.map(index(_)), in)
+  def mux1H(index: UInt, in: Seq[BurstMemIO]): BurstMemIO = mux1H(in.indices.map(index(_)), in)
 }

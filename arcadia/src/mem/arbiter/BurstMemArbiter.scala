@@ -32,7 +32,7 @@
 
 package arcadia.mem.arbiter
 
-import arcadia.mem.{BurstReadWriteMemIO, ConvertBurstMemIO}
+import arcadia.mem.{BurstMemIO, ConvertBurstMemIO}
 import chisel3._
 import chisel3.util._
 
@@ -50,9 +50,9 @@ class BurstMemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
     /** One-hot vector indicating which output was chosen */
     val chosen = Output(UInt(n.W))
     /** Input ports */
-    val in = Flipped(Vec(n, BurstReadWriteMemIO(addrWidth, dataWidth)))
+    val in = Flipped(Vec(n, BurstMemIO(addrWidth, dataWidth)))
     /** Output port */
-    val out = BurstReadWriteMemIO(addrWidth, dataWidth)
+    val out = BurstMemIO(addrWidth, dataWidth)
   })
 
   /**
@@ -63,7 +63,7 @@ class BurstMemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
    * @param in The list of input ports.
    * @return The output port.
    */
-  def connect(in: ConvertBurstMemIO*): BurstReadWriteMemIO = {
+  def connect(in: ConvertBurstMemIO*): BurstMemIO = {
     assert(in.length == n, s"There must be exactly $n input ports")
     in.zipWithIndex.foreach { case (port, i) => port.asBurstReadWriteMemIO <> io.in(i) }
     io.out
@@ -93,7 +93,7 @@ class BurstMemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
   // Outputs
   io.busy := busyReg
   io.chosen := chosen
-  io.out <> BurstReadWriteMemIO.mux1H(chosen, io.in)
+  io.out <> BurstMemIO.mux1H(chosen, io.in)
 
   // Debug
   if (sys.env.get("DEBUG").contains("1")) {

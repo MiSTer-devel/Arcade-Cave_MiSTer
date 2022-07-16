@@ -32,7 +32,7 @@
 
 package arcadia.mem.ddr
 
-import arcadia.mem.BurstReadWriteMemIO
+import arcadia.mem.BurstMemIO
 import arcadia.util.Counter
 import chisel3._
 import chisel3.util._
@@ -45,9 +45,9 @@ import chisel3.util._
 class DDR(config: Config) extends Module {
   val io = IO(new Bundle {
     /** Memory port */
-    val mem = Flipped(BurstReadWriteMemIO(config))
+    val mem = Flipped(BurstMemIO(config))
     /** DDR port */
-    val ddr = BurstReadWriteMemIO(config)
+    val ddr = BurstMemIO(config)
     /** Debug port */
     val debug = new Bundle {
       val burstCounter = Output(UInt())

@@ -46,7 +46,7 @@ class SinglePortRam(addrWidth: Int,
                     dataWidth: Int,
                     depth: Option[Int] = None,
                     maskEnable: Boolean = false) extends Module {
-  val io = IO(Flipped(ReadWriteMemIO(addrWidth, dataWidth)))
+  val io = IO(Flipped(MemIO(addrWidth, dataWidth)))
 
   private val depth_ = depth.getOrElse(0)
 

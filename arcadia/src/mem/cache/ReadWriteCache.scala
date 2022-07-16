@@ -61,9 +61,9 @@ class ReadWriteCache(config: Config) extends Module {
     /** Enable the cache */
     val enable = Input(Bool())
     /** Input port */
-    val in = Flipped(AsyncReadWriteMemIO(config.inAddrWidth, config.inDataWidth))
+    val in = Flipped(AsyncMemIO(config.inAddrWidth, config.inDataWidth))
     /** Output port */
-    val out = BurstReadWriteMemIO(config.outAddrWidth, config.outDataWidth)
+    val out = BurstMemIO(config.outAddrWidth, config.outDataWidth)
     /** Debug port */
     val debug = Output(new Bundle {
       val idle = Bool()

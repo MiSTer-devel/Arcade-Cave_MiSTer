@@ -47,7 +47,7 @@ class RegisterFile(dataWidth: Int, depth: Int) extends Module {
 
   val io = IO(new Bundle {
     /** Memory port */
-    val mem = Flipped(ReadWriteMemIO(ADDR_WIDTH, dataWidth))
+    val mem = Flipped(MemIO(ADDR_WIDTH, dataWidth))
     /** Registers port */
     val regs: Vec[Bits] = Output(Vec(depth, Bits(dataWidth.W)))
   })

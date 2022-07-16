@@ -32,7 +32,7 @@
 
 package arcadia.snd
 
-import arcadia.mem.{AsyncReadMemIO, ReadWriteMemIO}
+import arcadia.mem.{AsyncReadMemIO, MemIO}
 import arcadia.snd.ymz._
 import chisel3._
 import chisel3.util._
@@ -83,7 +83,7 @@ case class YMZ280BConfig(clockFreq: Double,
 class YMZ280B(config: YMZ280BConfig) extends Module {
   val io = IO(new Bundle {
     /** CPU port */
-    val cpu = Flipped(ReadWriteMemIO(config.cpuAddrWidth, config.cpuDataWidth))
+    val cpu = Flipped(MemIO(config.cpuAddrWidth, config.cpuDataWidth))
     /** ROM port */
     val rom = AsyncReadMemIO(config.memAddrWidth, config.memDataWidth)
     /** Audio output */

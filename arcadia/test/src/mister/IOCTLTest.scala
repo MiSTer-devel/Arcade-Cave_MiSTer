@@ -61,7 +61,7 @@ class IOCTLTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   it should "download NVRAM data" in {
     test(new Module {
       val io = IO(new Bundle {
-        val mem = AsyncReadWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH)
+        val mem = AsyncMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH)
         val ioctl = new IOCTL
       })
       io.mem <> io.ioctl.nvram
@@ -79,7 +79,7 @@ class IOCTLTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   it should "upload NVRAM data" in {
     test(new Module {
       val io = IO(new Bundle {
-        val mem = AsyncReadWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH)
+        val mem = AsyncMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH)
         val ioctl = new IOCTL
       })
       io.mem <> io.ioctl.nvram

@@ -32,7 +32,7 @@
 
 package arcadia.mem.sdram
 
-import arcadia.mem.BurstReadWriteMemIO
+import arcadia.mem.BurstMemIO
 import arcadia.mem.request.ReadWriteRequest
 import chisel3._
 import chisel3.util._
@@ -48,7 +48,7 @@ class SDRAM(config: Config) extends Module {
 
   val io = IO(new Bundle {
     /** Memory port */
-    val mem = Flipped(BurstReadWriteMemIO(config))
+    val mem = Flipped(BurstMemIO(config))
     /** Control port */
     val sdram = SDRAMIO(config)
     /** Debug port */

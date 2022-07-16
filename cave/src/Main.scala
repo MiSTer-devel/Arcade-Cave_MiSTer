@@ -58,7 +58,7 @@ class Main extends Module {
     /** CPU reset */
     val cpuReset = Input(Bool())
     /** DDR port */
-    val ddr = BurstReadWriteMemIO(Config.ddrConfig)
+    val ddr = BurstMemIO(Config.ddrConfig)
     /** SDRAM control port */
     val sdram = SDRAMIO(Config.sdramConfig)
     /** Options port */

@@ -51,20 +51,20 @@ class MemSys extends Module {
       /** ROM download port */
       val rom = Flipped(AsyncWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
       /** NVRAM download port */
-      val nvram = Flipped(AsyncReadWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
+      val nvram = Flipped(AsyncMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
       /** Asserted when the ROM has finished downloading */
       val done = Input(Bool())
     }
     /** DDR port */
-    val ddr = BurstReadWriteMemIO(Config.ddrConfig)
+    val ddr = BurstMemIO(Config.ddrConfig)
     /** SDRAM port */
-    val sdram = BurstReadWriteMemIO(Config.sdramConfig)
+    val sdram = BurstMemIO(Config.sdramConfig)
     /** ROM port */
     val rom = Flipped(new RomIO)
     /** Sprite frame buffer port */
-    val spriteFrameBuffer = Flipped(BurstReadWriteMemIO(Config.ddrConfig))
+    val spriteFrameBuffer = Flipped(BurstMemIO(Config.ddrConfig))
     /** System frame buffer port */
-    val systemFrameBuffer = Flipped(BurstReadWriteMemIO(Config.ddrConfig))
+    val systemFrameBuffer = Flipped(BurstMemIO(Config.ddrConfig))
     /** Asserted when the memory system is ready */
     val ready = Output(Bool())
   })

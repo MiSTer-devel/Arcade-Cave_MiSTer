@@ -33,7 +33,7 @@
 package arcadia.snd
 
 import arcadia.clk.ClockDivider
-import arcadia.mem.{AsyncReadMemIO, ReadWriteMemIO}
+import arcadia.mem.{AsyncReadMemIO, MemIO}
 import chisel3._
 import chisel3.util._
 
@@ -67,7 +67,7 @@ case class OKIM6295Config(clockFreq: Double,
 class OKIM6295(config: OKIM6295Config) extends Module {
   val io = IO(new Bundle {
     /** CPU port */
-    val cpu = Flipped(ReadWriteMemIO(config.cpuAddrWidth, config.cpuDataWidth))
+    val cpu = Flipped(MemIO(config.cpuAddrWidth, config.cpuDataWidth))
     /** Sound ROM port */
     val rom = AsyncReadMemIO(config.memAddrWidth, config.memDataWidth)
     /** Audio output port */

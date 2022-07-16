@@ -32,7 +32,7 @@
 
 package arcadia.mem.arbiter
 
-import arcadia.mem.{AsyncReadWriteMemIO, ConvertAsyncMemIO}
+import arcadia.mem.{AsyncMemIO, ConvertAsyncMemIO}
 import chisel3._
 import chisel3.util._
 
@@ -50,9 +50,9 @@ class AsyncMemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
     /** One-hot vector indicating which output was chosen */
     val chosen = Output(UInt(n.W))
     /** Input ports */
-    val in = Flipped(Vec(n, AsyncReadWriteMemIO(addrWidth, dataWidth)))
+    val in = Flipped(Vec(n, AsyncMemIO(addrWidth, dataWidth)))
     /** Output port */
-    val out = AsyncReadWriteMemIO(addrWidth, dataWidth)
+    val out = AsyncMemIO(addrWidth, dataWidth)
   })
 
   /**
@@ -63,7 +63,7 @@ class AsyncMemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
    * @param in The list of input ports.
    * @return The output port.
    */
-  def connect(in: ConvertAsyncMemIO*): AsyncReadWriteMemIO = {
+  def connect(in: ConvertAsyncMemIO*): AsyncMemIO = {
     assert(in.length == n, s"There must be exactly $n input ports")
     in.zipWithIndex.foreach { case (port, i) => port.asAsyncReadWriteMemIO <> io.in(i) }
     io.out
@@ -93,7 +93,7 @@ class AsyncMemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
   // Outputs
   io.busy := busyReg
   io.chosen := chosen
-  io.out <> AsyncReadWriteMemIO.mux1H(chosen, io.in)
+  io.out <> AsyncMemIO.mux1H(chosen, io.in)
 
   // Debug
   if (sys.env.get("DEBUG").contains("1")) {

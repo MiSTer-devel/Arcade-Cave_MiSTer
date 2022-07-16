@@ -40,7 +40,7 @@ import chisel3.util._
 class EEPROM extends Module {
   val io = IO(new Bundle {
     /** Memory port */
-    val mem = AsyncReadWriteMemIO(EEPROM.ADDR_WIDTH + 1, EEPROM.DATA_WIDTH)
+    val mem = AsyncMemIO(EEPROM.ADDR_WIDTH + 1, EEPROM.DATA_WIDTH)
     /** Serial port */
     val serial = new SerialIO
     /** Debug port */

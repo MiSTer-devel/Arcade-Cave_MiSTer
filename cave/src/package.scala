@@ -45,7 +45,7 @@ package object cave {
   class SoundRomIO extends AsyncReadMemIO(Config.SOUND_ROM_ADDR_WIDTH, Config.SOUND_ROM_DATA_WIDTH)
 
   /** EEPROM IO */
-  class EEPROMIO extends AsyncReadWriteMemIO(Config.EEPROM_ADDR_WIDTH, Config.EEPROM_DATA_WIDTH)
+  class EEPROMIO extends AsyncMemIO(Config.EEPROM_ADDR_WIDTH, Config.EEPROM_DATA_WIDTH)
 
   /** Sprite ROM IO */
   class SpriteRomIO extends BurstReadMemIO(Config.TILE_ROM_ADDR_WIDTH, Config.TILE_ROM_DATA_WIDTH)

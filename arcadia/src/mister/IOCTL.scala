@@ -75,10 +75,10 @@ class IOCTL extends Bundle {
   }
 
   /** Converts NVRAM data to an asynchronous read-write memory interface. */
-  def nvram: AsyncReadWriteMemIO = {
+  def nvram: AsyncMemIO = {
     val readEnable = upload && this.index === IOCTL.NVRAM_INDEX.U
     val writeEnable = download && this.index === IOCTL.NVRAM_INDEX.U
-    val mem = Wire(AsyncReadWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
+    val mem = Wire(AsyncMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
     mem.rd := readEnable && rd
     mem.wr := writeEnable && wr
     when(readEnable || writeEnable) { waitReq := mem.waitReq }

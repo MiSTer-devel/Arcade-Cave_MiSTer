@@ -46,7 +46,7 @@ trait BusConfig {
 /** Defines interface conversion methods. */
 trait ConvertMemIO {
   /** Converts the interface to synchronous read-write. */
-  def asReadWriteMemIO: ReadWriteMemIO
+  def asReadWriteMemIO: MemIO
 }
 
 /**
@@ -55,7 +55,7 @@ trait ConvertMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-abstract class MemIO protected(val addrWidth: Int, val dataWidth: Int) extends Bundle with BusConfig {
+abstract class AbstractMemIO protected(val addrWidth: Int, val dataWidth: Int) extends Bundle with BusConfig {
   /** The width of the data mask (i.e. the number of bytes that can be masked when writing data). */
   def maskWidth = dataWidth / 8
 }
@@ -66,7 +66,7 @@ abstract class MemIO protected(val addrWidth: Int, val dataWidth: Int) extends B
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class ReadMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) with ConvertMemIO {
+class ReadMemIO(addrWidth: Int, dataWidth: Int) extends AbstractMemIO(addrWidth, dataWidth) with ConvertMemIO {
   /** Read enable */
   val rd = Output(Bool())
   /** Address bus */
@@ -77,8 +77,8 @@ class ReadMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWid
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
   /** Converts the interface to synchronous read-write. */
-  def asReadWriteMemIO: ReadWriteMemIO = {
-    val mem = Wire(Flipped(ReadWriteMemIO(this)))
+  def asReadWriteMemIO: MemIO = {
+    val mem = Wire(Flipped(MemIO(this)))
     mem.rd := rd
     mem.wr := false.B
     mem.addr := addr
@@ -188,7 +188,7 @@ object ReadMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class WriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) with ConvertMemIO {
+class WriteMemIO(addrWidth: Int, dataWidth: Int) extends AbstractMemIO(addrWidth, dataWidth) with ConvertMemIO {
   /** Write enable */
   val wr = Output(Bool())
   /** Address bus */
@@ -201,8 +201,8 @@ class WriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWi
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
   /** Converts the interface to synchronous read-write. */
-  def asReadWriteMemIO: ReadWriteMemIO = {
-    val mem = Wire(Flipped(ReadWriteMemIO(this)))
+  def asReadWriteMemIO: MemIO = {
+    val mem = Wire(Flipped(MemIO(this)))
     mem.rd := false.B
     mem.wr := wr
     mem.addr := addr
@@ -279,7 +279,7 @@ object WriteMemIO {
  * @param addrWidth The width of the address bus.
  * @param dataWidth The width of the data bus.
  */
-class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWidth) with ConvertMemIO {
+class MemIO(addrWidth: Int, dataWidth: Int) extends AbstractMemIO(addrWidth, dataWidth) with ConvertMemIO {
   /** Read enable */
   val rd = Output(Bool())
   /** Write enable */
@@ -319,7 +319,7 @@ class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, da
   }
 
   /** Converts the interface to synchronous read-write. */
-  def asReadWriteMemIO: ReadWriteMemIO = this
+  def asReadWriteMemIO: MemIO = this
 
   /** Sets default values for all the signals. */
   def default(): Unit = {
@@ -335,8 +335,8 @@ class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, da
    *
    * @param f The transform function.
    */
-  def mapAddr(f: UInt => UInt): ReadWriteMemIO = {
-    val mem = Wire(Flipped(ReadWriteMemIO(f(addr).getWidth, this.dataWidth)))
+  def mapAddr(f: UInt => UInt): MemIO = {
+    val mem = Wire(Flipped(MemIO(f(addr).getWidth, this.dataWidth)))
     mem.rd := rd
     mem.wr := wr
     mem.addr := f(addr)
@@ -351,8 +351,8 @@ class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, da
    *
    * @param f The transform function.
    */
-  def mapData(f: Bits => Bits): ReadWriteMemIO = {
-    val mem = Wire(Flipped(ReadWriteMemIO(this)))
+  def mapData(f: Bits => Bits): MemIO = {
+    val mem = Wire(Flipped(MemIO(this)))
     mem.rd := rd
     mem.wr := wr
     mem.addr := addr
@@ -363,8 +363,8 @@ class ReadWriteMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, da
   }
 }
 
-object ReadWriteMemIO {
-  def apply(addrWidth: Int, dataWidth: Int): ReadWriteMemIO = new ReadWriteMemIO(addrWidth, dataWidth)
+object MemIO {
+  def apply(addrWidth: Int, dataWidth: Int): MemIO = new MemIO(addrWidth, dataWidth)
 
-  def apply(config: BusConfig) = new ReadWriteMemIO(config)
+  def apply(config: BusConfig) = new MemIO(config)
 }

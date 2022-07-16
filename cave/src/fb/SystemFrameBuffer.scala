@@ -34,7 +34,7 @@ package cave.fb
 
 import arcadia._
 import arcadia.gfx.VideoIO
-import arcadia.mem.BurstReadWriteMemIO
+import arcadia.mem.BurstMemIO
 import arcadia.mister.FrameBufferCtrlIO
 import cave._
 import chisel3._
@@ -70,7 +70,7 @@ class SystemFrameBuffer extends Module {
     /** Frame buffer port */
     val frameBuffer = Flipped(new SystemFrameBufferIO)
     /** DDR port */
-    val ddr = BurstReadWriteMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
+    val ddr = BurstMemIO(Config.ddrConfig.addrWidth, Config.ddrConfig.dataWidth)
   })
 
   // The page flipper uses triple buffering by default, or double buffering when low latency mode is

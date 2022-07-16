@@ -51,11 +51,11 @@ class Sound extends Module {
     /** CPU port */
     val cpu = Flipped(new Bundle {
       /** OKIM6295 CPU port */
-      val oki = Vec(Sound.OKI_COUNT, ReadWriteMemIO(CPU.ADDR_WIDTH, CPU.DATA_WIDTH))
+      val oki = Vec(Sound.OKI_COUNT, MemIO(CPU.ADDR_WIDTH, CPU.DATA_WIDTH))
       /** NMK115 CPU port */
       val nmk = WriteMemIO(CPU.ADDR_WIDTH, CPU.DATA_WIDTH)
       /** YMZ280B CPU port */
-      val ymz = ReadWriteMemIO(CPU.ADDR_WIDTH, CPU.DATA_WIDTH)
+      val ymz = MemIO(CPU.ADDR_WIDTH, CPU.DATA_WIDTH)
     })
     /** Sound ROM port */
     val rom = Vec(Config.SOUND_ROM_COUNT, new SoundRomIO)

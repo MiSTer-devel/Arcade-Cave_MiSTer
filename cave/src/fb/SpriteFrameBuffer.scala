@@ -71,7 +71,7 @@ class SpriteFrameBuffer extends Module {
     /** Frame buffer port */
     val frameBuffer = Flipped(new SpriteFrameBufferIO)
     /** DDR port */
-    val ddr = BurstReadWriteMemIO(Config.ddrConfig)
+    val ddr = BurstMemIO(Config.ddrConfig)
   })
 
   // Line buffer
