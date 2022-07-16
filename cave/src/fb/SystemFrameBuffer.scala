@@ -103,6 +103,9 @@ class SystemFrameBuffer extends Module {
   }
   queue.io.enable := io.enable
   queue.io.readClock := clock
-  queue.io.in <> io.frameBuffer
   queue.io.out.mapAddr(_ + pageFlipper.io.addrWrite).asBurstReadWriteMemIO <> io.ddr
+
+  // Outputs
+  io.frameBuffer.mem <> queue.io.in
+  io.frameBuffer.size := io.video.size
 }

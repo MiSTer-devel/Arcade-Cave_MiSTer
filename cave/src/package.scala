@@ -69,7 +69,12 @@ package object cave {
   }
 
   /** System frame buffer IO */
-  class SystemFrameBufferIO extends AsyncWriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SYSTEM_FRAME_BUFFER_DATA_WIDTH)
+  class SystemFrameBufferIO extends Bundle {
+    /** Size port */
+    val size = Input(UVec2(9.W))
+    /** Memory port */
+    val mem = AsyncWriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SYSTEM_FRAME_BUFFER_DATA_WIDTH)
+  }
 
   /** Sound device enum */
   object SoundDevice {
