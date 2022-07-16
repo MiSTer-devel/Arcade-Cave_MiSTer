@@ -133,6 +133,7 @@ class Main extends Module {
   // The Cave module should be reset when the CPU reset signal is asserted (i.e. the user pressed
   // the reset button), or while the memory system is not ready.
   val cave = withReset(io.cpuReset || !memSys.io.ready) { Module(new Cave) }
+  cave.io.videoClock := io.videoClock
   cave.io.gameConfig <> gameConfigReg
   cave.io.options <> io.options
   cave.io.dips := dipsRegs.io.regs
@@ -144,6 +145,7 @@ class Main extends Module {
 
   // Sprite frame buffer
   val spriteFrameBuffer = Module(new SpriteFrameBuffer)
+  spriteFrameBuffer.io.videoClock := io.videoClock
   spriteFrameBuffer.io.enable := io.options.frameBufferEnable.sprite && memSys.io.ready
   spriteFrameBuffer.io.swap := cave.io.spriteFrameBufferSwap
   spriteFrameBuffer.io.video <> videoSys.io.video
@@ -153,6 +155,7 @@ class Main extends Module {
 
   // System frame buffer
   val systemFrameBuffer = Module(new SystemFrameBuffer)
+  systemFrameBuffer.io.videoClock := io.videoClock
   systemFrameBuffer.io.enable := io.options.frameBufferEnable.system && memSys.io.ready
   systemFrameBuffer.io.rotate := io.options.rotate
   systemFrameBuffer.io.forceBlank := !memSys.io.ready

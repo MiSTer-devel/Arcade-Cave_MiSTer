@@ -32,31 +32,42 @@
 
 package cave.gfx
 
-import chisel3._
 import chiseltest._
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
 class LayerProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
-  it should "load tiles from VRAM" in {
+  it should "load small tiles from VRAM" in {
     test(new LayerProcessor(0)) { dut =>
       dut.io.ctrl.regs.tileSize.poke(false)
       dut.io.video.pos.x.poke(0)
-      dut.io.ctrl.vram16x16.addr.expect(0x01)
+      dut.io.ctrl.vram16x16.rd.expect(true)
+      dut.io.ctrl.vram16x16.addr.expect(0xbf)
       dut.io.video.pos.x.poke(8)
-      dut.io.ctrl.vram16x16.addr.expect(0x02)
+      dut.io.ctrl.vram16x16.addr.expect(0x80)
       dut.io.video.pos.x.poke(248)
+      dut.io.ctrl.vram16x16.addr.expect(0x9e)
+    }
+  }
+
+  it should "load large tiles from VRAM" in {
+    test(new LayerProcessor(0)) { dut =>
+      dut.io.ctrl.regs.tileSize.poke(true)
+      dut.io.video.pos.x.poke(0)
+      dut.io.ctrl.vram16x16.rd.expect(true)
+      dut.io.ctrl.vram16x16.addr.expect(0x3f)
+      dut.io.video.pos.x.poke(8)
       dut.io.ctrl.vram16x16.addr.expect(0x20)
+      dut.io.video.pos.x.poke(240)
+      dut.io.ctrl.vram16x16.addr.expect(0x2e)
     }
   }
 
   it should "load line effects from VRAM" in {
     test(new LayerProcessor(0)) { dut =>
-      dut.io.video.hSync.poke(true.B)
-      dut.clock.step()
-      dut.io.video.hSync.poke(false.B)
-      dut.io.ctrl.lineRam.addr.expect(0)
+      dut.io.ctrl.lineRam.rd.expect(true)
+      dut.io.ctrl.lineRam.addr.expect(0x11)
     }
   }
 }

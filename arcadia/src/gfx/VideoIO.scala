@@ -36,10 +36,6 @@ import arcadia.UVec2
 import chisel3._
 
 class VideoIO extends VideoTimingIO {
-  /** Video clock */
-  val clock = Output(Clock())
-  /** Video reset */
-  val reset = Output(Bool())
   /** Video registers */
   val regs = Output(new VideoRegs)
   /** Asserted when the video mode is changed */

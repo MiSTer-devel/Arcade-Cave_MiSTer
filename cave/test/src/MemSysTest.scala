@@ -38,46 +38,64 @@ import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
-trait MemSysTestHelpers {
-  protected def waitForDownloadReady(dut: MemSys) =
-    while (dut.io.ioctl.waitReq.peekBoolean()) { dut.clock.step() }
-}
-
-class MemSysTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with MemSysTestHelpers {
-  it should "write download data to memory" in {
+class MemSysTest extends AnyFlatSpec with ChiselScalatestTester with Matchers  {
+  it should "write ROM data to DDR memory" in {
     test(new MemSys) { dut =>
-      waitForDownloadReady(dut)
-      dut.io.ioctl.download.poke(true)
-
-      // Download & fill
-      dut.io.ioctl.wr.poke(true)
-      dut.io.ioctl.addr.poke(0)
-      dut.io.ioctl.dout.poke(0x1234)
+      dut.io.prog.rom.wr.poke(true)
+      dut.io.prog.rom.addr.poke(0)
+      dut.io.prog.rom.din.poke(0x3210)
+      dut.io.ddr.wr.expect(false)
       dut.clock.step()
-      dut.io.ioctl.wr.poke(false)
-      dut.clock.step(2)
-      dut.io.ddr.rd.expect(true)
-      dut.io.ddr.burstLength.expect(1.U)
+      dut.io.prog.rom.addr.poke(1)
+      dut.io.prog.rom.din.poke(0x7654)
+      dut.io.ddr.wr.expect(false)
+      dut.clock.step()
+      dut.io.prog.rom.addr.poke(2)
+      dut.io.prog.rom.din.poke(0xba98)
+      dut.io.ddr.wr.expect(false)
+      dut.clock.step()
+      dut.io.prog.rom.addr.poke(3)
+      dut.io.prog.rom.din.poke(0xfedc)
+      dut.io.ddr.wr.expect(false)
+      dut.clock.step()
+      dut.io.prog.rom.wr.poke(false)
+      dut.io.ddr.wr.expect(true)
+      dut.io.ddr.burstLength.expect(1)
+      dut.io.ddr.addr.expect(0x30000000)
+      dut.io.ddr.din.expect("h_fedcba98_76543210".U)
+      dut.clock.step()
+    }
+  }
 
-      // DDR valid
+  it should "copy ROM data from DDR memory to SDRAM" in {
+    test(new MemSys) { dut =>
+      dut.io.prog.done.poke(true)
+      dut.io.ddr.rd.expect(false)
+      dut.io.sdram.wr.expect(false)
+      dut.clock.step()
+      dut.io.ddr.rd.expect(true)
+      dut.io.ddr.burstLength.expect(16)
+      dut.io.ddr.addr.expect(0x30000000)
+      dut.io.sdram.wr.expect(false)
+      dut.clock.step()
       dut.io.ddr.valid.poke(true)
+      dut.io.ddr.burstDone.poke(true)
+      dut.io.ddr.dout.poke("h_fedcba98_76543210".U)
       dut.clock.step(2)
       dut.io.ddr.valid.poke(false)
-
-      // Burst done
-      dut.io.ddr.burstDone.poke(true)
-      dut.clock.step()
       dut.io.ddr.burstDone.poke(false)
-
-      // Download & evict
-      dut.io.ioctl.wr.poke(true)
-      dut.io.ioctl.addr.poke(8)
-      dut.io.ioctl.dout.poke(0x5678)
+      dut.io.sdram.wr.expect(true)
+      dut.io.sdram.din.expect(0x3210)
       dut.clock.step()
-      dut.io.ioctl.wr.poke(false)
-      dut.clock.step(2)
-      dut.io.ddr.wr.expect(true)
-      dut.io.ddr.burstLength.expect(1.U)
+      dut.io.sdram.wr.expect(true)
+      dut.io.sdram.din.expect(0x7654)
+      dut.clock.step()
+      dut.io.sdram.wr.expect(true)
+      dut.io.sdram.din.expect(0xba98)
+      dut.clock.step()
+      dut.io.sdram.wr.expect(true)
+      dut.io.sdram.din.expect(0xfedc)
+      dut.clock.step()
     }
   }
 }

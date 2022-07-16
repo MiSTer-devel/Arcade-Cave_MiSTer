@@ -60,6 +60,8 @@ import chisel3.util._
  */
 class SpriteFrameBuffer extends Module {
   val io = IO(new Bundle {
+    /** Video clock domain */
+    val videoClock = Input(Clock())
     /** Enable the frame buffer */
     val enable = Input(Bool())
     /** Swap the current page */
@@ -83,7 +85,7 @@ class SpriteFrameBuffer extends Module {
     dataWidthB = Config.SPRITE_FRAME_BUFFER_DATA_WIDTH,
     depthB = Some(Config.FRAME_BUFFER_WIDTH)
   ))
-  lineBuffer.io.clockB := io.video.clock
+  lineBuffer.io.clockB := io.videoClock
   lineBuffer.io.portB <> io.lineBuffer
 
   // The page flipper uses double buffering for sprites. The pages are swapped at the start of every
@@ -113,7 +115,6 @@ class SpriteFrameBuffer extends Module {
   ))
   queue.io.enable := io.enable
   queue.io.readClock := clock
-  queue.io.in <> io.frameBuffer
 
   // Clear frame buffer when the swap signal is asserted
   val frameBufferDma = Module(new BurstWriteDMA(Config.spriteFrameBufferDmaConfig))
@@ -132,4 +133,8 @@ class SpriteFrameBuffer extends Module {
     frameBufferDma.io.out.mapAddr(_ + pageFlipper.io.addrWrite),
     queue.io.out.mapAddr(_ + pageFlipper.io.addrWrite)
   ) <> io.ddr
+
+  // Outputs
+  io.frameBuffer.mem <> queue.io.in
+  io.frameBuffer.size := io.video.size
 }

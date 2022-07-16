@@ -48,6 +48,8 @@ import chisel3.util._
  */
 class GPU extends Module {
   val io = IO(new Bundle {
+    /** Video clock domain */
+    val videoClock = Input(Clock())
     /** Game config port */
     val gameConfig = Input(GameConfig())
     /** Options port */
@@ -72,11 +74,10 @@ class GPU extends Module {
 
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
-  spriteProcessor.io.video <> io.video
   spriteProcessor.io.ctrl <> io.spriteCtrl
   spriteProcessor.io.frameBuffer <> io.spriteFrameBuffer
 
-  withClockAndReset(io.video.clock, io.video.reset) {
+  withClock(io.videoClock) {
     // Layer processors
     val layerProcessor = 0.until(Config.LAYER_COUNT).map { i =>
       val p = Module(new LayerProcessor(i))
@@ -100,10 +101,10 @@ class GPU extends Module {
     io.spriteLineBuffer.addr := io.video.pos.x
 
     // Decode color mixer data and write it to the system frame buffer
-    io.systemFrameBuffer.wr := RegNext(io.video.clockEnable && io.video.displayEnable)
-    io.systemFrameBuffer.addr := RegNext(GPU.frameBufferAddr(io.video.size, io.video.pos, io.options.flip, io.options.rotate))
-    io.systemFrameBuffer.mask := 0xf.U // 4 bytes
-    io.systemFrameBuffer.din := RegNext(GPU.decodeABGR(colorMixer.io.dout))
+    io.systemFrameBuffer.mem.wr := RegNext(io.video.clockEnable && io.video.displayEnable)
+    io.systemFrameBuffer.mem.addr := RegNext(GPU.frameBufferAddr(io.systemFrameBuffer.size, io.video.pos, io.options.flip, io.options.rotate))
+    io.systemFrameBuffer.mem.mask := 0xf.U // 4 bytes
+    io.systemFrameBuffer.mem.din := RegNext(GPU.decodeABGR(colorMixer.io.dout))
 
     // Decode color mixer data and write it to the RGB output
     io.rgb := GPU.decodeRGB(colorMixer.io.dout)

@@ -100,8 +100,6 @@ class VideoSys extends Module {
   }
 
   // Outputs
-  io.video.clock := io.videoClock
-  io.video.reset := io.videoReset
   io.video.clockEnable := timing.clockEnable
   io.video.displayEnable := timing.displayEnable
   io.video.pos := timing.pos
