@@ -113,7 +113,6 @@ class SpriteFrameBuffer extends Module {
   ))
   queue.io.enable := io.enable
   queue.io.readClock := clock
-  queue.io.in <> io.frameBuffer
 
   // Clear frame buffer when the swap signal is asserted
   val frameBufferDma = Module(new BurstWriteDMA(Config.spriteFrameBufferDmaConfig))
@@ -132,4 +131,8 @@ class SpriteFrameBuffer extends Module {
     frameBufferDma.io.out.mapAddr(_ + pageFlipper.io.addrWrite),
     queue.io.out.mapAddr(_ + pageFlipper.io.addrWrite)
   ) <> io.ddr
+
+  // Outputs
+  io.frameBuffer.mem <> queue.io.in
+  io.frameBuffer.size := io.video.size
 }
