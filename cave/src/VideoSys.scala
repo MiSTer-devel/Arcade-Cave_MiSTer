@@ -78,9 +78,9 @@ class VideoSys extends Module {
 
     // Compatibility video timing
     val compatibilityVideoTiming = Module(new VideoTiming(Config.compatibilityVideoTimingConfig))
-    compatibilityVideoTiming.io.display := UVec2(320.U, 240.U)
-    compatibilityVideoTiming.io.frontPorch := UVec2(30.U, 12.U)
-    compatibilityVideoTiming.io.retrace := UVec2(20.U, 2.U)
+    compatibilityVideoTiming.io.display := io.video.regs.size
+    compatibilityVideoTiming.io.frontPorch := io.video.regs.frontPorch
+    compatibilityVideoTiming.io.retrace := io.video.regs.retrace
 
     // Changing the CRT offset during the display region can momentarily alter the screen
     // dimensions, which may cause issues with other modules. If we latch the offset during a
