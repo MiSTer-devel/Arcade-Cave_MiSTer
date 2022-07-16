@@ -57,6 +57,8 @@ import chisel3.util.ShiftRegister
  */
 class SystemFrameBuffer extends Module {
   val io = IO(new Bundle {
+    /** Video clock domain */
+    val videoClock = Input(Clock())
     /** Enable the frame buffer */
     val enable = Input(Bool())
     /** Rotate the frame buffer 90 degrees */
@@ -92,7 +94,7 @@ class SystemFrameBuffer extends Module {
 
   // Queue frame buffer requests. Requests are written to the queue in the video clock domain, and
   // read from the queue in the system clock domain
-  val queue = withClockAndReset(io.video.clock, io.video.reset) {
+  val queue = withClock(io.videoClock) {
     Module(new RequestQueue(
       inAddrWidth = Config.FRAME_BUFFER_ADDR_WIDTH,
       inDataWidth = Config.SYSTEM_FRAME_BUFFER_DATA_WIDTH,

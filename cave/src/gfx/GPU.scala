@@ -48,6 +48,8 @@ import chisel3.util._
  */
 class GPU extends Module {
   val io = IO(new Bundle {
+    /** Video clock domain */
+    val videoClock = Input(Clock())
     /** Game config port */
     val gameConfig = Input(GameConfig())
     /** Options port */
@@ -75,7 +77,7 @@ class GPU extends Module {
   spriteProcessor.io.ctrl <> io.spriteCtrl
   spriteProcessor.io.frameBuffer <> io.spriteFrameBuffer
 
-  withClockAndReset(io.video.clock, io.video.reset) {
+  withClock(io.videoClock) {
     // Layer processors
     val layerProcessor = 0.until(Config.LAYER_COUNT).map { i =>
       val p = Module(new LayerProcessor(i))
