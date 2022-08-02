@@ -4,7 +4,6 @@
 .metals
 .vscode
 out
-project/target
 quartus/*.qws
 quartus/*.qdf
 quartus/build_id.v
