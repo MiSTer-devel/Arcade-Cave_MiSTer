@@ -35,7 +35,7 @@ package arcadia.util
 import chisel3._
 import chisel3.util._
 
-private class CounterStatic(to: Int, init: Int) {
+private class CounterStatic(to: Long, init: Long) {
   require(to >= init, s"Counter value must greater than initial value, got: $to")
   val value = if (to > 1) RegInit(init.U(log2Ceil(to).W)) else init.U
 
@@ -61,7 +61,7 @@ private class CounterStatic(to: Int, init: Int) {
   }
 }
 
-private class CounterDynamic(to: UInt, init: Int) {
+private class CounterDynamic(to: UInt, init: Long) {
   val value = RegInit(init.U(to.getWidth.W))
 
   /** Increments the counter */
@@ -79,7 +79,7 @@ private class CounterDynamic(to: UInt, init: Int) {
 }
 
 object Counter {
-  def static(n: Int, enable: Bool = true.B, reset: Bool = false.B, init: Int = 0): (UInt, Bool) = {
+  def static(n: Long, enable: Bool = true.B, reset: Bool = false.B, init: Long = 0): (UInt, Bool) = {
     assert(init == 0 || init < n, "Initial value must be less than the maximum")
     val c = new CounterStatic(n, init)
     val wrap = WireInit(false.B)
@@ -87,7 +87,7 @@ object Counter {
     (c.value, wrap)
   }
 
-  def dynamic(n: UInt, enable: Bool = true.B, reset: Bool = false.B, init: Int = 0): (UInt, Bool) = {
+  def dynamic(n: UInt, enable: Bool = true.B, reset: Bool = false.B, init: Long = 0): (UInt, Bool) = {
     val c = new CounterDynamic(n, init)
     val wrap = WireInit(false.B)
     when(reset) { c.reset() }.elsewhen(enable) { wrap := c.inc() }
