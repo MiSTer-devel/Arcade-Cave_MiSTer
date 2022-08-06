@@ -65,7 +65,7 @@ class AsyncMemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
    */
   def connect(in: ConvertAsyncMemIO*): AsyncMemIO = {
     assert(in.length == n, s"There must be exactly $n input ports")
-    in.zipWithIndex.foreach { case (port, i) => port.asAsyncReadWriteMemIO <> io.in(i) }
+    in.zipWithIndex.foreach { case (port, i) => port.asAsyncMemIO <> io.in(i) }
     io.out
   }
 
