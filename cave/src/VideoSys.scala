@@ -67,7 +67,7 @@ class VideoSys extends Module {
   videoRegs.io.mem <> io.prog.video
     .mapAddr { a => (a >> 1).asUInt } // convert from byte address
     .mapData(Util.swapEndianness) // swap bytes
-    .asReadWriteMemIO
+    .asMemIO
 
   val timing = withClockAndReset(io.videoClock, io.videoReset) {
     // Original video timing

@@ -103,7 +103,7 @@ class SpriteFrameBuffer extends Module {
   lineBufferDma.io.start := io.enable && lineBufferDmaStart
   lineBufferDma.io.out
     .mapAddr { a => (a >> 3).asUInt } // convert from byte address
-    .asReadWriteMemIO <> lineBuffer.io.portA
+    .asMemIO <> lineBuffer.io.portA
 
   // Queue frame buffer requests
   val queue = Module(new RequestQueue(

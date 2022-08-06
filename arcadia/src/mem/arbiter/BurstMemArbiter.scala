@@ -65,7 +65,7 @@ class BurstMemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
    */
   def connect(in: ConvertBurstMemIO*): BurstMemIO = {
     assert(in.length == n, s"There must be exactly $n input ports")
-    in.zipWithIndex.foreach { case (port, i) => port.asBurstReadWriteMemIO <> io.in(i) }
+    in.zipWithIndex.foreach { case (port, i) => port.asBurstMemIO <> io.in(i) }
     io.out
   }
 
