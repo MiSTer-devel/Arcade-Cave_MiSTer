@@ -48,7 +48,7 @@ trait ValidIO {
 /** Defines interface conversion methods. */
 trait ConvertAsyncMemIO {
   /** Converts the interface to read-write. */
-  def asAsyncReadWriteMemIO: AsyncMemIO
+  def asAsyncMemIO: AsyncMemIO
 }
 
 /**
@@ -61,7 +61,7 @@ class AsyncReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
   /** Converts the interface to read-write. */
-  def asAsyncReadWriteMemIO: AsyncMemIO = {
+  def asAsyncMemIO: AsyncMemIO = {
     val mem = Wire(Flipped(AsyncMemIO(this)))
     mem.rd := rd
     mem.wr := false.B
@@ -75,7 +75,7 @@ class AsyncReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth
   }
 
   /** Converts the interface to synchronous read-write. */
-  override def asReadWriteMemIO: MemIO = {
+  override def asMemIO: MemIO = {
     val mem = Wire(Flipped(MemIO(this)))
     mem.rd := rd
     mem.wr := false.B
@@ -152,7 +152,7 @@ class AsyncWriteMemIO(addrWidth: Int, dataWidth: Int) extends WriteMemIO(addrWid
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
   /** Converts the interface to read-write. */
-  def asAsyncReadWriteMemIO: AsyncMemIO = {
+  def asAsyncMemIO: AsyncMemIO = {
     val mem = Wire(Flipped(AsyncMemIO(this)))
     mem.rd := false.B
     mem.wr := wr
@@ -164,7 +164,7 @@ class AsyncWriteMemIO(addrWidth: Int, dataWidth: Int) extends WriteMemIO(addrWid
   }
 
   /** Converts the interface to synchronous read-write. */
-  override def asReadWriteMemIO: MemIO = {
+  override def asMemIO: MemIO = {
     val mem = Wire(Flipped(MemIO(this)))
     mem.rd := false.B
     mem.wr := wr
@@ -248,7 +248,7 @@ class AsyncMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWi
   }
 
   /** Converts the interface to read-write. */
-  def asAsyncReadWriteMemIO: AsyncMemIO = this
+  def asAsyncMemIO: AsyncMemIO = this
 
   /**
    * Maps the address using the given function.

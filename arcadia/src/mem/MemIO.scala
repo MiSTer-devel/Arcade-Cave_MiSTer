@@ -48,7 +48,7 @@ trait BusConfig {
 /** Defines interface conversion methods. */
 trait ConvertMemIO {
   /** Converts the interface to synchronous read-write. */
-  def asReadWriteMemIO: MemIO
+  def asMemIO: MemIO
 }
 
 /**
@@ -68,7 +68,7 @@ class ReadMemIO(val addrWidth: Int, val dataWidth: Int) extends Bundle with BusC
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
   /** Converts the interface to synchronous read-write. */
-  def asReadWriteMemIO: MemIO = {
+  def asMemIO: MemIO = {
     val mem = Wire(Flipped(MemIO(this)))
     mem.rd := rd
     mem.wr := false.B
@@ -192,7 +192,7 @@ class WriteMemIO(val addrWidth: Int, val dataWidth: Int) extends Bundle with Bus
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
   /** Converts the interface to synchronous read-write. */
-  def asReadWriteMemIO: MemIO = {
+  def asMemIO: MemIO = {
     val mem = Wire(Flipped(MemIO(this)))
     mem.rd := false.B
     mem.wr := wr
@@ -310,7 +310,7 @@ class MemIO(val addrWidth: Int, val dataWidth: Int) extends Bundle with BusConfi
   }
 
   /** Converts the interface to synchronous read-write. */
-  def asReadWriteMemIO: MemIO = this
+  def asMemIO: MemIO = this
 
   /** Sets default values for all the signals. */
   def default(): Unit = {

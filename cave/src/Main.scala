@@ -102,7 +102,7 @@ class Main extends Module {
   val dipsRegs = Module(new RegisterFile(IOCTL.DATA_WIDTH, Config.DIPS_REGS_COUNT))
   dipsRegs.io.mem <> io.ioctl.dips
     .mapAddr { a => (a >> 1).asUInt } // convert from byte address
-    .asReadWriteMemIO
+    .asMemIO
 
   // DDR controller
   val ddr = Module(new DDR(Config.ddrConfig))

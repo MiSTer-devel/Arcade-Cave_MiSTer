@@ -46,7 +46,7 @@ trait BurstIO {
 /** Defines interface conversion methods. */
 trait ConvertBurstMemIO {
   /** Converts the interface to read-write. */
-  def asBurstReadWriteMemIO: BurstMemIO
+  def asBurstMemIO: BurstMemIO
 }
 
 /**
@@ -59,7 +59,7 @@ class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addr
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
   /** Converts the interface to read-write. */
-  def asBurstReadWriteMemIO: BurstMemIO = {
+  def asBurstMemIO: BurstMemIO = {
     val mem = Wire(Flipped(BurstMemIO(this)))
     mem.rd := rd
     mem.wr := false.B
@@ -151,7 +151,7 @@ class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(ad
   def this(config: BusConfig) = this(config.addrWidth, config.dataWidth)
 
   /** Converts the interface to read-write. */
-  def asBurstReadWriteMemIO: BurstMemIO = {
+  def asBurstMemIO: BurstMemIO = {
     val mem = Wire(Flipped(BurstMemIO(this)))
     mem.rd := false.B
     mem.wr := wr
@@ -251,7 +251,7 @@ class BurstMemIO(addrWidth: Int, dataWidth: Int) extends AsyncMemIO(addrWidth, d
   }
 
   /** Converts the interface to read-write. */
-  def asBurstReadWriteMemIO: BurstMemIO = this
+  def asBurstMemIO: BurstMemIO = this
 
   /** Sets default values for all the signals. */
   override def default() = {
