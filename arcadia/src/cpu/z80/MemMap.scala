@@ -1,38 +1,33 @@
 /*
- *    __   __     __  __     __         __
- *   /\ "-.\ \   /\ \/\ \   /\ \       /\ \
- *   \ \ \-.  \  \ \ \_\ \  \ \ \____  \ \ \____
- *    \ \_\\"\_\  \ \_____\  \ \_____\  \ \_____\
- *     \/_/ \/_/   \/_____/   \/_____/   \/_____/
- *    ______     ______       __     ______     ______     ______
- *   /\  __ \   /\  == \     /\ \   /\  ___\   /\  ___\   /\__  _\
- *   \ \ \/\ \  \ \  __<    _\_\ \  \ \  __\   \ \ \____  \/_/\ \/
- *    \ \_____\  \ \_____\ /\_____\  \ \_____\  \ \_____\    \ \_\
- *     \/_____/   \/_____/ \/_____/   \/_____/   \/_____/     \/_/
+ *   __   __     __  __     __         __
+ *  /\ "-.\ \   /\ \/\ \   /\ \       /\ \
+ *  \ \ \-.  \  \ \ \_\ \  \ \ \____  \ \ \____
+ *   \ \_\\"\_\  \ \_____\  \ \_____\  \ \_____\
+ *    \/_/ \/_/   \/_____/   \/_____/   \/_____/
+ *   ______     ______       __     ______     ______     ______
+ *  /\  __ \   /\  == \     /\ \   /\  ___\   /\  ___\   /\__  _\
+ *  \ \ \/\ \  \ \  __<    _\_\ \  \ \  __\   \ \ \____  \/_/\ \/
+ *   \ \_____\  \ \_____\ /\_____\  \ \_____\  \ \_____\    \ \_\
+ *    \/_____/   \/_____/ \/_____/   \/_____/   \/_____/     \/_/
  *
- *  https://joshbassett.info
- *  https://twitter.com/nullobject
- *  https://github.com/nullobject
+ * https://joshbassett.info
+ * https://twitter.com/nullobject
+ * https://github.com/nullobject
  *
- *  Copyright (c) 2022 Josh Bassett
+ * Copyright (c) 2022 Josh Bassett
  *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy
- *  of this software and associated documentation files (the "Software"), to deal
- *  in the Software without restriction, including without limitation the rights
- *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *  copies of the Software, and to permit persons to whom the Software is
- *  furnished to do so, subject to the following conditions:
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  The above copyright notice and this permission notice shall be included in all
- *  copies or substantial portions of the Software.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *  SOFTWARE.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 package arcadia.cpu.z80
@@ -124,6 +119,22 @@ class MemMap(cpu: CPUIO) {
     }
 
     /**
+     * Maps an address range to the given getter and setter functions.
+     *
+     * @param f The getter function.
+     * @param g The setter function.
+     */
+    def rw(f: (UInt, UInt) => UInt)(g: (UInt, UInt, Bits) => Unit): Unit = {
+      when(cs && cpu.mreq) {
+        when(cpu.rd) {
+          cpu.din := f(cpu.addr, offset)
+        }.elsewhen(cpu.wr) {
+          g(cpu.addr, offset, cpu.dout)
+        }
+      }
+    }
+
+    /**
      * Maps an address range to the given getter function.
      *
      * @param f The getter function.
@@ -139,6 +150,16 @@ class MemMap(cpu: CPUIO) {
      */
     def w(f: (UInt, UInt, Bits) => Unit): Unit = {
       when(cs && cpu.mreq && cpu.wr) { f(cpu.addr, offset, cpu.dout) }
+    }
+
+    /** Ignores write access for the address range. */
+    def nopw(): Unit = {
+      w((_, _, _) => {})
+    }
+
+    /** Ignores read/write access for the address range. */
+    def noprw(): Unit = {
+      rw((_, _) => 0.U)((_, _, _) => {})
     }
   }
 }
