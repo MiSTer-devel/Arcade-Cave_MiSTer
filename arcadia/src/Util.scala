@@ -135,6 +135,15 @@ object Util {
   def maskBits[T <: Bits](value: T, n: Int): T = ((value >> n) << n).asTypeOf(chiselTypeOf(value))
 
   /**
+   * Masks the least significant bits of the given value.
+   *
+   * @param value The value.
+   * @param n     The number of bits to be masked.
+   * @return A masked value.
+   */
+  def maskBits[T <: Bits](value: T, n: UInt): T = ((value >> n) << n).asTypeOf(chiselTypeOf(value))
+
+  /**
    * Detects edges of a signal.
    *
    * @param s The signal used to detect edges.
