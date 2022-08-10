@@ -1,5 +1,7 @@
 # Cave 68000
 
+[![Test](https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/actions/workflows/test.yml/badge.svg)](https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/actions/workflows/test.yml)
+
 This project contains the MiSTer core for Cave's first-generation 68000 arcade hardware.
 
 ![23](https://user-images.githubusercontent.com/32810066/126911397-e54b786a-39ff-4200-8fdb-8750d1b40976.png)
@@ -17,7 +19,7 @@ This project contains the MiSTer core for Cave's first-generation 68000 arcade h
 | [**Thunder Heroes**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=theroes&arcade_only=0&autosearch=1)     | Public        |
 | [**Donpachi**](https://en.wikipedia.org/wiki/DonPachi)                                                                | Public        |
 | [**Air Gallet**](https://en.wikipedia.org/wiki/Air_Gallet)                                                            | Unimplemented |
-| [**Hotdog Storm**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=hotdogst&arcade_only=0&autosearch=1)      | Unimplemented |
+| [**Hotdog Storm**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=hotdogst&arcade_only=0&autosearch=1)      | WIP           |
 | [**Koro Koro Quest**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=korokoro&arcade_only=0&autosearch=1)   | Unimplemented |
 | [**Mazinger Z**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=mazinger&arcade_only=0&autosearch=1)        | Unimplemented |
 | [**Gogetsuji Legends**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=plegends&arcade_only=0&autosearch=1) | Unimplemented |
