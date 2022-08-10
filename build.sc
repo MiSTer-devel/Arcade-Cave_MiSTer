@@ -29,5 +29,5 @@ trait CommonModule extends ScalaModule { m =>
 
 object arcadia extends CommonModule
 object cave extends CommonModule {
-  def moduleDeps = Seq(arcadia)
+  override def moduleDeps = Seq(arcadia)
 }
