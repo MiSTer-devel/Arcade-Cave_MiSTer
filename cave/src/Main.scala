@@ -139,7 +139,7 @@ class Main extends Module {
   cave.io.dips := dipsRegs.io.regs
   cave.io.joystick <> io.joystick
   cave.io.audio <> io.audio
-  cave.io.video <> videoSys.io.video
+  cave.io.video <> io.video
   cave.io.rgb <> io.rgb
   cave.io.rom <> memSys.io.rom
 
@@ -148,7 +148,7 @@ class Main extends Module {
   spriteFrameBuffer.io.videoClock := io.videoClock
   spriteFrameBuffer.io.enable := io.options.frameBufferEnable.sprite && memSys.io.ready
   spriteFrameBuffer.io.swap := cave.io.spriteFrameBufferSwap
-  spriteFrameBuffer.io.video <> videoSys.io.video
+  spriteFrameBuffer.io.video <> io.video
   spriteFrameBuffer.io.lineBuffer <> cave.io.spriteLineBuffer
   spriteFrameBuffer.io.frameBuffer <> cave.io.spriteFrameBuffer
   spriteFrameBuffer.io.ddr <> memSys.io.spriteFrameBuffer
@@ -159,7 +159,7 @@ class Main extends Module {
   systemFrameBuffer.io.enable := io.options.frameBufferEnable.system && memSys.io.ready
   systemFrameBuffer.io.rotate := io.options.rotate
   systemFrameBuffer.io.forceBlank := !memSys.io.ready
-  systemFrameBuffer.io.video <> videoSys.io.video
+  systemFrameBuffer.io.video <> io.video
   systemFrameBuffer.io.frameBufferCtrl <> io.frameBufferCtrl
   systemFrameBuffer.io.frameBuffer <> cave.io.systemFrameBuffer
   systemFrameBuffer.io.ddr <> memSys.io.systemFrameBuffer
