@@ -81,13 +81,13 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val numTilesReg = RegEnable(spriteReg.cols * spriteReg.rows, stateReg === State.check)
   val burstPendingReg = RegInit(false.B)
 
-  // The FIFO is used to buffer tile ROM data to be processed by the sprite decoder
-  val fifo = Module(new Queue(Bits(Config.TILE_ROM_DATA_WIDTH.W), SpriteProcessor.FIFO_DEPTH, useSyncReadMem = true, hasFlush = true))
-  fifo.flush := stateReg === State.idle
-
   // Counters
   val (spriteCounter, spriteCounterWrap) = Counter.static(maxSprites, stateReg === State.next)
   val (tileCounter, tileCounterWrap) = Counter.dynamic(numTilesReg, effectiveRead)
+
+  // The FIFO is used to buffer tile ROM data to be processed by the sprite decoder
+  val fifo = Module(new Queue(Bits(), SpriteProcessor.FIFO_DEPTH, useSyncReadMem = true, hasFlush = true))
+  fifo.flush := stateReg === State.idle
 
   // Sprite blitter
   val blitter = Module(new SpriteBlitter)
