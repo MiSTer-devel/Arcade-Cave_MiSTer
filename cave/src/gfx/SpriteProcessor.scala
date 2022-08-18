@@ -79,7 +79,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val stateReg = RegInit(State.idle)
   val spriteReg = RegEnable(sprite, stateReg === State.latch)
   val numTilesReg = RegEnable(spriteReg.cols * spriteReg.rows, stateReg === State.check)
-  val burstPendingReg = RegInit(false.B)
+  val readPendingReg = RegInit(false.B)
 
   // Counters
   val (spriteCounter, spriteCounterWrap) = Counter.static(maxSprites, stateReg === State.next)
@@ -101,7 +101,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
 
   // Read tile ROM data when the FIFO is half-empty (i.e. there is enough room to fit another burst)
   val tileRomRead = stateReg === State.pending &&
-    !burstPendingReg &&
+    !readPendingReg &&
     fifo.io.count <= (SpriteProcessor.FIFO_DEPTH / 2).U
 
   // Set effective read flag
@@ -119,9 +119,9 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
 
   // The burst pending register is asserted when there is a burst in progress
   when(io.ctrl.tileRom.burstDone) {
-    burstPendingReg := false.B
+    readPendingReg := false.B
   }.elsewhen(effectiveRead) {
-    burstPendingReg := true.B
+    readPendingReg := true.B
   }
 
   // Enqueue the blitter configuration when the blitter is ready
