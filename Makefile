@@ -17,4 +17,4 @@ test:
 	./mill _.test
 
 clean:
-	rm -rf out quartus/rtl/ChiselTop.v quartus/rtl/Main.* quartus/db quartus/incremental_db quartus/output_files test_run_dir
+	rm -rf out quartus/core/Cave.* quartus/db quartus/incremental_db quartus/output_files test_run_dir

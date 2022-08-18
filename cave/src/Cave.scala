@@ -33,443 +33,138 @@
 package cave
 
 import arcadia._
-import arcadia.cpu.m68k._
 import arcadia.gfx._
 import arcadia.mem._
+import arcadia.mem.ddr.DDR
+import arcadia.mem.sdram.{SDRAM, SDRAMIO}
 import arcadia.mister._
-import cave.gfx._
+import cave.fb._
 import chisel3._
-import chisel3.util._
+import chisel3.experimental.FlatIO
+import chisel3.stage._
 
 /**
- * Represents the first-generation CAVE arcade hardware.
+ * The top-level module.
  *
- * This module contains defines the CPU, GPU, sound, RAM, ROM, and memory maps.
+ * This module abstracts the rest of the arcade hardware from MiSTer-specific things (e.g. memory
+ * subsystem) that are not part of the original arcade hardware design.
  */
 class Cave extends Module {
-  val io = IO(new Bundle {
+  val io = FlatIO(new Bundle {
     /** Video clock domain */
     val videoClock = Input(Clock())
-    /** Game config port */
-    val gameConfig = Input(GameConfig())
+    /** Video reset */
+    val videoReset = Input(Bool())
+    /** CPU reset */
+    val cpuReset = Input(Bool())
+    /** DDR port */
+    val ddr = BurstMemIO(Config.ddrConfig)
+    /** SDRAM control port */
+    val sdram = SDRAMIO(Config.sdramConfig)
     /** Options port */
     val options = OptionsIO()
     /** Joystick port */
     val joystick = Vec(2, JoystickIO())
-    /** DIP switches port */
-    val dips = DIPIO()
-    /** Video port */
-    val video = Flipped(VideoIO())
+    /** IOCTL port */
+    val ioctl = IOCTL()
+    /** Frame buffer control port */
+    val frameBufferCtrl = FrameBufferCtrlIO()
     /** Audio port */
     val audio = Output(SInt(Config.AUDIO_SAMPLE_WIDTH.W))
+    /** Video port */
+    val video = VideoIO()
     /** RGB output */
     val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
-    /** ROM port */
-    val rom = new RomIO
-    /** Sprite line buffer port */
-    val spriteLineBuffer = new SpriteLineBufferIO
-    /** Sprite frame buffer port */
-    val spriteFrameBuffer = new SpriteFrameBufferIO
-    /** System frame buffer port */
-    val systemFrameBuffer = new SystemFrameBufferIO
-    /** Asserted when the current page for the sprite frame buffer should be swapped */
-    val spriteFrameBufferSwap = Output(Bool())
+    /** LED port */
+    val led = LEDIO()
   })
 
-  // A write-only memory interface is used to connect the CPU to the EEPROM
-  val eepromMem = Wire(WriteMemIO(CPU.ADDR_WIDTH, CPU.DATA_WIDTH))
+  io.ioctl.default()
 
-  // Synchronize vertical blank into system clock domain
-  val vBlank = ShiftRegister(io.video.vBlank, 2)
-  val vBlankRising = Util.rising(vBlank)
-  val vBlankFalling = Util.falling(vBlank)
-
-  // Toggle pause register
-  val pauseReg = Util.toggle(Util.rising(io.joystick(0).pause || io.joystick(1).pause))
-
-  // IRQ signals
-  val videoIrq = RegInit(false.B)
-  val agalletIrq = RegInit(false.B)
-  val unknownIrq = RegInit(false.B)
-  val soundIrq = WireInit(false.B)
-
-  // M68K CPU
-  val cpu = Module(new CPU(Config.CPU_CLOCK_DIV))
-  val map = new MemMap(cpu.io)
-  cpu.io.halt := pauseReg
-  cpu.io.dtack := false.B
-  cpu.io.vpa := cpu.io.as && cpu.io.fc === 7.U // autovectored interrupts
-  cpu.io.ipl := videoIrq || soundIrq || unknownIrq
-  cpu.io.din := 0.U
-
-  // Set program ROM interface defaults
-  io.rom.progRom.default()
-
-  // EEPROM
-  val eeprom = Module(new EEPROM)
-  eeprom.io.mem <> io.rom.eeprom
-  val cs = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(5), eepromMem.din(9))
-  val sck = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(6), eepromMem.din(10))
-  val sdi = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(7), eepromMem.din(11))
-  eeprom.io.serial.cs := RegEnable(cs, false.B, eepromMem.wr)
-  eeprom.io.serial.sck := RegEnable(sck, false.B, eepromMem.wr)
-  eeprom.io.serial.sdi := RegEnable(sdi, false.B, eepromMem.wr)
-  eepromMem.default()
-
-  // Main RAM
-  val mainRam = Module(new SinglePortRam(
-    addrWidth = Config.MAIN_RAM_ADDR_WIDTH,
-    dataWidth = Config.MAIN_RAM_DATA_WIDTH,
-    maskEnable = true
-  ))
-  mainRam.io.default()
-
-  // Sprite VRAM
-  val spriteRam = Module(new TrueDualPortRam(
-    addrWidthA = Config.SPRITE_RAM_ADDR_WIDTH,
-    dataWidthA = Config.SPRITE_RAM_DATA_WIDTH,
-    addrWidthB = Config.SPRITE_RAM_GPU_ADDR_WIDTH,
-    dataWidthB = Config.SPRITE_RAM_GPU_DATA_WIDTH,
-    maskEnable = true
-  ))
-  spriteRam.io.clockB := clock // system (i.e. fast) clock domain
-  spriteRam.io.portA.default()
-
-  // Layer VRAM (8x8)
-  val vram8x8 = 0.until(Config.LAYER_COUNT).map { _ =>
-    val ram = Module(new TrueDualPortRam(
-      addrWidthA = Config.LAYER_8x8_RAM_ADDR_WIDTH,
-      dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
-      addrWidthB = Config.LAYER_8x8_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH,
-      maskEnable = true
-    ))
-    ram.io.clockB := io.videoClock
-    ram.io.portA.default()
-    ram
+  // The game configuration register is latched when data is written to the IOCTL (i.e. the game
+  // index is set by the MRA file).
+  val gameConfigReg = {
+    val gameConfig = Reg(GameConfig())
+    val latched = RegInit(false.B)
+    when(io.ioctl.download && io.ioctl.wr && io.ioctl.index === IOCTL.GAME_INDEX.U) {
+      gameConfig := GameConfig(io.ioctl.dout(OptionsIO.GAME_INDEX_WIDTH - 1, 0))
+      latched := true.B
+    }
+    // Default to the game configuration set in the options
+    when(Util.falling(io.ioctl.download) && !latched) {
+      gameConfig := GameConfig(io.options.gameIndex)
+      latched := true.B
+    }
+    gameConfig
   }
 
-  // Layer VRAM (16x16)
-  val vram16x16 = 0.until(Config.LAYER_COUNT).map { _ =>
-    val ram = Module(new TrueDualPortRam(
-      addrWidthA = Config.LAYER_16x16_RAM_ADDR_WIDTH,
-      dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
-      addrWidthB = Config.LAYER_16x16_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LAYER_RAM_GPU_DATA_WIDTH,
-      maskEnable = true
-    ))
-    ram.io.clockB := io.videoClock
-    ram.io.portA.default()
-    ram
-  }
+  // Connect IOCTL to DIPs register file
+  val dipsRegs = Module(new RegisterFile(IOCTL.DATA_WIDTH, Config.DIPS_REGS_COUNT))
+  dipsRegs.io.mem <> io.ioctl.dips
+    .mapAddr { a => (a >> 1).asUInt } // convert from byte address
+    .asMemIO
 
-  // Line RAM
-  val lineRam = 0.until(Config.LAYER_COUNT).map { _ =>
-    val ram = Module(new TrueDualPortRam(
-      addrWidthA = Config.LINE_RAM_ADDR_WIDTH,
-      dataWidthA = Config.LINE_RAM_DATA_WIDTH,
-      addrWidthB = Config.LINE_RAM_GPU_ADDR_WIDTH,
-      dataWidthB = Config.LINE_RAM_GPU_DATA_WIDTH,
-      maskEnable = true
-    ))
-    ram.io.clockB := io.videoClock
-    ram.io.portA.default()
-    ram
-  }
+  // DDR controller
+  val ddr = Module(new DDR(Config.ddrConfig))
+  ddr.io.ddr <> io.ddr
 
-  // Palette RAM
-  val paletteRam = Module(new TrueDualPortRam(
-    addrWidthA = Config.PALETTE_RAM_ADDR_WIDTH,
-    dataWidthA = Config.PALETTE_RAM_DATA_WIDTH,
-    addrWidthB = Config.PALETTE_RAM_GPU_ADDR_WIDTH,
-    dataWidthB = Config.PALETTE_RAM_GPU_DATA_WIDTH,
-    maskEnable = true
-  ))
-  paletteRam.io.clockB := io.videoClock
-  paletteRam.io.portA.default()
+  // SDRAM controller
+  val sdram = Module(new SDRAM(Config.sdramConfig))
+  sdram.io.sdram <> io.sdram
 
-  // Layer registers
-  val layerRegs = 0.until(Config.LAYER_COUNT).map { _ =>
-    val regs = Module(new RegisterFile(CPU.DATA_WIDTH, Config.LAYER_REGS_COUNT))
-    regs.io.mem.default()
-    regs
-  }
+  // Memory subsystem
+  val memSys = Module(new MemSys)
+  memSys.io.gameConfig <> gameConfigReg
+  memSys.io.prog.rom <> io.ioctl.rom
+  memSys.io.prog.nvram <> io.ioctl.nvram
+  memSys.io.prog.done := Util.falling(io.ioctl.download) && io.ioctl.index === IOCTL.ROM_INDEX.U
+  memSys.io.ddr <> ddr.io.mem
+  memSys.io.sdram <> sdram.io.mem
 
-  // Sprite registers
-  val spriteRegs = Module(new RegisterFile(CPU.DATA_WIDTH, Config.SPRITE_REGS_COUNT))
-  spriteRegs.io.mem.default()
+  // Video subsystem
+  val videoSys = Module(new VideoSys)
+  videoSys.io.videoClock := io.videoClock
+  videoSys.io.videoReset := io.videoReset
+  videoSys.io.prog.video <> io.ioctl.video
+  videoSys.io.prog.done := Util.falling(io.ioctl.download) && io.ioctl.index === IOCTL.VIDEO_INDEX.U
+  videoSys.io.options <> io.options
+  videoSys.io.video <> io.video
 
-  // Graphics processor
-  val gpu = Module(new GPU)
-  gpu.io.videoClock := io.videoClock
-  gpu.io.gameConfig <> io.gameConfig
-  gpu.io.options <> io.options
-  gpu.io.video <> io.video
-  0.until(Config.LAYER_COUNT).foreach { i =>
-    gpu.io.layerCtrl(i).format := io.gameConfig.layer(i).format
-    gpu.io.layerCtrl(i).enable := io.options.layerEnable.layer(i)
-    gpu.io.layerCtrl(i).rowScrollEnable := io.options.rowScrollEnable
-    gpu.io.layerCtrl(i).rowSelectEnable := io.options.rowSelectEnable
-    gpu.io.layerCtrl(i).regs := withClock(io.videoClock) { ShiftRegister(LayerRegs.decode(layerRegs(i).io.regs), 2) }
-    gpu.io.layerCtrl(i).vram8x8 <> vram8x8(i).io.portB
-    gpu.io.layerCtrl(i).vram16x16 <> vram16x16(i).io.portB
-    gpu.io.layerCtrl(i).lineRam <> lineRam(i).io.portB
-    gpu.io.layerCtrl(i).tileRom <> Crossing.syncronize(io.videoClock, io.rom.layerTileRom(i))
-  }
-  gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
-  gpu.io.spriteCtrl.enable := io.options.layerEnable.sprite
-  gpu.io.spriteCtrl.start := vBlankFalling
-  gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
-  gpu.io.spriteCtrl.regs := SpriteRegs.decode(spriteRegs.io.regs)
-  gpu.io.spriteCtrl.vram <> spriteRam.io.portB
-  gpu.io.spriteCtrl.tileRom <> io.rom.spriteTileRom
-  gpu.io.spriteLineBuffer <> io.spriteLineBuffer
-  gpu.io.spriteFrameBuffer <> io.spriteFrameBuffer
-  gpu.io.systemFrameBuffer <> io.systemFrameBuffer
-  gpu.io.paletteRam <> paletteRam.io.portB
-  gpu.io.rgb <> io.rgb
+  // Main PCB
+  val main = withReset(io.cpuReset || !memSys.io.ready) { Module(new Main) }
+  main.io.videoClock := io.videoClock
+  main.io.gameConfig <> gameConfigReg
+  main.io.options <> io.options
+  main.io.dips := dipsRegs.io.regs
+  main.io.joystick <> io.joystick
+  main.io.audio <> io.audio
+  main.io.video := io.video
+  main.io.rgb <> io.rgb
+  main.io.rom <> memSys.io.rom
 
-  // Sound
-  val sound = Module(new Sound)
-  sound.io.gameConfig <> io.gameConfig
-  sound.io.cpu.oki(0).default()
-  sound.io.cpu.oki(1).default()
-  sound.io.cpu.nmk.default()
-  sound.io.cpu.ymz.default()
-  sound.io.rom <> io.rom.soundRom
-  io.audio := sound.io.audio
-  soundIrq := sound.io.irq
+  // Sprite frame buffer
+  val spriteFrameBuffer = Module(new SpriteFrameBuffer)
+  spriteFrameBuffer.io.videoClock := io.videoClock
+  spriteFrameBuffer.io.enable := io.options.frameBufferEnable.sprite && memSys.io.ready
+  spriteFrameBuffer.io.swap := main.io.spriteFrameBufferSwap
+  spriteFrameBuffer.io.video <> videoSys.io.video
+  spriteFrameBuffer.io.lineBuffer <> main.io.spriteLineBuffer
+  spriteFrameBuffer.io.frameBuffer <> main.io.spriteFrameBuffer
+  spriteFrameBuffer.io.ddr <> memSys.io.spriteFrameBuffer
 
-  // Toggle video IRQ
-  when(vBlankRising) {
-    videoIrq := true.B
-    agalletIrq := true.B
-  }.elsewhen(Util.falling(vBlank)) {
-    agalletIrq := false.B
-  }
+  // System frame buffer
+  val systemFrameBuffer = Module(new SystemFrameBuffer)
+  systemFrameBuffer.io.videoClock := io.videoClock
+  systemFrameBuffer.io.enable := io.options.frameBufferEnable.system && memSys.io.ready
+  systemFrameBuffer.io.rotate := io.options.rotate
+  systemFrameBuffer.io.forceBlank := !memSys.io.ready
+  systemFrameBuffer.io.video <> videoSys.io.video
+  systemFrameBuffer.io.frameBufferCtrl <> io.frameBufferCtrl
+  systemFrameBuffer.io.frameBuffer <> main.io.systemFrameBuffer
+  systemFrameBuffer.io.ddr <> memSys.io.systemFrameBuffer
 
-  // IRQ cause handler
-  val irqCause = { (_: UInt, offset: UInt) =>
-    val a = offset === 0.U && agalletIrq
-    val b = unknownIrq
-    val c = videoIrq
-    when(offset === 4.U) { videoIrq := false.B }
-    when(offset === 6.U) { unknownIrq := false.B }
-    Cat(!a, !b, !c)
-  }
-
-  // Set player input ports
-  val (input0, input1) = Cave.encodePlayers(io.gameConfig.index, io.options, io.joystick, eeprom)
-
-  // Swap the sprite frame buffer while the CPU is paused. This allows the GPU to continue rendering
-  // sprites.
-  io.spriteFrameBufferSwap := pauseReg && vBlankRising
-
-  /**
-   * Maps video RAM to the given base address.
-   *
-   * @param baseAddr  The base memory address.
-   * @param vram8x8   The 8x8 VRAM memory interface.
-   * @param vram16x16 The 16x16 VRAM memory interface.
-   * @param lineRam   The line RAM memory interface.
-   */
-  def vramMap(baseAddr: Int, vram8x8: MemIO, vram16x16: MemIO, lineRam: MemIO): Unit = {
-    map((baseAddr + 0x0000) to (baseAddr + 0x0fff)).readWriteMem(vram16x16)
-    map((baseAddr + 0x1000) to (baseAddr + 0x17ff)).readWriteMem(lineRam)
-    map((baseAddr + 0x1800) to (baseAddr + 0x3fff)).readWriteStub()
-    map((baseAddr + 0x4000) to (baseAddr + 0x7fff)).readWriteMem(vram8x8)
-    map((baseAddr + 0x8000) to (baseAddr + 0xffff)).readWriteStub()
-  }
-
-  /**
-   * Maps video registers to the given base address.
-   *
-   * @param baseAddr The base memory address.
-   */
-  def vregMap(baseAddr: Int): Unit = {
-    map((baseAddr + 0x00) to (baseAddr + 0x07)).r(irqCause)
-    map((baseAddr + 0x00) to (baseAddr + 0x0f)).writeMem(spriteRegs.io.mem.asWriteMemIO)
-    map(baseAddr + 0x08).w { (_, _, _) => io.spriteFrameBufferSwap := true.B }
-    map((baseAddr + 0x0a) to (baseAddr + 0x7f)).noprw()
-  }
-
-  // Access to 0x11xxxx appears during the service menu. It must be ignored, otherwise the service
-  // menu freezes.
-  map(0x110000 to 0x1fffff).noprw()
-
-  // Dangun Feveron
-  when(io.gameConfig.index === GameConfig.DFEVERON.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
-    map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-    map(0x300000 to 0x300003).readWriteMem(sound.io.cpu.ymz)
-    map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-    vramMap(0x500000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
-    vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
-    map(0x708000 to 0x708fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
-    map(0x710c12 to 0x710c1f).noprw() // unused
-    vregMap(0x800000)
-    map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
-    map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
-    map(0xb00000).r { (_, _) => input0 }
-    map(0xb00002).r { (_, _) => input1 }
-    map(0xc00000).writeMem(eepromMem)
-  }
-
-  // DonPachi
-  when(io.gameConfig.index === GameConfig.DONPACHI.U) {
-    map(0x000000 to 0x07ffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
-    map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-    vramMap(0x200000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
-    vramMap(0x300000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
-    map(0x400000 to 0x40ffff).readWriteMemT(vram8x8(2).io.portA)(a => a(12, 0)) // layer 2 is 8x8 only
-    map(0x500000 to 0x50ffff).readWriteMem(spriteRam.io.portA)
-    map(0x600000 to 0x600005).readWriteMem(layerRegs(1).io.mem)
-    map(0x700000 to 0x700005).readWriteMem(layerRegs(0).io.mem)
-    map(0x800000 to 0x800005).readWriteMem(layerRegs(2).io.mem)
-    vregMap(0x900000)
-    map(0xa08000 to 0xa08fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
-    map(0xb00000 to 0xb00003).readWriteMem(sound.io.cpu.oki(0))
-    map(0xb00010 to 0xb00013).readWriteMem(sound.io.cpu.oki(1))
-    map(0xb00020 to 0xb0002f).writeMem(sound.io.cpu.nmk)
-    map(0xc00000).r { (_, _) => input0 }
-    map(0xc00002).r { (_, _) => input1 }
-    map(0xd00000).writeMem(eepromMem)
-  }
-
-  // DoDonPachi
-  when(io.gameConfig.index === GameConfig.DDONPACH.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
-    map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-    map(0x300000 to 0x300003).readWriteMem(sound.io.cpu.ymz)
-    map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-    vramMap(0x500000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
-    map(0x5fff00 to 0x5fffff).nopw() // access occurs during attract loop
-    vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
-    map(0x700000 to 0x70ffff).readWriteMemT(vram8x8(2).io.portA)(a => a(12, 0)) // layer 2 is 8x8 only
-    vregMap(0x800000)
-    map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
-    map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
-    map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
-    map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-    map(0xd00000).r { (_, _) => input0 }
-    map(0xd00002).r { (_, _) => input1 }
-    map(0xe00000).writeMem(eepromMem)
-  }
-
-  // ESP Ra.De.
-  when(io.gameConfig.index === GameConfig.ESPRADE.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
-    map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-    map(0x300000 to 0x300003).readWriteMem(sound.io.cpu.ymz)
-    map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-    vramMap(0x500000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
-    vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
-    vramMap(0x700000, vram8x8(2).io.portA, vram16x16(2).io.portA, lineRam(2).io.portA)
-    vregMap(0x800000)
-    map(0x800f00 to 0x800f03).nopr() // access occurs during attract loop
-    map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
-    map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
-    map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
-    map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-    map(0xd00000).r { (_, _) => input0 }
-    map(0xd00002).r { (_, _) => input1 }
-    map(0xe00000).writeMem(eepromMem)
-  }
-
-  // Gaia Crusaders
-  when(io.gameConfig.index === GameConfig.GAIA.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
-    map(0x00057e to 0x000581).nopw() // access occurs during boot
-    map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-    map(0x300000 to 0x300003).readWriteMem(sound.io.cpu.ymz)
-    map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-    vramMap(0x500000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
-    vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
-    vramMap(0x700000, vram8x8(2).io.portA, vram16x16(2).io.portA, lineRam(2).io.portA)
-    vregMap(0x800000)
-    map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
-    map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
-    map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
-    map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-    map(0xd00010).r { (_, _) => input0 }
-    map(0xd00010).nopw() // coin counter
-    map(0xd00012).r { (_, _) => input1 }
-    map(0xd00014).r { (_, _) => io.dips(0) }
-    map(0xd00014).nopw() // watchdog
-  }
-
-  // Guwange
-  when(io.gameConfig.index === GameConfig.GUWANGE.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
-    map(0x200000 to 0x20ffff).readWriteMem(mainRam.io)
-    map(0x210000 to 0x2fffff).nopr() // access occurs for Guwange (Special)
-    vregMap(0x300000)
-    map(0x300080 to 0x3fffff).nopr() // access occurs for Guwange (Special)
-    map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-    map(0x410000 to 0x4fffff).nopr() // access occurs for Guwange (Special)
-    vramMap(0x500000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
-    map(0x508000 to 0x5fffff).nopr() // access occurs for Guwange (Special)
-    vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
-    map(0x608000 to 0x6fffff).nopr() // access occurs for Guwange (Special)
-    vramMap(0x700000, vram8x8(2).io.portA, vram16x16(2).io.portA, lineRam(2).io.portA)
-    map(0x800000 to 0x800003).readWriteMem(sound.io.cpu.ymz)
-    map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
-    map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
-    map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
-    map(0xc00000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
-    map(0xd00010 to 0xd00014).noprw()
-    map(0xd00010).writeMem(eepromMem)
-    map(0xd00010).r { (_, _) => input0 }
-    map(0xd00012).r { (_, _) => input1 }
-  }
-
-  // Puzzle Uo Poko
-  when(io.gameConfig.index === GameConfig.UOPOKO.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
-    map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-    map(0x300000 to 0x300003).readWriteMem(sound.io.cpu.ymz)
-    map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
-    vramMap(0x500000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
-    vregMap(0x600000)
-    map(0x700000 to 0x700005).readWriteMem(layerRegs(0).io.mem)
-    map(0x800000 to 0x80ffff).readWriteMem(paletteRam.io.portA)
-    map(0x900000).r { (_, _) => input0 }
-    map(0x900002).r { (_, _) => input1 }
-    map(0xa00000).writeMem(eepromMem)
-  }
-}
-
-object Cave {
-  /**
-   * Encodes the player inputs and EEPROM data.
-   *
-   * @param gameIndex The game index.
-   * @param options   The options port.
-   * @param joystick  The joystick port.
-   * @param eeprom    The eeprom port.
-   * @return A tuple representing the left and right player inputs.
-   */
-  private def encodePlayers(gameIndex: UInt, options: OptionsIO, joystick: Vec[JoystickIO], eeprom: EEPROM): (UInt, UInt) = {
-    // Trigger coin pulse
-    val coin1 = Util.pulseSync(Config.COIN_PULSE_WIDTH, joystick(0).coin)
-    val coin2 = Util.pulseSync(Config.COIN_PULSE_WIDTH, joystick(1).coin)
-
-    // Trigger service button press
-    val service = Util.pulseSync(Config.SERVICE_PULSE_WIDTH, options.service)
-
-    val default1 = Cat("b111111".U, ~service, ~coin1, ~joystick(0).start, ~joystick(0).buttons(2, 0), ~joystick(0).right, ~joystick(0).left, ~joystick(0).down, ~joystick(0).up)
-    val default2 = Cat("b1111".U, eeprom.io.serial.sdo, "b11".U, ~coin2, ~joystick(1).start, ~joystick(1).buttons(2, 0), ~joystick(1).right, ~joystick(1).left, ~joystick(1).down, ~joystick(1).up)
-
-    val left = MuxLookup(gameIndex, default1, Seq(
-      GameConfig.GAIA.U -> Cat(~joystick(1).buttons(3, 0), ~joystick(1).right, ~joystick(1).left, ~joystick(1).down, ~joystick(1).up, ~joystick(0).buttons(3, 0), ~joystick(0).right, ~joystick(0).left, ~joystick(0).down, ~joystick(0).up),
-      GameConfig.GUWANGE.U -> Cat(~joystick(1).buttons(2, 0), ~joystick(1).right, ~joystick(1).left, ~joystick(1).down, ~joystick(1).up, ~joystick(1).start, ~joystick(0).buttons(2, 0), ~joystick(0).right, ~joystick(0).left, ~joystick(0).down, ~joystick(0).up, ~joystick(0).start),
-    ))
-
-    val right = MuxLookup(gameIndex, default2, Seq(
-      GameConfig.GAIA.U -> Cat("b0000111111".U, ~joystick(1).start, ~joystick(0).start, "b1".U, ~service, ~coin2, ~coin1),
-      GameConfig.GUWANGE.U -> Cat("b11111111".U, eeprom.io.serial.sdo, "b1111".U, ~service, ~coin2, ~coin1),
-    ))
-
-    (left, right)
-  }
+  // System LED outputs
+  io.led.power := false.B
+  io.led.disk := io.ioctl.download
+  io.led.user := memSys.io.ready
 }

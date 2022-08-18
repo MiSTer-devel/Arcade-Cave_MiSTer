@@ -489,7 +489,7 @@ assign DDRAM_ADDR = ddr_addr[31:3];
 assign SDRAM_DQ = sdram_oe ? sdram_din : 16'bZ;
 assign sdram_dout = SDRAM_DQ;
 
-Main main (
+Cave cave (
   // System clock/reset
   .clock(clk_sys),
   .reset(rst_sys),
