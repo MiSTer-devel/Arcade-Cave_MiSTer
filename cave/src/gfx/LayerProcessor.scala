@@ -110,8 +110,8 @@ class LayerProcessor(index: Int) extends Module {
   // TODO: This should be calculated differently for Sailor Moon.
   val lineRamAddr = Mux(io.ctrl.regs.flipY, pos.y + 1.U, pos.y - 1.U)
 
-  // Set layer RAM address
-  val layerRamAddr = LayerProcessor.tileAddr(io.ctrl, pos_)
+  // Set layer VRAM address
+  val vramAddr = LayerProcessor.vramAddr(io.ctrl, pos_)
 
   // Decode tile
   val tile = Mux(io.ctrl.regs.tileSize,
@@ -132,9 +132,9 @@ class LayerProcessor(index: Int) extends Module {
   io.ctrl.lineRam.rd := true.B // read-only
   io.ctrl.lineRam.addr := lineRamAddr
   io.ctrl.vram8x8.rd := true.B // read-only
-  io.ctrl.vram8x8.addr := layerRamAddr
+  io.ctrl.vram8x8.addr := vramAddr
   io.ctrl.vram16x16.rd := true.B // read-only
-  io.ctrl.vram16x16.addr := layerRamAddr
+  io.ctrl.vram16x16.addr := vramAddr
   io.ctrl.tileRom.rd := tileRomRead
   io.ctrl.tileRom.addr := LayerProcessor.tileRomAddr(io.ctrl, tileReg.code, tileOffset)
   io.pen := Mux(layerEnable, pen, PaletteEntry.zero)
@@ -151,7 +151,7 @@ object LayerProcessor {
    *
    * @param index The index of the layer.
    * @param ctrl  The layer control.
-   * @return An offset value.
+   * @return An unsigned vector.
    */
   def layerOffset(index: Int, ctrl: LayerCtrlIO): UVec2 = {
     val x = Mux(ctrl.regs.tileSize, (0x13 - (index + 1)).U, (0x13 - (index + 1 + 8)).U)
@@ -169,7 +169,7 @@ object LayerProcessor {
    * @param pos  The absolute position of the pixel in the tilemap.
    * @return A memory address.
    */
-  private def tileAddr(ctrl: LayerCtrlIO, pos: UVec2): UInt = {
+  private def vramAddr(ctrl: LayerCtrlIO, pos: UVec2): UInt = {
     val large = pos.y(8, 4) ## (pos.x(8, 4) + Mux(ctrl.regs.flipX, 0x1f.U, 1.U))
     val small = pos.y(8, 3) ## (pos.x(8, 3) + Mux(ctrl.regs.flipX, 0x3f.U, 1.U))
     Mux(ctrl.regs.tileSize, large, small)
@@ -180,7 +180,7 @@ object LayerProcessor {
    *
    * @param ctrl The layer control bundle.
    * @param pos  The absolute position of the pixel in the tilemap.
-   * @return A position relative to the tile.
+   * @return An unsigned vector.
    */
   private def tileOffset(ctrl: LayerCtrlIO, pos: UVec2): UVec2 = {
     val x = Mux(ctrl.regs.tileSize, pos.x(3, 0), pos.x(2, 0))
@@ -189,7 +189,7 @@ object LayerProcessor {
   }
 
   /**
-   * Calculates the tile ROM byte address for the given tile code.
+   * Calculates the tile ROM address for the given tile code.
    *
    * @param ctrl   The layer control bundle.
    * @param code   The tile code.

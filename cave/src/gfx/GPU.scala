@@ -134,9 +134,10 @@ object GPU {
   }
 
   /**
-   * Decodes Cave pixel data into a 24-bit RGB color value.
+   * Decodes a 24 bit RGB value from the given pixel data.
    *
-   * @param data The color data.
+   * @param data The pixel data.
+   * @return A 24 bit RGB value.
    */
   private def decodeRGB(data: Bits): RGB = {
     val b = data(4, 0) ## data(4, 2)
@@ -146,10 +147,10 @@ object GPU {
   }
 
   /**
-   * Decodes Cave pixel data into a 32-bit ABGR pixel.
+   * Decodes a 32 bit ABGR value from the given pixel data.
    *
    * @param data The pixel data.
-   * @return A 32-bit pixel value.
+   * @return A 32 bit ARGB value.
    */
   def decodeABGR(data: Bits): Bits = {
     val rgb = decodeRGB(data)
