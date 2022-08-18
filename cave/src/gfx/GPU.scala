@@ -80,10 +80,10 @@ class GPU extends Module {
   withClock(io.videoClock) {
     // Layer processors
     val layerProcessor = 0.until(Config.LAYER_COUNT).map { i =>
-      val p = Module(new LayerProcessor(i))
+      val p = Module(new LayerProcessor)
       p.io.video <> io.video
       p.io.ctrl <> io.layerCtrl(i)
-      p.io.spriteOffset := io.spriteCtrl.regs.offset
+      p.io.offset := GPU.layerOffset(i, io.layerCtrl(i)) - io.spriteCtrl.regs.offset
       p
     }
 
@@ -155,5 +155,26 @@ object GPU {
   def decodeABGR(data: Bits): Bits = {
     val rgb = decodeRGB(data)
     Cat(rgb.b, rgb.g, rgb.r).pad(32)
+  }
+
+  /**
+   * Calculates the offset adjustment for a layer.
+   *
+   * Each layer is horizontally offset by one pixel with respect to the previous layer. There is
+   * also an additional 8 pixel horizontal offset for layers with small (i.e. 8x8) tiles.
+   *
+   * Finally, there is a two pixel offset applied to flipped layers.
+   *
+   * @param index The index of the layer.
+   * @param ctrl  The layer control.
+   * @return An unsigned vector.
+   */
+  def layerOffset(index: Int, ctrl: LayerCtrlIO): UVec2 = {
+    val x = Mux(ctrl.regs.tileSize, (index + 0x1ee).U, (index + 0x1ee + 8).U)
+    val y = 0x12.U
+    UVec2(
+      Mux(ctrl.regs.flipX, x + 1.U, x),
+      Mux(ctrl.regs.flipY, y + 1.U, y)
+    )
   }
 }
