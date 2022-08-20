@@ -30,13 +30,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave
+package cave.main
 
 import arcadia._
 import arcadia.cpu.m68k._
 import arcadia.gfx._
 import arcadia.mem._
 import arcadia.mister._
+import cave._
 import cave.gfx._
 import chisel3._
 import chisel3.util._

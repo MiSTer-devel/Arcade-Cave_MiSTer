@@ -39,9 +39,9 @@ import arcadia.mem.ddr.DDR
 import arcadia.mem.sdram.{SDRAM, SDRAMIO}
 import arcadia.mister._
 import cave.fb._
+import cave.main.Main
 import chisel3._
 import chisel3.experimental.FlatIO
-import chisel3.stage._
 
 /**
  * The top-level module.

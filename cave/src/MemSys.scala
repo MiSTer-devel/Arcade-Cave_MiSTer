@@ -39,6 +39,7 @@ import arcadia.mem.buffer.BurstBuffer
 import arcadia.mem.cache.{Cache, ReadCache}
 import arcadia.mem.dma.BurstReadDMA
 import arcadia.mister._
+import cave.main.RomIO
 import chisel3._
 
 /** The memory subsystem routes memory requests to either DDR or SDRAM. */

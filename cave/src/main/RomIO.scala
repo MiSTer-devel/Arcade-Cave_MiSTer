@@ -30,8 +30,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave
+package cave.main
 
+import cave._
 import chisel3._
 
 /** A bundle that contains memory ports for all ROMs. */
