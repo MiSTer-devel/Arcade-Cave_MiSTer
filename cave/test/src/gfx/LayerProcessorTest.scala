@@ -39,35 +39,35 @@ import matchers.should.Matchers
 
 class LayerProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   it should "load small tiles from VRAM" in {
-    test(new LayerProcessor(0)) { dut =>
+    test(new LayerProcessor) { dut =>
       dut.io.ctrl.regs.tileSize.poke(false)
       dut.io.video.pos.x.poke(0)
       dut.io.ctrl.vram16x16.rd.expect(true)
-      dut.io.ctrl.vram16x16.addr.expect(0xbf)
+      dut.io.ctrl.vram16x16.addr.expect(0x01)
       dut.io.video.pos.x.poke(8)
-      dut.io.ctrl.vram16x16.addr.expect(0x80)
+      dut.io.ctrl.vram16x16.addr.expect(0x02)
       dut.io.video.pos.x.poke(248)
-      dut.io.ctrl.vram16x16.addr.expect(0x9e)
+      dut.io.ctrl.vram16x16.addr.expect(0x20)
     }
   }
 
   it should "load large tiles from VRAM" in {
-    test(new LayerProcessor(0)) { dut =>
+    test(new LayerProcessor) { dut =>
       dut.io.ctrl.regs.tileSize.poke(true)
       dut.io.video.pos.x.poke(0)
       dut.io.ctrl.vram16x16.rd.expect(true)
-      dut.io.ctrl.vram16x16.addr.expect(0x3f)
+      dut.io.ctrl.vram16x16.addr.expect(0x01)
       dut.io.video.pos.x.poke(8)
-      dut.io.ctrl.vram16x16.addr.expect(0x20)
+      dut.io.ctrl.vram16x16.addr.expect(0x01)
       dut.io.video.pos.x.poke(240)
-      dut.io.ctrl.vram16x16.addr.expect(0x2e)
+      dut.io.ctrl.vram16x16.addr.expect(0x10)
     }
   }
 
   it should "load line effects from VRAM" in {
-    test(new LayerProcessor(0)) { dut =>
+    test(new LayerProcessor) { dut =>
       dut.io.ctrl.lineRam.rd.expect(true)
-      dut.io.ctrl.lineRam.addr.expect(0x11)
+      dut.io.ctrl.lineRam.addr.expect(0x1ff)
     }
   }
 }
