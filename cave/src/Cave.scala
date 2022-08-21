@@ -63,8 +63,8 @@ class Cave extends Module {
     val sdram = SDRAMIO(Config.sdramConfig)
     /** Options port */
     val options = OptionsIO()
-    /** Joystick port */
-    val joystick = Vec(2, JoystickIO())
+    /** Player port */
+    val player = Vec(2, PlayerIO())
     /** IOCTL port */
     val ioctl = IOCTL()
     /** Frame buffer control port */
@@ -136,7 +136,7 @@ class Cave extends Module {
   main.io.gameConfig <> gameConfigReg
   main.io.options <> io.options
   main.io.dips := dipsRegs.io.regs
-  main.io.joystick <> io.joystick
+  main.io.player <> io.player
   main.io.audio <> io.audio
   main.io.video := io.video
   main.io.rgb <> io.rgb

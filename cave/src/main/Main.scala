@@ -52,7 +52,7 @@ class Main extends Module {
     /** Options port */
     val options = OptionsIO()
     /** Joystick port */
-    val joystick = Vec(2, JoystickIO())
+    val player = Vec(2, PlayerIO())
     /** DIP switches port */
     val dips = DIPIO()
     /** Video port */
@@ -82,7 +82,7 @@ class Main extends Module {
   val vBlankFalling = Util.falling(vBlank)
 
   // Toggle pause register
-  val pauseReg = Util.toggle(Util.rising(io.joystick(0).pause || io.joystick(1).pause))
+  val pauseReg = Util.toggle(Util.rising(io.player(0).pause || io.player(1).pause))
 
   // IRQ signals
   val videoIrq = RegInit(false.B)
@@ -256,7 +256,7 @@ class Main extends Module {
   }
 
   // Set player input ports
-  val (input0, input1) = Main.encodePlayers(io.gameConfig.index, io.options, io.joystick, eeprom)
+  val (input0, input1) = Main.encodePlayers(io.gameConfig.index, io.options, io.player, eeprom)
 
   // Swap the sprite frame buffer while the CPU is paused. This allows the GPU to continue rendering
   // sprites.
@@ -442,28 +442,28 @@ object Main {
    *
    * @param gameIndex The game index.
    * @param options   The options port.
-   * @param joystick  The joystick port.
+   * @param player    The player port.
    * @param eeprom    The eeprom port.
    * @return A tuple representing the left and right player inputs.
    */
-  private def encodePlayers(gameIndex: UInt, options: OptionsIO, joystick: Vec[JoystickIO], eeprom: EEPROM): (UInt, UInt) = {
+  private def encodePlayers(gameIndex: UInt, options: OptionsIO, player: Vec[PlayerIO], eeprom: EEPROM): (UInt, UInt) = {
     // Trigger coin pulse
-    val coin1 = Util.pulseSync(Config.COIN_PULSE_WIDTH, joystick(0).coin)
-    val coin2 = Util.pulseSync(Config.COIN_PULSE_WIDTH, joystick(1).coin)
+    val coin1 = Util.pulseSync(Config.COIN_PULSE_WIDTH, player(0).coin)
+    val coin2 = Util.pulseSync(Config.COIN_PULSE_WIDTH, player(1).coin)
 
     // Trigger service button press
     val service = Util.pulseSync(Config.SERVICE_PULSE_WIDTH, options.service)
 
-    val default1 = Cat("b111111".U, ~service, ~coin1, ~joystick(0).start, ~joystick(0).buttons(2, 0), ~joystick(0).right, ~joystick(0).left, ~joystick(0).down, ~joystick(0).up)
-    val default2 = Cat("b1111".U, eeprom.io.serial.sdo, "b11".U, ~coin2, ~joystick(1).start, ~joystick(1).buttons(2, 0), ~joystick(1).right, ~joystick(1).left, ~joystick(1).down, ~joystick(1).up)
+    val default1 = Cat("b111111".U, ~service, ~coin1, ~player(0).start, ~player(0).buttons(2, 0), ~player(0).right, ~player(0).left, ~player(0).down, ~player(0).up)
+    val default2 = Cat("b1111".U, eeprom.io.serial.sdo, "b11".U, ~coin2, ~player(1).start, ~player(1).buttons(2, 0), ~player(1).right, ~player(1).left, ~player(1).down, ~player(1).up)
 
     val left = MuxLookup(gameIndex, default1, Seq(
-      GameConfig.GAIA.U -> Cat(~joystick(1).buttons(3, 0), ~joystick(1).right, ~joystick(1).left, ~joystick(1).down, ~joystick(1).up, ~joystick(0).buttons(3, 0), ~joystick(0).right, ~joystick(0).left, ~joystick(0).down, ~joystick(0).up),
-      GameConfig.GUWANGE.U -> Cat(~joystick(1).buttons(2, 0), ~joystick(1).right, ~joystick(1).left, ~joystick(1).down, ~joystick(1).up, ~joystick(1).start, ~joystick(0).buttons(2, 0), ~joystick(0).right, ~joystick(0).left, ~joystick(0).down, ~joystick(0).up, ~joystick(0).start),
+      GameConfig.GAIA.U -> Cat(~player(1).buttons(3, 0), ~player(1).right, ~player(1).left, ~player(1).down, ~player(1).up, ~player(0).buttons(3, 0), ~player(0).right, ~player(0).left, ~player(0).down, ~player(0).up),
+      GameConfig.GUWANGE.U -> Cat(~player(1).buttons(2, 0), ~player(1).right, ~player(1).left, ~player(1).down, ~player(1).up, ~player(1).start, ~player(0).buttons(2, 0), ~player(0).right, ~player(0).left, ~player(0).down, ~player(0).up, ~player(0).start),
     ))
 
     val right = MuxLookup(gameIndex, default2, Seq(
-      GameConfig.GAIA.U -> Cat("b0000111111".U, ~joystick(1).start, ~joystick(0).start, "b1".U, ~service, ~coin2, ~coin1),
+      GameConfig.GAIA.U -> Cat("b0000111111".U, ~player(1).start, ~player(0).start, "b1".U, ~service, ~coin2, ~coin1),
       GameConfig.GUWANGE.U -> Cat("b11111111".U, eeprom.io.serial.sdo, "b1111".U, ~service, ~coin2, ~coin1),
     ))
 

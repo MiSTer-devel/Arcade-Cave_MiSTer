@@ -30,33 +30,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package arcadia.mister
+package arcadia
 
 import chisel3._
 
-/** A bundle that contains the joystick signals. */
-class JoystickIO extends Bundle {
-  /** Player up */
+/** A bundle that contains the player input signals. */
+class PlayerIO extends Bundle {
+  /** Up */
   val up = Input(Bool())
-  /** Player down */
+  /** Down */
   val down = Input(Bool())
-  /** Player left */
+  /** Left */
   val left = Input(Bool())
-  /** Player right */
+  /** Right */
   val right = Input(Bool())
-  /** Player buttons */
-  val buttons = Input(Bits(JoystickIO.BUTTON_COUNT.W))
-  /** Player start */
+  /** Buttons */
+  val buttons = Input(Bits(PlayerIO.BUTTON_COUNT.W))
+  /** Start */
   val start = Input(Bool())
-  /** Player coin */
+  /** Coin */
   val coin = Input(Bool())
-  /** Player pause */
+  /** Pause */
   val pause = Input(Bool())
 }
 
-object JoystickIO {
+object PlayerIO {
   /** The number of buttons */
   val BUTTON_COUNT = 4
 
-  def apply() = new JoystickIO
+  def apply() = new PlayerIO
 }
