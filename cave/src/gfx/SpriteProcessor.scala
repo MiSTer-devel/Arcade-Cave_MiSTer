@@ -32,6 +32,7 @@
 
 package cave.gfx
 
+import arcadia.gfx.VideoIO
 import arcadia.util.Counter
 import cave._
 import chisel3._
@@ -44,6 +45,8 @@ import chisel3.util._
  */
 class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val io = IO(new Bundle {
+    /** Video port */
+    val video = Input(new VideoIO)
     /** Control port */
     val ctrl = SpriteCtrlIO()
     /** Frame buffer port */
@@ -91,6 +94,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
 
   // Sprite blitter
   val blitter = Module(new SpriteBlitter)
+  blitter.io.video <> io.video
   blitter.io.enable := io.ctrl.enable
 
   // Sprite decoder

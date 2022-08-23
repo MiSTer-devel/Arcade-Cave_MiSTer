@@ -135,6 +135,5 @@ class SpriteFrameBuffer extends Module {
   ) <> io.ddr
 
   // Outputs
-  io.frameBuffer.mem <> queue.io.in
-  io.frameBuffer.size := io.video.size
+  io.frameBuffer <> queue.io.in
 }

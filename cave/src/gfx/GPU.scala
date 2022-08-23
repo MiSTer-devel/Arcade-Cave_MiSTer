@@ -74,6 +74,7 @@ class GPU extends Module {
 
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
+  spriteProcessor.io.video <> io.video
   spriteProcessor.io.ctrl <> io.spriteCtrl
   spriteProcessor.io.frameBuffer <> io.spriteFrameBuffer
 
@@ -101,10 +102,10 @@ class GPU extends Module {
     io.spriteLineBuffer.addr := io.video.pos.x
 
     // Decode color mixer data and write it to the system frame buffer
-    io.systemFrameBuffer.mem.wr := RegNext(io.video.clockEnable && io.video.displayEnable)
-    io.systemFrameBuffer.mem.addr := RegNext(GPU.frameBufferAddr(io.systemFrameBuffer.size, io.video.pos, io.options.flip, io.options.rotate))
-    io.systemFrameBuffer.mem.mask := 0xf.U // 4 bytes
-    io.systemFrameBuffer.mem.din := RegNext(GPU.decodeABGR(colorMixer.io.dout))
+    io.systemFrameBuffer.wr := RegNext(io.video.clockEnable && io.video.displayEnable)
+    io.systemFrameBuffer.addr := RegNext(GPU.frameBufferAddr(io.video.size, io.video.pos, io.options.flip, io.options.rotate))
+    io.systemFrameBuffer.mask := 0xf.U // 4 bytes
+    io.systemFrameBuffer.din := RegNext(GPU.decodeABGR(colorMixer.io.dout))
 
     // Decode color mixer data and write it to the RGB output
     io.rgb := GPU.decodeRGB(colorMixer.io.dout)

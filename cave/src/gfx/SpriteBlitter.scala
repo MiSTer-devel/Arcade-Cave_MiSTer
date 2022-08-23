@@ -33,6 +33,7 @@
 package cave.gfx
 
 import arcadia._
+import arcadia.gfx.VideoIO
 import arcadia.util.{Counter, PISO}
 import cave._
 import chisel3._
@@ -51,6 +52,8 @@ class SpriteBlitterConfig extends Bundle {
 /** The sprite blitter copies a sprite to the frame buffer. */
 class SpriteBlitter extends Module {
   val io = IO(new Bundle {
+    /** Video port */
+    val video = Input(new VideoIO)
     /** Config port */
     val config = DeqIO(new SpriteBlitterConfig)
     /** Enable flag */
@@ -69,7 +72,7 @@ class SpriteBlitter extends Module {
 
   // The PISO is used to buffer a single row of pixels to be copied to the frame buffer
   val piso = Module(new PISO(Config.SPRITE_TILE_SIZE, Bits(Config.SPRITE_TILE_MAX_BPP.W)))
-  piso.io.rd := busyReg && !io.frameBuffer.mem.waitReq
+  piso.io.rd := busyReg && !io.frameBuffer.waitReq
   piso.io.wr := io.pixelData.fire
   piso.io.din := io.pixelData.bits
 
@@ -78,19 +81,19 @@ class SpriteBlitter extends Module {
   val pisoAlmostEmpty = piso.io.isAlmostEmpty
 
   // Counters
-  val (x, xWrap) = Counter.dynamic(configReg.sprite.size.x, enable = busyReg && !pisoEmpty && !io.frameBuffer.mem.waitReq)
+  val (x, xWrap) = Counter.dynamic(configReg.sprite.size.x, enable = busyReg && !pisoEmpty && !io.frameBuffer.waitReq)
   val (y, yWrap) = Counter.dynamic(configReg.sprite.size.y, enable = xWrap)
 
   // Pixel position
-  val posReg = RegEnable(SpriteBlitter.pixelPos(configReg.sprite, UVec2(x, y)), !io.frameBuffer.mem.waitReq)
+  val posReg = RegEnable(SpriteBlitter.pixelPos(configReg.sprite, UVec2(x, y)), !io.frameBuffer.waitReq)
 
   // Decode the palette entry for the current pixel
   val pen = PaletteEntry(configReg.sprite.priority, configReg.sprite.colorCode, piso.io.dout)
-  val penReg = RegEnable(pen, !io.frameBuffer.mem.waitReq)
-  val validReg = RegEnable(!pisoEmpty, !io.frameBuffer.mem.waitReq)
+  val penReg = RegEnable(pen, !io.frameBuffer.waitReq)
+  val validReg = RegEnable(!pisoEmpty, !io.frameBuffer.waitReq)
 
   // The visible flag is asserted if the pixel is non-transparent and within the screen bounds
-  val visible = SpriteBlitter.isVisible(io.frameBuffer.size, posReg) && validReg && !penReg.isTransparent
+  val visible = SpriteBlitter.isVisible(io.video.size, posReg) && validReg && !penReg.isTransparent
 
   // The done flag is asserted when the sprite has finished blitting
   val blitDone = xWrap && yWrap
@@ -101,7 +104,7 @@ class SpriteBlitter extends Module {
 
   // The pixel data ready flag is asserted when the PISO is empty, or will be empty in the next
   // clock cycle
-  val pixelDataReady = !io.frameBuffer.mem.waitReq && (pisoEmpty || pisoAlmostEmpty)
+  val pixelDataReady = !io.frameBuffer.waitReq && (pisoEmpty || pisoAlmostEmpty)
 
   // Toggle busy register
   when(io.config.fire) { busyReg := true.B }.elsewhen(blitDone) { busyReg := false.B }
@@ -109,15 +112,15 @@ class SpriteBlitter extends Module {
   // Outputs
   io.config.ready := configReady
   io.pixelData.ready := pixelDataReady
-  io.frameBuffer.mem.wr := io.enable && visible
-  io.frameBuffer.mem.addr := SpriteBlitter.frameBufferAddr(io.frameBuffer.size, posReg, configReg.hFlip)
-  io.frameBuffer.mem.mask := 3.U
-  io.frameBuffer.mem.din := penReg.asUInt
+  io.frameBuffer.wr := io.enable && visible
+  io.frameBuffer.addr := SpriteBlitter.frameBufferAddr(io.video.size, posReg, configReg.hFlip)
+  io.frameBuffer.mask := 3.U
+  io.frameBuffer.din := penReg.asUInt
   io.busy := busyReg
 
   // Debug
   if (sys.env.get("DEBUG").contains("1")) {
-    printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), busy: $busyReg, configReady: $configReady, pixelDataReady: $pixelDataReady, write: ${ io.frameBuffer.mem.wr }, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
+    printf(p"SpriteBlitter(x: $x ($xWrap), y: $y ($yWrap), busy: $busyReg, configReady: $configReady, pixelDataReady: $pixelDataReady, write: ${ io.frameBuffer.wr }, pisoEmpty: ${ piso.io.isEmpty }, pisoAlmostEmpty: ${ piso.io.isAlmostEmpty })\n")
   }
 }
 
