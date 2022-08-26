@@ -50,7 +50,7 @@ import chisel3.util._
  */
 class RequestQueue(inAddrWidth: Int, inDataWidth: Int, outAddrWidth: Int, outDataWidth: Int, depth: Int) extends Module {
   // Sanity check
-  assert(outAddrWidth % inDataWidth == 0, "Output data width must be divisible by input data width")
+  assert(outDataWidth % inDataWidth == 0, "Output data width must be divisible by input data width")
 
   val io = IO(new Bundle {
     /** Enable the request queue */
