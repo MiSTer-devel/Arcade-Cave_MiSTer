@@ -5,6 +5,7 @@
   <year>2012</year>
   <manufacturer>Hack (trap15)</manufacturer>
   <category>Shooter</category>
+  <rotation>vertical (ccw)</rotation>
   <rbf>cave</rbf>
 
   <!-- ROM data -->

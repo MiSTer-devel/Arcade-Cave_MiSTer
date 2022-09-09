@@ -5,6 +5,7 @@
   <year>1995</year>
   <manufacturer>CAVE</manufacturer>
   <category>Shooter</category>
+  <rotation>vertical (ccw)</rotation>
   <rbf>cave</rbf>
 
   <!-- ROM data -->
