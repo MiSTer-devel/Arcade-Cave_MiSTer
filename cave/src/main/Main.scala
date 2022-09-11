@@ -65,7 +65,7 @@ class Main extends Module {
     /** EEPROM port */
     val eeprom = new EEPROMIO
     /** Layer tile ROM port */
-    val layerTileRom = Vec(Config.LAYER_COUNT, new LayerRomIO)
+    val layerTileRom = Vec(Config.LAYER_COUNT, new TileRomIO)
     /** Sprite tile ROM port */
     val spriteTileRom = new SpriteRomIO
     /** Sprite line buffer port */

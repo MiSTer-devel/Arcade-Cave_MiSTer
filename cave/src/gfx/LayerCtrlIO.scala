@@ -51,7 +51,7 @@ class LayerCtrlIO extends Bundle {
   /** Line RAM port */
   val lineRam = ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
   /** Tile ROM port */
-  val tileRom = new LayerRomIO
+  val tileRom = new TileRomIO
 }
 
 object LayerCtrlIO {

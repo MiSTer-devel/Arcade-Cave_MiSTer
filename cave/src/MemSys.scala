@@ -62,7 +62,7 @@ class MemSys extends Module {
     /** Sound ROM port */
     val soundRom = Flipped(Vec(Config.SOUND_ROM_COUNT, new SoundRomIO))
     /** Layer tile ROM port */
-    val layerTileRom = Flipped(Vec(Config.LAYER_COUNT, new LayerRomIO))
+    val layerTileRom = Flipped(Vec(Config.LAYER_COUNT, new TileRomIO))
     /** Sprite tile ROM port */
     val spriteTileRom = Flipped(new SpriteRomIO)
     /** DDR port */
