@@ -105,6 +105,29 @@ class Main extends Module {
   cpu.io.ipl := videoIrq || io.soundCtrl.irq || unknownIrq
   cpu.io.din := 0.U
 
+  // Graphics processor
+  val gpu = Module(new GPU)
+  gpu.io.videoClock := io.videoClock
+  gpu.io.gameConfig <> io.gameConfig
+  gpu.io.options <> io.options
+  gpu.io.video <> io.video
+  0.until(Config.LAYER_COUNT).foreach { i =>
+    gpu.io.layerCtrl(i).format := io.gameConfig.layer(i).format
+    gpu.io.layerCtrl(i).enable := io.options.layerEnable.layer(i)
+    gpu.io.layerCtrl(i).rowScrollEnable := io.options.rowScrollEnable
+    gpu.io.layerCtrl(i).rowSelectEnable := io.options.rowSelectEnable
+    gpu.io.layerCtrl(i).tileRom <> Crossing.syncronize(io.videoClock, io.layerTileRom(i))
+  }
+  gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
+  gpu.io.spriteCtrl.enable := io.options.layerEnable.sprite
+  gpu.io.spriteCtrl.start := vBlankFalling
+  gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
+  gpu.io.spriteCtrl.tileRom <> io.spriteTileRom
+  gpu.io.spriteLineBuffer <> io.spriteLineBuffer
+  gpu.io.spriteFrameBuffer <> io.spriteFrameBuffer
+  gpu.io.systemFrameBuffer <> io.systemFrameBuffer
+  io.rgb := gpu.io.rgb
+
   // Set interface defaults
   io.soundCtrl.oki(0).default()
   io.soundCtrl.oki(1).default()
@@ -141,9 +164,10 @@ class Main extends Module {
   ))
   spriteRam.io.clockB := clock // system (i.e. fast) clock domain
   spriteRam.io.portA.default()
+  spriteRam.io.portB <> gpu.io.spriteCtrl.vram
 
   // Layer VRAM (8x8)
-  val vram8x8 = 0.until(Config.LAYER_COUNT).map { _ =>
+  val vram8x8 = 0.until(Config.LAYER_COUNT).map { i =>
     val ram = Module(new TrueDualPortRam(
       addrWidthA = Config.LAYER_8x8_RAM_ADDR_WIDTH,
       dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
@@ -153,11 +177,12 @@ class Main extends Module {
     ))
     ram.io.clockB := io.videoClock
     ram.io.portA.default()
+    ram.io.portB <> gpu.io.layerCtrl(i).vram8x8
     ram
   }
 
   // Layer VRAM (16x16)
-  val vram16x16 = 0.until(Config.LAYER_COUNT).map { _ =>
+  val vram16x16 = 0.until(Config.LAYER_COUNT).map { i =>
     val ram = Module(new TrueDualPortRam(
       addrWidthA = Config.LAYER_16x16_RAM_ADDR_WIDTH,
       dataWidthA = Config.LAYER_RAM_DATA_WIDTH,
@@ -167,11 +192,12 @@ class Main extends Module {
     ))
     ram.io.clockB := io.videoClock
     ram.io.portA.default()
+    ram.io.portB <> gpu.io.layerCtrl(i).vram16x16
     ram
   }
 
   // Line RAM
-  val lineRam = 0.until(Config.LAYER_COUNT).map { _ =>
+  val lineRam = 0.until(Config.LAYER_COUNT).map { i =>
     val ram = Module(new TrueDualPortRam(
       addrWidthA = Config.LINE_RAM_ADDR_WIDTH,
       dataWidthA = Config.LINE_RAM_DATA_WIDTH,
@@ -181,6 +207,7 @@ class Main extends Module {
     ))
     ram.io.clockB := io.videoClock
     ram.io.portA.default()
+    ram.io.portB <> gpu.io.layerCtrl(i).lineRam
     ram
   }
 
@@ -194,47 +221,20 @@ class Main extends Module {
   ))
   paletteRam.io.clockB := io.videoClock
   paletteRam.io.portA.default()
+  paletteRam.io.portB <> gpu.io.paletteRam
 
   // Layer registers
-  val layerRegs = 0.until(Config.LAYER_COUNT).map { _ =>
+  val layerRegs = 0.until(Config.LAYER_COUNT).map { i =>
     val regs = Module(new RegisterFile(CPU.DATA_WIDTH, Config.LAYER_REGS_COUNT))
     regs.io.mem.default()
+    gpu.io.layerCtrl(i).regs := withClock(io.videoClock) { ShiftRegister(LayerRegs.decode(regs.io.regs), 2) }
     regs
   }
 
   // Sprite registers
   val spriteRegs = Module(new RegisterFile(CPU.DATA_WIDTH, Config.SPRITE_REGS_COUNT))
   spriteRegs.io.mem.default()
-
-  // Graphics processor
-  val gpu = Module(new GPU)
-  gpu.io.videoClock := io.videoClock
-  gpu.io.gameConfig <> io.gameConfig
-  gpu.io.options <> io.options
-  gpu.io.video <> io.video
-  0.until(Config.LAYER_COUNT).foreach { i =>
-    gpu.io.layerCtrl(i).format := io.gameConfig.layer(i).format
-    gpu.io.layerCtrl(i).enable := io.options.layerEnable.layer(i)
-    gpu.io.layerCtrl(i).rowScrollEnable := io.options.rowScrollEnable
-    gpu.io.layerCtrl(i).rowSelectEnable := io.options.rowSelectEnable
-    gpu.io.layerCtrl(i).regs := withClock(io.videoClock) { ShiftRegister(LayerRegs.decode(layerRegs(i).io.regs), 2) }
-    gpu.io.layerCtrl(i).vram8x8 <> vram8x8(i).io.portB
-    gpu.io.layerCtrl(i).vram16x16 <> vram16x16(i).io.portB
-    gpu.io.layerCtrl(i).lineRam <> lineRam(i).io.portB
-    gpu.io.layerCtrl(i).tileRom <> Crossing.syncronize(io.videoClock, io.layerTileRom(i))
-  }
-  gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
-  gpu.io.spriteCtrl.enable := io.options.layerEnable.sprite
-  gpu.io.spriteCtrl.start := vBlankFalling
-  gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
   gpu.io.spriteCtrl.regs := SpriteRegs.decode(spriteRegs.io.regs)
-  gpu.io.spriteCtrl.vram <> spriteRam.io.portB
-  gpu.io.spriteCtrl.tileRom <> io.spriteTileRom
-  gpu.io.spriteLineBuffer <> io.spriteLineBuffer
-  gpu.io.spriteFrameBuffer <> io.spriteFrameBuffer
-  gpu.io.systemFrameBuffer <> io.systemFrameBuffer
-  gpu.io.paletteRam <> paletteRam.io.portB
-  io.rgb := gpu.io.rgb
 
   // Toggle video IRQ
   when(vBlankRising) {
