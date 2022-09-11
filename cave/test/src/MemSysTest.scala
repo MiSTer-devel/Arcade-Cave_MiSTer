@@ -70,6 +70,8 @@ class MemSysTest extends AnyFlatSpec with ChiselScalatestTester with Matchers  {
   it should "copy ROM data from DDR memory to SDRAM" in {
     test(new MemSys) { dut =>
       dut.io.prog.done.poke(true)
+      dut.io.ddr.wait_n.poke(true)
+      dut.io.sdram.wait_n.poke(true)
       dut.io.ddr.rd.expect(false)
       dut.io.sdram.wr.expect(false)
       dut.clock.step()
