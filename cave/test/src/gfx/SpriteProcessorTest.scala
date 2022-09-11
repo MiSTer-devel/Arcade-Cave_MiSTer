@@ -148,7 +148,9 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
       dut.io.ctrl.start.poke(true)
       dut.io.ctrl.vram.dout.poke("h0101_0000_0000_0001_0000".U)
       waitForPending(dut)
+      dut.io.ctrl.tileRom.wait_n.poke(true)
       dut.io.ctrl.tileRom.valid.poke(true)
+      dut.io.frameBuffer.wait_n.poke(true)
       dut.clock.step(16)
       dut.io.ctrl.tileRom.valid.poke(false)
       dut.io.ctrl.tileRom.burstDone.poke(true)
@@ -175,6 +177,8 @@ class SpriteProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Ma
     test(mkProcessor()) { dut =>
       dut.io.ctrl.start.poke(true)
       dut.io.ctrl.vram.dout.poke("h0101_0000_0000_0001_0000".U)
+      dut.io.ctrl.tileRom.wait_n.poke(true)
+      dut.io.frameBuffer.wait_n.poke(true)
       waitForReady(dut)
       dut.clock.step()
       dut.io.ctrl.tileRom.rd.expect(true)
