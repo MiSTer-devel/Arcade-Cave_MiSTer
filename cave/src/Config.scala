@@ -238,13 +238,13 @@ object Config {
 
   /** Sprite frame buffer DMA configuration */
   val spriteFrameBufferDmaConfig = dma.Config(
-    depth = Config.FRAME_BUFFER_WIDTH * Config.FRAME_BUFFER_HEIGHT * SPRITE_FRAME_BUFFER_DATA_WIDTH / Config.ddrConfig.dataWidth,
+    depth = FRAME_BUFFER_WIDTH * FRAME_BUFFER_HEIGHT * SPRITE_FRAME_BUFFER_DATA_WIDTH / ddrConfig.dataWidth,
     burstLength = 64
   )
 
   /** Sprite line buffer DMA configuration */
   val spriteLineBufferDmaConfig = dma.Config(
-    depth = Config.FRAME_BUFFER_WIDTH * SPRITE_FRAME_BUFFER_DATA_WIDTH / Config.ddrConfig.dataWidth,
+    depth = FRAME_BUFFER_WIDTH * SPRITE_FRAME_BUFFER_DATA_WIDTH / ddrConfig.dataWidth,
     burstLength = 16
   )
 }
