@@ -76,20 +76,6 @@ class GameConfig extends Bundle {
 object GameConfig {
   /** The width of the graphics format value */
   val GFX_FORMAT_WIDTH = 2
-  /** Dangun Feveron */
-  val DFEVERON = 0
-  /** DoDonPachi */
-  val DDONPACH = 1
-  /** DonPachi */
-  val DONPACHI = 2
-  /** ESP Ra.De. */
-  val ESPRADE = 3
-  /** Puzzle Uo Poko */
-  val UOPOKO = 4
-  /** Guwange */
-  val GUWANGE = 5
-  /** Gaia Crusaders */
-  val GAIA = 6
 
   def apply() = new GameConfig
 
@@ -100,18 +86,18 @@ object GameConfig {
    */
   def apply(index: UInt): GameConfig = {
     MuxLookup(index, dfeveron, Seq(
-      DDONPACH.U -> ddonpach,
-      DONPACHI.U -> donpachi,
-      ESPRADE.U -> esprade,
-      GAIA.U -> gaia,
-      GUWANGE.U -> guwange,
-      UOPOKO.U -> uopoko
+      Game.DDONPACH.U -> ddonpach,
+      Game.DONPACHI.U -> donpachi,
+      Game.ESPRADE.U -> esprade,
+      Game.GAIA.U -> gaia,
+      Game.GUWANGE.U -> guwange,
+      Game.UOPOKO.U -> uopoko
     ))
   }
 
   private def dfeveron = {
     val wire = Wire(new GameConfig)
-    wire.index := DFEVERON.U
+    wire.index := Game.DFEVERON.U
     wire.granularity := 16.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00100000.U
@@ -136,7 +122,7 @@ object GameConfig {
 
   private def ddonpach = {
     val wire = Wire(new GameConfig)
-    wire.index := DDONPACH.U
+    wire.index := Game.DDONPACH.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00100000.U
@@ -161,7 +147,7 @@ object GameConfig {
 
   private def donpachi = {
     val wire = Wire(new GameConfig)
-    wire.index := DONPACHI.U
+    wire.index := Game.DONPACHI.U
     wire.granularity := 16.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00080000.U
@@ -186,7 +172,7 @@ object GameConfig {
 
   private def esprade = {
     val wire = Wire(new GameConfig)
-    wire.index := ESPRADE.U
+    wire.index := Game.ESPRADE.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00100000.U
@@ -211,7 +197,7 @@ object GameConfig {
 
   private def gaia = {
     val wire = Wire(new GameConfig)
-    wire.index := GAIA.U
+    wire.index := Game.GAIA.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0.U // disabled
@@ -236,7 +222,7 @@ object GameConfig {
 
   private def guwange = {
     val wire = Wire(new GameConfig)
-    wire.index := GUWANGE.U
+    wire.index := Game.GUWANGE.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00100000.U
@@ -261,7 +247,7 @@ object GameConfig {
 
   private def uopoko = {
     val wire = Wire(new GameConfig)
-    wire.index := UOPOKO.U
+    wire.index := Game.UOPOKO.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00100000.U

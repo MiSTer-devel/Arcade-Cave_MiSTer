@@ -94,7 +94,7 @@ object ColorMixer {
    */
   private def backgroundPen(index: UInt): PaletteEntry =
     MuxLookup(index, PaletteEntry(0.U, 0x7f.U, 0.U), Seq(
-      GameConfig.DFEVERON.U -> PaletteEntry(0.U, 0x3f.U, 0.U)
+      Game.DFEVERON.U -> PaletteEntry(0.U, 0x3f.U, 0.U)
     ))
 
   /**

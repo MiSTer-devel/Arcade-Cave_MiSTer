@@ -35,6 +35,24 @@ import chisel3._
 import arcadia.mem._
 
 package object cave {
+  /** Game enum */
+  object Game {
+    /** Dangun Feveron */
+    val DFEVERON = 0
+    /** DoDonPachi */
+    val DDONPACH = 1
+    /** DonPachi */
+    val DONPACHI = 2
+    /** ESP Ra.De. */
+    val ESPRADE = 3
+    /** Puzzle Uo Poko */
+    val UOPOKO = 4
+    /** Guwange */
+    val GUWANGE = 5
+    /** Gaia Crusaders */
+    val GAIA = 6
+  }
+
   /** Graphics format enum */
   object GraphicsFormat {
     /** Unknown graphics format */

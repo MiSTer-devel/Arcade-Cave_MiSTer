@@ -136,9 +136,9 @@ class Main extends Module {
   // EEPROM
   val eeprom = Module(new EEPROM)
   eeprom.io.mem <> io.eeprom
-  val cs = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(5), eepromMem.din(9))
-  val sck = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(6), eepromMem.din(10))
-  val sdi = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(7), eepromMem.din(11))
+  val cs = Mux(io.gameConfig.index === Game.GUWANGE.U, eepromMem.din(5), eepromMem.din(9))
+  val sck = Mux(io.gameConfig.index === Game.GUWANGE.U, eepromMem.din(6), eepromMem.din(10))
+  val sdi = Mux(io.gameConfig.index === Game.GUWANGE.U, eepromMem.din(7), eepromMem.din(11))
   eeprom.io.serial.cs := RegEnable(cs, false.B, eepromMem.wr)
   eeprom.io.serial.sck := RegEnable(sck, false.B, eepromMem.wr)
   eeprom.io.serial.sdi := RegEnable(sdi, false.B, eepromMem.wr)
@@ -292,7 +292,7 @@ class Main extends Module {
   map(0x110000 to 0x1fffff).noprw()
 
   // Dangun Feveron
-  when(io.gameConfig.index === GameConfig.DFEVERON.U) {
+  when(io.gameConfig.index === Game.DFEVERON.U) {
     map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x300003).readWriteMem(io.soundCtrl.ymz)
@@ -310,7 +310,7 @@ class Main extends Module {
   }
 
   // DonPachi
-  when(io.gameConfig.index === GameConfig.DONPACHI.U) {
+  when(io.gameConfig.index === Game.DONPACHI.U) {
     map(0x000000 to 0x07ffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     vramMap(0x200000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
@@ -331,7 +331,7 @@ class Main extends Module {
   }
 
   // DoDonPachi
-  when(io.gameConfig.index === GameConfig.DDONPACH.U) {
+  when(io.gameConfig.index === Game.DDONPACH.U) {
     map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x300003).readWriteMem(io.soundCtrl.ymz)
@@ -351,7 +351,7 @@ class Main extends Module {
   }
 
   // ESP Ra.De.
-  when(io.gameConfig.index === GameConfig.ESPRADE.U) {
+  when(io.gameConfig.index === Game.ESPRADE.U) {
     map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x300003).readWriteMem(io.soundCtrl.ymz)
@@ -371,7 +371,7 @@ class Main extends Module {
   }
 
   // Gaia Crusaders
-  when(io.gameConfig.index === GameConfig.GAIA.U) {
+  when(io.gameConfig.index === Game.GAIA.U) {
     map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x00057e to 0x000581).nopw() // access occurs during boot
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
@@ -393,7 +393,7 @@ class Main extends Module {
   }
 
   // Guwange
-  when(io.gameConfig.index === GameConfig.GUWANGE.U) {
+  when(io.gameConfig.index === Game.GUWANGE.U) {
     map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x200000 to 0x20ffff).readWriteMem(mainRam.io)
     map(0x210000 to 0x2fffff).nopr() // access occurs for Guwange (Special)
@@ -418,7 +418,7 @@ class Main extends Module {
   }
 
   // Puzzle Uo Poko
-  when(io.gameConfig.index === GameConfig.UOPOKO.U) {
+  when(io.gameConfig.index === Game.UOPOKO.U) {
     map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x300003).readWriteMem(io.soundCtrl.ymz)
@@ -455,13 +455,13 @@ object Main {
     val default2 = Cat("b1111".U, eeprom.io.serial.sdo, "b11".U, ~coin2, ~player(1).start, ~player(1).buttons(2, 0), ~player(1).right, ~player(1).left, ~player(1).down, ~player(1).up)
 
     val left = MuxLookup(gameIndex, default1, Seq(
-      GameConfig.GAIA.U -> Cat(~player(1).buttons(3, 0), ~player(1).right, ~player(1).left, ~player(1).down, ~player(1).up, ~player(0).buttons(3, 0), ~player(0).right, ~player(0).left, ~player(0).down, ~player(0).up),
-      GameConfig.GUWANGE.U -> Cat(~player(1).buttons(2, 0), ~player(1).right, ~player(1).left, ~player(1).down, ~player(1).up, ~player(1).start, ~player(0).buttons(2, 0), ~player(0).right, ~player(0).left, ~player(0).down, ~player(0).up, ~player(0).start),
+      Game.GAIA.U -> Cat(~player(1).buttons(3, 0), ~player(1).right, ~player(1).left, ~player(1).down, ~player(1).up, ~player(0).buttons(3, 0), ~player(0).right, ~player(0).left, ~player(0).down, ~player(0).up),
+      Game.GUWANGE.U -> Cat(~player(1).buttons(2, 0), ~player(1).right, ~player(1).left, ~player(1).down, ~player(1).up, ~player(1).start, ~player(0).buttons(2, 0), ~player(0).right, ~player(0).left, ~player(0).down, ~player(0).up, ~player(0).start),
     ))
 
     val right = MuxLookup(gameIndex, default2, Seq(
-      GameConfig.GAIA.U -> Cat("b0000111111".U, ~player(1).start, ~player(0).start, "b1".U, ~service, ~coin2, ~coin1),
-      GameConfig.GUWANGE.U -> Cat("b11111111".U, eeprom.io.serial.sdo, "b1111".U, ~service, ~coin2, ~coin1),
+      Game.GAIA.U -> Cat("b0000111111".U, ~player(1).start, ~player(0).start, "b1".U, ~service, ~coin2, ~coin1),
+      Game.GUWANGE.U -> Cat("b11111111".U, eeprom.io.serial.sdo, "b1111".U, ~service, ~coin2, ~coin1),
     ))
 
     (left, right)
