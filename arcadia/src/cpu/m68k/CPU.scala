@@ -65,7 +65,7 @@ class CPUIO extends Bundle {
 }
 
 /** M68000 CPU */
-class CPU(clockDiv: Int) extends Module {
+class CPU(clockDiv: Int = 1) extends Module {
   val io = IO(new CPUIO)
 
   class FX68K extends BlackBox {
@@ -115,7 +115,6 @@ class CPU(clockDiv: Int) extends Module {
   val (_, phi1) = Counter.static(clockDiv)
   val phi2 = ShiftRegister(phi1, clockDiv / 2)
 
-  // CPU
   val cpu = Module(new FX68K)
   cpu.io.clk := clock.asBool
   cpu.io.enPhi1 := phi1

@@ -118,7 +118,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
   val done = channelStateReg.done
 
   // Fetch PCM data when the audio pipeline is ready for data
-  val pendingReg = Util.latchSync(audioPipeline.io.pcmData.ready && !io.rom.waitReq, io.rom.valid)
+  val pendingReg = Util.latchSync(audioPipeline.io.pcmData.ready && io.rom.wait_n, io.rom.valid)
   val memRead = audioPipeline.io.pcmData.ready && !pendingReg
   val memAddr = channelStateReg.addr
 

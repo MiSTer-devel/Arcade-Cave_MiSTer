@@ -67,18 +67,18 @@ class RequestQueue(inAddrWidth: Int, inDataWidth: Int, outAddrWidth: Int, outDat
   val dataWidthRatio = outDataWidth / inDataWidth
 
   // FIFO
-  val fifo = Module(new DualClockFIFO(io.in.getWidth, depth))
+  val fifo = Module(new DualClockFIFO(new WriteRequest(UInt(inAddrWidth.W), Bits(inDataWidth.W)), depth))
   fifo.io.readClock := io.readClock
 
   // Input -> FIFO
   fifo.io.enq.valid := io.in.wr
-  fifo.io.enq.bits := WriteRequest(io.in).asUInt
-  io.in.waitReq := !fifo.io.enq.ready
+  fifo.io.enq.bits := WriteRequest(io.in)
+  io.in.wait_n := fifo.io.enq.ready
 
   // FIFO -> Output
   io.out.wr := io.enable && fifo.io.deq.valid
-  fifo.io.deq.ready := !io.out.waitReq
-  val request = fifo.io.deq.bits.asTypeOf(new WriteRequest(chiselTypeOf(io.in.addr), chiselTypeOf(io.in.din)))
+  fifo.io.deq.ready := io.out.wait_n
+  val request = fifo.io.deq.bits
   io.out.burstLength := 1.U
   io.out.addr := request.addr << (3 - log2Ceil(dataWidthRatio)) // convert to byte address
   io.out.din := Cat(Seq.fill(dataWidthRatio) { request.din })

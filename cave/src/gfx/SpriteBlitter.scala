@@ -72,7 +72,7 @@ class SpriteBlitter extends Module {
 
   // The PISO is used to buffer a single row of pixels to be copied to the frame buffer
   val piso = Module(new PISO(Config.SPRITE_TILE_SIZE, Bits(Config.SPRITE_TILE_MAX_BPP.W)))
-  piso.io.rd := busyReg && !io.frameBuffer.waitReq
+  piso.io.rd := busyReg && io.frameBuffer.wait_n
   piso.io.wr := io.pixelData.fire
   piso.io.din := io.pixelData.bits
 
@@ -81,16 +81,16 @@ class SpriteBlitter extends Module {
   val pisoAlmostEmpty = piso.io.isAlmostEmpty
 
   // Counters
-  val (x, xWrap) = Counter.dynamic(configReg.sprite.size.x, enable = busyReg && !pisoEmpty && !io.frameBuffer.waitReq)
+  val (x, xWrap) = Counter.dynamic(configReg.sprite.size.x, enable = busyReg && !pisoEmpty && io.frameBuffer.wait_n)
   val (y, yWrap) = Counter.dynamic(configReg.sprite.size.y, enable = xWrap)
 
   // Pixel position
-  val posReg = RegEnable(SpriteBlitter.pixelPos(configReg.sprite, UVec2(x, y)), !io.frameBuffer.waitReq)
+  val posReg = RegEnable(SpriteBlitter.pixelPos(configReg.sprite, UVec2(x, y)), io.frameBuffer.wait_n)
 
   // Decode the palette entry for the current pixel
   val pen = PaletteEntry(configReg.sprite.priority, configReg.sprite.colorCode, piso.io.dout)
-  val penReg = RegEnable(pen, !io.frameBuffer.waitReq)
-  val validReg = RegEnable(!pisoEmpty, !io.frameBuffer.waitReq)
+  val penReg = RegEnable(pen, io.frameBuffer.wait_n)
+  val validReg = RegEnable(!pisoEmpty, io.frameBuffer.wait_n)
 
   // The visible flag is asserted if the pixel is non-transparent and within the screen bounds
   val visible = SpriteBlitter.isVisible(io.video.size, posReg) && validReg && !penReg.isTransparent
@@ -104,7 +104,7 @@ class SpriteBlitter extends Module {
 
   // The pixel data ready flag is asserted when the PISO is empty, or will be empty in the next
   // clock cycle
-  val pixelDataReady = !io.frameBuffer.waitReq && (pisoEmpty || pisoAlmostEmpty)
+  val pixelDataReady = io.frameBuffer.wait_n && (pisoEmpty || pisoAlmostEmpty)
 
   // Toggle busy register
   when(io.config.fire) { busyReg := true.B }.elsewhen(blitDone) { busyReg := false.B }

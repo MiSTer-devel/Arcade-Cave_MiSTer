@@ -44,6 +44,9 @@ trait BurstWriteDMATestHelpers {
 class BurstWriteDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with BurstWriteDMATestHelpers {
   it should "copy data from an asynchronous input memory to a bursted output memory" in {
     test(mkDMA()) { dut =>
+      dut.io.in.wait_n.poke(true)
+      dut.io.out.wait_n.poke(true)
+
       // start
       dut.io.start.poke(true)
       dut.io.in.rd.expect(false)
@@ -53,14 +56,14 @@ class BurstWriteDMATest extends AnyFlatSpec with ChiselScalatestTester with Matc
       // wait for read
       dut.io.start.poke(false)
       dut.io.busy.expect(true)
-      dut.io.in.waitReq.poke(true)
+      dut.io.in.wait_n.poke(false)
       dut.io.in.rd.expect(true)
       dut.io.in.addr.expect(0x00)
       dut.io.out.wr.expect(false)
       dut.clock.step()
 
       // read 0
-      dut.io.in.waitReq.poke(false)
+      dut.io.in.wait_n.poke(true)
       dut.io.in.rd.expect(true)
       dut.io.in.addr.expect(0x00)
       dut.io.out.wr.expect(false)

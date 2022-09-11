@@ -30,38 +30,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package arcadia.mem.sdram
+package arcadida.pocket
 
 import chisel3._
 
-/**
- * An interface for controlling a SDRAM device.
- *
- * @param config The SDRAM configuration.
- */
-class SDRAMIO(config: Config) extends Bundle {
-  /** Clock enable */
-  val cke = Output(Bool())
-  /** Chip select (active-low) */
-  val cs_n = Output(Bool())
-  /** Row address strobe (active-low) */
-  val ras_n = Output(Bool())
-  /** Column address strobe (active-low) */
-  val cas_n = Output(Bool())
-  /** Write enable (active-low) */
-  val we_n = Output(Bool())
-  /** Output enable (active-low) */
-  val oe_n = Output(Bool())
-  /** Bank bus */
-  val bank = Output(UInt(config.bankWidth.W))
-  /** Address bus */
-  val addr = Output(UInt(config.rowWidth.W))
-  /** Data input bus */
-  val din = Output(Bits(config.dataWidth.W))
-  /** Data output bus */
-  val dout = Input(Bits(config.dataWidth.W))
+class OptionsIO extends Bundle {
+  /** Game index */
+  val gameIndex = Output(UInt(32.W))
+  /** Scaler mode */
+  val scalerMode = Output(UInt(3.W))
+  /** Enable debugging */
+  val debug = Output(Bool())
+  /** Layer enable */
+  val layer = Output(Vec(3, Bool()))
+  /** Sprite enable */
+  val sprite = Output(Bool())
+  /** Flip video output */
+  val flip = Output(Bool())
+  /** FM enable */
+  val fm = Output(Bool())
+  /** PCM enable */
+  val pcm = Output(Bool())
 }
 
-object SDRAMIO {
-  def apply(config: Config) = new SDRAMIO(config)
+object OptionsIO {
+  def apply(): OptionsIO = new OptionsIO()
 }

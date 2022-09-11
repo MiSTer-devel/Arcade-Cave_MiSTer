@@ -140,7 +140,7 @@ class ReadCache(config: Config) extends Module {
 
   // Control signals
   start := io.enable && request.rd && stateReg === State.idle
-  val waitReq = !(io.enable && stateReg === State.idle)
+  val wait_n = io.enable && stateReg === State.idle
   val hitA = cacheEntryA.isHit(requestReg.addr)
   val hitB = cacheEntryB.isHit(requestReg.addr)
   val hit = hitA || hitB
@@ -209,7 +209,7 @@ class ReadCache(config: Config) extends Module {
 
     // Fill a cache line
     is(State.fill) {
-      when(!io.out.waitReq) { stateReg := State.fillWait }
+      when(io.out.wait_n) { stateReg := State.fillWait }
     }
 
     // Wait for a line file
@@ -222,7 +222,7 @@ class ReadCache(config: Config) extends Module {
   }
 
   // Outputs
-  io.in.waitReq := waitReq
+  io.in.wait_n := wait_n
   io.in.valid := validReg
   io.in.dout := doutReg
   io.out.rd := stateReg === State.fill

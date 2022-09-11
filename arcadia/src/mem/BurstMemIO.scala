@@ -64,7 +64,7 @@ class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addr
     mem.rd := rd
     mem.wr := false.B
     mem.burstLength := burstLength
-    waitReq := mem.waitReq
+    wait_n := mem.wait_n
     valid := mem.valid
     burstDone := mem.burstDone
     mem.addr := addr
@@ -89,7 +89,7 @@ class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addr
     val mem = Wire(Flipped(BurstReadMemIO(f(addr).getWidth, this.dataWidth)))
     mem.rd := rd
     mem.burstLength := burstLength
-    waitReq := mem.waitReq
+    wait_n := mem.wait_n
     valid := mem.valid
     burstDone := mem.burstDone
     mem.addr := f(addr)
@@ -106,7 +106,7 @@ class BurstReadMemIO(addrWidth: Int, dataWidth: Int) extends AsyncReadMemIO(addr
     val mem = Wire(Flipped(BurstReadMemIO(this)))
     mem.rd := rd
     mem.burstLength := burstLength
-    waitReq := mem.waitReq
+    wait_n := mem.wait_n
     valid := mem.valid
     burstDone := mem.burstDone
     mem.addr := addr
@@ -121,18 +121,19 @@ object BurstReadMemIO {
   def apply(config: BusConfig) = new BurstReadMemIO(config)
 
   /**
-   * Multiplexes requests from multiple write-only memory interface to a single write-only memory
+   * Multiplexes requests from multiple read-only memory interface to a single read-only memory
    * interfaces. The request is routed to the first enabled interface.
    *
    * @param in A list of enable-interface pairs.
    */
   def mux(in: Seq[(Bool, BurstReadMemIO)]): BurstReadMemIO = {
+    val anySelected = in.map(_._1).reduce(_ || _)
     val mem = Wire(chiselTypeOf(in.head._2))
     mem.rd := MuxCase(false.B, in.map(a => a._1 -> a._2.rd))
     mem.burstLength := MuxCase(0.U, in.map(a => a._1 -> a._2.burstLength))
     mem.addr := MuxCase(DontCare, in.map(a => a._1 -> a._2.addr))
     for ((selected, port) <- in) {
-      port.waitReq := (selected && mem.waitReq) || (!selected && port.rd)
+      port.wait_n := (!anySelected || selected) && mem.wait_n
       port.valid := mem.valid && selected
       port.burstDone := mem.burstDone && selected
       port.dout := mem.dout
@@ -156,7 +157,7 @@ class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(ad
     mem.rd := false.B
     mem.wr := wr
     mem.burstLength := burstLength
-    waitReq := mem.waitReq
+    wait_n := mem.wait_n
     burstDone := mem.burstDone
     mem.addr := addr
     mem.mask := mask
@@ -179,7 +180,7 @@ class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(ad
     val mem = Wire(Flipped(BurstWriteMemIO(f(addr).getWidth, this.dataWidth)))
     mem.wr := wr
     mem.burstLength := burstLength
-    waitReq := mem.waitReq
+    wait_n := mem.wait_n
     burstDone := mem.burstDone
     mem.addr := f(addr)
     mem.mask := mask
@@ -196,7 +197,7 @@ class BurstWriteMemIO(addrWidth: Int, dataWidth: Int) extends AsyncWriteMemIO(ad
     val mem = Wire(Flipped(BurstWriteMemIO(this)))
     mem.wr := wr
     mem.burstLength := burstLength
-    waitReq := mem.waitReq
+    wait_n := mem.wait_n
     burstDone := mem.burstDone
     mem.addr := addr
     mem.mask := mask
@@ -226,7 +227,7 @@ class BurstMemIO(addrWidth: Int, dataWidth: Int) extends AsyncMemIO(addrWidth, d
     rd := mem.rd
     wr := false.B
     burstLength := mem.burstLength
-    mem.waitReq := waitReq
+    mem.wait_n := wait_n
     mem.valid := valid
     mem.burstDone := burstDone
     addr := mem.addr
@@ -242,7 +243,7 @@ class BurstMemIO(addrWidth: Int, dataWidth: Int) extends AsyncMemIO(addrWidth, d
     rd := false.B
     wr := mem.wr
     burstLength := mem.burstLength
-    mem.waitReq := waitReq
+    mem.wait_n := wait_n
     mem.burstDone := burstDone
     addr := mem.addr
     mask := mem.mask
@@ -269,7 +270,7 @@ class BurstMemIO(addrWidth: Int, dataWidth: Int) extends AsyncMemIO(addrWidth, d
     mem.rd := rd
     mem.wr := wr
     mem.burstLength := burstLength
-    waitReq := mem.waitReq
+    wait_n := mem.wait_n
     valid := mem.valid
     burstDone := mem.burstDone
     mem.addr := f(addr)
@@ -289,7 +290,7 @@ class BurstMemIO(addrWidth: Int, dataWidth: Int) extends AsyncMemIO(addrWidth, d
     mem.rd := rd
     mem.wr := wr
     mem.burstLength := burstLength
-    waitReq := mem.waitReq
+    wait_n := mem.wait_n
     valid := mem.valid
     burstDone := mem.burstDone
     mem.addr := addr
@@ -321,7 +322,7 @@ object BurstMemIO {
     mem.mask := Mux1H(in.map(a => a._1 -> a._2.mask))
     mem.din := Mux1H(in.map(a => a._1 -> a._2.din))
     for ((selected, port) <- in) {
-      port.waitReq := (anySelected && !selected) || mem.waitReq
+      port.wait_n := (!anySelected || selected) && mem.wait_n
       port.valid := selected && mem.valid
       port.burstDone := selected && mem.burstDone
       port.dout := mem.dout

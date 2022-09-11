@@ -153,7 +153,7 @@ class EEPROM extends Module {
       when(io.mem.valid) {
         dataReg := io.mem.dout
         stateReg := State.shiftOut
-      }.elsewhen(!io.mem.waitReq) {
+      }.elsewhen(io.mem.wait_n) {
         stateReg := State.readWait
       }
     }
@@ -168,7 +168,7 @@ class EEPROM extends Module {
 
     // Write data to memory
     is(State.write) {
-      when(!io.mem.waitReq) {
+      when(io.mem.wait_n) {
         addrReg := addrReg + 1.U
         when(!writeAllReg || addrReg.andR) { stateReg := State.idle }
       }

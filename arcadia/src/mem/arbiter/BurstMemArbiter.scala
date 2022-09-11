@@ -80,7 +80,7 @@ class BurstMemArbiter(n: Int, addrWidth: Int, dataWidth: Int) extends Module {
   val chosen = Mux(busyReg, indexReg, index)
 
   // Assert the effective request signal when a request is accepted by the output port
-  val effectiveRequest = !busyReg && (io.out.rd || io.out.wr) && !io.out.waitReq
+  val effectiveRequest = !busyReg && (io.out.rd || io.out.wr) && io.out.wait_n
 
   // Toggle the busy register
   when(io.out.burstDone) {

@@ -47,7 +47,7 @@ class IOCTL extends Bundle {
   /** Write enable */
   val wr = Input(Bool())
   /** Asserted when the core isn't ready to proceed with the request */
-  val waitReq = Output(Bool())
+  val wait_n = Output(Bool())
   /** Index */
   val index = Input(UInt(IOCTL.INDEX_WIDTH.W))
   /** Address bus */
@@ -58,7 +58,7 @@ class IOCTL extends Bundle {
   val dout = Input(Bits(IOCTL.DATA_WIDTH.W))
 
   def default(): Unit = {
-    waitReq := false.B
+    wait_n := true.B
     din := 0.U
   }
 
@@ -67,7 +67,7 @@ class IOCTL extends Bundle {
     val writeEnable = download && this.index === IOCTL.ROM_INDEX.U
     val mem = Wire(AsyncWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
     mem.wr := writeEnable && wr
-    when(writeEnable) { waitReq := mem.waitReq }
+    when(writeEnable) { wait_n := mem.wait_n }
     mem.addr := addr
     mem.mask := Fill(mem.maskWidth, 1.U)
     mem.din := dout
@@ -81,7 +81,7 @@ class IOCTL extends Bundle {
     val mem = Wire(AsyncMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
     mem.rd := readEnable && rd
     mem.wr := writeEnable && wr
-    when(readEnable || writeEnable) { waitReq := mem.waitReq }
+    when(readEnable || writeEnable) { wait_n := mem.wait_n }
     mem.addr := addr
     mem.mask := Fill(mem.maskWidth, 1.U)
     mem.din := dout
@@ -94,7 +94,7 @@ class IOCTL extends Bundle {
     val writeEnable = download && this.index === IOCTL.DIP_INDEX.U && !addr(IOCTL.ADDR_WIDTH - 1, 3).orR // ignore higher addresses
     val mem = Wire(AsyncWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
     mem.wr := writeEnable && wr
-    when(writeEnable) { waitReq := mem.waitReq }
+    when(writeEnable) { wait_n := mem.wait_n }
     mem.addr := addr
     mem.mask := Fill(mem.maskWidth, 1.U)
     mem.din := dout
@@ -106,7 +106,7 @@ class IOCTL extends Bundle {
     val writeEnable = download && this.index === IOCTL.VIDEO_INDEX.U
     val mem = Wire(AsyncWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH))
     mem.wr := writeEnable && wr
-    when(writeEnable) { waitReq := mem.waitReq }
+    when(writeEnable) { wait_n := mem.wait_n }
     mem.addr := addr
     mem.mask := Fill(mem.maskWidth, 1.U)
     mem.din := dout

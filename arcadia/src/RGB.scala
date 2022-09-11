@@ -84,4 +84,18 @@ object RGB {
     rgb.b := b
     rgb
   }
+
+  /**
+   * Constructs a RGB color with all channels set to the same value.
+   *
+   * @param value The channel value.
+   * @return A RGB color.
+   */
+  def apply(value: Bits): RGB = {
+    val rgb = Wire(new RGB(value.getWidth.W))
+    rgb.r := value
+    rgb.g := value
+    rgb.b := value
+    rgb
+  }
 }

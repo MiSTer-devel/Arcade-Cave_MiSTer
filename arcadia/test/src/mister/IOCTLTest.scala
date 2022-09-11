@@ -47,7 +47,7 @@ class IOCTLTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
         val ioctl = new IOCTL
       })
       io.mem <> io.ioctl.rom
-      io.ioctl.waitReq := false.B
+      io.ioctl.wait_n := true.B
       io.ioctl.din := 0.U
     }) { dut =>
       dut.io.mem.wr.expect(false)
@@ -65,7 +65,7 @@ class IOCTLTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
         val ioctl = new IOCTL
       })
       io.mem <> io.ioctl.nvram
-      io.ioctl.waitReq := false.B
+      io.ioctl.wait_n := true.B
       io.ioctl.din := 0.U
     }) { dut =>
       dut.io.mem.wr.expect(false)
@@ -83,7 +83,7 @@ class IOCTLTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
         val ioctl = new IOCTL
       })
       io.mem <> io.ioctl.nvram
-      io.ioctl.waitReq := false.B
+      io.ioctl.wait_n := true.B
       io.ioctl.din := 0.U
     }) { dut =>
       dut.io.mem.rd.expect(false)
@@ -101,7 +101,7 @@ class IOCTLTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
         val ioctl = new IOCTL
       })
       io.mem <> io.ioctl.dips
-      io.ioctl.waitReq := false.B
+      io.ioctl.wait_n := true.B
       io.ioctl.din := 0.U
     }) { dut =>
       dut.io.mem.wr.expect(false)
@@ -119,7 +119,7 @@ class IOCTLTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
         val ioctl = new IOCTL
       })
       io.mem <> io.ioctl.video
-      io.ioctl.waitReq := false.B
+      io.ioctl.wait_n := true.B
       io.ioctl.din := 0.U
     }) { dut =>
       dut.io.mem.wr.expect(false)

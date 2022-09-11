@@ -30,38 +30,41 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package arcadia.mem.sdram
+package arcadia.pocket
 
+import arcadia.mem._
 import chisel3._
+import chisel3.util._
 
-/**
- * An interface for controlling a SDRAM device.
- *
- * @param config The SDRAM configuration.
- */
-class SDRAMIO(config: Config) extends Bundle {
-  /** Clock enable */
-  val cke = Output(Bool())
-  /** Chip select (active-low) */
-  val cs_n = Output(Bool())
-  /** Row address strobe (active-low) */
-  val ras_n = Output(Bool())
-  /** Column address strobe (active-low) */
-  val cas_n = Output(Bool())
-  /** Write enable (active-low) */
-  val we_n = Output(Bool())
-  /** Output enable (active-low) */
-  val oe_n = Output(Bool())
-  /** Bank bus */
-  val bank = Output(UInt(config.bankWidth.W))
+/** A flow control interface used to download data into the core. */
+class BridgeIO extends Bundle {
+  /** Write enable */
+  val wr = Input(Bool())
   /** Address bus */
-  val addr = Output(UInt(config.rowWidth.W))
-  /** Data input bus */
-  val din = Output(Bits(config.dataWidth.W))
-  /** Data output bus */
-  val dout = Input(Bits(config.dataWidth.W))
+  val addr = Input(UInt(BridgeIO.ADDR_WIDTH.W))
+  /** Output data bus */
+  val dout = Input(Bits(BridgeIO.DATA_WIDTH.W))
+  /** Pause flag */
+  val pause = Input(Bool()) // FIXME: remove from bridge
+  /** Done flag */
+  val done = Input(Bool()) // FIXME: remove from bridge
+
+  /** Converts the bridge to an asynchronous write-only memory interface. */
+  def rom: WriteMemIO = {
+    val mem = Wire(WriteMemIO(BridgeIO.ADDR_WIDTH, BridgeIO.DATA_WIDTH))
+    mem.wr := wr
+    mem.addr := addr
+    mem.mask := Fill(mem.maskWidth, 1.U)
+    mem.din := dout
+    mem
+  }
 }
 
-object SDRAMIO {
-  def apply(config: Config) = new SDRAMIO(config)
+object BridgeIO {
+  /** The width of the address bus */
+  val ADDR_WIDTH = 32
+  /** The width of the data bus */
+  val DATA_WIDTH = 32
+
+  def apply() = new BridgeIO
 }

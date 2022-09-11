@@ -37,7 +37,7 @@ import chisel3.util._
 
 trait WaitIO {
   /** The wait request signal is asserted when the device isn't ready to proceed with a request. */
-  val waitReq = Input(Bool())
+  val wait_n = Input(Bool())
 }
 
 trait ValidIO {
@@ -65,7 +65,7 @@ class AsyncReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth
     val mem = Wire(Flipped(AsyncMemIO(this)))
     mem.rd := rd
     mem.wr := false.B
-    waitReq := mem.waitReq
+    wait_n := mem.wait_n
     valid := mem.valid
     mem.addr := addr
     mem.mask := DontCare
@@ -79,10 +79,19 @@ class AsyncReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth
     val mem = Wire(Flipped(MemIO(this)))
     mem.rd := rd
     mem.wr := false.B
-    waitReq := false.B
+    wait_n := true.B
     mem.addr := addr
     mem.mask := DontCare
     mem.din := DontCare
+    mem
+  }
+
+  /** Converts the interface to synchronous read-only. */
+  def asReadMemIO: ReadMemIO = {
+    val mem = Wire(Flipped(ReadMemIO(this)))
+    rd := mem.rd
+    addr := mem.addr
+    mem.dout := dout
     mem
   }
 
@@ -94,7 +103,7 @@ class AsyncReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth
   override def mapAddr(f: UInt => UInt): AsyncReadMemIO = {
     val mem = Wire(Flipped(AsyncReadMemIO(f(addr).getWidth, this.dataWidth)))
     mem.rd := rd
-    waitReq := mem.waitReq
+    wait_n := mem.wait_n
     valid := mem.valid
     mem.addr := f(addr)
     dout := mem.dout
@@ -109,7 +118,7 @@ class AsyncReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth
   override def mapData(f: Bits => Bits): AsyncReadMemIO = {
     val mem = Wire(Flipped(AsyncReadMemIO(this)))
     mem.rd := rd
-    waitReq := mem.waitReq
+    wait_n := mem.wait_n
     valid := mem.valid
     mem.addr := addr
     dout := f(mem.dout)
@@ -134,7 +143,7 @@ object AsyncReadMemIO {
     mem.rd := Mux1H(in.map(a => a._1 -> a._2.rd))
     mem.addr := Mux1H(in.map(a => a._1 -> a._2.addr))
     for ((selected, port) <- in) {
-      port.waitReq := (anySelected && !selected) || mem.waitReq
+      port.wait_n := (!anySelected || selected) && mem.wait_n
       port.valid := selected && mem.valid
       port.dout := mem.dout
     }
@@ -156,7 +165,7 @@ class AsyncWriteMemIO(addrWidth: Int, dataWidth: Int) extends WriteMemIO(addrWid
     val mem = Wire(Flipped(AsyncMemIO(this)))
     mem.rd := false.B
     mem.wr := wr
-    waitReq := mem.waitReq
+    wait_n := mem.wait_n
     mem.addr := addr
     mem.mask := mask
     mem.din := din
@@ -168,10 +177,20 @@ class AsyncWriteMemIO(addrWidth: Int, dataWidth: Int) extends WriteMemIO(addrWid
     val mem = Wire(Flipped(MemIO(this)))
     mem.rd := false.B
     mem.wr := wr
-    waitReq := false.B
+    wait_n := true.B
     mem.addr := addr
     mem.mask := mask
     mem.din := din
+    mem
+  }
+
+  /** Converts the interface to synchronous write-only. */
+  def asWriteMemIO: WriteMemIO = {
+    val mem = Wire(Flipped(WriteMemIO(this)))
+    wr := mem.wr
+    addr := mem.addr
+    mask := mem.mask
+    din := mem.din
     mem
   }
 
@@ -183,7 +202,7 @@ class AsyncWriteMemIO(addrWidth: Int, dataWidth: Int) extends WriteMemIO(addrWid
   override def mapAddr(f: UInt => UInt): AsyncWriteMemIO = {
     val mem = Wire(Flipped(AsyncWriteMemIO(f(addr).getWidth, this.dataWidth)))
     mem.wr := wr
-    waitReq := mem.waitReq
+    wait_n := mem.wait_n
     mem.addr := f(addr)
     mem.mask := mask
     mem.din := din
@@ -198,7 +217,7 @@ class AsyncWriteMemIO(addrWidth: Int, dataWidth: Int) extends WriteMemIO(addrWid
   override def mapData(f: Bits => Bits): AsyncWriteMemIO = {
     val mem = Wire(Flipped(AsyncWriteMemIO(this)))
     mem.wr := wr
-    waitReq := mem.waitReq
+    wait_n := mem.wait_n
     mem.addr := addr
     mem.mask := mask
     mem.din := f(din)
@@ -226,7 +245,7 @@ class AsyncMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWi
     val mem = Wire(Flipped(AsyncReadMemIO(this)))
     rd := mem.rd
     wr := false.B
-    mem.waitReq := waitReq
+    mem.wait_n := wait_n
     mem.valid := valid
     addr := mem.addr
     mask := DontCare
@@ -240,7 +259,7 @@ class AsyncMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWi
     val mem = Wire(Flipped(AsyncWriteMemIO(this)))
     rd := false.B
     wr := mem.wr
-    mem.waitReq := waitReq
+    mem.wait_n := wait_n
     addr := mem.addr
     mask := mem.mask
     din := mem.din
@@ -259,7 +278,7 @@ class AsyncMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWi
     val mem = Wire(Flipped(AsyncMemIO(f(addr).getWidth, this.dataWidth)))
     mem.rd := rd
     mem.wr := wr
-    waitReq := mem.waitReq
+    wait_n := mem.wait_n
     valid := mem.valid
     mem.addr := f(addr)
     mem.mask := mask
@@ -277,7 +296,7 @@ class AsyncMemIO(addrWidth: Int, dataWidth: Int) extends MemIO(addrWidth, dataWi
     val mem = Wire(Flipped(AsyncMemIO(this)))
     mem.rd := rd
     mem.wr := wr
-    waitReq := mem.waitReq
+    wait_n := mem.wait_n
     valid := mem.valid
     mem.addr := addr
     mem.mask := mask
@@ -307,7 +326,7 @@ object AsyncMemIO {
     mem.mask := Mux1H(in.map(a => a._1 -> a._2.mask))
     mem.din := Mux1H(in.map(a => a._1 -> a._2.din))
     for ((selected, port) <- in) {
-      port.waitReq := (anySelected && !selected) || mem.waitReq
+      port.wait_n := (!anySelected || selected) && mem.wait_n
       port.valid := selected && mem.valid
       port.dout := mem.dout
     }

@@ -48,7 +48,7 @@ class AudioMixerTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
     }
   }
 
-  it should "clips the audio output (8-bit)" in {
+  it should "clip the audio output (8-bit)" in {
     test(new AudioMixer(8, Seq(ChannelConfig(8, 1), ChannelConfig(8, 1)))) { dut =>
       dut.io.in(0).poke(127)
       dut.io.in(1).poke(1)
@@ -62,7 +62,7 @@ class AudioMixerTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
     }
   }
 
-  it should "clips the audio output (16-bit)" in {
+  it should "clip the audio output (16-bit)" in {
     test(new AudioMixer(16, Seq(ChannelConfig(16, 1), ChannelConfig(16, 1)))) { dut =>
       dut.io.in(0).poke(32767)
       dut.io.in(1).poke(1)
@@ -76,11 +76,15 @@ class AudioMixerTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
     }
   }
 
-  it should "converts all samples to the output width" in {
+  it should "convert all samples to the output width" in {
     test(new AudioMixer(9, Seq(ChannelConfig(8, 1)))) { dut =>
       dut.io.in(0).poke(127)
       dut.clock.step()
       dut.io.out.expect(254)
+
+      dut.io.in(0).poke(-128)
+      dut.clock.step()
+      dut.io.out.expect(-256)
     }
   }
 }

@@ -30,38 +30,52 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package arcadia.mem.sdram
+package arcadia.snd
 
+import arcadia.clk.ClockDivider
 import chisel3._
+import chisel3.util._
 
 /**
- * An interface for controlling a SDRAM device.
+ * The 5205 is a ADPCM sound chip.
  *
- * @param config The SDRAM configuration.
+ * @param clockFreq  The system clock frequency (Hz).
+ * @param sampleFreq The sample clock frequency (Hz).
+ * @note This module wraps jotego's JT5205 implementation.
+ * @see https://github.com/jotego/jt5205
  */
-class SDRAMIO(config: Config) extends Bundle {
-  /** Clock enable */
-  val cke = Output(Bool())
-  /** Chip select (active-low) */
-  val cs_n = Output(Bool())
-  /** Row address strobe (active-low) */
-  val ras_n = Output(Bool())
-  /** Column address strobe (active-low) */
-  val cas_n = Output(Bool())
-  /** Write enable (active-low) */
-  val we_n = Output(Bool())
-  /** Output enable (active-low) */
-  val oe_n = Output(Bool())
-  /** Bank bus */
-  val bank = Output(UInt(config.bankWidth.W))
-  /** Address bus */
-  val addr = Output(UInt(config.rowWidth.W))
-  /** Data input bus */
-  val din = Output(Bits(config.dataWidth.W))
-  /** Data output bus */
-  val dout = Input(Bits(config.dataWidth.W))
-}
+class JT5205(clockFreq: Double, sampleFreq: Double) extends Module {
+  val io = IO(new Bundle {
+    /** Data input port */
+    val din = Input(Bits(4.W))
+    /** Audio output port */
+    val audio = ValidIO(SInt(12.W))
+    /** Sample clock */
+    val vclk = Output(Bool())
+  })
 
-object SDRAMIO {
-  def apply(config: Config) = new SDRAMIO(config)
+  class JT5205_ extends BlackBox {
+    val io = IO(new Bundle {
+      val rst = Input(Bool())
+      val clk = Input(Bool())
+      val cen = Input(Bool())
+      val sel = Input(Bits(2.W))
+      val din = Input(Bits(4.W))
+      val sound = Output(SInt(12.W))
+      val sample = Output(Bool())
+      val vclk_o = Output(Bool())
+    })
+
+    override def desiredName = "jt5205"
+  }
+
+  val m = Module(new JT5205_)
+  m.io.clk := clock.asBool
+  m.io.rst := reset.asBool
+  m.io.cen := ClockDivider(clockFreq / sampleFreq)
+  m.io.sel := "b10".U // 8 kHz
+  m.io.din := io.din
+  io.audio.valid := m.io.sample
+  io.audio.bits := m.io.sound
+  io.vclk := m.io.vclk_o
 }

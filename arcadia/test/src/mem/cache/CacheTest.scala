@@ -84,7 +84,7 @@ trait ReadWriteCacheTestHelpers {
     dut.clock.step()
     dut.io.in.rd.poke(false)
     dut.clock.step(2)
-    dut.io.out.waitReq.poke(false)
+    dut.io.out.wait_n.poke(true)
 
     data.foreach { n =>
       dut.io.out.valid.poke(true)
@@ -175,6 +175,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "move to the evict state after a dirty write hit" in {
     test(mkCache()) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       fillCacheLine(dut, 0x00, Seq(0x3412, 0x7856))
       fillCacheLine(dut, 0x20, Seq(0xab90, 0xefcd))
       writeCache(dut, 0x00)
@@ -191,6 +192,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "move to the fill state after an eviction" in {
     test(mkCache()) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       fillCacheLine(dut, 0x00, Seq(0x3412, 0x7856))
       fillCacheLine(dut, 0x20, Seq(0xab90, 0xefcd))
       writeCache(dut, 0x00)
@@ -206,6 +208,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "move to the merge state after a line fill" in {
     test(mkCache()) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       fillCacheLine(dut, 0x00, Seq(0x0001, 0x0002))
       writeCache(dut, 0x02)
       dut.io.in.wr.poke(true)
@@ -220,6 +223,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "return to the idle state after writing a cache entry" in {
     test(mkCache()) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       dut.io.in.rd.poke(true)
       waitForFill(dut)
       dut.io.in.rd.poke(false)
@@ -233,6 +237,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "return to the idle state after a read hit" in {
     test(mkCache()) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       fillCacheLine(dut, 0x00, Seq(0x0001, 0x0002))
       dut.io.in.rd.poke(true)
       waitForCheck(dut)
@@ -245,6 +250,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "return to the idle state after a write hit" in {
     test(mkCache()) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       fillCacheLine(dut, 0x00, Seq(0x0001, 0x0002))
       dut.io.in.wr.poke(true)
       waitForCheck(dut)
@@ -260,11 +266,11 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "deassert the wait signal when the cache is enabled" in {
     test(mkCache()) { dut =>
       dut.io.enable.poke(true)
-      dut.io.in.waitReq.expect(true)
+      dut.io.in.wait_n.expect(false)
       waitForIdle(dut)
-      dut.io.in.waitReq.expect(false)
+      dut.io.in.wait_n.expect(true)
       dut.io.enable.poke(false)
-      dut.io.in.waitReq.expect(true)
+      dut.io.in.wait_n.expect(false)
     }
   }
 
@@ -273,6 +279,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "toggle the LRU bit during a read hit" in {
     test(mkCache()) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       fillCacheLine(dut, 0x00, Seq(0x3412, 0x7856))
       fillCacheLine(dut, 0x04, Seq(0x3412, 0x7856))
       fillCacheLine(dut, 0x20, Seq(0xab90, 0xefcd))
@@ -305,6 +312,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "toggle the LRU bit during a write hit" in {
     test(mkCache()) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       fillCacheLine(dut, 0x00, Seq(0x3412, 0x7856))
       fillCacheLine(dut, 0x04, Seq(0x3412, 0x7856))
       fillCacheLine(dut, 0x20, Seq(0xab90, 0xefcd))
@@ -338,6 +346,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
 
   it should "read from the cache during a hit" in {
     test(mkCache()) { dut =>
+      dut.io.out.wait_n.poke(true)
       dut.io.enable.poke(true)
       fillCacheLine(dut, 0x00, Seq(0x3412, 0x7856))
 
@@ -364,6 +373,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
 
   it should "fill a cache line during a miss" in {
     test(mkCache()) { dut =>
+      dut.io.out.wait_n.poke(true)
       dut.io.enable.poke(true)
       waitForIdle(dut)
 
@@ -398,6 +408,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "fill a cache line during a miss (wide)" in {
     test(mkCache(cacheConfig.copy(inDataWidth = 32))) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       waitForIdle(dut)
 
       // read
@@ -431,6 +442,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "fill a cache line during a miss (wrapping)" in {
     test(mkCache(cacheConfig.copy(wrapping = true))) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       waitForIdle(dut)
 
       // read
@@ -464,6 +476,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "fill a cache line during a miss (wide wrapping)" in {
     test(mkCache(cacheConfig.copy(inDataWidth = 32, wrapping = true))) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       waitForIdle(dut)
 
       // read
@@ -497,6 +510,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "evict a dirty cache entry before a line fill" in {
     test(mkCache(cacheConfig)) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       fillCacheLine(dut, 0x00, Seq(0x3412, 0x7856))
       fillCacheLine(dut, 0x20, Seq(0xab90, 0xefcd))
       writeCache(dut, 0x00, 0xab)
@@ -594,6 +608,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "evict a dirty cache entry before a line fill (wrapping)" in {
     test(mkCache(cacheConfig.copy(wrapping = true))) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       fillCacheLine(dut, 0x00, Seq(0x3412, 0x7856))
       fillCacheLine(dut, 0x20, Seq(0xab90, 0xefcd))
       writeCache(dut, 0x00, 0xab)
@@ -694,7 +709,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       waitForIdle(dut)
       dut.io.in.rd.poke(true)
       waitForCheck(dut)
-      dut.io.in.waitReq.expect(true)
+      dut.io.in.wait_n.expect(false)
     }
   }
 
@@ -703,6 +718,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "write to the cache during a hit" in {
     test(mkCache()) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       fillCacheLine(dut, 0x00, Seq(0x3412, 0x7856))
 
       // write
@@ -732,6 +748,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "fill a cache line during a miss" in {
     test(mkCache()) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       waitForIdle(dut)
 
       // write
@@ -770,6 +787,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "evict a dirty cache entry before writing to the cache" in {
     test(mkCache()) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       fillCacheLine(dut, 0x00, Seq(0x3412, 0x7856))
       fillCacheLine(dut, 0x20, Seq(0xab90, 0xefcd))
       writeCache(dut, 0x00, 0xab)
@@ -870,7 +888,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
       waitForIdle(dut)
       dut.io.in.wr.poke(true)
       waitForCheck(dut)
-      dut.io.in.waitReq.expect(true)
+      dut.io.in.wait_n.expect(false)
     }
   }
 
@@ -879,6 +897,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "read/write data (8:8)" in {
     test(mkCache(cacheConfig.copy(inDataWidth = 8, outDataWidth = 8))) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       fillCacheLine(dut, 0, Seq(0x12, 0x34))
       writeCache(dut, 0, 0x12)
       readCache(dut, 0) shouldBe 0x12
@@ -889,6 +908,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "read/write data (8:16)" in {
     test(mkCache(cacheConfig.copy(inDataWidth = 8, outDataWidth = 16))) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       fillCacheLine(dut, 0, Seq(0x3412, 0x7856))
       writeCache(dut, 0, 0x12)
       readCache(dut, 0) shouldBe 0x12
@@ -901,6 +921,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "read/write data (8:32)" in {
     test(mkCache(cacheConfig.copy(inDataWidth = 8, outDataWidth = 32))) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       fillCacheLine(dut, 0.U, Seq("h_78563412".U, "h_efcdab90".U))
       writeCache(dut, 0, 0x12)
       readCache(dut, 0) shouldBe 0x12
@@ -917,6 +938,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "read/write data (16:8)" in {
     test(mkCache(cacheConfig.copy(inDataWidth = 16, outDataWidth = 8))) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       fillCacheLine(dut, 0, Seq(0x12, 0x34))
       writeCache(dut, 0, 0x1234)
       readCache(dut, 0) shouldBe 0x1234
@@ -926,6 +948,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "read/write data (16:16)" in {
     test(mkCache(cacheConfig.copy(inDataWidth = 16, outDataWidth = 16))) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       fillCacheLine(dut, 0, Seq(0x3412, 0x7856))
       writeCache(dut, 0, 0x1234)
       readCache(dut, 0) shouldBe 0x1234
@@ -936,6 +959,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   it should "read/write data (16:32)" in {
     test(mkCache(cacheConfig.copy(inDataWidth = 16, outDataWidth = 32, lineWidth = 1))) { dut =>
       dut.io.enable.poke(true)
+      dut.io.out.wait_n.poke(true)
       fillCacheLine(dut, 0.U, Seq("h_78563412".U))
       writeCache(dut, 0, 0x1234)
       readCache(dut, 0) shouldBe 0x1234

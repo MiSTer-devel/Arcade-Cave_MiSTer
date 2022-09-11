@@ -122,10 +122,10 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   it should "move to the read wait state after starting a memory read request" in {
     test(new EEPROM) { dut =>
       read(dut, 0)
-      dut.io.mem.waitReq.poke(true)
+      dut.io.mem.wait_n.poke(false)
       dut.io.debug.readWait.expect(false)
       dut.clock.step()
-      dut.io.mem.waitReq.poke(false)
+      dut.io.mem.wait_n.poke(true)
       dut.io.debug.readWait.expect(false)
       dut.clock.step()
       dut.io.debug.readWait.expect(true)
@@ -193,10 +193,10 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
       write(dut, 0)
       dut.clock.step()
       writeBits(dut, 0.U(16.W))
-      dut.io.mem.waitReq.poke(true)
+      dut.io.mem.wait_n.poke(false)
       dut.io.debug.idle.expect(false)
       dut.clock.step()
-      dut.io.mem.waitReq.poke(false)
+      dut.io.mem.wait_n.poke(true)
       dut.io.debug.idle.expect(false)
       dut.clock.step()
       dut.io.debug.idle.expect(true)
@@ -248,6 +248,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   it should "read a word from memory" in {
     test(new EEPROM) { dut =>
       read(dut, 0x12)
+      dut.io.mem.wait_n.poke(true)
       dut.io.mem.rd.expect(true)
       dut.io.mem.addr.expect(0x24)
       readBit(dut) shouldBe false // dummy bit
@@ -280,6 +281,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
       enableWrite(dut)
       write(dut, 0x12)
       writeBits(dut, 0x1234.U(16.W))
+      dut.io.mem.wait_n.poke(true)
       dut.io.mem.wr.expect(true)
       dut.io.mem.addr.expect(0x24)
       dut.io.mem.din.expect(0x1234)
@@ -291,6 +293,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
       enableWrite(dut)
       writeAll(dut)
       writeBits(dut, 0x1234.U(16.W))
+      dut.io.mem.wait_n.poke(true)
       for (n <- 0 to 63) {
         dut.io.mem.wr.expect(true)
         dut.io.mem.addr.expect(n << 1)
@@ -306,6 +309,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
     test(new EEPROM) { dut =>
       enableWrite(dut)
       erase(dut, 0x12)
+      dut.io.mem.wait_n.poke(true)
       dut.io.mem.wr.expect(true)
       dut.io.mem.addr.expect(0x24)
       dut.io.mem.din.expect(0xffff)
@@ -316,6 +320,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
     test(new EEPROM) { dut =>
       enableWrite(dut)
       eraseAll(dut)
+      dut.io.mem.wait_n.poke(true)
       for (n <- 0 to 63) {
         dut.io.mem.wr.expect(true)
         dut.io.mem.addr.expect(n << 1)

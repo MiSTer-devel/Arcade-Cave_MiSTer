@@ -481,12 +481,12 @@ wire player_2_pause    =             joystick_1[10];
 ////////////////////////////////////////////////////////////////////////////////
 
 wire [31:0] ddr_addr;
-wire        sdram_oe;
+wire        sdram_oe_n;
 wire [15:0] sdram_din;
 wire [15:0] sdram_dout;
 
 assign DDRAM_ADDR = ddr_addr[31:3];
-assign SDRAM_DQ = sdram_oe ? sdram_din : 16'bZ;
+assign SDRAM_DQ = sdram_oe_n ? sdram_din : 16'bZ;
 assign sdram_dout = SDRAM_DQ;
 
 Cave cave (
@@ -556,7 +556,7 @@ Cave cave (
   .ddr_mask(DDRAM_BE),
   .ddr_din(DDRAM_DIN),
   .ddr_dout(DDRAM_DOUT),
-  .ddr_waitReq(DDRAM_BUSY),
+  .ddr_wait_n(~DDRAM_BUSY),
   .ddr_valid(DDRAM_DOUT_READY),
   .ddr_burstLength(DDRAM_BURSTCNT),
   // SDRAM
@@ -565,7 +565,7 @@ Cave cave (
   .sdram_ras_n(SDRAM_nRAS),
   .sdram_cas_n(SDRAM_nCAS),
   .sdram_we_n(SDRAM_nWE),
-  .sdram_oe(sdram_oe),
+  .sdram_oe_n(sdram_oe_n),
   .sdram_bank(SDRAM_BA),
   .sdram_addr(SDRAM_A),
   .sdram_din(sdram_din),
@@ -575,7 +575,7 @@ Cave cave (
   .ioctl_download(ioctl_download),
   .ioctl_rd(ioctl_rd),
   .ioctl_wr(ioctl_wr),
-  .ioctl_waitReq(ioctl_wait),
+  .ioctl_wait_n(~ioctl_wait),
   .ioctl_index(ioctl_index),
   .ioctl_addr(ioctl_addr),
   .ioctl_din(ioctl_din),

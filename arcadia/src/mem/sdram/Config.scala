@@ -48,10 +48,10 @@ import chisel3.util.log2Ceil
  * @param dataWidth      The width of the data bus.
  * @param burstLength    The number of words to be transferred during a read/write.
  * @param burstType      The burst type (0=sequential, 1=interleaved).
- * @param casLatency     The delay in clock cycles, between the start of a read command and the
- *                       availability of the output data.
+ * @param casLatency     The delay in clock cycles, between the start of a read operation and the
+ *                       first data value transferred.
  * @param writeBurstMode The write burst mode (0=burst, 1=single).
- * @param tINIT          The initialization delay (ns).
+ * @param tINIT          The device initialization delay (ns).
  * @param tMRD           The mode register cycle time (ns).
  * @param tRC            The row cycle time (ns).
  * @param tRCD           The RAS to CAS delay (ns).
@@ -68,7 +68,7 @@ case class Config(clockFreq: Double,
                   burstType: Int = 0,
                   casLatency: Int = 2,
                   writeBurstMode: Int = 0,
-                  tINIT: Double = 200000,
+                  tINIT: Double = 200_000,
                   tMRD: Double = 12,
                   tRC: Double = 60,
                   tRCD: Double = 18,
@@ -78,7 +78,7 @@ case class Config(clockFreq: Double,
   /** The width of the address bus (i.e. the byte width of all banks, rows, and columns). */
   val addrWidth = bankWidth + rowWidth + colWidth + 1
   /** The SDRAM clock period (ns). */
-  val clockPeriod = 1 / clockFreq * 1000000000
+  val clockPeriod = 1 / clockFreq * 1_000_000_000D
   /** The number of clock cycles to wait before selecting the device. */
   val deselectWait = (tINIT / clockPeriod).ceil.toLong
   /** The number of clock cycles to wait for a PRECHARGE command. */
@@ -102,8 +102,8 @@ case class Config(clockFreq: Double,
   /** The maximum value of the refresh counter. */
   val refreshCounterMax = 1 << log2Ceil(refreshInterval)
 
-  /** The mode opcode value used for configuring the SDRAM module. */
-  def mode: UInt =
+  /** The opcode to configure the SDRAM device. */
+  def opcode: UInt =
     0.U(3.W) ## // unused
       writeBurstMode.U(1.W) ##
       0.U(2.W) ## // unused

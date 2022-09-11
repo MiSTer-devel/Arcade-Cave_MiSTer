@@ -68,8 +68,8 @@ class DDR(config: Config) extends Module {
   // Control signals
   val read = stateReg === State.idle && io.mem.rd
   val write = (stateReg === State.idle || stateReg === State.writeWait) && io.mem.wr
-  val effectiveRead = read && !io.ddr.waitReq
-  val effectiveWrite = write && !io.ddr.waitReq
+  val effectiveRead = read && io.ddr.wait_n
+  val effectiveWrite = write && io.ddr.wait_n
   val burstCounterEnable = (stateReg === State.readWait && io.ddr.valid) || effectiveWrite
 
   // Burst counter

@@ -109,7 +109,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
     fifo.io.count <= (SpriteProcessor.FIFO_DEPTH / 2).U
 
   // Set effective read flag
-  effectiveRead := tileRomRead && !io.ctrl.tileRom.waitReq
+  effectiveRead := tileRomRead && io.ctrl.tileRom.wait_n
 
   // Set sprite RAM address. The sprite counter is padded to 10-bits (1024) to handle a lower
   // maximum sprite count during testing.

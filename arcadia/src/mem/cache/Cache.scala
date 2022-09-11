@@ -33,7 +33,7 @@
 package arcadia.mem.cache
 
 import arcadia.mem._
-import arcadia.mem.request.ReadWriteRequest
+import arcadia.mem.request.Request
 import chisel3._
 import chisel3.util._
 
@@ -97,7 +97,7 @@ class Cache(config: Config) extends Module {
   }
 
   // Cache request
-  val request = ReadWriteRequest(io.in.rd, io.in.wr, Address(config, io.in.addr), io.in.din, io.in.mask)
+  val request = Request(io.in.rd, io.in.wr, Address(config, io.in.addr), io.in.din, io.in.mask)
   val requestReg = RegEnable(request, start)
 
   // Data registers
@@ -137,7 +137,7 @@ class Cache(config: Config) extends Module {
   // Assert the burst counter enable signal as words are bursted from memory
   val burstCounterEnable = {
     val fill = stateReg === State.fillWait && io.out.valid
-    val evict = (stateReg === State.evict || stateReg === State.evictWait) && !io.out.waitReq
+    val evict = (stateReg === State.evict || stateReg === State.evictWait) && io.out.wait_n
     fill || evict
   }
 
@@ -147,7 +147,7 @@ class Cache(config: Config) extends Module {
 
   // Control signals
   start := io.enable && (request.rd || request.wr) && stateReg === State.idle
-  val waitReq = !(io.enable && stateReg === State.idle)
+  val wait_n = io.enable && stateReg === State.idle
   val hitA = cacheEntryA.isHit(requestReg.addr)
   val hitB = cacheEntryB.isHit(requestReg.addr)
   val hit = hitA || hitB
@@ -236,7 +236,7 @@ class Cache(config: Config) extends Module {
 
     // Fill a cache line
     is(State.fill) {
-      when(!io.out.waitReq) { stateReg := State.fillWait }
+      when(io.out.wait_n) { stateReg := State.fillWait }
     }
 
     // Wait for a line file
@@ -248,7 +248,7 @@ class Cache(config: Config) extends Module {
 
     // Evict a dirty cache entry
     is(State.evict) {
-      when(!io.out.waitReq) { stateReg := State.evictWait }
+      when(io.out.wait_n) { stateReg := State.evictWait }
     }
 
     // Wait for an eviction
@@ -264,7 +264,7 @@ class Cache(config: Config) extends Module {
   }
 
   // Outputs
-  io.in.waitReq := waitReq
+  io.in.wait_n := wait_n
   io.in.valid := validReg
   io.in.dout := doutReg
   io.out.rd := stateReg === State.fill

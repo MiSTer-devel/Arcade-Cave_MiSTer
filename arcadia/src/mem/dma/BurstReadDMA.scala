@@ -74,8 +74,8 @@ class BurstReadDMA(config: Config) extends Module {
   val start = io.start && !busy
   val read = readEnableReg && !readPendingReg && fifoAlmostEmpty
   val write = writeEnableReg && fifo.io.deq.valid
-  val effectiveRead = read && !io.in.waitReq
-  val effectiveWrite = write && !io.out.waitReq
+  val effectiveRead = read && io.in.wait_n
+  val effectiveWrite = write && io.out.wait_n
 
   // Counters
   val (wordCounter, wordCounterWrap) = Counter.static(config.depth, enable = effectiveWrite)
@@ -129,6 +129,6 @@ class BurstReadDMA(config: Config) extends Module {
 
   // Debug
   if (sys.env.get("DEBUG").contains("1")) {
-    printf(p"BurstReadDMA(start: ${io.start}, rdEnable: $readEnableReg, wrEnable: $writeEnableReg, rdPending: $readPendingReg, busy: $busy, read: $read, write: $write, inAddr: 0x${Hexadecimal(io.in.addr)}, inData: 0x${Hexadecimal(io.in.dout)}, outAddr: 0x${Hexadecimal(io.out.addr)}, outData: 0x${Hexadecimal(io.out.din)}, waitReq: ${io.in.waitReq}, valid: ${io.in.valid}, burst: $burstCounter ($burstCounterWrap))\n")
+    printf(p"BurstReadDMA(start: ${io.start}, rdEnable: $readEnableReg, wrEnable: $writeEnableReg, rdPending: $readPendingReg, busy: $busy, read: $read, write: $write, inAddr: 0x${Hexadecimal(io.in.addr)}, inData: 0x${Hexadecimal(io.in.dout)}, outAddr: 0x${Hexadecimal(io.out.addr)}, outData: 0x${Hexadecimal(io.out.din)}, wait: ${io.in.wait_n}, valid: ${io.in.valid}, burst: $burstCounter ($burstCounterWrap))\n")
   }
 }

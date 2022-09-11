@@ -44,6 +44,9 @@ trait BurstReadDMATestHelpers {
 class BurstReadDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with BurstReadDMATestHelpers {
   it should "copy data from a bursted input memory to an asynchronous output memory" in {
     test(mkDMA()) { dut =>
+      dut.io.in.wait_n.poke(true)
+      dut.io.out.wait_n.poke(true)
+
       // start
       dut.io.start.poke(true)
       dut.io.in.rd.expect(false)
@@ -53,14 +56,14 @@ class BurstReadDMATest extends AnyFlatSpec with ChiselScalatestTester with Match
       // wait for read
       dut.io.start.poke(false)
       dut.io.busy.expect(true)
-      dut.io.in.waitReq.poke(true)
+      dut.io.in.wait_n.poke(false)
       dut.io.in.rd.expect(true)
       dut.io.in.addr.expect(0x00)
       dut.io.out.wr.expect(false)
       dut.clock.step()
 
       // read 0
-      dut.io.in.waitReq.poke(false)
+      dut.io.in.wait_n.poke(true)
       dut.io.in.rd.expect(true)
       dut.io.in.addr.expect(0x00)
       dut.io.out.wr.expect(false)
@@ -108,7 +111,7 @@ class BurstReadDMATest extends AnyFlatSpec with ChiselScalatestTester with Match
       dut.io.in.burstDone.poke(false)
       dut.io.in.rd.expect(true)
       dut.io.in.addr.expect(0x20)
-      dut.io.out.waitReq.poke(true)
+      dut.io.out.wait_n.poke(false)
       dut.io.out.wr.expect(true)
       dut.io.out.addr.expect(0x18)
       dut.io.out.din.expect(0x13)
@@ -118,7 +121,7 @@ class BurstReadDMATest extends AnyFlatSpec with ChiselScalatestTester with Match
       dut.io.in.valid.poke(true)
       dut.io.in.dout.poke(0x14)
       dut.io.in.rd.expect(false)
-      dut.io.out.waitReq.poke(false)
+      dut.io.out.wait_n.poke(true)
       dut.io.out.wr.expect(true)
       dut.io.out.addr.expect(0x18)
       dut.io.out.din.expect(0x13)

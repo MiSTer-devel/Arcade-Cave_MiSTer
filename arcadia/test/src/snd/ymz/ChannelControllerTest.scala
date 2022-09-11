@@ -193,10 +193,10 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
       // Fetch
       waitForProcess(dut)
       dut.clock.step()
-      dut.io.rom.waitReq.poke(true)
+      dut.io.rom.wait_n.poke(false)
       dut.io.rom.rd.expect(true)
       dut.clock.step()
-      dut.io.rom.waitReq.poke(false)
+      dut.io.rom.wait_n.poke(true)
       dut.io.rom.rd.expect(true)
       dut.clock.step()
       dut.io.rom.rd.expect(false)

@@ -120,7 +120,7 @@ class SpriteFrameBuffer extends Module {
   val frameBufferDma = Module(new BurstWriteDMA(Config.spriteFrameBufferDmaConfig))
   frameBufferDma.io.start := io.enable && io.swap
   frameBufferDma.io.in.valid := true.B
-  frameBufferDma.io.in.waitReq := false.B
+  frameBufferDma.io.in.wait_n := true.B
   frameBufferDma.io.in.dout := 0.U
 
   // Calculate line buffer address offset for the next scanline

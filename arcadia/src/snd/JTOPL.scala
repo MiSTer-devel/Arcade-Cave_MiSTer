@@ -30,58 +30,59 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package arcadia.mem
+package arcadia.snd
 
+import arcadia.clk.ClockDivider
+import arcadia.mem._
 import chisel3._
 import chisel3.util._
 
 /**
- * A dual-clock FIFO.
+ * The OPL is a FM sound synthesizer.
  *
- * The write port runs in the default clock domain, and the read port runs in the read clock domain.
- *
- * @param t     The input data type.
- * @param depth The depth of the FIFO.
+ * @param clockFreq  The system clock frequency (Hz).
+ * @param sampleFreq The sample clock frequency (Hz).
+ * @note This module wraps jotego's JTOPL implementation.
+ * @see https://github.com/jotego/jtopl
  */
-class DualClockFIFO[T <: Data](t: T, depth: Int) extends Module {
+class JTOPL(clockFreq: Double, sampleFreq: Double) extends Module {
   val io = IO(new Bundle {
-    /** Read clock */
-    val readClock = Input(Clock())
-    /** Read port */
-    val deq = Flipped(DeqIO(t))
-    /** Write port */
-    val enq = Flipped(EnqIO(t))
+    /** CPU port */
+    val cpu = Flipped(MemIO(1, 8))
+    /** IRQ */
+    val irq = Output(Bool())
+    /** Audio output port */
+    val audio = ValidIO(SInt(16.W))
   })
 
-  class WrappedDualClockFIFO extends BlackBox(Map(
-    "DATA_WIDTH" -> t.getWidth,
-    "DEPTH" -> depth
-  )) {
+  class JTOPL_ extends BlackBox {
     val io = IO(new Bundle {
-      val data = Input(Bits(t.getWidth.W))
-      val rdclk = Input(Clock())
-      val rdreq = Input(Bool())
-      val wrclk = Input(Clock())
-      val wrreq = Input(Bool())
-      val q = Output(Bits(t.getWidth.W))
-      val rdempty = Output(Bool())
-      val wrfull = Output(Bool())
+      val rst = Input(Bool())
+      val clk = Input(Bool())
+      val cen = Input(Bool())
+      val din = Input(Bits(8.W))
+      val addr = Input(Bool())
+      val cs_n = Input(Bool())
+      val wr_n = Input(Bool())
+      val dout = Output(Bits(8.W))
+      val irq_n = Output(Bool())
+      val snd = Output(SInt(16.W))
+      val sample = Output(Bool())
     })
 
-    override def desiredName = "dual_clock_fifo"
+    override def desiredName = "jtopl"
   }
 
-  val fifo = Module(new WrappedDualClockFIFO)
-
-  // Write port
-  fifo.io.wrclk := clock
-  fifo.io.wrreq := io.enq.fire
-  io.enq.ready := !fifo.io.wrfull // allow writing while the FIFO isn't full
-  fifo.io.data := io.enq.bits.asUInt
-
-  // Read port
-  fifo.io.rdclk := io.readClock
-  fifo.io.rdreq := io.deq.fire
-  io.deq.valid := !fifo.io.rdempty // allow reading while the FIFO isn't empty
-  io.deq.bits := fifo.io.q.asTypeOf(t)
+  val m = Module(new JTOPL_)
+  m.io.rst := reset.asBool
+  m.io.clk := clock.asBool
+  m.io.cen := ClockDivider(clockFreq / sampleFreq)
+  m.io.cs_n := false.B
+  m.io.wr_n := !io.cpu.wr
+  m.io.addr := io.cpu.addr(0)
+  m.io.din := io.cpu.din
+  io.cpu.dout := m.io.dout
+  io.irq := !m.io.irq_n
+  io.audio.valid := m.io.sample
+  io.audio.bits := m.io.snd
 }

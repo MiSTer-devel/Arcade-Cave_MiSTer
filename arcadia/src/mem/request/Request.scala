@@ -30,38 +30,41 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package arcadia.mem.sdram
+package arcadia.mem.request
 
 import chisel3._
 
-/**
- * An interface for controlling a SDRAM device.
- *
- * @param config The SDRAM configuration.
- */
-class SDRAMIO(config: Config) extends Bundle {
-  /** Clock enable */
-  val cke = Output(Bool())
-  /** Chip select (active-low) */
-  val cs_n = Output(Bool())
-  /** Row address strobe (active-low) */
-  val ras_n = Output(Bool())
-  /** Column address strobe (active-low) */
-  val cas_n = Output(Bool())
-  /** Write enable (active-low) */
-  val we_n = Output(Bool())
-  /** Output enable (active-low) */
-  val oe_n = Output(Bool())
-  /** Bank bus */
-  val bank = Output(UInt(config.bankWidth.W))
+/** Represents a memory request. */
+class Request[S <: Data, T <: Data](s: S, t: T) extends Bundle {
+  /** Read enable */
+  val rd = Output(Bool())
+  /** Write enable */
+  val wr = Output(Bool())
   /** Address bus */
-  val addr = Output(UInt(config.rowWidth.W))
-  /** Data input bus */
-  val din = Output(Bits(config.dataWidth.W))
-  /** Data output bus */
-  val dout = Input(Bits(config.dataWidth.W))
+  val addr = Output(s)
+  /** Data bus */
+  val din = Output(t)
+  /** Byte mask */
+  val mask = Output(UInt((t.getWidth / 8).W))
 }
 
-object SDRAMIO {
-  def apply(config: Config) = new SDRAMIO(config)
+object Request {
+  /**
+   * Creates a read-write memory request.
+   *
+   * @param rd   Read enable.
+   * @param wr   Write enable.
+   * @param addr The memory address.
+   * @param din  The data value.
+   * @param mask The byte mask.
+   */
+  def apply[S <: Data, T <: Data](rd: Bool, wr: Bool, addr: S, din: T, mask: UInt): Request[S, T] = {
+    val req = Wire(new Request(chiselTypeOf(addr), chiselTypeOf(din)))
+    req.rd := rd
+    req.wr := wr
+    req.addr := addr
+    req.din := din
+    req.mask := mask
+    req
+  }
 }

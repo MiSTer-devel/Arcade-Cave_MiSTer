@@ -69,45 +69,46 @@ class AsyncMemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Ma
 
   it should "assert the wait signal when the output is busy" in {
     test(mkMemArbiter) { dut =>
-      dut.io.out.waitReq.poke(true)
+      dut.io.out.wait_n.poke(false)
 
       // read 0+1
       dut.io.in(0).rd.poke(true)
       dut.io.in(1).rd.poke(true)
-      dut.io.in(0).waitReq.expect(true)
-      dut.io.in(1).waitReq.expect(true)
+      dut.io.in(0).wait_n.expect(false)
+      dut.io.in(1).wait_n.expect(false)
 
       // wait 0
-      dut.io.out.waitReq.poke(false)
-      dut.io.in(0).waitReq.expect(false)
-      dut.io.in(1).waitReq.expect(true)
-      dut.io.out.waitReq.poke(true)
-      dut.io.in(0).waitReq.expect(true)
-      dut.io.in(1).waitReq.expect(true)
+      dut.io.out.wait_n.poke(true)
+      dut.io.in(0).wait_n.expect(true)
+      dut.io.in(1).wait_n.expect(false)
+      dut.io.out.wait_n.poke(false)
+      dut.io.in(0).wait_n.expect(false)
+      dut.io.in(1).wait_n.expect(false)
 
       // read 1
       dut.io.in(0).rd.poke(false)
       dut.io.in(1).rd.poke(true)
-      dut.io.in(0).waitReq.expect(true)
-      dut.io.in(1).waitReq.expect(true)
+      dut.io.in(0).wait_n.expect(false)
+      dut.io.in(1).wait_n.expect(false)
 
       // wait 1
-      dut.io.out.waitReq.poke(false)
-      dut.io.in(0).waitReq.expect(true)
-      dut.io.in(1).waitReq.expect(false)
-      dut.io.out.waitReq.poke(true)
-      dut.io.in(0).waitReq.expect(true)
-      dut.io.in(1).waitReq.expect(true)
+      dut.io.out.wait_n.poke(true)
+      dut.io.in(0).wait_n.expect(false)
+      dut.io.in(1).wait_n.expect(true)
+      dut.io.out.wait_n.poke(false)
+      dut.io.in(0).wait_n.expect(false)
+      dut.io.in(1).wait_n.expect(false)
     }
   }
 
   it should "assert not the wait signal when there are no requests" in {
     test(mkMemArbiter) { dut =>
-      dut.io.in(0).waitReq.expect(false)
-      dut.io.in(1).waitReq.expect(false)
+      dut.io.out.wait_n.poke(true)
+      dut.io.in(0).wait_n.expect(true)
+      dut.io.in(1).wait_n.expect(true)
       dut.io.in(0).rd.poke(true)
-      dut.io.in(0).waitReq.expect(false)
-      dut.io.in(1).waitReq.expect(true)
+      dut.io.in(0).wait_n.expect(true)
+      dut.io.in(1).wait_n.expect(false)
     }
   }
 
@@ -116,6 +117,7 @@ class AsyncMemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Ma
       // read 0+1
       dut.io.in(0).rd.poke(true)
       dut.io.in(1).rd.poke(true)
+      dut.io.out.wait_n.poke(true)
       dut.clock.step()
 
       // valid 0
@@ -149,6 +151,7 @@ class AsyncMemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Ma
   it should "assert the busy signal for pending requests" in {
     test(mkMemArbiter) { dut =>
       dut.io.in(0).rd.poke(true)
+      dut.io.out.wait_n.poke(true)
       dut.io.busy.expect(false)
       dut.clock.step()
       dut.io.in(0).rd.poke(false)
