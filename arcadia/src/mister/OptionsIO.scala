@@ -46,9 +46,9 @@ class OptionsIO extends Bundle {
   /** Service mode */
   val service = Input(Bool())
   /** Layer enable */
-  val layer = Output(Vec(3, Bool()))
+  val layer = Input(Vec(3, Bool()))
   /** Sprite enable */
-  val sprite = Output(Bool())
+  val sprite = Input(Bool())
   /** Flip the video output */
   val flip = Input(Bool())
   /** Game index */
