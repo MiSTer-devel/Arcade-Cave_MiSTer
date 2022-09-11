@@ -59,10 +59,8 @@ class LayerProcessor extends Module {
   // Decode the line effect for the current scanline
   val lineEffectReg = RegEnable(LineEffect.decode(io.ctrl.lineRam.dout), io.video.clockEnable)
 
-  // Enable flags
+  // Layer enable flag
   val layerEnable = io.ctrl.enable && io.ctrl.format =/= Config.GFX_FORMAT_UNKNOWN.U && io.ctrl.regs.enable
-  val rowScrollEnable = io.ctrl.rowScrollEnable && io.ctrl.regs.rowScrollEnable
-  val rowSelectEnable = io.ctrl.rowSelectEnable && io.ctrl.regs.rowSelectEnable
 
   // Don't read tile ROM data if the layer is disabled, or during a vertical blank. This is just to
   // ease SDRAM contention, as the layer tile ROM data is stored in SDRAM. This wouldn't be required
@@ -81,8 +79,8 @@ class LayerProcessor extends Module {
 
   // Apply line effects
   val pos_ = {
-    val x = Mux(rowScrollEnable, lineEffectReg.rowScroll, 0.U) + pos.x
-    val y = Mux(rowSelectEnable, lineEffectReg.rowSelect, pos.y)
+    val x = Mux(io.ctrl.regs.rowScrollEnable, lineEffectReg.rowScroll, 0.U) + pos.x
+    val y = Mux(io.ctrl.regs.rowSelectEnable, lineEffectReg.rowSelect, pos.y)
     UVec2(x, y)
   }
 

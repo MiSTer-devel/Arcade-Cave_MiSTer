@@ -113,13 +113,11 @@ class Main extends Module {
   gpu.io.video <> io.video
   0.until(Config.LAYER_COUNT).foreach { i =>
     gpu.io.layerCtrl(i).format := io.gameConfig.layer(i).format
-    gpu.io.layerCtrl(i).enable := io.options.layerEnable.layer(i)
-    gpu.io.layerCtrl(i).rowScrollEnable := io.options.rowScrollEnable
-    gpu.io.layerCtrl(i).rowSelectEnable := io.options.rowSelectEnable
+    gpu.io.layerCtrl(i).enable := io.options.layer(i)
     gpu.io.layerCtrl(i).tileRom <> Crossing.syncronize(io.videoClock, io.layerTileRom(i))
   }
   gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
-  gpu.io.spriteCtrl.enable := io.options.layerEnable.sprite
+  gpu.io.spriteCtrl.enable := io.options.sprite
   gpu.io.spriteCtrl.start := vBlankFalling
   gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
   gpu.io.spriteCtrl.tileRom <> io.spriteTileRom

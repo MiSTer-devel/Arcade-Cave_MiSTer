@@ -317,8 +317,6 @@ wire [15:0] ioctl_dout;
 wire [10:0] ps2_key;
 wire [31:0] joystick_0, joystick_1;
 
-wire sdram_available = |sdram_sz[1:0];
-
 hps_io #(.CONF_STR(CONF_STR), .WIDE(1)) hps_io (
   .clk_sys(clk_sys),
   .HPS_BUS(HPS_BUS),
@@ -499,21 +497,16 @@ Cave cave (
   // CPU reset
   .cpuReset(rst_cpu),
   // Options
-  .options_sdram(sdram_available),
   .options_offset_x(status[27:24]),
   .options_offset_y(status[31:28]),
   .options_rotate(status[3]),
-  .options_flip(status[4]),
   .options_compatibility(status[8]),
   .options_service(status[9]),
-  .options_layerEnable_sprite(~status[10]),
-  .options_layerEnable_layer_0(~status[11]),
-  .options_layerEnable_layer_1(~status[12]),
-  .options_layerEnable_layer_2(~status[13]),
-  .options_rowScrollEnable(~status[14]),
-  .options_rowSelectEnable(~status[15]),
-  .options_frameBufferEnable_sprite(~status[16]),
-  .options_frameBufferEnable_system(~status[17]),
+  .options_layer_0(~status[11]),
+  .options_layer_1(~status[12]),
+  .options_layer_2(~status[13]),
+  .options_sprite(~status[10]),
+  .options_flip(status[4]),
   .options_gameIndex(status[21:18]),
   // Joystick signals
   .player_0_up(player_1_up),

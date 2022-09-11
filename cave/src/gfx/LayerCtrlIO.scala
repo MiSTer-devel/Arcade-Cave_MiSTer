@@ -42,10 +42,6 @@ class LayerCtrlIO extends Bundle {
   val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))
   /** Enable the layer output */
   val enable = Input(Bool())
-  /** Enable the row scroll effect */
-  val rowScrollEnable = Input(Bool())
-  /** Enable the row select effect */
-  val rowSelectEnable = Input(Bool())
   /** Layer registers port */
   val regs = Input(new LayerRegs)
   /** 8x8 VRAM port */

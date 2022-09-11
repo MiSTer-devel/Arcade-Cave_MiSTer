@@ -145,7 +145,7 @@ class Cave extends Module {
   main.io.layerTileRom(2) <> memSys.io.layerTileRom(2)
   main.io.spriteTileRom <> memSys.io.spriteTileRom
 
-  // Sound
+  // Sound PCB
   val sound = Module(new Sound)
   sound.io.gameConfig := gameConfigReg
   sound.io.ctrl <> main.io.soundCtrl
@@ -154,7 +154,7 @@ class Cave extends Module {
   // Sprite frame buffer
   val spriteFrameBuffer = Module(new SpriteFrameBuffer)
   spriteFrameBuffer.io.videoClock := io.videoClock
-  spriteFrameBuffer.io.enable := io.options.frameBufferEnable.sprite && memSys.io.ready
+  spriteFrameBuffer.io.enable := memSys.io.ready
   spriteFrameBuffer.io.swap := main.io.spriteFrameBufferSwap
   spriteFrameBuffer.io.video := videoSys.io.video
   spriteFrameBuffer.io.lineBuffer <> main.io.spriteLineBuffer
@@ -164,7 +164,7 @@ class Cave extends Module {
   // System frame buffer
   val systemFrameBuffer = Module(new SystemFrameBuffer)
   systemFrameBuffer.io.videoClock := io.videoClock
-  systemFrameBuffer.io.enable := io.options.frameBufferEnable.system && memSys.io.ready
+  systemFrameBuffer.io.enable := memSys.io.ready
   systemFrameBuffer.io.rotate := io.options.rotate
   systemFrameBuffer.io.forceBlank := !memSys.io.ready
   systemFrameBuffer.io.video := videoSys.io.video
