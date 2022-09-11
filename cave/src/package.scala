@@ -30,12 +30,30 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import arcadia.UVec2
 import arcadia.cpu.m68k.CPU
 import chisel3._
 import arcadia.mem._
 
 package object cave {
+  /** Graphics format enum */
+  object GraphicsFormat {
+    /** Unknown graphics format */
+    val GFX_FORMAT_UNKNOWN = 0
+    /** 4BPP graphics format */
+    val GFX_FORMAT_4BPP = 1
+    /** 4BPP MSB graphics format */
+    val GFX_FORMAT_4BPP_MSB = 2
+    /** 8BPP graphics format */
+    val GFX_FORMAT_8BPP = 3
+  }
+
+  /** Sound device enum */
+  object SoundDevice {
+    val DISABLED = 0
+    val YMZ280B = 1
+    val OKIM6259 = 2
+  }
+
   /** DIP switches IO */
   def DIPIO(): Vec[UInt] = Input(Vec(4, Bits(CPU.DATA_WIDTH.W)))
 
@@ -65,11 +83,4 @@ package object cave {
 
   /** System frame buffer IO */
   class SystemFrameBufferIO extends AsyncWriteMemIO(Config.FRAME_BUFFER_ADDR_WIDTH, Config.SYSTEM_FRAME_BUFFER_DATA_WIDTH)
-
-  /** Sound device enum */
-  object SoundDevice {
-    val DISABLED = 0
-    val YMZ280B = 1
-    val OKIM6259 = 2
-  }
 }

@@ -39,7 +39,7 @@ import chisel3._
 /** A bundle that contains control signals for the layer processor. */
 class LayerCtrlIO extends Bundle {
   /** Graphics format */
-  val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))
+  val format = Input(UInt(GameConfig.GFX_FORMAT_WIDTH.W))
   /** Enable the layer output */
   val enable = Input(Bool())
   /** Layer registers port */

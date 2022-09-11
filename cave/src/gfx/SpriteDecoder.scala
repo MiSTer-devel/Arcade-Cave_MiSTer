@@ -33,7 +33,7 @@
 package cave.gfx
 
 import arcadia.Util
-import cave.Config
+import cave._
 import chisel3._
 import chisel3.util._
 
@@ -49,7 +49,7 @@ import chisel3.util._
 class SpriteDecoder extends Module {
   val io = IO(new Bundle {
     /** Graphics format port */
-    val format = Input(UInt(Config.GFX_FORMAT_WIDTH.W))
+    val format = Input(UInt(GameConfig.GFX_FORMAT_WIDTH.W))
     /** Tile ROM data port */
     val tileRom = DeqIO(Bits(Config.TILE_ROM_DATA_WIDTH.W))
     /** Pixel data port */
@@ -57,7 +57,7 @@ class SpriteDecoder extends Module {
   })
 
   // Set 8BPP flag
-  val is8BPP = io.format === Config.GFX_FORMAT_8BPP.U
+  val is8BPP = io.format === GraphicsFormat.GFX_FORMAT_8BPP.U
 
   // Registers
   val pendingReg = RegInit(false.B)
@@ -71,8 +71,8 @@ class SpriteDecoder extends Module {
 
   // Decode the tile ROM data
   val bits = MuxLookup(io.format, VecInit(SpriteDecoder.decode4BPP(dataReg.tail(Config.TILE_ROM_DATA_WIDTH))), Seq(
-    Config.GFX_FORMAT_4BPP_MSB.U -> VecInit(SpriteDecoder.decode4BPPMSB(dataReg.tail(Config.TILE_ROM_DATA_WIDTH))),
-    Config.GFX_FORMAT_8BPP.U -> VecInit(SpriteDecoder.decode8BPP(dataReg))
+    GraphicsFormat.GFX_FORMAT_4BPP_MSB.U -> VecInit(SpriteDecoder.decode4BPPMSB(dataReg.tail(Config.TILE_ROM_DATA_WIDTH))),
+    GraphicsFormat.GFX_FORMAT_8BPP.U -> VecInit(SpriteDecoder.decode8BPP(dataReg))
   ))
 
   // Clear registers when starting a new request

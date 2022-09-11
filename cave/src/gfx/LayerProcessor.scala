@@ -60,7 +60,7 @@ class LayerProcessor extends Module {
   val lineEffectReg = RegEnable(LineEffect.decode(io.ctrl.lineRam.dout), io.video.clockEnable)
 
   // Layer enable flag
-  val layerEnable = io.ctrl.enable && io.ctrl.format =/= Config.GFX_FORMAT_UNKNOWN.U && io.ctrl.regs.enable
+  val layerEnable = io.ctrl.enable && io.ctrl.format =/= GraphicsFormat.GFX_FORMAT_UNKNOWN.U && io.ctrl.regs.enable
 
   // Don't read tile ROM data if the layer is disabled, or during a vertical blank. This is just to
   // ease SDRAM contention, as the layer tile ROM data is stored in SDRAM. This wouldn't be required
@@ -171,10 +171,10 @@ object LayerProcessor {
    * @return A memory address.
    */
   private def tileRomAddr(ctrl: LayerCtrlIO, code: UInt, offset: UVec2): UInt = {
-    val format8x8x4 = !ctrl.regs.tileSize && ctrl.format === Config.GFX_FORMAT_4BPP.U
-    val format8x8x8 = !ctrl.regs.tileSize && ctrl.format === Config.GFX_FORMAT_8BPP.U
-    val format16x16x4 = ctrl.regs.tileSize && ctrl.format === Config.GFX_FORMAT_4BPP.U
-    val format16x16x8 = ctrl.regs.tileSize && ctrl.format === Config.GFX_FORMAT_8BPP.U
+    val format8x8x4 = !ctrl.regs.tileSize && ctrl.format === GraphicsFormat.GFX_FORMAT_4BPP.U
+    val format8x8x8 = !ctrl.regs.tileSize && ctrl.format === GraphicsFormat.GFX_FORMAT_8BPP.U
+    val format16x16x4 = ctrl.regs.tileSize && ctrl.format === GraphicsFormat.GFX_FORMAT_4BPP.U
+    val format16x16x8 = ctrl.regs.tileSize && ctrl.format === GraphicsFormat.GFX_FORMAT_8BPP.U
 
     MuxCase(0.U, Seq(
       format8x8x4 -> code ## offset.y(2, 1) ## 0.U(3.W),
@@ -195,7 +195,7 @@ object LayerProcessor {
     val word = offset.y(0) // toggle the word bit on alternate scanlines
     val pixels_4BPP = VecInit(decode4BPP(data, word))
     val pixels_8BPP = VecInit(decode8BPP(data))
-    Mux(format === Config.GFX_FORMAT_8BPP.U, pixels_8BPP, pixels_4BPP)
+    Mux(format === GraphicsFormat.GFX_FORMAT_8BPP.U, pixels_8BPP, pixels_4BPP)
   }
 
   /**

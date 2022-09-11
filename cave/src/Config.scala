@@ -185,17 +185,6 @@ object Config {
   /** The maximum bit depth of a tile */
   val SPRITE_TILE_MAX_BPP = 8
 
-  /** The width of the graphics format value */
-  val GFX_FORMAT_WIDTH = 2
-  /** Unknown graphics format */
-  val GFX_FORMAT_UNKNOWN = 0
-  /** 4BPP graphics format */
-  val GFX_FORMAT_4BPP = 1
-  /** 4BPP MSB graphics format */
-  val GFX_FORMAT_4BPP_MSB = 2
-  /** 8BPP graphics format */
-  val GFX_FORMAT_8BPP = 3
-
   /** The width of audio sample values */
   val AUDIO_SAMPLE_WIDTH = 16
 

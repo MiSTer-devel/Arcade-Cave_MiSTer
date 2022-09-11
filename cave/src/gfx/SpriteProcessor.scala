@@ -70,7 +70,7 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   }
 
   // Set 8BPP flag
-  val is8BPP = io.ctrl.format === Config.GFX_FORMAT_8BPP.U
+  val is8BPP = io.ctrl.format === GraphicsFormat.GFX_FORMAT_8BPP.U
 
   // Decode the sprite
   val sprite = Sprite.decode(io.ctrl.vram.dout, io.ctrl.zoom, io.ctrl.regs.fixed)
