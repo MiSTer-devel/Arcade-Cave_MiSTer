@@ -40,6 +40,7 @@ import arcadia.mem.sdram.{SDRAM, SDRAMIO}
 import arcadia.mister._
 import cave.fb._
 import cave.main.Main
+import cave.snd.Sound
 import chisel3._
 import chisel3.experimental.FlatIO
 
@@ -132,13 +133,23 @@ class Cave extends Module {
   // Main PCB
   val main = withReset(io.cpuReset || !memSys.io.ready) { Module(new Main) }
   main.io.videoClock := io.videoClock
-  main.io.gameConfig <> gameConfigReg
-  main.io.options <> io.options
+  main.io.gameConfig := gameConfigReg
+  main.io.options := io.options
   main.io.dips := dipsRegs.io.regs
   main.io.player <> io.player
-  main.io.audio <> io.audio
   main.io.video := videoSys.io.video
-  main.io.rom <> memSys.io.rom
+  main.io.progRom <> memSys.io.progRom
+  main.io.eeprom <> memSys.io.eeprom
+  main.io.layerTileRom(0) <> memSys.io.layerTileRom(0)
+  main.io.layerTileRom(1) <> memSys.io.layerTileRom(1)
+  main.io.layerTileRom(2) <> memSys.io.layerTileRom(2)
+  main.io.spriteTileRom <> memSys.io.spriteTileRom
+
+  // Sound
+  val sound = Module(new Sound)
+  sound.io.gameConfig := gameConfigReg
+  sound.io.ctrl <> main.io.soundCtrl
+  sound.io.rom <> memSys.io.soundRom
 
   // Sprite frame buffer
   val spriteFrameBuffer = Module(new SpriteFrameBuffer)
@@ -161,9 +172,12 @@ class Cave extends Module {
   systemFrameBuffer.io.frameBuffer <> main.io.systemFrameBuffer
   systemFrameBuffer.io.ddr <> memSys.io.systemFrameBuffer
 
-  // RGB output
+  // Video output
   io.video := videoSys.io.video
   io.rgb := main.io.rgb
+
+  // Audio output
+  io.audio := sound.io.audio
 
   // System LED outputs
   io.led.power := false.B

@@ -39,7 +39,6 @@ import arcadia.mem.buffer.BurstBuffer
 import arcadia.mem.cache.{Cache, ReadCache}
 import arcadia.mem.dma.BurstReadDMA
 import arcadia.mister._
-import cave.main.RomIO
 import chisel3._
 
 /** The memory subsystem routes memory requests to either DDR or SDRAM. */
@@ -56,12 +55,20 @@ class MemSys extends Module {
       /** Asserted when the ROM has finished downloading */
       val done = Input(Bool())
     }
+    /** Program ROM port */
+    val progRom = Flipped(new ProgRomIO)
+    /** EEPROM port */
+    val eeprom = Flipped(new EEPROMIO)
+    /** Sound ROM port */
+    val soundRom = Flipped(Vec(Config.SOUND_ROM_COUNT, new SoundRomIO))
+    /** Layer tile ROM port */
+    val layerTileRom = Flipped(Vec(Config.LAYER_COUNT, new LayerRomIO))
+    /** Sprite tile ROM port */
+    val spriteTileRom = Flipped(new SpriteRomIO)
     /** DDR port */
     val ddr = BurstMemIO(Config.ddrConfig)
     /** SDRAM port */
     val sdram = BurstMemIO(Config.sdramConfig)
-    /** ROM port */
-    val rom = Flipped(new RomIO)
     /** Sprite frame buffer port */
     val spriteFrameBuffer = Flipped(BurstMemIO(Config.ddrConfig))
     /** System frame buffer port */
@@ -107,7 +114,7 @@ class MemSys extends Module {
     wrapping = true
   )))
   progRomCache.io.enable := io.ready
-  progRomCache.io.in <> io.rom.progRom
+  progRomCache.io.in <> io.progRom
 
   // EEPROM cache
   val eepromCache = Module(new Cache(cache.Config(
@@ -133,7 +140,7 @@ class MemSys extends Module {
       wrapping = true
     )))
     c.io.enable := io.ready
-    c.io.in <> io.rom.soundRom(i)
+    c.io.in <> io.soundRom(i)
     c
   }
 
@@ -149,7 +156,7 @@ class MemSys extends Module {
       wrapping = true
     )))
     c.io.enable := io.ready
-    c.io.in <> io.rom.layerTileRom(i)
+    c.io.in <> io.layerTileRom(i)
     c
   }
 
@@ -160,7 +167,7 @@ class MemSys extends Module {
     copyDma.io.in.mapAddr(_ + Config.IOCTL_DOWNLOAD_BASE_ADDR.U),
     io.systemFrameBuffer,
     io.spriteFrameBuffer,
-    io.rom.spriteTileRom.mapAddr(_ + io.gameConfig.sprite.romOffset + Config.IOCTL_DOWNLOAD_BASE_ADDR.U)
+    io.spriteTileRom.mapAddr(_ + io.gameConfig.sprite.romOffset + Config.IOCTL_DOWNLOAD_BASE_ADDR.U)
   ) <> io.ddr
 
   // SDRAM arbiter
@@ -178,7 +185,7 @@ class MemSys extends Module {
 
   // NVRAM arbiter
   val nvramArbiter = Module(new AsyncMemArbiter(2, Config.EEPROM_ADDR_WIDTH, Config.EEPROM_DATA_WIDTH))
-  nvramArbiter.connect(io.prog.nvram, io.rom.eeprom) <> eepromCache.io.in
+  nvramArbiter.connect(io.prog.nvram, io.eeprom) <> eepromCache.io.in
 
   // Latch ready flag when the copy DMA has finished
   io.ready := Util.latchSync(Util.falling(copyDma.io.busy))

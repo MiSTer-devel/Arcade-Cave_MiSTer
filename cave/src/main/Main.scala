@@ -39,6 +39,7 @@ import arcadia.mem._
 import arcadia.mister._
 import cave._
 import cave.gfx._
+import cave.snd.SoundCtrlIO
 import chisel3._
 import chisel3.util._
 
@@ -57,12 +58,16 @@ class Main extends Module {
     val dips = DIPIO()
     /** Video port */
     val video = Flipped(VideoIO())
-    /** Audio port */
-    val audio = Output(SInt(Config.AUDIO_SAMPLE_WIDTH.W))
-    /** RGB port */
-    val rgb = Output(UInt(Config.RGB_WIDTH.W))
-    /** ROM port */
-    val rom = new RomIO
+    /** Sound control port */
+    val soundCtrl = Flipped(SoundCtrlIO())
+    /** Program ROM port */
+    val progRom = new ProgRomIO
+    /** EEPROM port */
+    val eeprom = new EEPROMIO
+    /** Layer tile ROM port */
+    val layerTileRom = Vec(Config.LAYER_COUNT, new LayerRomIO)
+    /** Sprite tile ROM port */
+    val spriteTileRom = new SpriteRomIO
     /** Sprite line buffer port */
     val spriteLineBuffer = new SpriteLineBufferIO
     /** Sprite frame buffer port */
@@ -71,6 +76,8 @@ class Main extends Module {
     val systemFrameBuffer = new SystemFrameBufferIO
     /** Asserted when the current page for the sprite frame buffer should be swapped */
     val spriteFrameBufferSwap = Output(Bool())
+    /** RGB port */
+    val rgb = Output(UInt(Config.RGB_WIDTH.W))
   })
 
   // A write-only memory interface is used to connect the CPU to the EEPROM
@@ -88,7 +95,6 @@ class Main extends Module {
   val videoIrq = RegInit(false.B)
   val agalletIrq = RegInit(false.B)
   val unknownIrq = RegInit(false.B)
-  val soundIrq = WireInit(false.B)
 
   // M68K CPU
   val cpu = Module(new CPU(Config.CPU_CLOCK_DIV))
@@ -96,15 +102,19 @@ class Main extends Module {
   cpu.io.halt := pauseReg
   cpu.io.dtack := false.B
   cpu.io.vpa := cpu.io.as && cpu.io.fc === 7.U // autovectored interrupts
-  cpu.io.ipl := videoIrq || soundIrq || unknownIrq
+  cpu.io.ipl := videoIrq || io.soundCtrl.irq || unknownIrq
   cpu.io.din := 0.U
 
-  // Set program ROM interface defaults
-  io.rom.progRom.default()
+  // Set interface defaults
+  io.soundCtrl.oki(0).default()
+  io.soundCtrl.oki(1).default()
+  io.soundCtrl.nmk.default()
+  io.soundCtrl.ymz.default()
+  io.progRom.default()
 
   // EEPROM
   val eeprom = Module(new EEPROM)
-  eeprom.io.mem <> io.rom.eeprom
+  eeprom.io.mem <> io.eeprom
   val cs = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(5), eepromMem.din(9))
   val sck = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(6), eepromMem.din(10))
   val sdi = Mux(io.gameConfig.index === GameConfig.GUWANGE.U, eepromMem.din(7), eepromMem.din(11))
@@ -211,7 +221,7 @@ class Main extends Module {
     gpu.io.layerCtrl(i).vram8x8 <> vram8x8(i).io.portB
     gpu.io.layerCtrl(i).vram16x16 <> vram16x16(i).io.portB
     gpu.io.layerCtrl(i).lineRam <> lineRam(i).io.portB
-    gpu.io.layerCtrl(i).tileRom <> Crossing.syncronize(io.videoClock, io.rom.layerTileRom(i))
+    gpu.io.layerCtrl(i).tileRom <> Crossing.syncronize(io.videoClock, io.layerTileRom(i))
   }
   gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
   gpu.io.spriteCtrl.enable := io.options.layerEnable.sprite
@@ -219,23 +229,12 @@ class Main extends Module {
   gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
   gpu.io.spriteCtrl.regs := SpriteRegs.decode(spriteRegs.io.regs)
   gpu.io.spriteCtrl.vram <> spriteRam.io.portB
-  gpu.io.spriteCtrl.tileRom <> io.rom.spriteTileRom
+  gpu.io.spriteCtrl.tileRom <> io.spriteTileRom
   gpu.io.spriteLineBuffer <> io.spriteLineBuffer
   gpu.io.spriteFrameBuffer <> io.spriteFrameBuffer
   gpu.io.systemFrameBuffer <> io.systemFrameBuffer
   gpu.io.paletteRam <> paletteRam.io.portB
   io.rgb := gpu.io.rgb
-
-  // Sound
-  val sound = Module(new Sound)
-  sound.io.gameConfig <> io.gameConfig
-  sound.io.cpu.oki(0).default()
-  sound.io.cpu.oki(1).default()
-  sound.io.cpu.nmk.default()
-  sound.io.cpu.ymz.default()
-  sound.io.rom <> io.rom.soundRom
-  io.audio := sound.io.audio
-  soundIrq := sound.io.irq
 
   // Toggle video IRQ
   when(vBlankRising) {
@@ -296,9 +295,9 @@ class Main extends Module {
 
   // Dangun Feveron
   when(io.gameConfig.index === GameConfig.DFEVERON.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
+    map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-    map(0x300000 to 0x300003).readWriteMem(sound.io.cpu.ymz)
+    map(0x300000 to 0x300003).readWriteMem(io.soundCtrl.ymz)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     vramMap(0x500000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
     vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
@@ -314,7 +313,7 @@ class Main extends Module {
 
   // DonPachi
   when(io.gameConfig.index === GameConfig.DONPACHI.U) {
-    map(0x000000 to 0x07ffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
+    map(0x000000 to 0x07ffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     vramMap(0x200000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
     vramMap(0x300000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
@@ -325,9 +324,9 @@ class Main extends Module {
     map(0x800000 to 0x800005).readWriteMem(layerRegs(2).io.mem)
     vregMap(0x900000)
     map(0xa08000 to 0xa08fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
-    map(0xb00000 to 0xb00003).readWriteMem(sound.io.cpu.oki(0))
-    map(0xb00010 to 0xb00013).readWriteMem(sound.io.cpu.oki(1))
-    map(0xb00020 to 0xb0002f).writeMem(sound.io.cpu.nmk)
+    map(0xb00000 to 0xb00003).readWriteMem(io.soundCtrl.oki(0))
+    map(0xb00010 to 0xb00013).readWriteMem(io.soundCtrl.oki(1))
+    map(0xb00020 to 0xb0002f).writeMem(io.soundCtrl.nmk)
     map(0xc00000).r { (_, _) => input0 }
     map(0xc00002).r { (_, _) => input1 }
     map(0xd00000).writeMem(eepromMem)
@@ -335,9 +334,9 @@ class Main extends Module {
 
   // DoDonPachi
   when(io.gameConfig.index === GameConfig.DDONPACH.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
+    map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-    map(0x300000 to 0x300003).readWriteMem(sound.io.cpu.ymz)
+    map(0x300000 to 0x300003).readWriteMem(io.soundCtrl.ymz)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     vramMap(0x500000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
     map(0x5fff00 to 0x5fffff).nopw() // access occurs during attract loop
@@ -355,9 +354,9 @@ class Main extends Module {
 
   // ESP Ra.De.
   when(io.gameConfig.index === GameConfig.ESPRADE.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
+    map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-    map(0x300000 to 0x300003).readWriteMem(sound.io.cpu.ymz)
+    map(0x300000 to 0x300003).readWriteMem(io.soundCtrl.ymz)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     vramMap(0x500000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
     vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
@@ -375,10 +374,10 @@ class Main extends Module {
 
   // Gaia Crusaders
   when(io.gameConfig.index === GameConfig.GAIA.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
+    map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x00057e to 0x000581).nopw() // access occurs during boot
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-    map(0x300000 to 0x300003).readWriteMem(sound.io.cpu.ymz)
+    map(0x300000 to 0x300003).readWriteMem(io.soundCtrl.ymz)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     vramMap(0x500000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
     vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
@@ -397,7 +396,7 @@ class Main extends Module {
 
   // Guwange
   when(io.gameConfig.index === GameConfig.GUWANGE.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
+    map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x200000 to 0x20ffff).readWriteMem(mainRam.io)
     map(0x210000 to 0x2fffff).nopr() // access occurs for Guwange (Special)
     vregMap(0x300000)
@@ -409,7 +408,7 @@ class Main extends Module {
     vramMap(0x600000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
     map(0x608000 to 0x6fffff).nopr() // access occurs for Guwange (Special)
     vramMap(0x700000, vram8x8(2).io.portA, vram16x16(2).io.portA, lineRam(2).io.portA)
-    map(0x800000 to 0x800003).readWriteMem(sound.io.cpu.ymz)
+    map(0x800000 to 0x800003).readWriteMem(io.soundCtrl.ymz)
     map(0x900000 to 0x900005).readWriteMem(layerRegs(0).io.mem)
     map(0xa00000 to 0xa00005).readWriteMem(layerRegs(1).io.mem)
     map(0xb00000 to 0xb00005).readWriteMem(layerRegs(2).io.mem)
@@ -422,9 +421,9 @@ class Main extends Module {
 
   // Puzzle Uo Poko
   when(io.gameConfig.index === GameConfig.UOPOKO.U) {
-    map(0x000000 to 0x0fffff).readMemT(io.rom.progRom) { _ ## 0.U } // convert to byte address
+    map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
-    map(0x300000 to 0x300003).readWriteMem(sound.io.cpu.ymz)
+    map(0x300000 to 0x300003).readWriteMem(io.soundCtrl.ymz)
     map(0x400000 to 0x40ffff).readWriteMem(spriteRam.io.portA)
     vramMap(0x500000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
     vregMap(0x600000)

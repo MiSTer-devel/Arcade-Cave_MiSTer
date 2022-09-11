@@ -30,16 +30,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave
+package cave.snd
 
-import arcadia.cpu.m68k.CPU
 import arcadia.mem._
 import arcadia.snd._
+import cave._
 import chisel3._
 import chisel3.util._
 
 /**
- * Represents the sound-related section of the CAVE arcade hardware.
+ * Represents the sound PCB.
  *
  * Earlier games tend to use one (or more) OKIM6295 ADPCM decoder chips, while later games rely on
  * a single YMZ280B ADPCM decoder chip.
@@ -48,32 +48,23 @@ class Sound extends Module {
   val io = IO(new Bundle {
     /** Game config port */
     val gameConfig = Input(GameConfig())
-    /** CPU port */
-    val cpu = Flipped(new Bundle {
-      /** OKIM6295 CPU port */
-      val oki = Vec(Sound.OKI_COUNT, MemIO(CPU.ADDR_WIDTH, CPU.DATA_WIDTH))
-      /** NMK115 CPU port */
-      val nmk = WriteMemIO(CPU.ADDR_WIDTH, CPU.DATA_WIDTH)
-      /** YMZ280B CPU port */
-      val ymz = MemIO(CPU.ADDR_WIDTH, CPU.DATA_WIDTH)
-    })
+    /** Control port */
+    val ctrl = SoundCtrlIO()
     /** Sound ROM port */
     val rom = Vec(Config.SOUND_ROM_COUNT, new SoundRomIO)
     /** Audio port */
     val audio = Output(SInt(Config.AUDIO_SAMPLE_WIDTH.W))
-    /** IRQ */
-    val irq = Output(Bool())
   })
 
   // NMK112 banking controller
   val nmk = Module(new NMK112)
-  nmk.io.cpu <> io.cpu.nmk
+  nmk.io.cpu <> io.ctrl.nmk
   nmk.io.mask := 1.U // disable phrase table bank switching for chip 0 (background music)
 
   // OKIM6295 ADPCM decoder
   val oki = 0.until(Sound.OKI_COUNT).map { i =>
     val oki = Module(new OKIM6295(Config.okiConfig(i)))
-    oki.io.cpu <> io.cpu.oki(i)
+    oki.io.cpu <> io.ctrl.oki(i)
     oki
   }
 
@@ -85,9 +76,9 @@ class Sound extends Module {
 
   // YMZ280B ADPCM decoder
   val ymz = Module(new YMZ280B(Config.ymzConfig))
-  ymz.io.cpu <> io.cpu.ymz
+  ymz.io.cpu <> io.ctrl.ymz
   ymz.io.rom <> io.rom(0)
-  io.irq := ymz.io.irq
+  io.ctrl.irq := ymz.io.irq
 
   // Mux sound ROM port 0
   io.rom(0) <> AsyncReadMemIO.mux1H(Seq(

@@ -30,21 +30,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cave.main
+package cave.snd
 
-import cave._
+import arcadia.mem._
 import chisel3._
 
-/** A bundle that contains memory ports for all ROMs. */
-class RomIO extends Bundle {
-  /** Program ROM port */
-  val progRom = new ProgRomIO
-  /** Sound ROM port */
-  val soundRom = Vec(Config.SOUND_ROM_COUNT, new SoundRomIO)
-  /** EEPROM port */
-  val eeprom = new EEPROMIO
-  /** Layer tile ROM port */
-  val layerTileRom = Vec(Config.LAYER_COUNT, new LayerRomIO)
-  /** Sprite tile ROM port */
-  val spriteTileRom = new SpriteRomIO
+class SoundCtrlIO extends Bundle {
+  /** OKIM6295 CPU port */
+  val oki = Flipped(Vec(Sound.OKI_COUNT, MemIO(23, 16)))
+  /** NMK115 CPU port */
+  val nmk = Flipped(WriteMemIO(23, 16))
+  /** YMZ280B CPU port */
+  val ymz = Flipped(MemIO(23, 16))
+  /** IRQ */
+  val irq = Output(Bool())
+}
+
+object SoundCtrlIO {
+  def apply(): SoundCtrlIO = new SoundCtrlIO()
 }
