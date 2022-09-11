@@ -69,7 +69,7 @@ class GPU extends Module {
     /** Palette RAM port */
     val paletteRam = new PaletteRamIO
     /** RGB output */
-    val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
+    val rgb = Output(UInt(Config.RGB_WIDTH.W))
   })
 
   // Sprite processor
@@ -140,11 +140,11 @@ object GPU {
    * @param data The pixel data.
    * @return A 24 bit RGB value.
    */
-  private def decodeRGB(data: Bits): RGB = {
+  private def decodeRGB(data: Bits): UInt = {
     val b = data(4, 0) ## data(4, 2)
     val r = data(9, 5) ## data(9, 7)
     val g = data(14, 10) ## data(14, 12)
-    RGB(r, g, b)
+    r ## g ## b
   }
 
   /**
@@ -154,8 +154,10 @@ object GPU {
    * @return A 32 bit ARGB value.
    */
   def decodeABGR(data: Bits): Bits = {
-    val rgb = decodeRGB(data)
-    Cat(rgb.b, rgb.g, rgb.r).pad(32)
+    val b = data(4, 0) ## data(4, 2)
+    val r = data(9, 5) ## data(9, 7)
+    val g = data(14, 10) ## data(14, 12)
+    Cat(b, g, r).pad(32)
   }
 
   /**

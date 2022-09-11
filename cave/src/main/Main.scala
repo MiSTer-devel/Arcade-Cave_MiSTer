@@ -59,8 +59,8 @@ class Main extends Module {
     val video = Flipped(VideoIO())
     /** Audio port */
     val audio = Output(SInt(Config.AUDIO_SAMPLE_WIDTH.W))
-    /** RGB output */
-    val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
+    /** RGB port */
+    val rgb = Output(UInt(Config.RGB_WIDTH.W))
     /** ROM port */
     val rom = new RomIO
     /** Sprite line buffer port */
@@ -224,7 +224,7 @@ class Main extends Module {
   gpu.io.spriteFrameBuffer <> io.spriteFrameBuffer
   gpu.io.systemFrameBuffer <> io.systemFrameBuffer
   gpu.io.paletteRam <> paletteRam.io.portB
-  gpu.io.rgb <> io.rgb
+  io.rgb := gpu.io.rgb
 
   // Sound
   val sound = Module(new Sound)

@@ -145,8 +145,8 @@ object Config {
   /** The number of sprite registers */
   val SPRITE_REGS_COUNT = 8
 
-  /** The number of bits per color channel for the output RGB signal */
-  val RGB_OUTPUT_BPP = 8
+  /** The width of the final RGB values */
+  val RGB_WIDTH = 24
 
   /** The width of the frame buffer in pixels */
   val FRAME_BUFFER_WIDTH = 512

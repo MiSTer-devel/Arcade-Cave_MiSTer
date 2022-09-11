@@ -353,7 +353,7 @@ hps_io #(.CONF_STR(CONF_STR), .WIDE(1)) hps_io (
 ////////////////////////////////////////////////////////////////////////////////
 
 wire ce_pix;
-wire [7:0] r, g, b;
+wire [23:0] rgb;
 wire hsync, vsync;
 wire hblank, vblank;
 wire [1:0] aspect_ratio = status[2:1];
@@ -376,9 +376,9 @@ video_mixer #(.LINE_LENGTH(320), .HALF_DEPTH(0), .GAMMA(1)) video_mixer (
   .hq2x(fx==1),
   .gamma_bus(gamma_bus),
 
-  .R(r),
-  .G(g),
-  .B(b),
+  .R(rgb[23:16]),
+  .G(rgb[15:8]),
+  .B(rgb[7:0]),
 
   .HSync(hsync),
   .VSync(vsync),
@@ -581,9 +581,7 @@ Cave cave (
   .ioctl_din(ioctl_din),
   .ioctl_dout(ioctl_dout),
   // RGB output
-  .rgb_r(r),
-  .rgb_g(g),
-  .rgb_b(b),
+  .rgb(rgb),
   // Audio output
   .audio(AUDIO_L),
   // LEDs

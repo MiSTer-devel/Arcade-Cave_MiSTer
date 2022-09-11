@@ -74,7 +74,7 @@ class Cave extends Module {
     /** Video port */
     val video = VideoIO()
     /** RGB output */
-    val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
+    val rgb = Output(UInt(Config.RGB_WIDTH.W))
     /** LED port */
     val led = LEDIO()
   })
@@ -128,7 +128,6 @@ class Cave extends Module {
   videoSys.io.prog.video <> io.ioctl.video
   videoSys.io.prog.done := Util.falling(io.ioctl.download) && io.ioctl.index === IOCTL.VIDEO_INDEX.U
   videoSys.io.options <> io.options
-  videoSys.io.video <> io.video
 
   // Main PCB
   val main = withReset(io.cpuReset || !memSys.io.ready) { Module(new Main) }
@@ -138,8 +137,7 @@ class Cave extends Module {
   main.io.dips := dipsRegs.io.regs
   main.io.player <> io.player
   main.io.audio <> io.audio
-  main.io.video := io.video
-  main.io.rgb <> io.rgb
+  main.io.video := videoSys.io.video
   main.io.rom <> memSys.io.rom
 
   // Sprite frame buffer
@@ -147,7 +145,7 @@ class Cave extends Module {
   spriteFrameBuffer.io.videoClock := io.videoClock
   spriteFrameBuffer.io.enable := io.options.frameBufferEnable.sprite && memSys.io.ready
   spriteFrameBuffer.io.swap := main.io.spriteFrameBufferSwap
-  spriteFrameBuffer.io.video <> videoSys.io.video
+  spriteFrameBuffer.io.video := videoSys.io.video
   spriteFrameBuffer.io.lineBuffer <> main.io.spriteLineBuffer
   spriteFrameBuffer.io.frameBuffer <> main.io.spriteFrameBuffer
   spriteFrameBuffer.io.ddr <> memSys.io.spriteFrameBuffer
@@ -158,10 +156,14 @@ class Cave extends Module {
   systemFrameBuffer.io.enable := io.options.frameBufferEnable.system && memSys.io.ready
   systemFrameBuffer.io.rotate := io.options.rotate
   systemFrameBuffer.io.forceBlank := !memSys.io.ready
-  systemFrameBuffer.io.video <> videoSys.io.video
+  systemFrameBuffer.io.video := videoSys.io.video
   systemFrameBuffer.io.frameBufferCtrl <> io.frameBufferCtrl
   systemFrameBuffer.io.frameBuffer <> main.io.systemFrameBuffer
   systemFrameBuffer.io.ddr <> memSys.io.systemFrameBuffer
+
+  // RGB output
+  io.video := videoSys.io.video
+  io.rgb := main.io.rgb
 
   // System LED outputs
   io.led.power := false.B
