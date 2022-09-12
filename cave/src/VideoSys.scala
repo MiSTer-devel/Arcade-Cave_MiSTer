@@ -59,7 +59,7 @@ class VideoSys extends Module {
     /** Options port */
     val options = OptionsIO()
     /** Video port */
-    val video = VideoIO()
+    val video = Output(VideoIO())
   })
 
   // Connect IOCTL to video register file

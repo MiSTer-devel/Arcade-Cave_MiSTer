@@ -66,7 +66,7 @@ class SystemFrameBuffer extends Module {
     /** Disable the frame buffer output */
     val forceBlank = Input(Bool())
     /** Video port */
-    val video = Flipped(VideoIO())
+    val video = Input(VideoIO())
     /** Frame buffer control port */
     val frameBufferCtrl = FrameBufferCtrlIO()
     /** Frame buffer port */

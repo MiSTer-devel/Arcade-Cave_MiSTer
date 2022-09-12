@@ -80,7 +80,7 @@ class VideoTiming(config: VideoTimingConfig) extends Module {
     /** CRT offset */
     val offset = Input(SVec2(4.W))
     /** Timing port */
-    val timing = VideoTimingIO()
+    val timing = Output(VideoTimingIO())
   })
 
   // Counters

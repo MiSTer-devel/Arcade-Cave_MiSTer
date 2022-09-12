@@ -59,7 +59,7 @@ class Main extends Module {
     /** DIP switches port */
     val dips = DIPIO()
     /** Video port */
-    val video = Flipped(VideoIO())
+    val video = Input(VideoIO())
     /** GPU memory port */
     val gpuMem = Flipped(GPUMemIO())
     /** Sound control port */

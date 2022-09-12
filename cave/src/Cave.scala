@@ -73,7 +73,7 @@ class Cave extends Module {
     /** Frame buffer control port */
     val frameBufferCtrl = FrameBufferCtrlIO()
     /** Video port */
-    val video = VideoIO()
+    val video = Output(VideoIO())
     /** RGB output */
     val rgb = Output(UInt(Config.RGB_WIDTH.W))
     /** Audio port */
@@ -161,7 +161,7 @@ class Cave extends Module {
   gpu.io.videoClock := io.videoClock
   gpu.io.gameConfig := gameConfigReg
   gpu.io.options := io.options
-  gpu.io.video := io.video
+  gpu.io.video := videoSys.io.video
   0.until(Config.LAYER_COUNT).foreach { i =>
     gpu.io.layerCtrl(i).enable := io.options.layer(i)
     gpu.io.layerCtrl(i).format := gameConfigReg.layer(i).format
@@ -201,14 +201,10 @@ class Cave extends Module {
   systemFrameBuffer.io.frameBuffer <> gpu.io.systemFrameBuffer
   systemFrameBuffer.io.ddr <> memSys.io.systemFrameBuffer
 
-  // Video output
+  // Outputs
   io.video := videoSys.io.video
   io.rgb := gpu.io.rgb
-
-  // Audio output
   io.audio := sound.io.audio
-
-  // System LED outputs
   io.led.power := false.B
   io.led.disk := io.ioctl.download
   io.led.user := memSys.io.ready

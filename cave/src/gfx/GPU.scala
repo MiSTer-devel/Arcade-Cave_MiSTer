@@ -55,7 +55,7 @@ class GPU extends Module {
     /** Options port */
     val options = OptionsIO()
     /** Video port */
-    val video = Flipped(VideoIO())
+    val video = Input(VideoIO())
     /** Layer control ports */
     val layerCtrl = Vec(Config.LAYER_COUNT, LayerCtrlIO())
     /** Sprite control port */
@@ -74,16 +74,16 @@ class GPU extends Module {
 
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
-  spriteProcessor.io.video <> io.video
   spriteProcessor.io.ctrl <> io.spriteCtrl
+  spriteProcessor.io.video := io.video
   spriteProcessor.io.frameBuffer <> io.spriteFrameBuffer
 
   withClock(io.videoClock) {
     // Layer processors
     val layerProcessor = 0.until(Config.LAYER_COUNT).map { i =>
       val p = Module(new LayerProcessor)
-      p.io.video <> io.video
       p.io.ctrl <> io.layerCtrl(i)
+      p.io.video := io.video
       p.io.offset := GPU.layerOffset(i, io.layerCtrl(i)) - io.spriteCtrl.regs.offset
       p
     }

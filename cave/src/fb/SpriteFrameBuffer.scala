@@ -67,7 +67,7 @@ class SpriteFrameBuffer extends Module {
     /** Swap the current page */
     val swap = Input(Bool())
     /** Video port */
-    val video = Flipped(VideoIO())
+    val video = Input(VideoIO())
     /** Line buffer port */
     val lineBuffer = Flipped(new SpriteLineBufferIO)
     /** Frame buffer port */

@@ -46,10 +46,10 @@ import chisel3.util._
  */
 class LayerProcessor extends Module {
   val io = IO(new Bundle {
-    /** Video port */
-    val video = Input(new VideoIO)
     /** Layer control port */
     val ctrl = LayerCtrlIO()
+    /** Video port */
+    val video = Input(VideoIO())
     /** Layer offset */
     val offset = Input(UVec2(Config.LAYER_SCROLL_WIDTH.W))
     /** Palette entry output */

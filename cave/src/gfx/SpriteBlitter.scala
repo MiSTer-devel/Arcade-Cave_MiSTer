@@ -52,14 +52,14 @@ class SpriteBlitterConfig extends Bundle {
 /** The sprite blitter copies a sprite to the frame buffer. */
 class SpriteBlitter extends Module {
   val io = IO(new Bundle {
-    /** Video port */
-    val video = Input(new VideoIO)
-    /** Config port */
-    val config = DeqIO(new SpriteBlitterConfig)
     /** Enable flag */
     val enable = Input(Bool())
     /** Busy flag */
     val busy = Output(Bool())
+    /** Config port */
+    val config = DeqIO(new SpriteBlitterConfig)
+    /** Video port */
+    val video = Input(VideoIO())
     /** Pixel data port */
     val pixelData = DeqIO(Vec(Config.SPRITE_TILE_SIZE, Bits(Config.SPRITE_TILE_MAX_BPP.W)))
     /** Frame buffer port */

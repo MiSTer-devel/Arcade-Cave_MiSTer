@@ -37,9 +37,9 @@ import chisel3._
 
 class VideoIO extends VideoTimingIO {
   /** Video registers */
-  val regs = Output(new VideoRegs)
+  val regs = new VideoRegs
   /** Asserted when the video mode is changed */
-  val changeMode = Output(Bool())
+  val changeMode = Bool()
 
   /** Video size in pixels */
   def size: UVec2 = regs.size

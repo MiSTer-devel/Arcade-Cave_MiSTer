@@ -38,19 +38,19 @@ import chisel3._
 /** An interface that contains analog video timing signals. */
 class VideoTimingIO extends Bundle {
   /** Asserted when the video clock is enabled */
-  val clockEnable = Output(Bool())
+  val clockEnable = Bool()
   /** Asserted when the video position is in the display region */
-  val displayEnable = Output(Bool())
+  val displayEnable = Bool()
   /** Video position */
-  val pos = Output(UVec2(9.W))
+  val pos = UVec2(9.W)
   /** Horizontal sync */
-  val hSync = Output(Bool())
+  val hSync = Bool()
   /** Vertical sync */
-  val vSync = Output(Bool())
+  val vSync = Bool()
   /** Horizontal blank */
-  val hBlank = Output(Bool())
+  val hBlank = Bool()
   /** Vertical blank */
-  val vBlank = Output(Bool())
+  val vBlank = Bool()
 }
 
 object VideoTimingIO {

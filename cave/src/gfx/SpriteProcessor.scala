@@ -45,10 +45,10 @@ import chisel3.util._
  */
 class SpriteProcessor(maxSprites: Int = 1024) extends Module {
   val io = IO(new Bundle {
-    /** Video port */
-    val video = Input(new VideoIO)
     /** Control port */
     val ctrl = SpriteCtrlIO()
+    /** Video port */
+    val video = Input(VideoIO())
     /** Frame buffer port */
     val frameBuffer = new SpriteFrameBufferIO
     /** Debug port */
@@ -94,8 +94,8 @@ class SpriteProcessor(maxSprites: Int = 1024) extends Module {
 
   // Sprite blitter
   val blitter = Module(new SpriteBlitter)
-  blitter.io.video <> io.video
   blitter.io.enable := io.ctrl.enable
+  blitter.io.video := io.video
 
   // Sprite decoder
   val decoder = Module(new SpriteDecoder)
