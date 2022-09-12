@@ -57,7 +57,7 @@ class VideoSys extends Module {
       val done = Input(Bool())
     }
     /** Options port */
-    val options = OptionsIO()
+    val options = Input(OptionsIO())
     /** Video port */
     val video = Output(VideoIO())
   })

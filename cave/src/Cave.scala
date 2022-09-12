@@ -63,7 +63,7 @@ class Cave extends Module {
     /** Video reset */
     val videoReset = Input(Bool())
     /** Options port */
-    val options = OptionsIO()
+    val options = Input(OptionsIO())
     /** Player port */
     val player = Vec(2, PlayerIO())
     /** IOCTL port */
@@ -135,7 +135,7 @@ class Cave extends Module {
   videoSys.io.videoReset := io.videoReset
   videoSys.io.prog.video <> io.ioctl.video
   videoSys.io.prog.done := Util.falling(io.ioctl.download) && io.ioctl.index === IOCTL.VIDEO_INDEX.U
-  videoSys.io.options <> io.options
+  videoSys.io.options := io.options
 
   // Main PCB
   val main = withClockAndReset(io.cpuClock, io.cpuReset || !memSys.io.ready) { Module(new Main) }

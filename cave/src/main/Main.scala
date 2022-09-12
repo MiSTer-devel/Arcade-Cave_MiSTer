@@ -53,7 +53,7 @@ class Main extends Module {
     /** Game config port */
     val gameConfig = Input(GameConfig())
     /** Options port */
-    val options = OptionsIO()
+    val options = Input(OptionsIO())
     /** Joystick port */
     val player = Vec(2, PlayerIO())
     /** DIP switches port */

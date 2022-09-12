@@ -38,21 +38,21 @@ import chisel3._
 /** An interface that contains the user options. */
 class OptionsIO extends Bundle {
   /** CRT offset */
-  val offset = Input(SVec2(OptionsIO.SCREEN_OFFSET_WIDTH.W))
+  val offset = SVec2(OptionsIO.SCREEN_OFFSET_WIDTH.W)
   /** Rotate the HDMI output 90 degrees */
-  val rotate = Input(Bool())
+  val rotate = Bool()
   /** Video compatibility (60Hz) mode */
-  val compatibility = Input(Bool())
+  val compatibility = Bool()
   /** Service mode */
-  val service = Input(Bool())
+  val service = Bool()
   /** Layer enable */
-  val layer = Input(Vec(3, Bool()))
+  val layer = Vec(3, Bool())
   /** Sprite enable */
-  val sprite = Input(Bool())
+  val sprite = Bool()
   /** Flip the video output */
-  val flip = Input(Bool())
+  val flip = Bool()
   /** Game index */
-  val gameIndex = Input(UInt(OptionsIO.GAME_INDEX_WIDTH.W))
+  val gameIndex = UInt(OptionsIO.GAME_INDEX_WIDTH.W)
 }
 
 object OptionsIO {

@@ -53,7 +53,7 @@ class GPU extends Module {
     /** Game config port */
     val gameConfig = Input(GameConfig())
     /** Options port */
-    val options = OptionsIO()
+    val options = Input(OptionsIO())
     /** Video port */
     val video = Input(VideoIO())
     /** Layer control ports */
