@@ -51,7 +51,7 @@ object Config {
   /** Video clock frequency (Hz) */
   val VIDEO_CLOCK_FREQ = 28_000_000D
   /** Video clock divider */
-  val VIDEO_CLOCK_DIV = 4 // 7MHz
+  val VIDEO_CLOCK_DIV = 4 // 7 MHz
 
   /** The width of the screen in pixels */
   val SCREEN_WIDTH = 320
@@ -69,9 +69,9 @@ object Config {
   val DIPS_REGS_COUNT = 4
 
   /** The width of the pulse generated when a coin is inserted */
-  val COIN_PULSE_WIDTH = (100000000D / CLOCK_PERIOD).ceil.toInt // 100ms
+  val COIN_PULSE_WIDTH = (100_000_000D / CLOCK_PERIOD).ceil.toInt // 100 ms
   /** The width of the pulse generated when the service button is pressed */
-  val SERVICE_PULSE_WIDTH = (2500000000D / CLOCK_PERIOD).ceil.toInt // 2500ms
+  val SERVICE_PULSE_WIDTH = (2_500_000_000D / CLOCK_PERIOD).ceil.toInt // 2500 ms
 
   /** The width of the program ROM address bus */
   val PROG_ROM_ADDR_WIDTH = 20 // 1MB
@@ -191,12 +191,12 @@ object Config {
   val AUDIO_SAMPLE_WIDTH = 16
 
   /** YMZ280B configuration */
-  val ymzConfig = YMZ280BConfig(clockFreq = CLOCK_FREQ, sampleFreq = 88200)
+  val ymzConfig = YMZ280BConfig(clockFreq = CPU_CLOCK_FREQ, sampleFreq = 88_200)
 
   /** OKIM6295 configuration */
   val okiConfig = Seq(
-    OKIM6295Config(clockFreq = CLOCK_FREQ, sampleFreq = 1056000),
-    OKIM6295Config(clockFreq = CLOCK_FREQ, sampleFreq = 2112000)
+    OKIM6295Config(clockFreq = CPU_CLOCK_FREQ, sampleFreq = 1_056_000),
+    OKIM6295Config(clockFreq = CPU_CLOCK_FREQ, sampleFreq = 2_112_000)
   )
 
   /** DDR configuration */
@@ -212,7 +212,7 @@ object Config {
   val originalVideoTimingConfig = VideoTimingConfig(
     clockFreq = VIDEO_CLOCK_FREQ,
     clockDiv = VIDEO_CLOCK_DIV,
-    hFreq = 15625, // Hz
+    hFreq = 15_625, // Hz
     vFreq = 57.444 // Hz
   )
 
@@ -220,12 +220,12 @@ object Config {
   val compatibilityVideoTimingConfig = VideoTimingConfig(
     clockFreq = VIDEO_CLOCK_FREQ,
     clockDiv = VIDEO_CLOCK_DIV,
-    hFreq = 15625, // Hz
+    hFreq = 15_625, // Hz
     vFreq = 60 // Hz
   )
 
   /** Copy download DMA configuration */
-  val copyDownloadDmaConfig = dma.Config(depth = 0x400000, burstLength = 16) // 32MB
+  val copyDownloadDmaConfig = dma.Config(depth = 0x400000, burstLength = 16) // 32 MB
 
   /** Sprite frame buffer DMA configuration */
   val spriteFrameBufferDmaConfig = dma.Config(

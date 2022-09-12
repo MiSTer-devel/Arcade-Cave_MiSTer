@@ -87,7 +87,6 @@ class Cave extends Module {
   io.ioctl.default()
 
   val vBlank = ShiftRegister(io.video.vBlank, 2)
-  val vBlankRising = Util.rising(vBlank)
   val vBlankFalling = Util.falling(vBlank)
 
   // The game configuration register is latched when data is written to the IOCTL (i.e. the game
