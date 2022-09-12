@@ -55,15 +55,15 @@ class ColorMixer extends Module {
     val dout = Output(UInt(Config.PALETTE_RAM_GPU_DATA_WIDTH.W))
   })
 
-  // Background pen
-  val backgroundPen = ColorMixer.backgroundPen(io.gameConfig.index)
+  // Fill pen
+  val fillPen = PaletteEntry(0.U, io.gameConfig.fillPalette, 0.U)
 
   // Mux the layers
   val index = ColorMixer.muxLayers(io.spritePen, io.layer0Pen, io.layer1Pen, io.layer2Pen)
 
   // Calculate the palette RAM address
   val paletteRamAddr = MuxLookup(index, 0.U, Seq(
-    ColorMixer.Priority.FILL.U -> ColorMixer.paletteRamAddr(backgroundPen, 0.U, io.gameConfig.granularity),
+    ColorMixer.Priority.FILL.U -> ColorMixer.paletteRamAddr(fillPen, 0.U, io.gameConfig.granularity),
     ColorMixer.Priority.SPRITE.U -> ColorMixer.paletteRamAddr(io.spritePen, 0.U, io.gameConfig.granularity),
     ColorMixer.Priority.LAYER0.U -> ColorMixer.paletteRamAddr(io.layer0Pen, io.gameConfig.layer(0).paletteBank, io.gameConfig.granularity),
     ColorMixer.Priority.LAYER1.U -> ColorMixer.paletteRamAddr(io.layer1Pen, io.gameConfig.layer(1).paletteBank, io.gameConfig.granularity),
@@ -85,17 +85,6 @@ object ColorMixer {
     val LAYER1 = 4
     val LAYER2 = 8
   }
-
-  /**
-   * Returns the palette entry used for the fill layer.
-   *
-   * @param index The game index.
-   * @return A palette entry.
-   */
-  private def backgroundPen(index: UInt): PaletteEntry =
-    MuxLookup(index, PaletteEntry(0.U, 0x7f.U, 0.U), Seq(
-      Game.DFEVERON.U -> PaletteEntry(0.U, 0x3f.U, 0.U)
-    ))
 
   /**
    * Calculates the palette RAM address from the given palette entry.
