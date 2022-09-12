@@ -227,7 +227,7 @@ class Main extends Module {
 
   // Swap the sprite frame buffer while the CPU is paused. This allows the GPU to continue rendering
   // sprites.
-  io.spriteFrameBufferSwap := pauseReg && vBlankRising
+  io.spriteFrameBufferSwap := vBlankRising && (io.gameIndex === Game.HOTDOGST.U || pauseReg)
 
   /**
    * Maps video RAM to the given base address.
@@ -385,6 +385,27 @@ class Main extends Module {
     map(0xd00010).writeMem(eepromMem)
     map(0xd00010).r { (_, _) => input0 }
     map(0xd00012).r { (_, _) => input1 }
+  }
+
+  // Hotdog Storm
+  when(io.gameIndex === Game.HOTDOGST.U) {
+    map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
+    map(0x300000 to 0x30ffff).readWriteMem(mainRam.io)
+    map(0x408000 to 0x408fff).readWriteMemT(paletteRam.io.portA)(a => a(10, 0))
+    map(0x600000).nopr() // access occurs during service menu
+    vramMap(0x880000, vram8x8(0).io.portA, vram16x16(0).io.portA, lineRam(0).io.portA)
+    vramMap(0x900000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
+    vramMap(0x980000, vram8x8(2).io.portA, vram16x16(2).io.portA, lineRam(2).io.portA)
+    vregMap(0xa80000)
+    map(0xa8006e).nopw() // TODO: sound ROM
+    map(0xb00000 to 0xb00005).readWriteMem(layerRegs(0).io.mem)
+    map(0xb80000 to 0xb80005).readWriteMem(layerRegs(1).io.mem)
+    map(0xc00000 to 0xc00005).readWriteMem(layerRegs(2).io.mem)
+    map(0xc80000).r { (_, _) => input0 }
+    map(0xc80002).r { (_, _) => input1 }
+    map(0xd00000).writeMem(eepromMem)
+    map(0xd00002).noprw()
+    map(0xf00000 to 0xf0ffff).readWriteMem(spriteRam.io.portA)
   }
 
   // Puzzle Uo Poko

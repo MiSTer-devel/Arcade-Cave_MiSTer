@@ -51,6 +51,8 @@ package object cave {
     val GUWANGE = 5
     /** Gaia Crusaders */
     val GAIA = 6
+    /** Hotdog Storm */
+    val HOTDOGST = 7
   }
 
   /** Graphics format enum */

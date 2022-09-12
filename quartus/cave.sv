@@ -190,7 +190,7 @@ localparam CONF_STR = {
   "P1OC,Layer 1,On,Off;",
   "P1OD,Layer 2,On,Off;",
   "P1-;",
-  "P1OIL,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.,Puzzle Uo Poko,Guwange,Gaia;",
+  "P1OIL,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.,Puzzle Uo Poko,Guwange,Gaia,Hotdog Storm;",
   "-;",
   "R0,Reset;",
   "J,B0,B1,B2,B3,Start,Coin,Pause;",
