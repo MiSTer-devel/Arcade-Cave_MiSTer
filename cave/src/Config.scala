@@ -190,23 +190,11 @@ object Config {
   /** The width of audio sample values */
   val AUDIO_SAMPLE_WIDTH = 16
 
-  /** YMZ280B configuration */
-  val ymzConfig = YMZ280BConfig(clockFreq = CPU_CLOCK_FREQ, sampleFreq = 88_200)
-
-  /** OKIM6295 configuration */
-  val okiConfig = Seq(
-    OKIM6295Config(clockFreq = CPU_CLOCK_FREQ, sampleFreq = 1_056_000),
-    OKIM6295Config(clockFreq = CPU_CLOCK_FREQ, sampleFreq = 2_112_000)
-  )
-
   /** DDR configuration */
   val ddrConfig = ddr.Config()
 
   /** SDRAM configuration */
-  val sdramConfig = sdram.Config(
-    clockFreq = CLOCK_FREQ,
-    burstLength = 4
-  )
+  val sdramConfig = sdram.Config(clockFreq = CLOCK_FREQ, burstLength = 4)
 
   /** Original (57Hz) video timing configuration */
   val originalVideoTimingConfig = VideoTimingConfig(
@@ -237,5 +225,14 @@ object Config {
   val spriteLineBufferDmaConfig = dma.Config(
     depth = FRAME_BUFFER_WIDTH * SPRITE_FRAME_BUFFER_DATA_WIDTH / ddrConfig.dataWidth,
     burstLength = 16
+  )
+
+  /** YMZ280B configuration */
+  val ymzConfig = YMZ280BConfig(clockFreq = CPU_CLOCK_FREQ, sampleFreq = 88_200)
+
+  /** OKIM6295 configuration */
+  val okiConfig = Seq(
+    OKIM6295Config(clockFreq = CPU_CLOCK_FREQ, sampleFreq = 1_056_000),
+    OKIM6295Config(clockFreq = CPU_CLOCK_FREQ, sampleFreq = 2_112_000)
   )
 }
