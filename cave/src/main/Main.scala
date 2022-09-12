@@ -114,7 +114,7 @@ class Main extends Module {
   0.until(Config.LAYER_COUNT).foreach { i =>
     gpu.io.layerCtrl(i).format := io.gameConfig.layer(i).format
     gpu.io.layerCtrl(i).enable := io.options.layer(i)
-    gpu.io.layerCtrl(i).tileRom <> Crossing.syncronize(io.videoClock, io.layerTileRom(i))
+    gpu.io.layerCtrl(i).tileRom <> io.layerTileRom(i)
   }
   gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
   gpu.io.spriteCtrl.enable := io.options.sprite

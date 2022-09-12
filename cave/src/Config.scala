@@ -43,13 +43,15 @@ object Config {
   /** Clock period (ns) */
   val CLOCK_PERIOD = 1 / CLOCK_FREQ * 1_000_000_000D
 
+  /** CPU clock frequency (Hz) */
+  val CPU_CLOCK_FREQ = 32_000_000D
+  /** CPU clock divider */
+  val CPU_CLOCK_DIV = 2 // 16 MHz
+
   /** Video clock frequency (Hz) */
   val VIDEO_CLOCK_FREQ = 28_000_000D
   /** Video clock divider */
   val VIDEO_CLOCK_DIV = 4 // 7MHz
-
-  /** CPU clock divider */
-  val CPU_CLOCK_DIV = 6 // 16MHz
 
   /** The width of the screen in pixels */
   val SCREEN_WIDTH = 320

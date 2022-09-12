@@ -52,12 +52,14 @@ import chisel3.experimental.FlatIO
  */
 class Cave extends Module {
   val io = FlatIO(new Bundle {
-    /** Video clock domain */
+    /** CPU clock */
+    val cpuClock = Input(Clock())
+    /** CPU reset */
+    val cpuReset = Input(Bool())
+    /** Video clock */
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
-    /** CPU reset */
-    val cpuReset = Input(Bool())
     /** Options port */
     val options = OptionsIO()
     /** Player port */
@@ -131,18 +133,18 @@ class Cave extends Module {
   videoSys.io.options <> io.options
 
   // Main PCB
-  val main = withReset(io.cpuReset || !memSys.io.ready) { Module(new Main) }
+  val main = withClockAndReset(io.cpuClock, io.cpuReset || !memSys.io.ready) { Module(new Main) }
   main.io.videoClock := io.videoClock
   main.io.gameConfig := gameConfigReg
   main.io.options := io.options
   main.io.dips := dipsRegs.io.regs
   main.io.player <> io.player
   main.io.video := videoSys.io.video
-  main.io.progRom <> memSys.io.progRom
-  main.io.eeprom <> memSys.io.eeprom
-  main.io.layerTileRom(0) <> memSys.io.layerTileRom(0)
-  main.io.layerTileRom(1) <> memSys.io.layerTileRom(1)
-  main.io.layerTileRom(2) <> memSys.io.layerTileRom(2)
+  main.io.progRom <> Crossing.freeze(io.cpuClock, memSys.io.progRom)
+  main.io.eeprom <> Crossing.freeze(io.cpuClock, memSys.io.eeprom)
+  main.io.layerTileRom(0) <> Crossing.syncronize(io.videoClock, memSys.io.layerTileRom(0))
+  main.io.layerTileRom(1) <> Crossing.syncronize(io.videoClock, memSys.io.layerTileRom(1))
+  main.io.layerTileRom(2) <> Crossing.syncronize(io.videoClock, memSys.io.layerTileRom(2))
   main.io.spriteTileRom <> memSys.io.spriteTileRom
 
   // Sound PCB

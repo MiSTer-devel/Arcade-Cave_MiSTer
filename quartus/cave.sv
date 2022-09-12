@@ -189,10 +189,6 @@ localparam CONF_STR = {
   "P1OB,Layer 0,On,Off;",
   "P1OC,Layer 1,On,Off;",
   "P1OD,Layer 2,On,Off;",
-  "P1OE,Row scroll,On,Off;",
-  "P1OF,Row select,On,Off;",
-  "P1OG,Sprite framebuffer,On,Off;",
-  "P1OH,System framebuffer,On,Off;",
   "P1-;",
   "P1OIL,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.,Puzzle Uo Poko,Guwange,Gaia;",
   "-;",
@@ -206,8 +202,8 @@ localparam CONF_STR = {
 ////////////////////////////////////////////////////////////////////////////////
 
 wire pll_sys_locked, pll_video_locked;
-wire clk_sys, clk_video;
-wire rst_sys, rst_video, rst_cpu;
+wire clk_sys, clk_cpu, clk_video;
+wire rst_sys, rst_cpu, rst_video;
 reg  rst_pll;
 
 // Resets the PLL if it loses lock
@@ -236,7 +232,8 @@ pll_sys pll_sys (
   .refclk(CLK_50M),
   .rst(rst_pll),
   .locked(pll_sys_locked),
-  .outclk_0(clk_sys)
+  .outclk_0(clk_sys),
+  .outclk_1(clk_cpu)
 );
 
 pll_video pll_video (
@@ -256,7 +253,7 @@ reset_ctrl reset_sys_ctrl (
 );
 
 reset_ctrl reset_cpu_ctrl (
-  .clk(clk_sys),
+  .clk(clk_cpu),
   .rst_i(RESET | ~pll_sys_locked | status[0] | buttons[1]),
   .rst_o(rst_cpu)
 );
@@ -488,14 +485,14 @@ assign SDRAM_DQ = sdram_oe_n ? sdram_din : 16'bZ;
 assign sdram_dout = SDRAM_DQ;
 
 Cave cave (
-  // System clock/reset
-  .clock(clk_sys),
   .reset(rst_sys),
-  // Video clock/reset
-  .videoClock(clk_video),
-  .videoReset(rst_video),
-  // CPU reset
   .cpuReset(rst_cpu),
+  .videoReset(rst_video),
+
+  .clock(clk_sys),
+  .cpuClock(clk_cpu),
+  .videoClock(clk_video),
+
   // Options
   .options_offset_x(status[27:24]),
   .options_offset_y(status[31:28]),
