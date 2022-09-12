@@ -39,12 +39,12 @@ import chisel3.util.log2Ceil
 
 object Config {
   /** System clock frequency (Hz) */
-  val CLOCK_FREQ = 96000000D
+  val CLOCK_FREQ = 96_000_000D
   /** Clock period (ns) */
-  val CLOCK_PERIOD = 1 / CLOCK_FREQ * 1000000000
+  val CLOCK_PERIOD = 1 / CLOCK_FREQ * 1_000_000_000D
 
   /** Video clock frequency (Hz) */
-  val VIDEO_CLOCK_FREQ = 28000000D
+  val VIDEO_CLOCK_FREQ = 28_000_000D
   /** Video clock divider */
   val VIDEO_CLOCK_DIV = 4 // 7MHz
 
