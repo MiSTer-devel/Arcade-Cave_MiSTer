@@ -37,21 +37,21 @@ import chisel3._
 /** A bundle that contains the player input signals. */
 class PlayerIO extends Bundle {
   /** Up */
-  val up = Input(Bool())
+  val up = Bool()
   /** Down */
-  val down = Input(Bool())
+  val down = Bool()
   /** Left */
-  val left = Input(Bool())
+  val left = Bool()
   /** Right */
-  val right = Input(Bool())
+  val right = Bool()
   /** Buttons */
-  val buttons = Input(Bits(PlayerIO.BUTTON_COUNT.W))
+  val buttons = Bits(PlayerIO.BUTTON_COUNT.W)
   /** Start */
-  val start = Input(Bool())
+  val start = Bool()
   /** Coin */
-  val coin = Input(Bool())
+  val coin = Bool()
   /** Pause */
-  val pause = Input(Bool())
+  val pause = Bool()
 }
 
 object PlayerIO {

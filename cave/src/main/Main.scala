@@ -55,7 +55,7 @@ class Main extends Module {
     /** Options port */
     val options = Input(OptionsIO())
     /** Joystick port */
-    val player = Vec(2, PlayerIO())
+    val player = Input(Vec(2, PlayerIO()))
     /** DIP switches port */
     val dips = DIPIO()
     /** Video port */

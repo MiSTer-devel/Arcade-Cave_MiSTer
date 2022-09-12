@@ -65,7 +65,7 @@ class Cave extends Module {
     /** Options port */
     val options = Input(OptionsIO())
     /** Player port */
-    val player = Vec(2, PlayerIO())
+    val player = Input(Vec(2, PlayerIO()))
     /** IOCTL port */
     val ioctl = IOCTL()
     /** LED port */
