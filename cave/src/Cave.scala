@@ -58,26 +58,26 @@ class Cave extends Module {
     val videoReset = Input(Bool())
     /** CPU reset */
     val cpuReset = Input(Bool())
-    /** DDR port */
-    val ddr = BurstMemIO(Config.ddrConfig)
-    /** SDRAM control port */
-    val sdram = SDRAMIO(Config.sdramConfig)
     /** Options port */
     val options = OptionsIO()
     /** Player port */
     val player = Vec(2, PlayerIO())
     /** IOCTL port */
     val ioctl = IOCTL()
+    /** LED port */
+    val led = LEDIO()
     /** Frame buffer control port */
     val frameBufferCtrl = FrameBufferCtrlIO()
-    /** Audio port */
-    val audio = Output(SInt(Config.AUDIO_SAMPLE_WIDTH.W))
     /** Video port */
     val video = VideoIO()
     /** RGB output */
     val rgb = Output(UInt(Config.RGB_WIDTH.W))
-    /** LED port */
-    val led = LEDIO()
+    /** Audio port */
+    val audio = Output(SInt(Config.AUDIO_SAMPLE_WIDTH.W))
+    /** SDRAM control port */
+    val sdram = SDRAMIO(Config.sdramConfig)
+    /** DDR port */
+    val ddr = BurstMemIO(Config.ddrConfig)
   })
 
   io.ioctl.default()
