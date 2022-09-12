@@ -46,8 +46,10 @@ import chisel3.util._
 /** Represents the main PCB. */
 class Main extends Module {
   val io = IO(new Bundle {
-    /** Video clock domain */
+    /** Video clock */
     val videoClock = Input(Clock())
+    /** Sprite clock */
+    val spriteClock = Input(Clock())
     /** Game config port */
     val gameConfig = Input(GameConfig())
     /** Options port */
@@ -58,26 +60,16 @@ class Main extends Module {
     val dips = DIPIO()
     /** Video port */
     val video = Flipped(VideoIO())
+    /** GPU memory port */
+    val gpuMem = Flipped(GPUMemIO())
     /** Sound control port */
     val soundCtrl = Flipped(SoundCtrlIO())
     /** Program ROM port */
     val progRom = new ProgRomIO
     /** EEPROM port */
     val eeprom = new EEPROMIO
-    /** Layer tile ROM port */
-    val layerTileRom = Vec(Config.LAYER_COUNT, new TileRomIO)
-    /** Sprite tile ROM port */
-    val spriteTileRom = new SpriteRomIO
-    /** Sprite line buffer port */
-    val spriteLineBuffer = new SpriteLineBufferIO
-    /** Sprite frame buffer port */
-    val spriteFrameBuffer = new SpriteFrameBufferIO
-    /** System frame buffer port */
-    val systemFrameBuffer = new SystemFrameBufferIO
     /** Asserted when the current page for the sprite frame buffer should be swapped */
     val spriteFrameBufferSwap = Output(Bool())
-    /** RGB port */
-    val rgb = Output(UInt(Config.RGB_WIDTH.W))
   })
 
   // A write-only memory interface is used to connect the CPU to the EEPROM
@@ -86,7 +78,6 @@ class Main extends Module {
   // Synchronize vertical blank into system clock domain
   val vBlank = ShiftRegister(io.video.vBlank, 2)
   val vBlankRising = Util.rising(vBlank)
-  val vBlankFalling = Util.falling(vBlank)
 
   // Toggle pause register
   val pauseReg = Util.toggle(Util.rising(io.player(0).pause || io.player(1).pause))
@@ -104,27 +95,6 @@ class Main extends Module {
   cpu.io.vpa := cpu.io.as && cpu.io.fc === 7.U // autovectored interrupts
   cpu.io.ipl := videoIrq || io.soundCtrl.irq || unknownIrq
   cpu.io.din := 0.U
-
-  // Graphics processor
-  val gpu = Module(new GPU)
-  gpu.io.videoClock := io.videoClock
-  gpu.io.gameConfig <> io.gameConfig
-  gpu.io.options <> io.options
-  gpu.io.video <> io.video
-  0.until(Config.LAYER_COUNT).foreach { i =>
-    gpu.io.layerCtrl(i).format := io.gameConfig.layer(i).format
-    gpu.io.layerCtrl(i).enable := io.options.layer(i)
-    gpu.io.layerCtrl(i).tileRom <> io.layerTileRom(i)
-  }
-  gpu.io.spriteCtrl.format := io.gameConfig.sprite.format
-  gpu.io.spriteCtrl.enable := io.options.sprite
-  gpu.io.spriteCtrl.start := vBlankFalling
-  gpu.io.spriteCtrl.zoom := io.gameConfig.sprite.zoom
-  gpu.io.spriteCtrl.tileRom <> io.spriteTileRom
-  gpu.io.spriteLineBuffer <> io.spriteLineBuffer
-  gpu.io.spriteFrameBuffer <> io.spriteFrameBuffer
-  gpu.io.systemFrameBuffer <> io.systemFrameBuffer
-  io.rgb := gpu.io.rgb
 
   // Set interface defaults
   io.soundCtrl.oki(0).default()
@@ -160,9 +130,9 @@ class Main extends Module {
     dataWidthB = Config.SPRITE_RAM_GPU_DATA_WIDTH,
     maskEnable = true
   ))
-  spriteRam.io.clockB := clock // system (i.e. fast) clock domain
+  spriteRam.io.clockB := io.spriteClock
   spriteRam.io.portA.default()
-  spriteRam.io.portB <> gpu.io.spriteCtrl.vram
+  spriteRam.io.portB <> io.gpuMem.sprite.vram
 
   // Layer VRAM (8x8)
   val vram8x8 = 0.until(Config.LAYER_COUNT).map { i =>
@@ -175,7 +145,7 @@ class Main extends Module {
     ))
     ram.io.clockB := io.videoClock
     ram.io.portA.default()
-    ram.io.portB <> gpu.io.layerCtrl(i).vram8x8
+    ram.io.portB <> io.gpuMem.layer(i).vram8x8
     ram
   }
 
@@ -190,7 +160,7 @@ class Main extends Module {
     ))
     ram.io.clockB := io.videoClock
     ram.io.portA.default()
-    ram.io.portB <> gpu.io.layerCtrl(i).vram16x16
+    ram.io.portB <> io.gpuMem.layer(i).vram16x16
     ram
   }
 
@@ -205,7 +175,7 @@ class Main extends Module {
     ))
     ram.io.clockB := io.videoClock
     ram.io.portA.default()
-    ram.io.portB <> gpu.io.layerCtrl(i).lineRam
+    ram.io.portB <> io.gpuMem.layer(i).lineRam
     ram
   }
 
@@ -219,20 +189,20 @@ class Main extends Module {
   ))
   paletteRam.io.clockB := io.videoClock
   paletteRam.io.portA.default()
-  paletteRam.io.portB <> gpu.io.paletteRam
+  paletteRam.io.portB <> io.gpuMem.paletteRam
 
   // Layer registers
   val layerRegs = 0.until(Config.LAYER_COUNT).map { i =>
     val regs = Module(new RegisterFile(CPU.DATA_WIDTH, Config.LAYER_REGS_COUNT))
     regs.io.mem.default()
-    gpu.io.layerCtrl(i).regs := withClock(io.videoClock) { ShiftRegister(LayerRegs.decode(regs.io.regs), 2) }
+    io.gpuMem.layer(i).regs := withClock(io.videoClock) { ShiftRegister(LayerRegs.decode(regs.io.regs), 2) }
     regs
   }
 
   // Sprite registers
   val spriteRegs = Module(new RegisterFile(CPU.DATA_WIDTH, Config.SPRITE_REGS_COUNT))
   spriteRegs.io.mem.default()
-  gpu.io.spriteCtrl.regs := SpriteRegs.decode(spriteRegs.io.regs)
+  io.gpuMem.sprite.regs := SpriteRegs.decode(spriteRegs.io.regs)
 
   // Toggle video IRQ
   when(vBlankRising) {

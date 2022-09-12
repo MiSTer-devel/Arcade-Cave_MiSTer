@@ -36,24 +36,30 @@ import arcadia.mem.ReadMemIO
 import cave._
 import chisel3._
 
-/** A bundle that contains control signals for the layer processor. */
-class LayerCtrlIO extends Bundle {
-  /** Enable the layer output */
-  val enable = Input(Bool())
-  /** Graphics format */
-  val format = Input(UInt(GameConfig.GFX_FORMAT_WIDTH.W))
-  /** Layer registers port */
-  val regs = Input(new LayerRegs)
-  /** 8x8 VRAM port */
-  val vram8x8 = ReadMemIO(Config.LAYER_8x8_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
-  /** 16x16 VRAM port */
-  val vram16x16 = ReadMemIO(Config.LAYER_16x16_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
-  /** Line RAM port */
-  val lineRam = ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
-  /** Tile ROM port */
-  val tileRom = new TileRomIO
+/** A bundle that contains memory interfaces for the GPU. */
+class GPUMemIO extends Bundle {
+  /** Layer port */
+  val layer = Vec(3, new Bundle {
+    /** Layer registers port */
+    val regs = Input(new LayerRegs)
+    /** 8x8 VRAM port */
+    val vram8x8 = ReadMemIO(Config.LAYER_8x8_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
+    /** 16x16 VRAM port */
+    val vram16x16 = ReadMemIO(Config.LAYER_16x16_RAM_GPU_ADDR_WIDTH, Config.LAYER_RAM_GPU_DATA_WIDTH)
+    /** Line RAM port */
+    val lineRam = ReadMemIO(Config.LINE_RAM_GPU_ADDR_WIDTH, Config.LINE_RAM_GPU_DATA_WIDTH)
+  })
+  /** Sprite VRAM port */
+  val sprite = new Bundle {
+    /** Sprite registers */
+    val regs = Input(new SpriteRegs)
+    /** VRAM port */
+    val vram = ReadMemIO(Config.SPRITE_RAM_GPU_ADDR_WIDTH, Config.SPRITE_RAM_GPU_DATA_WIDTH)
+  }
+  /** Palette RAM port */
+  val paletteRam = new PaletteRamIO
 }
 
-object LayerCtrlIO {
-  def apply() = new LayerCtrlIO
+object GPUMemIO {
+  def apply() = new GPUMemIO()
 }

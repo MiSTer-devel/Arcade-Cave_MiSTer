@@ -76,6 +76,9 @@ class SpriteFrameBuffer extends Module {
     val ddr = BurstMemIO(Config.ddrConfig)
   })
 
+  val hBlank = ShiftRegister(io.video.hBlank, 2)
+  val hBlankRising = Util.rising(hBlank)
+
   // Line buffer
   val lineBuffer = Module(new TrueDualPortRam(
     addrWidthA = Config.FRAME_BUFFER_ADDR_WIDTH_X - 2,
@@ -95,12 +98,9 @@ class SpriteFrameBuffer extends Module {
   pageFlipper.io.swapRead := false.B
   pageFlipper.io.swapWrite := io.enable && io.swap
 
-  // Start line buffer DMA as soon as the current line has finished
-  val lineBufferDmaStart = Util.rising(ShiftRegister(io.video.hBlank, 2))
-
   // Copy line buffer from DDR memory to BRAM
   val lineBufferDma = Module(new BurstReadDMA(Config.spriteLineBufferDmaConfig))
-  lineBufferDma.io.start := io.enable && lineBufferDmaStart
+  lineBufferDma.io.start := io.enable && hBlankRising
   lineBufferDma.io.out
     .mapAddr { a => (a >> 3).asUInt } // convert from byte address
     .asMemIO <> lineBuffer.io.portA

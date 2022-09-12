@@ -38,10 +38,10 @@ import chisel3._
 
 /** A bundle that contains control signals for the sprite processor. */
 class SpriteCtrlIO extends Bundle {
-  /** Graphics format */
-  val format = Input(UInt(GameConfig.GFX_FORMAT_WIDTH.W))
   /** Enable the layer output */
   val enable = Input(Bool())
+  /** Graphics format */
+  val format = Input(UInt(GameConfig.GFX_FORMAT_WIDTH.W))
   /** Start a new frame */
   val start = Input(Bool())
   /** Asserted when the sprite processor is busy */

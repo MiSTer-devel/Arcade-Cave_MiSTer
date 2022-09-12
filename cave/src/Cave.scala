@@ -39,9 +39,11 @@ import arcadia.mem.ddr.DDR
 import arcadia.mem.sdram.{SDRAM, SDRAMIO}
 import arcadia.mister._
 import cave.fb._
+import cave.gfx.GPU
 import cave.main.Main
 import cave.snd.Sound
 import chisel3._
+import chisel3.util._
 import chisel3.experimental.FlatIO
 
 /**
@@ -83,6 +85,10 @@ class Cave extends Module {
   })
 
   io.ioctl.default()
+
+  val vBlank = ShiftRegister(io.video.vBlank, 2)
+  val vBlankRising = Util.rising(vBlank)
+  val vBlankFalling = Util.falling(vBlank)
 
   // The game configuration register is latched when data is written to the IOCTL (i.e. the game
   // index is set by the MRA file).
@@ -135,6 +141,7 @@ class Cave extends Module {
   // Main PCB
   val main = withClockAndReset(io.cpuClock, io.cpuReset || !memSys.io.ready) { Module(new Main) }
   main.io.videoClock := io.videoClock
+  main.io.spriteClock := clock
   main.io.gameConfig := gameConfigReg
   main.io.options := io.options
   main.io.dips := dipsRegs.io.regs
@@ -142,16 +149,37 @@ class Cave extends Module {
   main.io.video := videoSys.io.video
   main.io.progRom <> Crossing.freeze(io.cpuClock, memSys.io.progRom)
   main.io.eeprom <> Crossing.freeze(io.cpuClock, memSys.io.eeprom)
-  main.io.layerTileRom(0) <> Crossing.syncronize(io.videoClock, memSys.io.layerTileRom(0))
-  main.io.layerTileRom(1) <> Crossing.syncronize(io.videoClock, memSys.io.layerTileRom(1))
-  main.io.layerTileRom(2) <> Crossing.syncronize(io.videoClock, memSys.io.layerTileRom(2))
-  main.io.spriteTileRom <> memSys.io.spriteTileRom
 
   // Sound PCB
-  val sound = Module(new Sound)
+  val sound = withClockAndReset(io.cpuClock, io.cpuReset || !memSys.io.ready) { Module(new Sound) }
   sound.io.gameConfig := gameConfigReg
   sound.io.ctrl <> main.io.soundCtrl
-  sound.io.rom <> memSys.io.soundRom
+  sound.io.rom(0) <> Crossing.freeze(io.cpuClock, memSys.io.soundRom(0))
+  sound.io.rom(1) <> Crossing.freeze(io.cpuClock, memSys.io.soundRom(1))
+
+  // Graphics processor
+  val gpu = Module(new GPU)
+  gpu.io.videoClock := io.videoClock
+  gpu.io.gameConfig := gameConfigReg
+  gpu.io.options := io.options
+  gpu.io.video := io.video
+  0.until(Config.LAYER_COUNT).foreach { i =>
+    gpu.io.layerCtrl(i).enable := io.options.layer(i)
+    gpu.io.layerCtrl(i).format := gameConfigReg.layer(i).format
+    gpu.io.layerCtrl(i).vram8x8 <> main.io.gpuMem.layer(i).vram8x8
+    gpu.io.layerCtrl(i).vram16x16 <> main.io.gpuMem.layer(i).vram16x16
+    gpu.io.layerCtrl(i).lineRam <> main.io.gpuMem.layer(i).lineRam
+    gpu.io.layerCtrl(i).tileRom <> Crossing.syncronize(io.videoClock, memSys.io.layerTileRom(i))
+    gpu.io.layerCtrl(i).regs := main.io.gpuMem.layer(i).regs
+  }
+  gpu.io.spriteCtrl.enable := io.options.sprite
+  gpu.io.spriteCtrl.format := gameConfigReg.sprite.format
+  gpu.io.spriteCtrl.start := vBlankFalling
+  gpu.io.spriteCtrl.zoom := gameConfigReg.sprite.zoom
+  gpu.io.spriteCtrl.vram <> main.io.gpuMem.sprite.vram
+  gpu.io.spriteCtrl.tileRom <> memSys.io.spriteTileRom
+  gpu.io.spriteCtrl.regs := main.io.gpuMem.sprite.regs
+  gpu.io.paletteRam <> main.io.gpuMem.paletteRam
 
   // Sprite frame buffer
   val spriteFrameBuffer = Module(new SpriteFrameBuffer)
@@ -159,8 +187,8 @@ class Cave extends Module {
   spriteFrameBuffer.io.enable := memSys.io.ready
   spriteFrameBuffer.io.swap := main.io.spriteFrameBufferSwap
   spriteFrameBuffer.io.video := videoSys.io.video
-  spriteFrameBuffer.io.lineBuffer <> main.io.spriteLineBuffer
-  spriteFrameBuffer.io.frameBuffer <> main.io.spriteFrameBuffer
+  spriteFrameBuffer.io.lineBuffer <> gpu.io.spriteLineBuffer
+  spriteFrameBuffer.io.frameBuffer <> gpu.io.spriteFrameBuffer
   spriteFrameBuffer.io.ddr <> memSys.io.spriteFrameBuffer
 
   // System frame buffer
@@ -171,12 +199,12 @@ class Cave extends Module {
   systemFrameBuffer.io.forceBlank := !memSys.io.ready
   systemFrameBuffer.io.video := videoSys.io.video
   systemFrameBuffer.io.frameBufferCtrl <> io.frameBufferCtrl
-  systemFrameBuffer.io.frameBuffer <> main.io.systemFrameBuffer
+  systemFrameBuffer.io.frameBuffer <> gpu.io.systemFrameBuffer
   systemFrameBuffer.io.ddr <> memSys.io.systemFrameBuffer
 
   // Video output
   io.video := videoSys.io.video
-  io.rgb := main.io.rgb
+  io.rgb := gpu.io.rgb
 
   // Audio output
   io.audio := sound.io.audio
