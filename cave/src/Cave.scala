@@ -159,9 +159,6 @@ class Cave extends Module {
   // Graphics processor
   val gpu = Module(new GPU)
   gpu.io.videoClock := io.videoClock
-  gpu.io.gameConfig := gameConfigReg
-  gpu.io.options := io.options
-  gpu.io.video := videoSys.io.video
   0.until(Config.LAYER_COUNT).foreach { i =>
     gpu.io.layerCtrl(i).enable := io.options.layer(i)
     gpu.io.layerCtrl(i).format := gameConfigReg.layer(i).format
@@ -178,6 +175,9 @@ class Cave extends Module {
   gpu.io.spriteCtrl.vram <> main.io.gpuMem.sprite.vram
   gpu.io.spriteCtrl.tileRom <> memSys.io.spriteTileRom
   gpu.io.spriteCtrl.regs := main.io.gpuMem.sprite.regs
+  gpu.io.gameConfig := gameConfigReg
+  gpu.io.options := io.options
+  gpu.io.video := videoSys.io.video
   gpu.io.paletteRam <> main.io.gpuMem.paletteRam
 
   // Sprite frame buffer

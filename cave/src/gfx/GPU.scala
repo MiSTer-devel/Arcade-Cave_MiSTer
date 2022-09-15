@@ -50,16 +50,16 @@ class GPU extends Module {
   val io = IO(new Bundle {
     /** Video clock domain */
     val videoClock = Input(Clock())
+    /** Layer control ports */
+    val layerCtrl = Vec(Config.LAYER_COUNT, LayerCtrlIO())
+    /** Sprite control port */
+    val spriteCtrl = SpriteCtrlIO()
     /** Game config port */
     val gameConfig = Input(GameConfig())
     /** Options port */
     val options = Input(OptionsIO())
     /** Video port */
     val video = Input(VideoIO())
-    /** Layer control ports */
-    val layerCtrl = Vec(Config.LAYER_COUNT, LayerCtrlIO())
-    /** Sprite control port */
-    val spriteCtrl = SpriteCtrlIO()
     /** Sprite line buffer port */
     val spriteLineBuffer = new SpriteLineBufferIO
     /** Sprite frame buffer port */
