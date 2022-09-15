@@ -44,14 +44,14 @@ import chisel3.util._
  * Tilemap layers are 512x512 pixels, and are composed of either 8x8 or 16x16 tiles with a color
  * depth of either 4 or 8 bits-per-pixel.
  */
-class LayerProcessor extends Module {
+class LayerProcessor(index: Int) extends Module {
   val io = IO(new Bundle {
     /** Layer control port */
     val ctrl = LayerCtrlIO()
     /** Video port */
     val video = Input(VideoIO())
-    /** Layer offset */
-    val offset = Input(UVec2(Config.LAYER_SCROLL_WIDTH.W))
+    /** Sprite offset */
+    val spriteOffset = Input(UVec2(Config.LAYER_SCROLL_WIDTH.W))
     /** Palette entry output */
     val pen = Output(new PaletteEntry)
   })
@@ -67,10 +67,13 @@ class LayerProcessor extends Module {
   // in the original arcade hardware.
   val tileRomRead = layerEnable && !io.video.vBlank
 
+  // Layer offset
+  val layerOffset = LayerProcessor.layerOffset(index, io.ctrl)
+
   // Apply the scroll and layer offsets to get the final pixel position
   val pos = {
-    val normal = io.video.pos + io.ctrl.regs.scroll + io.offset
-    val flipped = io.video.size - io.video.pos + io.ctrl.regs.scroll + io.offset
+    val normal = io.video.pos + io.ctrl.regs.scroll - io.spriteOffset - layerOffset
+    val flipped = io.video.size - io.video.pos + io.ctrl.regs.scroll - io.spriteOffset + layerOffset
     UVec2(
       Mux(io.ctrl.regs.flipX, flipped.x, normal.x),
       Mux(io.ctrl.regs.flipY, flipped.y, normal.y)
@@ -136,6 +139,27 @@ class LayerProcessor extends Module {
 }
 
 object LayerProcessor {
+  /**
+   * Calculates the offset adjustment for a layer.
+   *
+   * Each layer is horizontally offset by one pixel with respect to the previous layer. There is
+   * also an additional 8 pixel horizontal offset for layers with small (i.e. 8x8) tiles.
+   *
+   * Finally, there is a two pixel offset applied to flipped layers.
+   *
+   * @param index The index of the layer.
+   * @param ctrl  The layer control.
+   * @return An unsigned vector.
+   */
+  def layerOffset(index: Int, ctrl: LayerCtrlIO): UVec2 = {
+    val x = Mux(ctrl.regs.tileSize, (0x13 - (index + 1)).U, (0x13 - (index + 1 + 8)).U)
+    val y = 0x1ee.U
+    UVec2(
+      Mux(ctrl.regs.flipX, x + 1.U, x),
+      Mux(ctrl.regs.flipY, y + 1.U, y)
+    )
+  }
+
   /**
    * Calculates the VRAM address for the next tile.
    *
