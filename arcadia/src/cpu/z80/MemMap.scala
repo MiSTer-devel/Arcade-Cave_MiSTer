@@ -49,8 +49,9 @@ import chisel3._
  * memory refresh). This ensures the data is ready when the read enable signal is asserted.
  *
  * @param cpu The CPU IO port.
+ * @param addrMask The global address mask.
  */
-class MemMap(cpu: CPUIO) {
+class MemMap(cpu: CPUIO, addrMask: Int = 0xffff) {
   /**
    * Create a memory map for the given address.
    *
@@ -72,11 +73,11 @@ class MemMap(cpu: CPUIO) {
    * @param r   The address range.
    */
   class Mapping(cpu: CPUIO, r: Range) {
-    // Address offset
-    val offset = cpu.addr - r.start.U
+    val addr = cpu.addr & addrMask.U
+    val offset = addr - r.start.U
 
-    // Chip select
-    val cs = Util.between(cpu.addr, r)
+    // Assert chip select if the address is within the range
+    val cs = Util.between(addr, r)
 
     /**
      * Maps an address range to the given read-write memory port.
@@ -94,7 +95,7 @@ class MemMap(cpu: CPUIO) {
     def readWriteMemT(mem: MemIO)(f: UInt => UInt): Unit = {
       mem.rd := cs && !cpu.rfsh
       mem.wr := cs && cpu.mreq && cpu.wr
-      mem.addr := f(cpu.addr)
+      mem.addr := f(addr)
       mem.din := cpu.dout
       when(cs && cpu.mreq && cpu.rd) { cpu.din := mem.dout }
     }
@@ -114,7 +115,7 @@ class MemMap(cpu: CPUIO) {
      */
     def readMemT(mem: ReadMemIO)(f: UInt => UInt): Unit = {
       mem.rd := cs && !cpu.rfsh
-      mem.addr := f(cpu.addr)
+      mem.addr := f(addr)
       when(cs && cpu.mreq && cpu.rd) { cpu.din := mem.dout }
     }
 
@@ -133,7 +134,7 @@ class MemMap(cpu: CPUIO) {
      */
     def writeMemT(mem: WriteMemIO)(f: UInt => UInt): Unit = {
       mem.wr := cs && cpu.mreq && cpu.wr
-      mem.addr := f(cpu.addr)
+      mem.addr := f(addr)
       mem.din := cpu.dout
     }
 
@@ -146,9 +147,9 @@ class MemMap(cpu: CPUIO) {
     def rw(f: (UInt, UInt) => UInt)(g: (UInt, UInt, Bits) => Unit): Unit = {
       when(cs && cpu.mreq) {
         when(cpu.rd) {
-          cpu.din := f(cpu.addr, offset)
+          cpu.din := f(addr, offset)
         }.elsewhen(cpu.wr) {
-          g(cpu.addr, offset, cpu.dout)
+          g(addr, offset, cpu.dout)
         }
       }
     }
@@ -159,7 +160,7 @@ class MemMap(cpu: CPUIO) {
      * @param f The getter function.
      */
     def r(f: (UInt, UInt) => Bits): Unit = {
-      when(cs && cpu.mreq && cpu.rd) { cpu.din := f(cpu.addr, offset) }
+      when(cs && cpu.mreq && cpu.rd) { cpu.din := f(addr, offset) }
     }
 
     /**
@@ -168,7 +169,7 @@ class MemMap(cpu: CPUIO) {
      * @param f The setter function.
      */
     def w(f: (UInt, UInt, Bits) => Unit): Unit = {
-      when(cs && cpu.mreq && cpu.wr) { f(cpu.addr, offset, cpu.dout) }
+      when(cs && cpu.mreq && cpu.wr) { f(addr, offset, cpu.dout) }
     }
 
     /** Ignores read access for the address range. */
