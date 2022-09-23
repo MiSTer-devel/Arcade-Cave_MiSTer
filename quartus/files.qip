@@ -6,5 +6,6 @@ set_global_assignment -name SYSTEMVERILOG_FILE cave.sv
 set_global_assignment -name QIP_FILE core/arcadia/arcadia.qip
 set_global_assignment -name QIP_FILE core/fx68k/fx68k.qip
 set_global_assignment -name QIP_FILE core/jt6295/jt6295.qip
+set_global_assignment -name QIP_FILE core/t80/t80.qip
 set_global_assignment -name VERILOG_FILE core/Cave.v
 set_global_assignment -name VERILOG_FILE core/reset_ctrl.v
