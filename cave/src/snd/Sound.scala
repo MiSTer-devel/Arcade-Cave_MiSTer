@@ -75,14 +75,14 @@ class Sound extends Module {
   )
 
   // YMZ280B ADPCM decoder
-  val ymz = Module(new YMZ280B(Config.ymzConfig))
-  ymz.io.cpu <> io.ctrl.ymz
-  ymz.io.rom <> io.rom(0)
-  io.ctrl.irq := ymz.io.irq
+  val ymz280b = Module(new YMZ280B(Config.ymzConfig))
+  ymz280b.io.cpu <> io.ctrl.ymz
+  ymz280b.io.rom <> io.rom(0)
+  io.ctrl.irq := ymz280b.io.irq
 
   // Mux sound ROM port 0
   io.rom(0) <> AsyncReadMemIO.mux1H(Seq(
-    (io.gameConfig.sound(0).device === SoundDevice.YMZ280B.U) -> ymz.io.rom,
+    (io.gameConfig.sound(0).device === SoundDevice.YMZ280B.U) -> ymz280b.io.rom,
     (io.gameConfig.sound(0).device === SoundDevice.OKIM6259.U) -> okiRom(0)
   ))
 
@@ -91,7 +91,7 @@ class Sound extends Module {
 
   // Audio mixer
   io.audio := AudioMixer.sum(Config.AUDIO_SAMPLE_WIDTH,
-    RegEnable(ymz.io.audio.bits.left, ymz.io.audio.valid) -> 1,
+    RegEnable(ymz280b.io.audio.bits.left, ymz280b.io.audio.valid) -> 1,
     RegEnable(oki(0).io.audio.bits, oki(0).io.audio.valid) -> 1.6,
     RegEnable(oki(1).io.audio.bits, oki(1).io.audio.valid) -> 1
   )
