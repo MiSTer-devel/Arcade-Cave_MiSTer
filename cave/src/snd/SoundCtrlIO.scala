@@ -35,6 +35,7 @@ package cave.snd
 import arcadia.mem._
 import chisel3._
 
+/** An bundle that contains control signals for the sound PCB. */
 class SoundCtrlIO extends Bundle {
   /** OKIM6295 CPU port */
   val oki = Flipped(Vec(Sound.OKI_COUNT, MemIO(23, 16)))
