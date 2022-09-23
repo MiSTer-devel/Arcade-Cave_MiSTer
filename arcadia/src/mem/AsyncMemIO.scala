@@ -124,6 +124,21 @@ class AsyncReadMemIO(addrWidth: Int, dataWidth: Int) extends ReadMemIO(addrWidth
     dout := f(mem.dout)
     mem
   }
+
+  /**
+   * Enables the memory interface.
+   *
+   * @param value The enable value.
+   */
+  def enable(value: Bool): AsyncReadMemIO = {
+    val mem = Wire(Flipped(AsyncReadMemIO(this)))
+    mem.rd := value && rd
+    wait_n := mem.wait_n
+    valid := mem.valid
+    mem.addr := addr
+    dout := mem.dout
+    mem
+  }
 }
 
 object AsyncReadMemIO {
@@ -149,6 +164,24 @@ object AsyncReadMemIO {
     }
     mem
   }
+
+  /**
+   * Multiplexes requests from multiple read-only memory interface to a single read-only memory
+   * interfaces. The request is routed to the first enabled interface.
+   *
+   * @param sel A list of enable signals.
+   * @param in  A list of read-write memory interfaces.
+   */
+  def mux1H(sel: Seq[Bool], in: Seq[AsyncReadMemIO]): AsyncReadMemIO = mux1H(sel zip in)
+
+  /**
+   * Multiplexes requests from multiple read-only memory interface to a single read-only memory
+   * interfaces. The request is routed to indexed interface.
+   *
+   * @param index An index signal.
+   * @param in    A list of read-write memory interfaces.
+   */
+  def mux1H(index: UInt, in: Seq[AsyncReadMemIO]): AsyncReadMemIO = mux1H(in.indices.map(index(_)), in)
 }
 
 /**
