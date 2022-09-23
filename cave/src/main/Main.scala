@@ -101,6 +101,8 @@ class Main extends Module {
   io.soundCtrl.oki(1).default()
   io.soundCtrl.nmk.default()
   io.soundCtrl.ymz.default()
+  io.soundCtrl.req := false.B
+  io.soundCtrl.data := cpu.io.dout
   io.progRom.default()
 
   // EEPROM
@@ -397,7 +399,7 @@ class Main extends Module {
     vramMap(0x900000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
     vramMap(0x980000, vram8x8(2).io.portA, vram16x16(2).io.portA, lineRam(2).io.portA)
     vregMap(0xa80000)
-    map(0xa8006e).nopw() // TODO: sound ROM
+    map(0xa8006e).w { (_, _, _) => io.soundCtrl.req := true.B }
     map(0xb00000 to 0xb00005).readWriteMem(layerRegs(0).io.mem)
     map(0xb80000 to 0xb80005).readWriteMem(layerRegs(1).io.mem)
     map(0xc00000 to 0xc00005).readWriteMem(layerRegs(2).io.mem)

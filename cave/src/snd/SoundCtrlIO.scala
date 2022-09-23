@@ -43,6 +43,10 @@ class SoundCtrlIO extends Bundle {
   val nmk = Flipped(WriteMemIO(23, 16))
   /** YMZ280B CPU port */
   val ymz = Flipped(MemIO(23, 16))
+  /** Request flag */
+  val req = Input(Bool())
+  /** Request data */
+  val data = Input(Bits(16.W))
   /** IRQ */
   val irq = Output(Bool())
 }

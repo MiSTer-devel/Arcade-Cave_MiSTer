@@ -251,8 +251,8 @@ object GameConfig {
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00100000.U
     wire.fillPalette := 0x7f.U
-    wire.sound(0).device := SoundDevice.DISABLED.U
-    wire.sound(1).device := SoundDevice.DISABLED.U
+    wire.sound(0).device := SoundDevice.Z80.U
+    wire.sound(1).device := SoundDevice.OKIM6259.U
     wire.sound(0).romOffset := 0x00100080.U
     wire.sound(1).romOffset := 0x00140080.U
     wire.layer(0).format := GraphicsFormat.GFX_FORMAT_4BPP.U

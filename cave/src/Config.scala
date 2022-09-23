@@ -48,6 +48,9 @@ object Config {
   /** Clock period (ns) */
   val CPU_CLOCK_PERIOD = 1 / CPU_CLOCK_FREQ * 1_000_000_000D
 
+  /** Sound clock divider */
+  val SOUND_CLOCK_DIV = 8 // 4 MHz
+
   /** Video clock frequency (Hz) */
   val VIDEO_CLOCK_FREQ = 28_000_000D
   /** Video clock divider */

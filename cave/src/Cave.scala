@@ -153,6 +153,7 @@ class Cave extends Module {
 
   // Sound PCB
   val sound = withClockAndReset(io.cpuClock, io.cpuReset || !memSys.io.ready) { Module(new Sound) }
+  sound.io.gameIndex := gameIndexReg
   sound.io.gameConfig := gameConfig
   sound.io.ctrl <> main.io.soundCtrl
   sound.io.rom(0) <> Crossing.freeze(io.cpuClock, memSys.io.soundRom(0))

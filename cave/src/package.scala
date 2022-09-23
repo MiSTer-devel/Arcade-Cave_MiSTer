@@ -72,6 +72,7 @@ package object cave {
     val DISABLED = 0
     val YMZ280B = 1
     val OKIM6259 = 2
+    val Z80 = 3
   }
 
   /** DIP switches IO */
