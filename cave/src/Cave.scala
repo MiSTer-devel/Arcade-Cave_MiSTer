@@ -89,22 +89,24 @@ class Cave extends Module {
   val vBlank = ShiftRegister(io.video.vBlank, 2)
   val vBlankFalling = Util.falling(vBlank)
 
-  // The game configuration register is latched when data is written to the IOCTL (i.e. the game
-  // index is set by the MRA file).
-  val gameConfigReg = {
-    val gameConfig = Reg(GameConfig())
+  // The game index register is latched when data is written to the IOCTL (i.e. the game index is
+  // set by the MRA file), and falls back to the value in the options.
+  val gameIndexReg = {
+    val reg = Reg(UInt(4.W))
     val latched = RegInit(false.B)
     when(io.ioctl.download && io.ioctl.wr && io.ioctl.index === IOCTL.GAME_INDEX.U) {
-      gameConfig := GameConfig(io.ioctl.dout(OptionsIO.GAME_INDEX_WIDTH - 1, 0))
+      reg := io.ioctl.dout(OptionsIO.GAME_INDEX_WIDTH - 1, 0)
       latched := true.B
     }
-    // Default to the game configuration set in the options
     when(Util.falling(io.ioctl.download) && !latched) {
-      gameConfig := GameConfig(io.options.gameIndex)
+      reg := io.options.gameIndex
       latched := true.B
     }
-    gameConfig
+    reg
   }
+
+  // Game configuration
+  val gameConfig = GameConfig(gameIndexReg)
 
   // Connect IOCTL to DIPs register file
   val dipsRegs = Module(new RegisterFile(IOCTL.DATA_WIDTH, Config.DIPS_REGS_COUNT))
@@ -122,7 +124,7 @@ class Cave extends Module {
 
   // Memory subsystem
   val memSys = Module(new MemSys)
-  memSys.io.gameConfig <> gameConfigReg
+  memSys.io.gameConfig := gameConfig
   memSys.io.prog.rom <> io.ioctl.rom
   memSys.io.prog.nvram <> io.ioctl.nvram
   memSys.io.prog.done := Util.falling(io.ioctl.download) && io.ioctl.index === IOCTL.ROM_INDEX.U
@@ -141,7 +143,7 @@ class Cave extends Module {
   val main = withClockAndReset(io.cpuClock, io.cpuReset || !memSys.io.ready) { Module(new Main) }
   main.io.videoClock := io.videoClock
   main.io.spriteClock := clock
-  main.io.gameConfig := gameConfigReg
+  main.io.gameIndex := gameIndexReg
   main.io.options := io.options
   main.io.dips := dipsRegs.io.regs
   main.io.player <> io.player
@@ -151,7 +153,7 @@ class Cave extends Module {
 
   // Sound PCB
   val sound = withClockAndReset(io.cpuClock, io.cpuReset || !memSys.io.ready) { Module(new Sound) }
-  sound.io.gameConfig := gameConfigReg
+  sound.io.gameConfig := gameConfig
   sound.io.ctrl <> main.io.soundCtrl
   sound.io.rom(0) <> Crossing.freeze(io.cpuClock, memSys.io.soundRom(0))
   sound.io.rom(1) <> Crossing.freeze(io.cpuClock, memSys.io.soundRom(1))
@@ -161,7 +163,7 @@ class Cave extends Module {
   gpu.io.videoClock := io.videoClock
   0.until(Config.LAYER_COUNT).foreach { i =>
     gpu.io.layerCtrl(i).enable := io.options.layer(i)
-    gpu.io.layerCtrl(i).format := gameConfigReg.layer(i).format
+    gpu.io.layerCtrl(i).format := gameConfig.layer(i).format
     gpu.io.layerCtrl(i).vram8x8 <> main.io.gpuMem.layer(i).vram8x8
     gpu.io.layerCtrl(i).vram16x16 <> main.io.gpuMem.layer(i).vram16x16
     gpu.io.layerCtrl(i).lineRam <> main.io.gpuMem.layer(i).lineRam
@@ -169,13 +171,13 @@ class Cave extends Module {
     gpu.io.layerCtrl(i).regs := main.io.gpuMem.layer(i).regs
   }
   gpu.io.spriteCtrl.enable := io.options.sprite
-  gpu.io.spriteCtrl.format := gameConfigReg.sprite.format
+  gpu.io.spriteCtrl.format := gameConfig.sprite.format
   gpu.io.spriteCtrl.start := vBlankFalling
-  gpu.io.spriteCtrl.zoom := gameConfigReg.sprite.zoom
+  gpu.io.spriteCtrl.zoom := gameConfig.sprite.zoom
   gpu.io.spriteCtrl.vram <> main.io.gpuMem.sprite.vram
   gpu.io.spriteCtrl.tileRom <> memSys.io.spriteTileRom
   gpu.io.spriteCtrl.regs := main.io.gpuMem.sprite.regs
-  gpu.io.gameConfig := gameConfigReg
+  gpu.io.gameConfig := gameConfig
   gpu.io.options := io.options
   gpu.io.video := videoSys.io.video
   gpu.io.paletteRam <> main.io.gpuMem.paletteRam

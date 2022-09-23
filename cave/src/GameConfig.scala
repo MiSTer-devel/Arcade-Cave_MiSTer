@@ -32,14 +32,11 @@
 
 package cave
 
-import arcadia.mister.OptionsIO
 import chisel3._
 import chisel3.util._
 
 /** Represents a game configuration. */
 class GameConfig extends Bundle {
-  /** Game index */
-  val index = UInt(OptionsIO.GAME_INDEX_WIDTH.W)
   /** The number of colors per palette */
   val granularity = UInt(9.W)
   /** Program ROM offset */
@@ -99,7 +96,6 @@ object GameConfig {
 
   private def dfeveron = {
     val wire = Wire(new GameConfig)
-    wire.index := Game.DFEVERON.U
     wire.granularity := 16.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00100000.U
@@ -125,7 +121,6 @@ object GameConfig {
 
   private def ddonpach = {
     val wire = Wire(new GameConfig)
-    wire.index := Game.DDONPACH.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00100000.U
@@ -151,7 +146,6 @@ object GameConfig {
 
   private def donpachi = {
     val wire = Wire(new GameConfig)
-    wire.index := Game.DONPACHI.U
     wire.granularity := 16.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00080000.U
@@ -177,7 +171,6 @@ object GameConfig {
 
   private def esprade = {
     val wire = Wire(new GameConfig)
-    wire.index := Game.ESPRADE.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00100000.U
@@ -203,7 +196,6 @@ object GameConfig {
 
   private def gaia = {
     val wire = Wire(new GameConfig)
-    wire.index := Game.GAIA.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0.U // disabled
@@ -229,7 +221,6 @@ object GameConfig {
 
   private def guwange = {
     val wire = Wire(new GameConfig)
-    wire.index := Game.GUWANGE.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00100000.U
@@ -255,7 +246,6 @@ object GameConfig {
 
   private def uopoko = {
     val wire = Wire(new GameConfig)
-    wire.index := Game.UOPOKO.U
     wire.granularity := 256.U
     wire.progRomOffset := 0x00000000.U
     wire.eepromOffset := 0x00100000.U

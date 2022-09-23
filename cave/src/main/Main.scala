@@ -50,8 +50,8 @@ class Main extends Module {
     val videoClock = Input(Clock())
     /** Sprite clock */
     val spriteClock = Input(Clock())
-    /** Game config port */
-    val gameConfig = Input(GameConfig())
+    /** Game index */
+    val gameIndex = Input(UInt(4.W))
     /** Options port */
     val options = Input(OptionsIO())
     /** Joystick port */
@@ -106,9 +106,9 @@ class Main extends Module {
   // EEPROM
   val eeprom = Module(new EEPROM)
   eeprom.io.mem <> io.eeprom
-  val cs = Mux(io.gameConfig.index === Game.GUWANGE.U, eepromMem.din(5), eepromMem.din(9))
-  val sck = Mux(io.gameConfig.index === Game.GUWANGE.U, eepromMem.din(6), eepromMem.din(10))
-  val sdi = Mux(io.gameConfig.index === Game.GUWANGE.U, eepromMem.din(7), eepromMem.din(11))
+  val cs = Mux(io.gameIndex === Game.GUWANGE.U, eepromMem.din(5), eepromMem.din(9))
+  val sck = Mux(io.gameIndex === Game.GUWANGE.U, eepromMem.din(6), eepromMem.din(10))
+  val sdi = Mux(io.gameIndex === Game.GUWANGE.U, eepromMem.din(7), eepromMem.din(11))
   eeprom.io.serial.cs := RegEnable(cs, false.B, eepromMem.wr)
   eeprom.io.serial.sck := RegEnable(sck, false.B, eepromMem.wr)
   eeprom.io.serial.sdi := RegEnable(sdi, false.B, eepromMem.wr)
@@ -223,7 +223,7 @@ class Main extends Module {
   }
 
   // Set player input ports
-  val (input0, input1) = Main.encodePlayers(io.gameConfig.index, io.options, io.player, eeprom)
+  val (input0, input1) = Main.encodePlayers(io.gameIndex, io.options, io.player, eeprom)
 
   // Swap the sprite frame buffer while the CPU is paused. This allows the GPU to continue rendering
   // sprites.
@@ -262,7 +262,7 @@ class Main extends Module {
   map(0x110000 to 0x1fffff).noprw()
 
   // Dangun Feveron
-  when(io.gameConfig.index === Game.DFEVERON.U) {
+  when(io.gameIndex === Game.DFEVERON.U) {
     map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x300003).readWriteMem(io.soundCtrl.ymz)
@@ -280,7 +280,7 @@ class Main extends Module {
   }
 
   // DonPachi
-  when(io.gameConfig.index === Game.DONPACHI.U) {
+  when(io.gameIndex === Game.DONPACHI.U) {
     map(0x000000 to 0x07ffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     vramMap(0x200000, vram8x8(1).io.portA, vram16x16(1).io.portA, lineRam(1).io.portA)
@@ -301,7 +301,7 @@ class Main extends Module {
   }
 
   // DoDonPachi
-  when(io.gameConfig.index === Game.DDONPACH.U) {
+  when(io.gameIndex === Game.DDONPACH.U) {
     map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x300003).readWriteMem(io.soundCtrl.ymz)
@@ -321,7 +321,7 @@ class Main extends Module {
   }
 
   // ESP Ra.De.
-  when(io.gameConfig.index === Game.ESPRADE.U) {
+  when(io.gameIndex === Game.ESPRADE.U) {
     map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x300003).readWriteMem(io.soundCtrl.ymz)
@@ -341,7 +341,7 @@ class Main extends Module {
   }
 
   // Gaia Crusaders
-  when(io.gameConfig.index === Game.GAIA.U) {
+  when(io.gameIndex === Game.GAIA.U) {
     map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x00057e to 0x000581).nopw() // access occurs during boot
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
@@ -363,7 +363,7 @@ class Main extends Module {
   }
 
   // Guwange
-  when(io.gameConfig.index === Game.GUWANGE.U) {
+  when(io.gameIndex === Game.GUWANGE.U) {
     map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x200000 to 0x20ffff).readWriteMem(mainRam.io)
     map(0x210000 to 0x2fffff).nopr() // access occurs for Guwange (Special)
@@ -388,7 +388,7 @@ class Main extends Module {
   }
 
   // Puzzle Uo Poko
-  when(io.gameConfig.index === Game.UOPOKO.U) {
+  when(io.gameIndex === Game.UOPOKO.U) {
     map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
     map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
     map(0x300000 to 0x300003).readWriteMem(io.soundCtrl.ymz)
