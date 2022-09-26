@@ -40,13 +40,13 @@ import chisel3.util.log2Ceil
 object Config {
   /** System clock frequency (Hz) */
   val CLOCK_FREQ = 96_000_000D
-  /** Clock period (ns) */
-  val CLOCK_PERIOD = 1 / CLOCK_FREQ * 1_000_000_000D
 
   /** CPU clock frequency (Hz) */
   val CPU_CLOCK_FREQ = 32_000_000D
   /** CPU clock divider */
   val CPU_CLOCK_DIV = 2 // 16 MHz
+  /** Clock period (ns) */
+  val CPU_CLOCK_PERIOD = 1 / CPU_CLOCK_FREQ * 1_000_000_000D
 
   /** Video clock frequency (Hz) */
   val VIDEO_CLOCK_FREQ = 28_000_000D
@@ -69,9 +69,9 @@ object Config {
   val DIPS_REGS_COUNT = 4
 
   /** The width of the pulse generated when a coin is inserted */
-  val COIN_PULSE_WIDTH = (100_000_000D / CLOCK_PERIOD).ceil.toInt // 100 ms
+  val COIN_PULSE_WIDTH = (100_000_000D / CPU_CLOCK_PERIOD).ceil.toInt // 100 ms
   /** The width of the pulse generated when the service button is pressed */
-  val SERVICE_PULSE_WIDTH = (2_500_000_000D / CLOCK_PERIOD).ceil.toInt // 2500 ms
+  val SERVICE_PULSE_WIDTH = (2_500_000_000D / CPU_CLOCK_PERIOD).ceil.toInt // 2500 ms
 
   /** The width of the program ROM address bus */
   val PROG_ROM_ADDR_WIDTH = 20 // 1MB
