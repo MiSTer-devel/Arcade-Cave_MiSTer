@@ -177,11 +177,11 @@ class Sound extends Module {
 
   // Audio mixer
   io.audio := AudioMixer.sum(Config.AUDIO_SAMPLE_WIDTH,
-    RegEnable(ymz280b.io.audio.bits.left, ymz280b.io.audio.valid) -> 1,
+    RegEnable(ymz280b.io.audio.bits.left, ymz280b.io.audio.valid) -> 1.0,
     RegEnable(ym2203.io.audio.bits.psg, ym2203.io.audio.valid) -> 0.2,
-    RegEnable(ym2203.io.audio.bits.fm, ym2203.io.audio.valid) -> 0.8,
+    RegEnable(ym2203.io.audio.bits.fm, ym2203.io.audio.valid) -> 1.0,
     RegEnable(oki(0).io.audio.bits, oki(0).io.audio.valid) -> 1.6,
-    RegEnable(oki(1).io.audio.bits, oki(1).io.audio.valid) -> 1
+    RegEnable(oki(1).io.audio.bits, oki(1).io.audio.valid) -> 1.0
   )
 }
 
