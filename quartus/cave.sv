@@ -305,7 +305,7 @@ wire        ioctl_upload;
 wire        ioctl_download;
 wire        ioctl_rd;
 wire        ioctl_wr;
-wire        ioctl_wait;
+wire        ioctl_wait_n;
 wire  [7:0] ioctl_index;
 wire [26:0] ioctl_addr;
 wire [15:0] ioctl_din;
@@ -331,7 +331,7 @@ hps_io #(.CONF_STR(CONF_STR), .WIDE(1)) hps_io (
   .ioctl_download(ioctl_download),
   .ioctl_rd(ioctl_rd),
   .ioctl_wr(ioctl_wr),
-  .ioctl_wait(ioctl_wait),
+  .ioctl_wait(~ioctl_wait_n),
   .ioctl_index(ioctl_index),
   .ioctl_addr(ioctl_addr),
   .ioctl_din(ioctl_din),
@@ -565,7 +565,7 @@ Cave cave (
   .ioctl_download(ioctl_download),
   .ioctl_rd(ioctl_rd),
   .ioctl_wr(ioctl_wr),
-  .ioctl_wait_n(~ioctl_wait),
+  .ioctl_wait_n(ioctl_wait_n),
   .ioctl_index(ioctl_index),
   .ioctl_addr(ioctl_addr),
   .ioctl_din(ioctl_din),
