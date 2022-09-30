@@ -46,6 +46,7 @@ class EEPROM extends Module {
     /** Debug port */
     val debug = Output(new Bundle {
       val idle = Bool()
+      val start = Bool()
       val command = Bool()
       val read = Bool()
       val readWait = Bool()
@@ -57,14 +58,11 @@ class EEPROM extends Module {
 
   // States
   object State {
-    val idle :: command :: read :: readWait :: write :: shiftIn :: shiftOut :: Nil = Enum(7)
+    val idle :: start :: command :: read :: readWait :: write :: shiftIn :: shiftOut :: Nil = Enum(8)
   }
 
   // State register
   val stateReg = RegInit(State.idle)
-
-  // Serial clock
-  val serialClock = io.serial.cs && Util.rising(io.serial.sck)
 
   // Registers
   val counterReg = RegInit(0.U(17.W))
@@ -74,6 +72,9 @@ class EEPROM extends Module {
   val serialReg = RegInit(true.B)
   val writeAllReg = RegInit(false.B)
   val writeEnableReg = RegInit(false.B)
+
+  // Serial clock rising edge
+  val sckRising = Util.rising(io.serial.sck)
 
   // Control signals
   val done = counterReg(0)
@@ -86,7 +87,7 @@ class EEPROM extends Module {
   val disableWrite = opcodeReg === 0.U && addrReg(4, 3) === 0.U
 
   // Update the counter shift register
-  when((stateReg === State.command || stateReg === State.shiftIn || stateReg === State.shiftOut) && serialClock) {
+  when((stateReg === State.command || stateReg === State.shiftIn || stateReg === State.shiftOut) && sckRising) {
     counterReg := counterReg >> 1
   }
 
@@ -95,19 +96,24 @@ class EEPROM extends Module {
 
   // FSM
   switch(stateReg) {
-    // Wait for start bit
+    // Wait for chip select
     is(State.idle) {
       counterReg := 0x80.U
       addrReg := 0.U
       dataReg := 0xffff.U
       serialReg := true.B // ready
       writeAllReg := false.B
-      when(serialClock && io.serial.sdi) { stateReg := State.command }
+      when(io.serial.cs) { stateReg := State.start }
+    }
+
+    // Wait for start bit
+    is(State.start) {
+      when(sckRising && io.serial.sdi) { stateReg := State.command }
     }
 
     // Wait for opcode/address
     is(State.command) {
-      when(serialClock) {
+      when(sckRising) {
         val data = opcodeReg ## addrReg ## io.serial.sdi
 
         // Update opcode register
@@ -176,7 +182,7 @@ class EEPROM extends Module {
 
     // Shift serial data in
     is(State.shiftIn) {
-      when(serialClock) {
+      when(sckRising) {
         serialReg := false.B // busy
         dataReg := dataReg ## io.serial.sdi
         when(done) { stateReg := State.write }
@@ -185,7 +191,7 @@ class EEPROM extends Module {
 
     // Shift serial data out
     is(State.shiftOut) {
-      when(serialClock) {
+      when(sckRising) {
         dataReg := dataReg ## 0.U
         serialReg := dataReg.head(1)
         when(done) { stateReg := State.idle }
@@ -204,6 +210,7 @@ class EEPROM extends Module {
   io.mem.mask := 2.U
   io.mem.din := dataReg
   io.debug.idle := stateReg === State.idle
+  io.debug.start := stateReg === State.start
   io.debug.command := stateReg === State.command
   io.debug.read := stateReg === State.read
   io.debug.readWait := stateReg === State.readWait
@@ -224,6 +231,4 @@ object EEPROM {
   val ADDR_WIDTH = 6
   /** The width of the EEPROM data bus */
   val DATA_WIDTH = 16
-  /** The number of words in the EEPROM */
-  val DEPTH = 64
 }

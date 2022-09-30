@@ -236,6 +236,15 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
 
   behavior of "idle"
 
+  it should "ignore a rising clock when chip select is also rising" in {
+    test(new EEPROM) { dut =>
+      dut.io.serial.cs.poke(true)
+      dut.io.serial.sck.poke(true)
+      dut.clock.step(2)
+      dut.io.debug.start.expect(true)
+    }
+  }
+
   it should "assert the serial data output" in {
     test(new EEPROM) { dut =>
       dut.clock.step()
