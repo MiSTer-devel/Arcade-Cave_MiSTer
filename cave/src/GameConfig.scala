@@ -91,6 +91,7 @@ object GameConfig {
       Game.GAIA.U -> gaia,
       Game.GUWANGE.U -> guwange,
       Game.HOTDOGST.U -> hotdogst,
+      Game.MAZINGER.U -> mazinger,
       Game.UOPOKO.U -> uopoko
     ))
   }
@@ -266,6 +267,31 @@ object GameConfig {
     wire.layer(2).romOffset := 0x002c0080.U
     wire.sprite.format := GraphicsFormat.GFX_FORMAT_4BPP.U
     wire.sprite.romOffset := 0x00340080.U
+    wire.sprite.zoom := true.B
+    wire
+  }
+
+  private def mazinger = {
+    val wire = Wire(new GameConfig)
+    wire.granularity := 16.U
+    wire.progRomOffset := 0x00000000.U
+    wire.eepromOffset := 0x00100000.U
+    wire.fillPalette := 0x7f.U
+    wire.sound(0).device := SoundDevice.DISABLED.U
+    wire.sound(1).device := SoundDevice.DISABLED.U
+    wire.sound(0).romOffset := 0x00100080.U
+    wire.sound(1).romOffset := 0x00120080.U
+    wire.layer(0).format := GraphicsFormat.GFX_FORMAT_4BPP.U
+    wire.layer(1).format := GraphicsFormat.GFX_FORMAT_4BPP.U
+    wire.layer(2).format := GraphicsFormat.GFX_FORMAT_UNKNOWN.U
+    wire.layer(0).paletteBank := 0.U
+    wire.layer(1).paletteBank := 0.U
+    wire.layer(2).paletteBank := 0.U
+    wire.layer(0).romOffset := 0x001a0080.U
+    wire.layer(1).romOffset := 0x003a0080.U
+    wire.layer(2).romOffset := 0.U
+    wire.sprite.format := GraphicsFormat.GFX_FORMAT_4BPP.U
+    wire.sprite.romOffset := 0x005a0080.U
     wire.sprite.zoom := true.B
     wire
   }

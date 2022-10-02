@@ -410,6 +410,25 @@ class Main extends Module {
     map(0xf00000 to 0xf0ffff).readWriteMem(spriteRam.io.portA)
   }
 
+  // Mazinger Z
+  when(io.gameIndex === Game.MAZINGER.U) {
+    map(0x000000 to 0x07ffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
+    map(0x100000 to 0x10ffff).readWriteMem(mainRam.io)
+    map(0x200000 to 0x20ffff).readWriteMem(spriteRam.io.portA)
+    vregMap(0x300000)
+    map(0x30006e).w { (_, _, _) => io.soundCtrl.req := true.B }
+    map(0x400000 to 0x40ffff).readWriteMemT(vram8x8(1).io.portA)(a => a(12, 0)) // layer 1 is 8x8 only
+    map(0x500000 to 0x50ffff).readWriteMemT(vram8x8(0).io.portA)(a => a(12, 0)) // layer 0 is 8x8 only
+    map(0x600000 to 0x600005).readWriteMem(layerRegs(1).io.mem)
+    map(0x700000 to 0x700005).readWriteMem(layerRegs(0).io.mem)
+    map(0x800000).r { (_, _) => input0 }
+    map(0x800002).r { (_, _) => input1 }
+    map(0x900000).writeMem(eepromMem)
+    map(0xc08000 to 0xc0ffff).readWriteMem(paletteRam.io.portA)
+    map(0xd00000 to 0xd7ffff).noprw() // TODO
+//    map(0xd00000 to 0xd7ffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address
+  }
+
   // Puzzle Uo Poko
   when(io.gameIndex === Game.UOPOKO.U) {
     map(0x000000 to 0x0fffff).readMemT(io.progRom) { _ ## 0.U } // convert to byte address

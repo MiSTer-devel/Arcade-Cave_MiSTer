@@ -53,6 +53,8 @@ package object cave {
     val GAIA = 6
     /** Hotdog Storm */
     val HOTDOGST = 7
+    /** Mazinger Z */
+    val MAZINGER = 8
   }
 
   /** Graphics format enum */
