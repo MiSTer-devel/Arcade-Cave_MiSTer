@@ -32,7 +32,7 @@
 
 package cave.gfx
 
-import cave.Config
+import cave.{Config, GraphicsFormat}
 import chisel3._
 import chiseltest._
 import org.scalatest._
@@ -45,7 +45,7 @@ class SpriteDecoderTest extends AnyFlatSpec with ChiselScalatestTester with Matc
   it should "request a word from the tile ROM for every row" in {
     test(new SpriteDecoder) { dut =>
       // start
-      dut.io.format.poke(Config.GFX_FORMAT_4BPP)
+      dut.io.format.poke(GraphicsFormat.GFX_FORMAT_4BPP)
       dut.io.pixelData.ready.poke(true)
       dut.clock.step()
 
@@ -73,7 +73,7 @@ class SpriteDecoderTest extends AnyFlatSpec with ChiselScalatestTester with Matc
 
   it should "decode a 4BPP tile" in {
     test(new SpriteDecoder) { dut =>
-      dut.io.format.poke(Config.GFX_FORMAT_4BPP)
+      dut.io.format.poke(GraphicsFormat.GFX_FORMAT_4BPP)
       dut.io.pixelData.ready.poke(true)
       dut.clock.step()
       dut.io.tileRom.valid.poke(true)
@@ -89,7 +89,7 @@ class SpriteDecoderTest extends AnyFlatSpec with ChiselScalatestTester with Matc
 
   it should "decode a 4BPP MSB tile" in {
     test(new SpriteDecoder) { dut =>
-      dut.io.format.poke(Config.GFX_FORMAT_4BPP_MSB)
+      dut.io.format.poke(GraphicsFormat.GFX_FORMAT_4BPP_MSB)
       dut.io.pixelData.ready.poke(true)
       dut.clock.step()
       dut.io.tileRom.valid.poke(true)
@@ -108,7 +108,7 @@ class SpriteDecoderTest extends AnyFlatSpec with ChiselScalatestTester with Matc
   it should "request two words from the tile ROM for every row" in {
     test(new SpriteDecoder) { dut =>
       // start
-      dut.io.format.poke(Config.GFX_FORMAT_8BPP)
+      dut.io.format.poke(GraphicsFormat.GFX_FORMAT_8BPP)
       dut.io.pixelData.ready.poke(true)
       dut.clock.step()
 
@@ -142,7 +142,7 @@ class SpriteDecoderTest extends AnyFlatSpec with ChiselScalatestTester with Matc
 
   it should "decode a 8BPP tile" in {
     test(new SpriteDecoder) { dut =>
-      dut.io.format.poke(Config.GFX_FORMAT_8BPP)
+      dut.io.format.poke(GraphicsFormat.GFX_FORMAT_8BPP)
       dut.io.pixelData.ready.poke(true)
       dut.clock.step()
       dut.io.tileRom.valid.poke(true)
