@@ -212,6 +212,7 @@ class Main extends Module {
     agalletIrq := true.B
   }.elsewhen(Util.falling(vBlank)) {
     agalletIrq := false.B
+    unknownIrq := true.B
   }
 
   // IRQ cause handler
