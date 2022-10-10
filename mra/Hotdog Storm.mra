@@ -1,10 +1,12 @@
 <misterromdescription>
-  <name>Hotdog Storm</name>
+  <name>Hotdog Storm (Korea)</name>
   <mameversion>0226</mameversion>
   <setname>hotdogst</setname>
   <year>1996</year>
-  <manufacturer>Marble</manufacturer>
+  <manufacturer>Marble (Ace International license)</manufacturer>
   <category>Shooter</category>
+  <rotation>vertical (cw)</rotation>
+  <region>Korea</region>
   <rbf>cave</rbf>
 
   <!-- ROM data -->
