@@ -2,6 +2,7 @@
   <name>Dangun Feveron</name>
   <mameversion>0226</mameversion>
   <setname>dfeveron</setname>
+  <rotation>vertical (ccw)</rotation>
   <year>1998</year>
   <manufacturer>CAVE</manufacturer>
   <category>Shooter</category>
