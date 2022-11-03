@@ -2,10 +2,10 @@
   <name>DoDonPachi</name>
   <mameversion>0226</mameversion>
   <setname>ddonpach</setname>
-  <rotation>vertical (ccw)</rotation>
   <year>1997</year>
   <manufacturer>CAVE</manufacturer>
   <category>Shooter</category>
+  <rotation>vertical (ccw)</rotation>
   <rbf>cave</rbf>
 
   <!-- ROM data -->
