@@ -1,6 +1,7 @@
 <misterromdescription>
   <name>ESP Ra.De. (Japan)</name>
   <mameversion>0226</mameversion>
+  <rotation>vertical (ccw)</rotation>
   <setname>espradej</setname>
   <year>1998</year>
   <manufacturer>CAVE</manufacturer>
