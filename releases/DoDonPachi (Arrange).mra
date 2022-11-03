@@ -2,6 +2,7 @@
   <name>DoDonPachi (20120212 Arrange Ver. 1.1)</name>
   <mameversion>0226</mameversion>
   <setname>ddonpacha</setname>
+  <rotation>vertical (ccw)</rotation>
   <year>2012</year>
   <manufacturer>Hack (trap15)</manufacturer>
   <category>Shooter</category>
