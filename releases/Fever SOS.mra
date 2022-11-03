@@ -2,10 +2,10 @@
   <name>Fever SOS</name>
   <mameversion>0226</mameversion>
   <setname>feversos</setname>
-  <rotation>vertical (ccw)</rotation>
   <year>1998</year>
   <manufacturer>CAVE</manufacturer>
   <category>Shooter</category>
+  <rotation>vertical (ccw)</rotation>
   <rbf>cave</rbf>
 
   <!-- ROM data -->
