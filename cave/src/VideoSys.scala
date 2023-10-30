@@ -121,7 +121,7 @@ object VideoSys {
     vSize = Config.SCREEN_HEIGHT,
     hFrontPorch = 36,
     vFrontPorch = 12,
-    hRetrace = 20,
+    hRetrace = 28,
     vRetrace = 2
   )
 }
