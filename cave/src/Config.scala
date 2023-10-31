@@ -211,7 +211,7 @@ object Config {
   val compatibilityVideoTimingConfig = VideoTimingConfig(
     clockFreq = VIDEO_CLOCK_FREQ,
     clockDiv = VIDEO_CLOCK_DIV,
-    hFreq = 15_625, // Hz
+    hFreq = 15_734, // Hz (Match NTSC SPEC)
     vFreq = 60 // Hz
   )
 

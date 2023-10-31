@@ -61,6 +61,7 @@ module emu (
   output        VGA_F1,
   output [1:0]  VGA_SL,
   output        VGA_SCALER, // Force VGA scaler
+  output        VGA_DISABLE,
 
   input  [11:0] HDMI_WIDTH,
   input  [11:0] HDMI_HEIGHT,
@@ -388,6 +389,15 @@ video_mixer #(.LINE_LENGTH(320), .HALF_DEPTH(0), .GAMMA(1)) video_mixer (
   .VGA_DE(VGA_DE)
 );
 
+// Update HPS when video mode changes
+reg [1:0] video_status;
+always @(posedge clk_sys) begin
+    if (video_status != status[8]) begin
+        video_status <= status[8];
+        new_vmode <= ~new_vmode;
+    end
+end
+
 ////////////////////////////////////////////////////////////////////////////////
 // CONTROLS
 ////////////////////////////////////////////////////////////////////////////////
@@ -524,7 +534,7 @@ Cave cave (
   .player_1_pause(player_2_pause),
   // Video signals
   .video_clockEnable(ce_pix),
-  .video_changeMode(new_vmode),
+  .video_changeMode(0),
   .video_hSync(hsync),
   .video_vSync(vsync),
   .video_hBlank(hblank),
