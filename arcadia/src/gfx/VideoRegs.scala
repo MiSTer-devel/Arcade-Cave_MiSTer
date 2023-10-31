@@ -90,8 +90,8 @@ object VideoRegs {
   def decode[T <: Bits](data: Vec[T]): VideoRegs = {
     val regs = Wire(new VideoRegs)
     regs.size := UVec2(data(0)(8, 0), data(1)(8, 0))
-    regs.frontPorch := UVec2(data(2)(8, 0), data(3)(8, 0))
-    regs.retrace := UVec2(data(4)(8, 0), data(5)(8, 0))
+    regs.frontPorch := UVec2(data(2)(8, 0), data(3)(8, 0)) 
+    regs.retrace := UVec2(data(4)(8, 0) + 8.U, data(5)(8, 0) + 1.U) // Adjust decoded video timing for CRT's (Extended HSYNC / VSYNC)
     regs
   }
 }
