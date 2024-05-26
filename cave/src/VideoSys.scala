@@ -121,7 +121,7 @@ object VideoSys {
     vSize = Config.SCREEN_HEIGHT,
     hFrontPorch = 36,
     vFrontPorch = 12,
-    hRetrace = 20,
-    vRetrace = 2
+    hRetrace = 28, // Adjust Hsync to 28 and VSync to 3 to improve improve CRT compatibility
+    vRetrace = 3  // 
   )
 }
