@@ -13,5 +13,4 @@ quartus/greybox_tmp
 quartus/incremental_db
 quartus/jtag.cdf
 quartus/output_files
-quartus/core/Cave.*
 test_run_dir
