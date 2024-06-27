@@ -166,6 +166,10 @@ assign AUDIO_R   = AUDIO_L;
 assign AUDIO_S   = 1;
 assign AUDIO_MIX = 0;
 
+assign VGA_DISABLE = 0;
+
+assign LED_DISK[1] = 0;
+assign LED_POWER[1] = 0;
 assign BUTTONS = 0;
 
 assign VIDEO_ARX = (!aspect_ratio) ? (orientation ? 12'd3 : 12'd4) : (aspect_ratio - 1'd1);
@@ -229,7 +233,7 @@ always @(posedge clk_sys or posedge RESET) begin
   end
 end
 
-pll_sys pll_sys (
+pll pll (
   .refclk(CLK_50M),
   .rst(rst_pll),
   .locked(pll_sys_locked),
@@ -493,6 +497,8 @@ wire [15:0] sdram_dout;
 assign DDRAM_ADDR = ddr_addr[31:3];
 assign SDRAM_DQ = sdram_oe_n ? sdram_din : 16'bZ;
 assign sdram_dout = SDRAM_DQ;
+assign SDRAM_DQMH = 0;
+assign SDRAM_DQML = 0;
 
 Cave cave (
   .reset(rst_sys),

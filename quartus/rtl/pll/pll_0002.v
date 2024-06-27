@@ -1,5 +1,5 @@
 `timescale 1ns/10ps
-module  pll_sys_0002(
+module  pll_0002(
 
 	// interface 'refclk'
 	input wire refclk,

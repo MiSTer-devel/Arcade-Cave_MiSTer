@@ -3,6 +3,7 @@
 .idea
 .metals
 .vscode
+*.bak
 out
 quartus/*.qws
 quartus/*.qdf

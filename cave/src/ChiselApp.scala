@@ -36,7 +36,7 @@ import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
 
 object ChiselApp extends App {
   (new ChiselStage).execute(
-    Array("--compiler", "verilog", "--target-dir", "quartus/core"),
+    Array("--compiler", "verilog", "--target-dir", "quartus/rtl"),
     Seq(ChiselGeneratorAnnotation(() => new Cave))
   )
 }
