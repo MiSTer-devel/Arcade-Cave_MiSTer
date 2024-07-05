@@ -7,3 +7,4 @@ set_global_assignment -name QIP_FILE rtl/t80/t80.qip
 set_global_assignment -name VERILOG_FILE rtl/reset_ctrl.v
 set_global_assignment -name VERILOG_FILE rtl/Cave.v
 set_global_assignment -name SYSTEMVERILOG_FILE cave.sv
+set_global_assignment -name SDC_FILE cave.sdc
