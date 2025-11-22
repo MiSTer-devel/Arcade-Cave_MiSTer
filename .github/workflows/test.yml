@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  tabby-cad-version: 2025-11-22
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -19,5 +22,12 @@ jobs:
         with:
           java-version: '11'
           distribution: 'temurin'
+      - name: Install Verilator (OSS CAD Suite)
+        shell: bash
+        run: |
+          VERSION=${{ env.tabby-cad-version }}
+          ARTIFACT=oss-cad-suite-linux-x64-$(echo $VERSION | tr -d '-')
+          wget -q -O - https://github.com/YosysHQ/oss-cad-suite-build/releases/download/${VERSION}/${ARTIFACT}.tgz | tar -zx
+          echo "$(pwd)/oss-cad-suite/bin" >> $GITHUB_PATH
       - name: Units tests
         run: ./bin/mill _.test

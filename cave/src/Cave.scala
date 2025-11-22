@@ -44,7 +44,6 @@ import cave.main.Main
 import cave.snd.Sound
 import chisel3._
 import chisel3.util._
-import chisel3.experimental.FlatIO
 
 /**
  * The top-level module.
