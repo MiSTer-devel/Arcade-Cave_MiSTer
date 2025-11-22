@@ -62,7 +62,7 @@ class ColorMixer extends Module {
   val index = ColorMixer.muxLayers(io.spritePen, io.layer0Pen, io.layer1Pen, io.layer2Pen)
 
   // Calculate the palette RAM address
-  val paletteRamAddr = MuxLookup(index, 0.U, Seq(
+  val paletteRamAddr = MuxLookup(index, 0.U)(Seq(
     ColorMixer.Priority.FILL.U -> ColorMixer.paletteRamAddr(fillPen, 0.U, io.gameConfig.granularity),
     ColorMixer.Priority.SPRITE.U -> ColorMixer.paletteRamAddr(io.spritePen, 0.U, io.gameConfig.granularity),
     ColorMixer.Priority.LAYER0.U -> ColorMixer.paletteRamAddr(io.layer0Pen, io.gameConfig.layer(0).paletteBank, io.gameConfig.granularity),
@@ -97,7 +97,7 @@ object ColorMixer {
    * @return A memory address.
    */
   private def paletteRamAddr(pen: PaletteEntry, bank: UInt, granularity: UInt): UInt =
-    MuxLookup(granularity, bank ## pen.palette ## pen.color, Seq(
+    MuxLookup(granularity, bank ## pen.palette ## pen.color)(Seq(
       16.U -> bank ## pen.palette ## pen.color(3, 0),
       64.U -> bank ## pen.palette ## pen.color(5, 0)
     ))

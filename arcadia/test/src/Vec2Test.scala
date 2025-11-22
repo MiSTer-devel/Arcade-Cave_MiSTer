@@ -33,16 +33,16 @@
 package arcadia
 
 import chisel3._
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
-class Vec2Test extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+class Vec2Test extends AnyFlatSpec with ChiselSim with Matchers {
   behavior of "unsigned vector"
 
   it should "create a new vector" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Output(UVec2(4.W))
       })
@@ -54,7 +54,7 @@ class Vec2Test extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "add two vectors" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(UVec2(4.W))
         val b = Input(UVec2(4.W))
@@ -72,7 +72,7 @@ class Vec2Test extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "subtract two vectors" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(UVec2(4.W))
         val b = Input(UVec2(4.W))
@@ -90,7 +90,7 @@ class Vec2Test extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "multiply by scalar" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(UVec2(4.W))
         val b = Output(UVec2(4.W))
@@ -105,7 +105,7 @@ class Vec2Test extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "shift left" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(UVec2(4.W))
         val b = Output(UVec2(4.W))
@@ -120,7 +120,7 @@ class Vec2Test extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "shift right" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(UVec2(4.W))
         val b = Output(UVec2(4.W))
@@ -137,7 +137,7 @@ class Vec2Test extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   behavior of "signed vector"
 
   it should "create a new vector" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Output(SVec2(4.W))
       })
@@ -149,7 +149,7 @@ class Vec2Test extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "add two vectors" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(SVec2(4.W))
         val b = Input(SVec2(4.W))
@@ -167,7 +167,7 @@ class Vec2Test extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "subtract two vectors" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(SVec2(4.W))
         val b = Input(SVec2(4.W))
@@ -185,7 +185,7 @@ class Vec2Test extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "multiply by scalar" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(SVec2(4.W))
         val b = Output(SVec2(4.W))
@@ -200,7 +200,7 @@ class Vec2Test extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "shift left" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(SVec2(4.W))
         val b = Output(SVec2(4.W))
@@ -215,7 +215,7 @@ class Vec2Test extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "shift right" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(SVec2(4.W))
         val b = Output(SVec2(4.W))

@@ -32,14 +32,14 @@
 
 package arcadia.snd
 
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
-class AudioMixerTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+class AudioMixerTest extends AnyFlatSpec with ChiselSim with Matchers {
   it should "sum the audio inputs" in {
-    test(new AudioMixer(16, Seq(ChannelConfig(16, 1), ChannelConfig(16, 0.5), ChannelConfig(16, 0.25)))) { dut =>
+    simulate(new AudioMixer(16, Seq(ChannelConfig(16, 1), ChannelConfig(16, 0.5), ChannelConfig(16, 0.25)))) { dut =>
       dut.io.in(0).poke(1)
       dut.io.in(1).poke(2)
       dut.io.in(2).poke(4)
@@ -49,7 +49,7 @@ class AudioMixerTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
   }
 
   it should "clip the audio output (8-bit)" in {
-    test(new AudioMixer(8, Seq(ChannelConfig(8, 1), ChannelConfig(8, 1)))) { dut =>
+    simulate(new AudioMixer(8, Seq(ChannelConfig(8, 1), ChannelConfig(8, 1)))) { dut =>
       dut.io.in(0).poke(127)
       dut.io.in(1).poke(1)
       dut.clock.step()
@@ -63,7 +63,7 @@ class AudioMixerTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
   }
 
   it should "clip the audio output (16-bit)" in {
-    test(new AudioMixer(16, Seq(ChannelConfig(16, 1), ChannelConfig(16, 1)))) { dut =>
+    simulate(new AudioMixer(16, Seq(ChannelConfig(16, 1), ChannelConfig(16, 1)))) { dut =>
       dut.io.in(0).poke(32767)
       dut.io.in(1).poke(1)
       dut.clock.step()
@@ -77,7 +77,7 @@ class AudioMixerTest extends AnyFlatSpec with ChiselScalatestTester with Matcher
   }
 
   it should "convert all samples to the output width" in {
-    test(new AudioMixer(9, Seq(ChannelConfig(8, 1)))) { dut =>
+    simulate(new AudioMixer(9, Seq(ChannelConfig(8, 1)))) { dut =>
       dut.io.in(0).poke(127)
       dut.clock.step()
       dut.io.out.expect(254)

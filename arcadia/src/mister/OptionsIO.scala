@@ -50,7 +50,7 @@ class OptionsIO extends Bundle {
   /** Sprite enable */
   val sprite = Bool()
   /** Flip the video output */
-  val flip = Bool()
+  val flipVideo = Bool()
   /** Game index */
   val gameIndex = UInt(OptionsIO.GAME_INDEX_WIDTH.W)
 }

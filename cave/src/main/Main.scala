@@ -447,12 +447,12 @@ object Main {
     val default1 = Cat("b111111".U, ~service, ~coin1, ~player(0).start, ~player(0).buttons(2, 0), ~player(0).right, ~player(0).left, ~player(0).down, ~player(0).up)
     val default2 = Cat("b1111".U, eeprom.io.serial.sdo, "b11".U, ~coin2, ~player(1).start, ~player(1).buttons(2, 0), ~player(1).right, ~player(1).left, ~player(1).down, ~player(1).up)
 
-    val left = MuxLookup(gameIndex, default1, Seq(
+    val left = MuxLookup(gameIndex, default1)(Seq(
       Game.GAIA.U -> Cat(~player(1).buttons(3, 0), ~player(1).right, ~player(1).left, ~player(1).down, ~player(1).up, ~player(0).buttons(3, 0), ~player(0).right, ~player(0).left, ~player(0).down, ~player(0).up),
       Game.GUWANGE.U -> Cat(~player(1).buttons(2, 0), ~player(1).right, ~player(1).left, ~player(1).down, ~player(1).up, ~player(1).start, ~player(0).buttons(2, 0), ~player(0).right, ~player(0).left, ~player(0).down, ~player(0).up, ~player(0).start),
     ))
 
-    val right = MuxLookup(gameIndex, default2, Seq(
+    val right = MuxLookup(gameIndex, default2)(Seq(
       Game.GAIA.U -> Cat("b0000111111".U, ~player(1).start, ~player(0).start, "b1".U, ~service, ~coin2, ~coin1),
       Game.GUWANGE.U -> Cat("b11111111".U, eeprom.io.serial.sdo, "b1111".U, ~service, ~coin2, ~coin1),
     ))

@@ -33,7 +33,7 @@
 package arcadia.mem
 
 import arcadia.mem.ddr.{DDR, Config}
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
@@ -44,11 +44,11 @@ trait DDRTestHelpers {
   protected def mkDDR(config: Config = ddrConfig) = new DDR(config)
 }
 
-class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with DDRTestHelpers {
+class DDRTest extends AnyFlatSpec with ChiselSim with Matchers with DDRTestHelpers {
   behavior of "read"
 
   it should "read from DDR memory (burst=1)" in {
-    test(mkDDR()) { dut =>
+    simulate(mkDDR()) { dut =>
       // request
       dut.io.mem.burstLength.poke(1)
       dut.io.mem.rd.poke(true)
@@ -75,7 +75,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
   }
 
   it should "read from DDR memory (burst=2)" in {
-    test(mkDDR()) { dut =>
+    simulate(mkDDR()) { dut =>
       // request
       dut.io.mem.burstLength.poke(2)
       dut.io.mem.rd.poke(true)
@@ -106,7 +106,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
   }
 
   it should "latch the burst length" in {
-    test(mkDDR()) { dut =>
+    simulate(mkDDR()) { dut =>
       dut.io.mem.burstLength.poke(2)
       dut.io.mem.rd.poke(true)
       dut.io.ddr.wait_n.poke(true)
@@ -121,7 +121,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
   }
 
   it should "hold the burst counter when the wait signal is asserted" in {
-    test(mkDDR()) { dut =>
+    simulate(mkDDR()) { dut =>
       dut.io.mem.burstLength.poke(2)
       dut.io.mem.rd.poke(true)
       dut.io.ddr.wait_n.poke(false)
@@ -142,7 +142,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
   behavior of "write"
 
   it should "write to DDR memory (burst=1)" in {
-    test(mkDDR()) { dut =>
+    simulate(mkDDR()) { dut =>
       // request
       dut.io.mem.burstLength.poke(1)
       dut.io.mem.wr.poke(true)
@@ -163,7 +163,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
   }
 
   it should "write to DDR memory (burst=2)" in {
-    test(mkDDR()) { dut =>
+    simulate(mkDDR()) { dut =>
       // request
       dut.io.mem.burstLength.poke(2)
       dut.io.mem.wr.poke(true)
@@ -190,7 +190,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
   }
 
   it should "latch the burst length" in {
-    test(mkDDR()) { dut =>
+    simulate(mkDDR()) { dut =>
       dut.io.mem.burstLength.poke(2)
       dut.io.mem.wr.poke(true)
       dut.io.ddr.burstLength.expect(2)
@@ -204,7 +204,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
   }
 
   it should "hold the burst counter when the write signal is deasserted" in {
-    test(mkDDR()) { dut =>
+    simulate(mkDDR()) { dut =>
       dut.io.mem.burstLength.poke(2)
       dut.io.mem.wr.poke(true)
       dut.io.ddr.wait_n.poke(true)
@@ -221,7 +221,7 @@ class DDRTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with 
   }
 
   it should "hold the burst counter when the wait signal is asserted" in {
-    test(mkDDR()) { dut =>
+    simulate(mkDDR()) { dut =>
       dut.io.mem.burstLength.poke(2)
       dut.io.mem.wr.poke(true)
       dut.io.ddr.wait_n.poke(false)

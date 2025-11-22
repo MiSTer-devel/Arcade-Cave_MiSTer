@@ -1,33 +1,54 @@
-import mill._, scalalib._
+// import Mill dependency
+import mill._
+import mill.define.Sources
+import mill.modules.Util
 import mill.scalalib.TestModule.ScalaTest
+import scalalib._
+// support BSP
+import mill.bsp._
 
-trait CommonModule extends ScalaModule { m =>
-  def scalaVersion = "2.13.8"
+// Note: This project requires .mill-jvm-opts file containing:
+//   -Dchisel.project.root=${PWD}
+// This is needed because Chisel needs to know the project root directory
+// to properly generate and handle test directories and output files.
+// See: https://github.com/com-lihaoyi/mill/issues/3840
 
+trait CommonModule extends SbtModule { m =>
+  def root: String
+
+  override def millSourcePath = super.millSourcePath / os.up
+  override def scalaVersion = "2.13.17"
+  def chiselVersion = "7.3.0"
   override def scalacOptions = Seq(
     "-language:reflectiveCalls",
     "-deprecation",
     "-feature",
     "-Xcheckinit",
-    "-P:chiselplugin:genBundleElements"
+    "-Ymacro-annotations",
   )
-
   override def ivyDeps = Agg(
-    ivy"edu.berkeley.cs::chisel3:3.5.4",
+    ivy"org.chipsalliance::chisel:$chiselVersion",
   )
-
   override def scalacPluginIvyDeps = Agg(
-    ivy"edu.berkeley.cs:::chisel3-plugin:3.5.4",
+    ivy"org.chipsalliance:::chisel-plugin:$chiselVersion",
   )
-
-  object test extends Tests with ScalaTest {
+  override def sources = T.sources(
+    millSourcePath / root / "src"
+  )
+  object test extends SbtTests with TestModule.ScalaTest {
     override def ivyDeps = m.ivyDeps() ++ Agg(
-      ivy"edu.berkeley.cs::chiseltest:0.5.4"
+      ivy"org.scalatest::scalatest::3.2.19"
+    )
+    override def sources = T.sources(
+      millSourcePath / root / "test" / "src"
     )
   }
 }
 
-object arcadia extends CommonModule
+object arcadia extends CommonModule {
+  override def root = "arcadia"
+}
 object cave extends CommonModule {
+  override def root = "cave"
   override def moduleDeps = Seq(arcadia)
 }

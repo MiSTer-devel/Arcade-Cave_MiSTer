@@ -32,11 +32,19 @@
 
 package cave
 
-import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
+import circt.stage.ChiselStage
 
 object ChiselApp extends App {
-  (new ChiselStage).execute(
-    Array("--compiler", "verilog", "--target-dir", "quartus/rtl"),
-    Seq(ChiselGeneratorAnnotation(() => new Cave))
+  ChiselStage.emitSystemVerilogFile(
+    new Cave,
+    args = Array(
+      "--target-dir",
+      "quartus/rtl/cave/",
+      "--dump-fir"
+    ),
+    firtoolOpts = Array(
+      "-lowering-options=disallowExpressionInliningInPorts,disallowLocalVariables,disallowMuxInlining,disallowPackedArrays,disallowPortDeclSharing,explicitBitcast,noAlwaysComb",
+      "-default-layer-specialization=enable"
+    )
   )
 }

@@ -33,13 +33,17 @@
 package arcadia.mem
 
 import chisel3._
-import chiseltest._
+import chisel3.simulator.{Settings, Randomization}
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class RegisterFileTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+class RegisterFileTest extends AnyFlatSpec with ChiselSim with Matchers {
   it should "allow writing masked bytes" in {
-    test(new RegisterFile(16, 3)) { dut =>
+    simulate(
+      module = new RegisterFile(16, 3),
+      settings = Settings.default.copy(randomization = Randomization.uninitialized)
+    ) { dut =>
       dut.io.mem.wr.poke(true)
 
       // write
@@ -69,7 +73,7 @@ class RegisterFileTest extends AnyFlatSpec with ChiselScalatestTester with Match
   }
 
   it should "output the registers" in {
-    test(new RegisterFile(16, 3)) { dut =>
+    simulate(new RegisterFile(16, 3)) { dut =>
       dut.io.mem.wr.poke(true)
       dut.io.mem.mask.poke(3)
 

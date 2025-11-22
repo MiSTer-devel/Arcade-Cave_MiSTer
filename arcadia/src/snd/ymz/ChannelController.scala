@@ -58,7 +58,7 @@ class ChannelController(config: YMZ280BConfig) extends Module {
     /** Asserted when the current channel is done */
     val done = Output(Bool())
     /** Current channel index */
-    val index = Output(UInt())
+    val index = Output(UInt(log2Ceil(config.numChannels).W))
     /** Audio output port */
     val audio = ValidIO(Audio(config.sampleWidth.W))
     /** ROM port */
