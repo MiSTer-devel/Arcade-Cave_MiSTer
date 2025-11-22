@@ -4,6 +4,7 @@
   <setname>gaia</setname>
   <year>1999</year>
   <manufacturer>CAVE</manufacturer>
+  <rotation>horizontal</rotation>
   <category>Fighting</category>
   <rbf>cave</rbf>
 
