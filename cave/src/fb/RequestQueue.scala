@@ -84,7 +84,7 @@ class RequestQueue(inAddrWidth: Int, inDataWidth: Int, outAddrWidth: Int, outDat
   io.out.din := Cat(Seq.fill(dataWidthRatio) { request.din })
 
   if (inDataWidth == 8) {
-    io.out.mask := MuxLookup(request.addr(2, 0), request.mask, Seq(
+    io.out.mask := MuxLookup(request.addr(2, 0), request.mask)(Seq(
       1.U -> (request.mask << 1),
       2.U -> (request.mask << 2),
       3.U -> (request.mask << 3),
@@ -94,7 +94,7 @@ class RequestQueue(inAddrWidth: Int, inDataWidth: Int, outAddrWidth: Int, outDat
       7.U -> (request.mask << 7),
     ))
   } else if (inDataWidth == 16) {
-    io.out.mask := MuxLookup(request.addr(1, 0), request.mask, Seq(
+    io.out.mask := MuxLookup(request.addr(1, 0), request.mask)(Seq(
       1.U -> (request.mask << 2),
       2.U -> (request.mask << 4),
       3.U -> (request.mask << 6),

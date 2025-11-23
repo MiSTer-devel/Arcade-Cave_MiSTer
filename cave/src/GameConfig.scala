@@ -84,7 +84,7 @@ object GameConfig {
    * @param index The game index.
    */
   def apply(index: UInt): GameConfig = {
-    MuxLookup(index, dfeveron, Seq(
+    MuxLookup(index, dfeveron)(Seq(
       Game.DDONPACH.U -> ddonpach,
       Game.DONPACHI.U -> donpachi,
       Game.ESPRADE.U -> esprade,

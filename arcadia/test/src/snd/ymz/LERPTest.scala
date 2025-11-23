@@ -33,14 +33,14 @@
 package arcadia.snd.ymz
 
 import chisel3._
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class LERPTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+class LERPTest extends AnyFlatSpec with ChiselSim with Matchers {
   it should "interpolate sample values" in {
-    test(new LERP) { dut =>
+    simulate(new LERP) { dut =>
       dut.io.samples(0).poke(0)
       dut.io.samples(1).poke(16)
 
@@ -62,7 +62,7 @@ class LERPTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "handle min/max sample values" in {
-    test(new LERP) { dut =>
+    simulate(new LERP) { dut =>
       dut.io.samples(0).poke(-32767)
       dut.io.samples(1).poke(32767)
 

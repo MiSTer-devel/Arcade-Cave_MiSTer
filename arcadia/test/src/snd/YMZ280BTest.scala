@@ -33,21 +33,21 @@
 package arcadia.snd
 
 import chisel3._
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-trait YMZ280BTestHelpers {
+trait YMZ280BTestHelpers { this: ChiselSim =>
   protected val config = YMZ280BConfig(clockFreq = 44100, numChannels = 2)
 
   protected def mkADPCM = new YMZ280B(config)
 
-  protected def readStatusReg(dut: YMZ280B) = {
+  protected def readStatusReg(dut: YMZ280B): BigInt = {
     dut.io.cpu.rd.poke(true)
     dut.io.cpu.addr.poke(1)
     dut.clock.step()
     dut.io.cpu.rd.poke(false)
-    dut.io.cpu.dout.peekInt()
+    dut.io.cpu.dout.peek().litValue
   }
 
   protected def writeReg(dut: YMZ280B, addr: Int, data: Int) = {
@@ -62,25 +62,25 @@ trait YMZ280BTestHelpers {
   }
 }
 
-class YMZ280BTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with YMZ280BTestHelpers {
+class YMZ280BTest extends AnyFlatSpec with ChiselSim with Matchers with YMZ280BTestHelpers {
   behavior of "function register"
 
   it should "allow writing the channel pitch" in {
-    test(mkADPCM) { dut =>
+    simulate(mkADPCM) { dut =>
       writeReg(dut, 0x00, 1)
       dut.io.debug.channels(0).pitch.expect(1.U)
     }
   }
 
   it should "allow writing the channel level" in {
-    test(mkADPCM) { dut =>
+    simulate(mkADPCM) { dut =>
       writeReg(dut, 0x02, 3)
       dut.io.debug.channels(0).level.expect(3.U)
     }
   }
 
   it should "allow writing the start address" in {
-    test(mkADPCM) { dut =>
+    simulate(mkADPCM) { dut =>
       writeReg(dut, 0x60, 0x03)
       writeReg(dut, 0x40, 0x02)
       writeReg(dut, 0x20, 0x01)
@@ -89,7 +89,7 @@ class YMZ280BTest extends AnyFlatSpec with ChiselScalatestTester with Matchers w
   }
 
   it should "allow writing the loop start address" in {
-    test(mkADPCM) { dut =>
+    simulate(mkADPCM) { dut =>
       writeReg(dut, 0x61, 0x03)
       writeReg(dut, 0x41, 0x02)
       writeReg(dut, 0x21, 0x01)
@@ -98,7 +98,7 @@ class YMZ280BTest extends AnyFlatSpec with ChiselScalatestTester with Matchers w
   }
 
   it should "allow writing the loop end address" in {
-    test(mkADPCM) { dut =>
+    simulate(mkADPCM) { dut =>
       writeReg(dut, 0x62, 0x03)
       writeReg(dut, 0x42, 0x02)
       writeReg(dut, 0x22, 0x01)
@@ -107,7 +107,7 @@ class YMZ280BTest extends AnyFlatSpec with ChiselScalatestTester with Matchers w
   }
 
   it should "allow writing the end address" in {
-    test(mkADPCM) { dut =>
+    simulate(mkADPCM) { dut =>
       writeReg(dut, 0x63, 0x03)
       writeReg(dut, 0x43, 0x02)
       writeReg(dut, 0x23, 0x01)
@@ -118,7 +118,7 @@ class YMZ280BTest extends AnyFlatSpec with ChiselScalatestTester with Matchers w
   behavior of "status register"
 
   it should "allow reading the status of the channels" in {
-    test(mkADPCM) { dut =>
+    simulate(mkADPCM) { dut =>
       dut.io.rom.valid.poke(true)
       writeReg(dut, 0x00, 0xff) // channel 0 pitch
       writeReg(dut, 0x63, 0x01) // channel 0 end address
@@ -133,14 +133,14 @@ class YMZ280BTest extends AnyFlatSpec with ChiselScalatestTester with Matchers w
   behavior of "utility register"
 
   it should "allow writing the IRQ mask" in {
-    test(mkADPCM) { dut =>
+    simulate(mkADPCM) { dut =>
       writeReg(dut, 0xfe, 0x12)
       dut.io.debug.utilReg.irqMask.expect(0x12.U)
     }
   }
 
   it should "allow writing the enable flags" in {
-    test(mkADPCM) { dut =>
+    simulate(mkADPCM) { dut =>
       writeReg(dut, 0xff, 0xd0)
       dut.io.debug.utilReg.flags.keyOnEnable.expect(true)
       dut.io.debug.utilReg.flags.memEnable.expect(true)
@@ -151,7 +151,7 @@ class YMZ280BTest extends AnyFlatSpec with ChiselScalatestTester with Matchers w
   behavior of "IRQ"
 
   it should "assert the IRQ signal for channels that are done" in {
-    test(mkADPCM) { dut =>
+    simulate(mkADPCM) { dut =>
       dut.io.rom.valid.poke(true)
       writeReg(dut, 0x04, 0xff) // channel 1 pitch
       writeReg(dut, 0x67, 0x01) // channel 1 end address
@@ -164,7 +164,7 @@ class YMZ280BTest extends AnyFlatSpec with ChiselScalatestTester with Matchers w
   }
 
   it should "not assert the IRQ signal for masked channels" in {
-    test(mkADPCM) { dut =>
+    simulate(mkADPCM) { dut =>
       dut.io.rom.valid.poke(true)
       writeReg(dut, 0x04, 0xff) // channel 1 pitch
       writeReg(dut, 0x67, 0x01) // channel 1 end address

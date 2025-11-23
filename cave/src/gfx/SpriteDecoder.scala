@@ -70,7 +70,7 @@ class SpriteDecoder extends Module {
   val done = !is8BPP || toggleReg
 
   // Decode the tile ROM data
-  val bits = MuxLookup(io.format, VecInit(SpriteDecoder.decode4BPP(dataReg.tail(Config.TILE_ROM_DATA_WIDTH))), Seq(
+  val bits = MuxLookup(io.format, VecInit(SpriteDecoder.decode4BPP(dataReg.tail(Config.TILE_ROM_DATA_WIDTH))))(Seq(
     GraphicsFormat.GFX_FORMAT_4BPP_MSB.U -> VecInit(SpriteDecoder.decode4BPPMSB(dataReg.tail(Config.TILE_ROM_DATA_WIDTH))),
     GraphicsFormat.GFX_FORMAT_8BPP.U -> VecInit(SpriteDecoder.decode8BPP(dataReg))
   ))

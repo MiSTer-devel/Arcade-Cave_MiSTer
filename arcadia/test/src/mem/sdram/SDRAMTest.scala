@@ -32,11 +32,12 @@
 
 package arcadia.mem.sdram
 
-import chiseltest._
+import chisel3.simulator.{Settings, Randomization}
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-trait SDRAMTestHelpers {
+trait SDRAMTestHelpers { this: ChiselSim =>
   protected val sdramConfig = Config(
     clockFreq = 100_000_000D, // 100 MHz
     tINIT = 20,
@@ -51,32 +52,32 @@ trait SDRAMTestHelpers {
   protected def mkSDRAM(config: Config = sdramConfig) = new SDRAM(config)
 
   protected def waitForInit(dut: SDRAM) =
-    while (!dut.io.debug.init.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.init, 1, 1024)
 
   protected def waitForMode(dut: SDRAM) =
-    while (!dut.io.debug.mode.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.mode, 1, 1024)
 
   protected def waitForIdle(dut: SDRAM) =
-    while (!dut.io.debug.idle.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.idle, 1, 1024)
 
   protected def waitForActive(dut: SDRAM) =
-    while (!dut.io.debug.active.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.active, 1, 1024)
 
   protected def waitForRead(dut: SDRAM) =
-    while (!dut.io.debug.read.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.read, 1, 1024)
 
   protected def waitForWrite(dut: SDRAM) =
-    while (!dut.io.debug.write.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.write, 1, 1024)
 
   protected def waitForRefresh(dut: SDRAM) =
-    while (!dut.io.debug.refresh.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.refresh, 1, 1024)
 }
 
-class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with SDRAMTestHelpers {
+class SDRAMTest extends AnyFlatSpec with ChiselSim with Matchers with SDRAMTestHelpers {
   behavior of "FSM"
 
   it should "move to the mode state after initializing" in {
-    test(mkSDRAM()) { dut =>
+    simulate(mkSDRAM()) { dut =>
       waitForInit(dut)
       dut.clock.step(7)
       dut.io.debug.mode.expect(true)
@@ -84,7 +85,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "move to the idle state after configuring the device" in {
-    test(mkSDRAM()) { dut =>
+    simulate(mkSDRAM()) { dut =>
       waitForMode(dut)
       dut.clock.step(2)
       dut.io.debug.idle.expect(true)
@@ -92,7 +93,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "move to the active state" in {
-    test(mkSDRAM()) { dut =>
+    simulate(mkSDRAM()) { dut =>
       dut.io.mem.rd.poke(true)
       waitForIdle(dut)
       dut.clock.step()
@@ -101,7 +102,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "move to the read state" in {
-    test(mkSDRAM()) { dut =>
+    simulate(mkSDRAM()) { dut =>
       dut.io.mem.rd.poke(true)
       waitForActive(dut)
       dut.clock.step(2)
@@ -110,7 +111,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "move to the write state" in {
-    test(mkSDRAM()) { dut =>
+    simulate(mkSDRAM()) { dut =>
       dut.io.mem.wr.poke(true)
       waitForActive(dut)
       dut.clock.step(2)
@@ -119,7 +120,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "move to the refresh state" in {
-    test(mkSDRAM()) { dut =>
+    simulate(mkSDRAM()) { dut =>
       waitForIdle(dut)
       dut.clock.step(10)
       dut.io.debug.refresh.expect(true)
@@ -127,7 +128,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "return to the idle state from the read state" in {
-    test(mkSDRAM()) { dut =>
+    simulate(mkSDRAM()) { dut =>
       dut.io.mem.rd.poke(true)
       waitForRead(dut)
       dut.io.mem.rd.poke(false)
@@ -137,7 +138,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "return to the idle state from the write state" in {
-    test(mkSDRAM()) { dut =>
+    simulate(mkSDRAM()) { dut =>
       dut.io.mem.wr.poke(true)
       waitForWrite(dut)
       dut.io.mem.wr.poke(false)
@@ -147,7 +148,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "return to the idle state from the refresh state" in {
-    test(mkSDRAM()) { dut =>
+    simulate(mkSDRAM()) { dut =>
       waitForRefresh(dut)
       dut.clock.step(2)
       dut.io.debug.idle.expect(true)
@@ -157,13 +158,13 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   behavior of "initialize"
 
   it should "assert clock enable" in {
-    test(mkSDRAM()) { dut =>
+    simulate(mkSDRAM()) { dut =>
       dut.io.sdram.cke.expect(true)
     }
   }
 
   it should "initialize the SDRAM" in {
-    test(mkSDRAM()) { dut =>
+    simulate(mkSDRAM()) { dut =>
       // NOP
       dut.io.sdram.cs_n.expect(false)
       dut.io.sdram.ras_n.expect(true)
@@ -212,7 +213,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   behavior of "idle"
 
   it should "perform a NOP" in {
-    test(mkSDRAM()) { dut =>
+    simulate(mkSDRAM()) { dut =>
       waitForIdle(dut)
       dut.io.sdram.ras_n.expect(true)
       dut.io.sdram.cas_n.expect(true)
@@ -221,7 +222,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "deassert the wait signal" in {
-    test(mkSDRAM(sdramConfig.copy(burstLength = 2))) { dut =>
+    simulate(mkSDRAM(sdramConfig.copy(burstLength = 2))) { dut =>
       dut.io.mem.wait_n.expect(false)
       waitForIdle(dut)
       dut.io.mem.wait_n.expect(true)
@@ -231,7 +232,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   behavior of "addressing"
 
   it should "select a bank/row/col" in {
-    test(mkSDRAM(sdramConfig.copy(colWidth = 10))) { dut =>
+    simulate(mkSDRAM(sdramConfig.copy(colWidth = 10))) { dut =>
       waitForIdle(dut)
 
       dut.io.mem.rd.poke(true)
@@ -255,7 +256,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   behavior of "read"
 
   it should "read from the SDRAM (burst=1)" in {
-    test(mkSDRAM()) { dut =>
+    simulate(mkSDRAM()) { dut =>
       waitForIdle(dut)
 
       // read
@@ -279,7 +280,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "read from the SDRAM (burst=2)" in {
-    test(mkSDRAM(sdramConfig.copy(burstLength = 2))) { dut =>
+    simulate(mkSDRAM(sdramConfig.copy(burstLength = 2))) { dut =>
       waitForIdle(dut)
 
       // read
@@ -309,7 +310,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "read from the SDRAM (burst=4)" in {
-    test(mkSDRAM(sdramConfig.copy(burstLength = 4))) { dut =>
+    simulate(mkSDRAM(sdramConfig.copy(burstLength = 4))) { dut =>
       waitForIdle(dut)
 
       // read
@@ -351,7 +352,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "read from the SDRAM (burst=8)" in {
-    test(mkSDRAM(sdramConfig.copy(burstLength = 8))) { dut =>
+    simulate(mkSDRAM(sdramConfig.copy(burstLength = 8))) { dut =>
       waitForIdle(dut)
 
       // read
@@ -417,7 +418,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "assert the wait signal" in {
-    test(mkSDRAM(sdramConfig.copy(burstLength = 2))) { dut =>
+    simulate(mkSDRAM(sdramConfig.copy(burstLength = 2))) { dut =>
       waitForIdle(dut)
 
       // read
@@ -439,7 +440,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "assert the valid signal" in {
-    test(mkSDRAM(sdramConfig.copy(burstLength = 2))) { dut =>
+    simulate(mkSDRAM(sdramConfig.copy(burstLength = 2))) { dut =>
       waitForIdle(dut)
 
       // read
@@ -461,7 +462,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "assert the burst done signal" in {
-    test(mkSDRAM(sdramConfig.copy(burstLength = 2))) { dut =>
+    simulate(mkSDRAM(sdramConfig.copy(burstLength = 2))) { dut =>
       waitForIdle(dut)
 
       // read
@@ -485,7 +486,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   behavior of "write"
 
   it should "write to the SDRAM (burst=1)" in {
-    test(mkSDRAM()) { dut =>
+    simulate(mkSDRAM()) { dut =>
       waitForIdle(dut)
 
       // write
@@ -505,7 +506,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "write to the SDRAM (burst=2)" in {
-    test(mkSDRAM(sdramConfig.copy(burstLength = 2))) { dut =>
+    simulate(mkSDRAM(sdramConfig.copy(burstLength = 2))) { dut =>
       waitForIdle(dut)
 
       // write
@@ -530,7 +531,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "write to the SDRAM (burst=4)" in {
-    test(mkSDRAM(sdramConfig.copy(burstLength = 4))) { dut =>
+    simulate(mkSDRAM(sdramConfig.copy(burstLength = 4))) { dut =>
       waitForIdle(dut)
 
       // write
@@ -565,7 +566,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "write to the SDRAM (burst=8)" in {
-    test(mkSDRAM(sdramConfig.copy(burstLength = 8))) { dut =>
+    simulate(mkSDRAM(sdramConfig.copy(burstLength = 8))) { dut =>
       waitForIdle(dut)
 
       // write
@@ -620,7 +621,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "assert the wait signal" in {
-    test(mkSDRAM(sdramConfig.copy(burstLength = 2))) { dut =>
+    simulate(mkSDRAM(sdramConfig.copy(burstLength = 2))) { dut =>
       waitForIdle(dut)
 
       // write
@@ -642,7 +643,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   }
 
   it should "assert the burst done signal" in {
-    test(mkSDRAM(sdramConfig.copy(burstLength = 2))) { dut =>
+    simulate(mkSDRAM(sdramConfig.copy(burstLength = 2))) { dut =>
       waitForIdle(dut)
 
       // write
@@ -661,7 +662,7 @@ class SDRAMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wit
   behavior of "refresh"
 
   it should "assert the wait signal when a request is being processed" in {
-    test(mkSDRAM()) { dut =>
+    simulate(mkSDRAM()) { dut =>
       waitForRefresh(dut)
       dut.io.mem.rd.poke(true)
       dut.io.mem.wait_n.expect(false)

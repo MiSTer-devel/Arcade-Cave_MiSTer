@@ -34,11 +34,11 @@ package arcadia.snd.ymz
 
 import arcadia.snd.YMZ280BConfig
 import chisel3._
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-trait ChannelControllerTestHelpers {
+trait ChannelControllerTestHelpers { this: ChiselSim =>
   protected val ymzConfig = YMZ280BConfig(clockFreq = 44100 * 50, numChannels = 1)
 
   protected def mkChannelController(config: YMZ280BConfig = ymzConfig) = new ChannelController(config)
@@ -69,44 +69,45 @@ trait ChannelControllerTestHelpers {
   }
 
   protected def waitForIdle(dut: ChannelController) =
-    while (!dut.io.debug.idle.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.idle, 1, 1024)
 
   protected def waitForRead(dut: ChannelController) =
-    while (!dut.io.debug.read.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.read, 1, 1024)
 
   protected def waitForLatch(dut: ChannelController) =
-    while (!dut.io.debug.latch.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.latch, 1, 1024)
 
   protected def waitForCheck(dut: ChannelController) =
-    while (!dut.io.debug.check.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.check, 1, 10)
 
   protected def waitForReady(dut: ChannelController) =
-    while (!dut.io.debug.ready.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.ready, 1, 1024)
 
   protected def waitForProcess(dut: ChannelController) =
-    while (!dut.io.debug.process.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.process, 1, 1024)
 
   protected def waitForWrite(dut: ChannelController) =
-    while (!dut.io.debug.write.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.write, 1, 1024)
 
   protected def waitForNext(dut: ChannelController) =
-    while (!dut.io.debug.next.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.next, 1, 1024)
 
   protected def waitForDone(dut: ChannelController) =
-    while (!dut.io.debug.done.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.done, 1, 1024)
 
   protected def waitForMemRead(dut: ChannelController) =
-    while (!dut.io.rom.rd.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.rom.rd, 1, 1024)
 
   protected def waitForAudioValid(dut: ChannelController) =
-    while (!dut.io.audio.valid.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.audio.valid, 1, 1024)
+
 }
 
-class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with ChannelControllerTestHelpers {
+class ChannelControllerTest extends AnyFlatSpec with ChiselSim with Matchers with ChannelControllerTestHelpers {
   behavior of "FSM"
 
   it should "remain in the init state when the channel controller is disabled" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       waitForIdle(dut)
       dut.clock.step()
       dut.io.enable.poke(true)
@@ -117,7 +118,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   }
 
   it should "move to the read state after initializing" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       dut.io.enable.poke(true)
       waitForIdle(dut)
       dut.clock.step()
@@ -126,7 +127,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   }
 
   it should "move to the latch state after reading the channel state" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       dut.io.enable.poke(true)
       waitForRead(dut)
       dut.clock.step()
@@ -135,7 +136,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   }
 
   it should "move to the check state after latching the channel state" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       dut.io.enable.poke(true)
       waitForLatch(dut)
       dut.clock.step()
@@ -144,7 +145,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   }
 
   it should "move to the ready state after checking an enabled channel" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       dut.io.enable.poke(true)
       dut.io.regs(0).flags.keyOn.poke(true)
       waitForCheck(dut)
@@ -154,7 +155,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   }
 
   it should "move to the write state after checking a disabled channel" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       dut.io.enable.poke(true)
       waitForCheck(dut)
       dut.clock.step()
@@ -163,7 +164,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   }
 
   it should "move to the done state after processing all channels" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       dut.io.enable.poke(true)
       waitForNext(dut)
       dut.clock.step()
@@ -174,7 +175,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   }
 
   it should "move to the idle state after setting the audio output" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       dut.io.enable.poke(true)
       waitForAudioValid(dut)
       dut.clock.step()
@@ -185,7 +186,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   behavior of "PCM data"
 
   it should "assert the memory read enable signal" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
       startChannel(dut, index = 0)
@@ -204,7 +205,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   }
 
   it should "fetch PCM data for the channels" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
       dut.io.rom.valid.poke(true)
@@ -227,7 +228,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   }
 
   it should "reset the address nibble when restarting a channel" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
       dut.io.rom.valid.poke(true)
@@ -259,7 +260,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   behavior of "playing"
 
   it should "play a looped sample" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
       startChannel(dut, index = 0, loop = true, loopEndAddr = 1, endAddress = 1)
@@ -344,7 +345,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   }
 
   it should "sum the channel outputs" in {
-    test(mkChannelController(ymzConfig.copy(numChannels = 2))) { dut =>
+    simulate(mkChannelController(ymzConfig.copy(numChannels = 2))) { dut =>
       // Start
       dut.io.enable.poke(true)
       startChannel(dut, index = 0, pitch = 127)
@@ -380,7 +381,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   }
 
   it should "not allow a channel to play another sample until the key is released" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
       dut.io.rom.valid.poke(true)
@@ -415,7 +416,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   behavior of "active"
 
   it should "assert the active signal when a channel is playing" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       dut.io.enable.poke(true)
 
       // Active
@@ -425,13 +426,18 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
 
       // Inactive
       stopChannel(dut, index = 0)
-      waitForCheck(dut)
+      // There is some tight timing here that `stepUntil` doesn't seem to be
+      // handling correctly.  Use an explicit peek-and-step.
+      while (dut.io.debug.check.peek().litValue == 0) {
+        dut.clock.step()
+      }
       dut.io.active.expect(false)
+      dut.clock.step()
     }
   }
 
   it should "deassert the active signal when a channel has reached the end address" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
       dut.io.rom.valid.poke(true)
@@ -454,7 +460,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   behavior of "done"
 
   it should "assert the done signal when a channel has reached the end address" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
       dut.io.rom.valid.poke(true)
@@ -475,7 +481,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   }
 
   it should "not assert the done signal when the loop end address is equal to the end address" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
       dut.io.rom.valid.poke(true)
@@ -491,7 +497,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   }
 
   it should "not assert the done signal when a channel is stopped" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
       dut.io.rom.valid.poke(true)
@@ -508,7 +514,7 @@ class ChannelControllerTest extends AnyFlatSpec with ChiselScalatestTester with 
   }
 
   it should "not assert the done signal when a channel is inactive" in {
-    test(mkChannelController()) { dut =>
+    simulate(mkChannelController()) { dut =>
       // Start
       dut.io.enable.poke(true)
       dut.io.rom.valid.poke(true)

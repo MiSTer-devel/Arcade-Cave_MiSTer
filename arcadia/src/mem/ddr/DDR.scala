@@ -50,7 +50,7 @@ class DDR(config: Config) extends Module {
     val ddr = BurstMemIO(config)
     /** Debug port */
     val debug = new Bundle {
-      val burstCounter = Output(UInt())
+      val burstCounter = Output(UInt(mem.burstLength.getWidth.W))
     }
   })
 

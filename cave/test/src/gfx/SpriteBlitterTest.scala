@@ -32,23 +32,23 @@
 
 package cave.gfx
 
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
-class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+class SpriteBlitterTest extends AnyFlatSpec with ChiselSim with Matchers {
   behavior of "sprite data"
 
   it should "request sprite data when the PISO is empty" in {
-    test(new SpriteBlitter) { dut =>
+    simulate(new SpriteBlitter) { dut =>
       dut.io.config.valid.poke(true)
       dut.io.config.ready.expect(true)
     }
   }
 
   it should "request sprite data when blitting the last pixel" in {
-    test(new SpriteBlitter) { dut =>
+    simulate(new SpriteBlitter) { dut =>
       dut.io.enable.poke(true)
       dut.io.config.valid.poke(true)
       dut.io.config.bits.sprite.cols.poke(1)
@@ -67,7 +67,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
   behavior of "pixel data"
 
   it should "request pixel data when the PISO is empty" in {
-    test(new SpriteBlitter) { dut =>
+    simulate(new SpriteBlitter) { dut =>
       dut.io.frameBuffer.wait_n.poke(true)
       dut.io.pixelData.valid.poke(true)
       dut.io.pixelData.ready.expect(true)
@@ -75,7 +75,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
   }
 
   it should "request pixel data when the PISO is almost empty" in {
-    test(new SpriteBlitter) { dut =>
+    simulate(new SpriteBlitter) { dut =>
       dut.io.enable.poke(true)
       dut.io.config.valid.poke(true)
       dut.io.config.bits.sprite.cols.poke(1)
@@ -94,7 +94,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
   behavior of "blitting"
 
   it should "assert the busy signal" in {
-    test(new SpriteBlitter) { dut =>
+    simulate(new SpriteBlitter) { dut =>
       dut.io.enable.poke(true)
       dut.io.config.valid.poke(true)
       dut.io.config.bits.sprite.cols.poke(1)
@@ -113,7 +113,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
   }
 
   it should "write pixel data to the frame buffer" in {
-    test(new SpriteBlitter) { dut =>
+    simulate(new SpriteBlitter) { dut =>
       dut.io.enable.poke(true)
       dut.io.config.valid.poke(true)
       dut.io.config.bits.sprite.cols.poke(2)
@@ -184,7 +184,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
   }
 
   it should "wait for the frame buffer" in {
-    test(new SpriteBlitter) { dut =>
+    simulate(new SpriteBlitter) { dut =>
       dut.io.enable.poke(true)
       dut.io.config.valid.poke(true)
       dut.io.config.bits.sprite.cols.poke(1)
@@ -235,7 +235,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
   }
 
   it should "handle horizontal flipping" in {
-    test(new SpriteBlitter) { dut =>
+    simulate(new SpriteBlitter) { dut =>
       dut.io.enable.poke(true)
       dut.io.config.valid.poke(true)
       dut.io.config.bits.sprite.cols.poke(1)
@@ -275,7 +275,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
   }
 
   it should "handle vertical flipping" in {
-    test(new SpriteBlitter) { dut =>
+    simulate(new SpriteBlitter) { dut =>
       dut.io.enable.poke(true)
       dut.io.config.valid.poke(true)
       dut.io.config.bits.sprite.cols.poke(1)
@@ -317,7 +317,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
   behavior of "downscaling"
 
   it should "write pixel data to the frame buffer" in {
-    test(new SpriteBlitter) { dut =>
+    simulate(new SpriteBlitter) { dut =>
       dut.io.enable.poke(true)
       dut.io.config.valid.poke(true)
       dut.io.config.bits.sprite.cols.poke(1)
@@ -359,7 +359,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
   }
 
   it should "handle horizontal flipping" in {
-    test(new SpriteBlitter) { dut =>
+    simulate(new SpriteBlitter) { dut =>
       dut.io.enable.poke(true)
       dut.io.config.valid.poke(true)
       dut.io.config.bits.sprite.cols.poke(1)
@@ -401,7 +401,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
   behavior of "upscaling"
 
   it should "write pixel data to the frame buffer" in {
-    test(new SpriteBlitter) { dut =>
+    simulate(new SpriteBlitter) { dut =>
       dut.io.enable.poke(true)
       dut.io.config.valid.poke(true)
       dut.io.config.bits.sprite.cols.poke(1)
@@ -443,7 +443,7 @@ class SpriteBlitterTest extends AnyFlatSpec with ChiselScalatestTester with Matc
   }
 
   it should "handle horizontal flipping" in {
-    test(new SpriteBlitter) { dut =>
+    simulate(new SpriteBlitter) { dut =>
       dut.io.enable.poke(true)
       dut.io.config.valid.poke(true)
       dut.io.config.bits.sprite.cols.poke(1)

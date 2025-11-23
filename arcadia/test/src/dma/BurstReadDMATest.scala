@@ -33,7 +33,7 @@
 package arcadia.dma
 
 import arcadia.mem.dma.{BurstReadDMA, Config}
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -41,9 +41,9 @@ trait BurstReadDMATestHelpers {
   protected def mkDMA() = new BurstReadDMA(Config(depth = 8, burstLength = 4))
 }
 
-class BurstReadDMATest extends AnyFlatSpec with ChiselScalatestTester with Matchers with BurstReadDMATestHelpers {
+class BurstReadDMATest extends AnyFlatSpec with ChiselSim with Matchers with BurstReadDMATestHelpers {
   it should "copy data from a bursted input memory to an asynchronous output memory" in {
-    test(mkDMA()) { dut =>
+    simulate(mkDMA()) { dut =>
       dut.io.in.wait_n.poke(true)
       dut.io.out.wait_n.poke(true)
 

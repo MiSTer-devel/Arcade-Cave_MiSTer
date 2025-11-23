@@ -33,14 +33,14 @@
 package arcadia.snd.ymz
 
 import chisel3._
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class ADPCMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+class ADPCMTest extends AnyFlatSpec with ChiselSim with Matchers {
   it should "decode sample values" in {
-    test(new ADPCM) { dut =>
+    simulate(new ADPCM) { dut =>
       dut.io.data.poke(8)
       dut.io.in.step.poke(127)
       dut.io.in.sample.poke(0)

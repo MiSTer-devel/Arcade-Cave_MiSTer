@@ -33,16 +33,16 @@
 package arcadia.util
 
 import chisel3._
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
-class CounterTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+class CounterTest extends AnyFlatSpec with ChiselSim with Matchers {
   it should "increment a static counter" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
-        val value = Output(UInt())
+        val value = Output(UInt(2.W))
         val wrap = Output(Bool())
         val enable = Input(Bool())
         val reset = Input(Bool())
@@ -78,9 +78,9 @@ class CounterTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "wrap a static counter with zero length" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
-        val value = Output(UInt())
+        val value = Output(UInt(1.W))
         val wrap = Output(Bool())
       })
       val (value, wrap) = Counter.static(0)
@@ -96,9 +96,9 @@ class CounterTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "increment a dynamic counter" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
-        val value = Output(UInt())
+        val value = Output(UInt(2.W))
         val wrap = Output(Bool())
         val enable = Input(Bool())
         val reset = Input(Bool())
@@ -134,9 +134,9 @@ class CounterTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "wrap a dynamic counter with zero length" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
-        val value = Output(UInt())
+        val value = Output(UInt(1.W))
         val wrap = Output(Bool())
       })
       val (value, wrap) = Counter.dynamic(0.U)

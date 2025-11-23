@@ -33,13 +33,13 @@
 package arcadia
 
 import chisel3._
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class RGBTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+class RGBTest extends AnyFlatSpec with ChiselSim with Matchers {
   it should "create a new RGB" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Output(RGB(4.W))
       })
@@ -52,7 +52,7 @@ class RGBTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "AND two RGB values" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(RGB(4.W))
         val b = Input(RGB(4.W))
@@ -73,7 +73,7 @@ class RGBTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "OR two RGB values" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(RGB(4.W))
         val b = Input(RGB(4.W))

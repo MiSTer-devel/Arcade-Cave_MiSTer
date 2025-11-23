@@ -33,14 +33,14 @@
 package arcadia.snd
 
 import chisel3._
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class NMK112Test extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+class NMK112Test extends AnyFlatSpec with ChiselSim with Matchers {
   it should "map ROM addresses" in {
-    test(new NMK112) { dut =>
+    simulate(new NMK112) { dut =>
       dut.io.cpu.wr.poke(true.B)
 
       // write (chip 0, bank 0)
@@ -114,7 +114,7 @@ class NMK112Test extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "map ROM addresses with phrase table masking" in {
-    test(new NMK112) { dut =>
+    simulate(new NMK112) { dut =>
       dut.io.cpu.wr.poke(true.B)
       dut.io.mask.poke(1.U)
 

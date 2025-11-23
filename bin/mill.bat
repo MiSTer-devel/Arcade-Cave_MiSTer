@@ -15,7 +15,7 @@ rem setlocal seems to be unavailable on Windows 95/98/ME
 rem but I don't think we need to support them in 2019
 setlocal enabledelayedexpansion
 
-set "DEFAULT_MILL_VERSION=0.9.10"
+set "DEFAULT_MILL_VERSION=0.12.4"
 
 set "MILL_REPO_URL=https://github.com/com-lihaoyi/mill"
 

@@ -34,14 +34,14 @@ package arcadia.mister
 
 import arcadia.mem._
 import chisel3._
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
-class IOCTLTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+class IOCTLTest extends AnyFlatSpec with ChiselSim with Matchers {
   it should "download ROM data" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val mem = AsyncWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH)
         val ioctl = new IOCTL
@@ -59,7 +59,7 @@ class IOCTLTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "download NVRAM data" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val mem = AsyncMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH)
         val ioctl = new IOCTL
@@ -77,7 +77,7 @@ class IOCTLTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "upload NVRAM data" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val mem = AsyncMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH)
         val ioctl = new IOCTL
@@ -95,7 +95,7 @@ class IOCTLTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "download DIP switch data" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val mem = AsyncWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH)
         val ioctl = new IOCTL
@@ -113,7 +113,7 @@ class IOCTLTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "download video data" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val mem = AsyncWriteMemIO(IOCTL.ADDR_WIDTH, IOCTL.DATA_WIDTH)
         val ioctl = new IOCTL

@@ -33,12 +33,12 @@
 package arcadia.util
 
 import chisel3._
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
-class PISOTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+class PISOTest extends AnyFlatSpec with ChiselSim with Matchers {
   def mkPISO = new Module {
     val io = IO(new Bundle {
       val rd = Input(Bool())
@@ -58,7 +58,7 @@ class PISOTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "latch parallel values and emit them serially" in {
-    test(mkPISO) { dut =>
+    simulate(mkPISO) { dut =>
       dut.io.din(0).poke(1)
       dut.io.din(1).poke(2)
       dut.io.din(2).poke(3)
@@ -75,7 +75,7 @@ class PISOTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "assert the isEmpty signal" in {
-    test(mkPISO) { dut =>
+    simulate(mkPISO) { dut =>
       dut.io.isEmpty.expect(true)
       dut.io.wr.poke(true)
       dut.clock.step()
@@ -88,7 +88,7 @@ class PISOTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   it should "assert the isAlmostEmpty signal" in {
-    test(mkPISO) { dut =>
+    simulate(mkPISO) { dut =>
       dut.io.isAlmostEmpty.expect(false)
       dut.io.wr.poke(true)
       dut.clock.step()

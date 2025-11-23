@@ -32,14 +32,14 @@
 
 package cave.fb
 
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
-class PageFlipperTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+class PageFlipperTest extends AnyFlatSpec with ChiselSim with Matchers {
   it should "flip pages in double buffer mode" in {
-    test(new PageFlipper(0x24000000)) { dut =>
+    simulate(new PageFlipper(0x24000000)) { dut =>
       dut.io.mode.poke(false)
       dut.io.addrRead.expect(0x24000000)
       dut.io.addrWrite.expect(0x24080000)
@@ -67,7 +67,7 @@ class PageFlipperTest extends AnyFlatSpec with ChiselScalatestTester with Matche
   }
 
   it should "flip pages in triple buffer mode" in {
-    test(new PageFlipper(0x24000000)) { dut =>
+    simulate(new PageFlipper(0x24000000)) { dut =>
       dut.io.mode.poke(true)
       dut.io.addrRead.expect(0x24000000)
       dut.io.addrWrite.expect(0x24080000)

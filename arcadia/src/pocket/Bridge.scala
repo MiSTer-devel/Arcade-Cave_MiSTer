@@ -101,7 +101,7 @@ class Bridge(addrWidth: Int, dataWidth: Int, burstLength: Int) extends Module {
   io.options.sprite := RegEnable(din, latch(0xf9000018L))
   io.options.fm := RegEnable(din, latch(0xf900001cL))
   io.options.pcm := RegEnable(din, latch(0xf9000020L))
-  io.options.flip := false.B
+  io.options.flipVideo := false.B
 }
 
 object Bridge {
