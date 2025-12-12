@@ -68,8 +68,8 @@ class CPUIO extends Bundle {
 class CPU(clockDiv: Int = 1) extends Module {
   val io = IO(new CPUIO)
 
-  class FX68K extends BlackBox {
-    val io = IO(new Bundle {
+  class FX68K extends ExtModule {
+    val io = FlatIO(new Bundle {
       // System control
       val clk = Input(Bool())
       val enPhi1 = Input(Bool())

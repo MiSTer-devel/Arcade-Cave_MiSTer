@@ -50,13 +50,13 @@ class SinglePortRam(addrWidth: Int,
 
   private val depth_ = depth.getOrElse(0)
 
-  class WrappedSinglePortRam extends BlackBox(Map(
+  class WrappedSinglePortRam extends ExtModule(Map(
     "ADDR_WIDTH" -> addrWidth,
     "DATA_WIDTH" -> dataWidth,
     "DEPTH" -> depth_,
     "MASK_ENABLE" -> (if (maskEnable) "TRUE" else "FALSE"),
   )) {
-    val io = IO(new Bundle {
+    val io = FlatIO(new Bundle {
       val clk = Input(Clock())
       val rd = Input(Bool())
       val wr = Input(Bool())

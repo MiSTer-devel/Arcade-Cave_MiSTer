@@ -53,11 +53,11 @@ class DualClockFIFO[T <: Data](t: T, depth: Int) extends Module {
     val enq = Flipped(EnqIO(t))
   })
 
-  class WrappedDualClockFIFO extends BlackBox(Map(
+  class WrappedDualClockFIFO extends ExtModule(Map(
     "DATA_WIDTH" -> t.getWidth,
     "DEPTH" -> depth
   )) {
-    val io = IO(new Bundle {
+    val io = FlatIO(new Bundle {
       val data = Input(Bits(t.getWidth.W))
       val rdclk = Input(Clock())
       val rdreq = Input(Bool())

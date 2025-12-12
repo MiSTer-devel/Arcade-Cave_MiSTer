@@ -34,7 +34,6 @@ package arcadia.snd
 
 import arcadia.Util
 import chisel3._
-import chisel3.internal.firrtl.Width
 
 /** Represents a stereo pair of audio samples. */
 sealed class Audio private[arcadia](width: Width) extends Bundle {

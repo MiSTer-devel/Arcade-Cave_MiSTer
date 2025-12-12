@@ -33,7 +33,6 @@
 package arcadia
 
 import chisel3._
-import chisel3.internal.firrtl.Width
 
 /** Abstract 2D vector. */
 sealed abstract class Vec2[T <: Bits with Num[T]] extends Bundle {
