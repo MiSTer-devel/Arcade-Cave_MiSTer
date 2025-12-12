@@ -43,7 +43,7 @@ object ChiselApp extends App {
       "--dump-fir"
     ),
     firtoolOpts = Array(
-      "-lowering-options=disallowExpressionInliningInPorts,disallowLocalVariables,disallowMuxInlining,disallowPackedArrays,disallowPortDeclSharing,explicitBitcast,noAlwaysComb",
+      "-lowering-options=disallowExpressionInliningInPorts,disallowLocalVariables,disallowMuxInlining,disallowPackedArrays,disallowPortDeclSharing,explicitBitcast,noAlwaysComb,omitVersionComment",
       "-default-layer-specialization=enable",
       "-strip-debug-info",
       "-disable-all-randomization"
