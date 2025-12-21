@@ -18,7 +18,7 @@ trait CommonModule extends SbtModule { m =>
 
   override def millSourcePath = super.millSourcePath / os.up
   override def scalaVersion = "2.13.18"
-  def chiselVersion = "7.5.0"
+  def chiselVersion = "7.6.0"
   override def scalacOptions = Seq(
     "-language:reflectiveCalls",
     "-deprecation",
