@@ -13,18 +13,18 @@ module OKIM6295_1(
 
   wire        _adpcm_ss = 1'h1;
   wire        _adpcm_wrn;
-  reg  [15:0] view__cen_counter;
-  reg         view__cen_clockEnable;
-  wire [16:0] view__cen_next = 17'({1'h0, view__cen_counter} + 17'h10E5);
+  reg  [15:0] adpcm_cen_counter;
+  reg         adpcm_cen_clockEnable;
+  wire [16:0] adpcm_cen_next = 17'({1'h0, adpcm_cen_counter} + 17'h10E5);
   always @(posedge clock) begin
-    view__cen_counter <= view__cen_next[15:0];
-    view__cen_clockEnable <= view__cen_next[16];
+    adpcm_cen_counter <= adpcm_cen_next[15:0];
+    adpcm_cen_clockEnable <= adpcm_cen_next[16];
   end // always @(posedge)
   assign _adpcm_wrn = ~io_cpu_wr;
   jt6295 adpcm (
     .rst      (reset),
     .clk      (clock),
-    .cen      (view__cen_clockEnable),
+    .cen      (adpcm_cen_clockEnable),
     .ss       (_adpcm_ss),
     .wrn      (_adpcm_wrn),
     .din      (io_cpu_din),

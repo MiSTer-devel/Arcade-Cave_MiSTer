@@ -15,18 +15,18 @@ module YM2203(
   wire        _m_wr_n;
   wire        _m_irq_n;
   wire [9:0]  _m_psg_snd;
-  reg  [15:0] view__cen_counter;
-  reg         view__cen_clockEnable;
-  wire [16:0] view__cen_next = 17'({1'h0, view__cen_counter} + 17'h2000);
+  reg  [15:0] m_cen_counter;
+  reg         m_cen_clockEnable;
+  wire [16:0] m_cen_next = 17'({1'h0, m_cen_counter} + 17'h2000);
   always @(posedge clock) begin
-    view__cen_counter <= view__cen_next[15:0];
-    view__cen_clockEnable <= view__cen_next[16];
+    m_cen_counter <= m_cen_next[15:0];
+    m_cen_clockEnable <= m_cen_next[16];
   end // always @(posedge)
   assign _m_wr_n = ~io_cpu_wr;
   jt03 m (
     .rst        (reset),
     .clk        (clock),
-    .cen        (view__cen_clockEnable),
+    .cen        (m_cen_clockEnable),
     .din        (io_cpu_din),
     .addr       (io_cpu_addr),
     .cs_n       (_m_cs_n),

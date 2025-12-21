@@ -430,7 +430,7 @@ module Cave(
     memSys_io_prog_nvram_readEnable | memSys_io_prog_nvram_writeEnable
       ? _memSys_io_prog_nvram_wait_n
       : ~memSys_io_prog_rom_writeEnable | _memSys_io_prog_rom_wait_n;
-  reg  [15:0]  memSys_io_prog_nvram_view__ioctl_din_r;
+  reg  [15:0]  memSys_io_prog_nvram_ioctl_din_r;
   reg          memSys_io_prog_done_REG;
   wire         _videoSys_io_prog_done_T_2 = ioctl_index == 8'h3;
   wire         videoSys_io_prog_video_writeEnable =
@@ -450,7 +450,7 @@ module Cave(
       gameIndexReg <= ioctl_dout[3:0];
     gameIndexReg_REG <= ioctl_download;
     if (_memSys_io_prog_nvram_valid)
-      memSys_io_prog_nvram_view__ioctl_din_r <= _memSys_io_prog_nvram_dout;
+      memSys_io_prog_nvram_ioctl_din_r <= _memSys_io_prog_nvram_dout;
     memSys_io_prog_done_REG <= ioctl_download;
     videoSys_io_prog_done_REG <= ioctl_download;
     if (reset)
@@ -1060,7 +1060,7 @@ module Cave(
   );
   assign ioctl_wait_n = videoSys_io_prog_video_writeEnable | _GEN_5;
   assign ioctl_din =
-    memSys_io_prog_nvram_readEnable ? memSys_io_prog_nvram_view__ioctl_din_r : 16'h0;
+    memSys_io_prog_nvram_readEnable ? memSys_io_prog_nvram_ioctl_din_r : 16'h0;
   assign led_power = 1'h0;
   assign led_disk = ioctl_download;
   assign led_user = _memSys_io_ready;
