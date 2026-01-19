@@ -59,7 +59,7 @@ class RegisterFile(dataWidth: Int, depth: Int) extends Module {
   val data = regs(io.mem.addr)
 
   // Split data register into a vector of bytes
-  val bytes = data.asTypeOf(Vec(io.mem.maskWidth, Bits(8.W)))
+  val bytes = WireInit(data.asTypeOf(Vec(io.mem.maskWidth, Bits(8.W))))
 
   // Write masked bytes to the data register
   0.until(io.mem.maskWidth).foreach { n =>

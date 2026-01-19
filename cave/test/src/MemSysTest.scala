@@ -33,14 +33,14 @@
 package cave
 
 import chisel3._
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
-class MemSysTest extends AnyFlatSpec with ChiselScalatestTester with Matchers  {
+class MemSysTest extends AnyFlatSpec with ChiselSim with Matchers  {
   it should "write ROM data to DDR memory" in {
-    test(new MemSys) { dut =>
+    simulate(new MemSys) { dut =>
       dut.io.prog.rom.wr.poke(true)
       dut.io.prog.rom.addr.poke(0)
       dut.io.prog.rom.din.poke(0x3210)
@@ -68,7 +68,7 @@ class MemSysTest extends AnyFlatSpec with ChiselScalatestTester with Matchers  {
   }
 
   it should "copy ROM data from DDR memory to SDRAM" in {
-    test(new MemSys) { dut =>
+    simulate(new MemSys) { dut =>
       dut.io.prog.done.poke(true)
       dut.io.ddr.wait_n.poke(true)
       dut.io.sdram.wait_n.poke(true)

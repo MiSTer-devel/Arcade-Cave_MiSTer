@@ -1,0 +1,65 @@
+module CPU_1(
+  input         clock,
+  input         reset,
+  output [15:0] io_addr,
+  input  [7:0]  io_din,
+  output [7:0]  io_dout,
+  output        io_rd,
+  output        io_wr,
+  output        io_rfsh,
+  output        io_mreq,
+  output        io_iorq,
+  input         io_int,
+  input         io_nmi
+);
+
+  wire       _cpu_RESET_n;
+  wire       _cpu_CEN;
+  wire       _cpu_WAIT_n = 1'h1;
+  wire       _cpu_INT_n;
+  wire       _cpu_NMI_n;
+  wire       _cpu_BUSRQ_n = 1'h1;
+  wire       _cpu_MREQ_n;
+  wire       _cpu_IORQ_n;
+  wire       _cpu_RD_n;
+  wire       _cpu_WR_n;
+  wire       _cpu_RFSH_n;
+  reg  [2:0] cen_value;
+  always @(posedge clock) begin
+    if (reset)
+      cen_value <= 3'h0;
+    else
+      cen_value <= 3'(cen_value + 3'h1);
+  end // always @(posedge)
+  assign _cpu_RESET_n = ~reset;
+  assign _cpu_CEN = &cen_value;
+  assign _cpu_INT_n = ~io_int;
+  assign _cpu_NMI_n = ~io_nmi;
+  T80s cpu (
+    .RESET_n (_cpu_RESET_n),
+    .CLK     (clock),
+    .CEN     (_cpu_CEN),
+    .WAIT_n  (_cpu_WAIT_n),
+    .INT_n   (_cpu_INT_n),
+    .NMI_n   (_cpu_NMI_n),
+    .BUSRQ_n (_cpu_BUSRQ_n),
+    .M1_n    (/* unused */),
+    .MREQ_n  (_cpu_MREQ_n),
+    .IORQ_n  (_cpu_IORQ_n),
+    .RD_n    (_cpu_RD_n),
+    .WR_n    (_cpu_WR_n),
+    .RFSH_n  (_cpu_RFSH_n),
+    .HALT_n  (/* unused */),
+    .BUSAK_n (/* unused */),
+    .A       (io_addr),
+    .DI      (io_din),
+    .DO      (io_dout),
+    .REG     (/* unused */)
+  );
+  assign io_rd = ~_cpu_RD_n;
+  assign io_wr = ~_cpu_WR_n;
+  assign io_rfsh = ~_cpu_RFSH_n;
+  assign io_mreq = ~_cpu_MREQ_n;
+  assign io_iorq = ~_cpu_IORQ_n;
+endmodule
+

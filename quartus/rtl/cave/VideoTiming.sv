@@ -1,0 +1,65 @@
+module VideoTiming(
+  input        clock,
+  input        reset,
+  input  [8:0] io_display_x,
+  input  [8:0] io_display_y,
+  input  [8:0] io_frontPorch_x,
+  input  [8:0] io_frontPorch_y,
+  input  [8:0] io_retrace_x,
+  input  [8:0] io_retrace_y,
+  input  [3:0] io_offset_x,
+  input  [3:0] io_offset_y,
+  output       io_timing_clockEnable,
+  output       io_timing_displayEnable,
+  output [8:0] io_timing_pos_x,
+  output [8:0] io_timing_pos_y,
+  output       io_timing_hSync,
+  output       io_timing_vSync,
+  output       io_timing_hBlank,
+  output       io_timing_vBlank
+);
+
+  reg  [1:0] clockDivWrap_value;
+  reg  [8:0] x;
+  wire [9:0] _GEN = {1'h0, x};
+  reg  [8:0] y;
+  wire [9:0] _GEN_0 = {1'h0, y};
+  wire [9:0] _hEndDisplay_T = 10'({{6{io_offset_x[3]}}, io_offset_x} + 10'h1C0);
+  wire [9:0] _GEN_1 = {1'h0, io_frontPorch_x};
+  wire [9:0] _GEN_2 = {1'h0, io_retrace_x};
+  wire [9:0] _hBeginDisplay_T_8 =
+    10'(10'(10'(_hEndDisplay_T - {1'h0, io_display_x}) - _GEN_1) - _GEN_2);
+  wire [9:0] _vEndDisplay_T = 10'({{6{io_offset_y[3]}}, io_offset_y} + 10'h110);
+  wire [9:0] _GEN_3 = {1'h0, io_frontPorch_y};
+  wire [9:0] _GEN_4 = {1'h0, io_retrace_y};
+  wire [9:0] _vBeginDisplay_T_8 =
+    10'(10'(10'(_vEndDisplay_T - {1'h0, io_display_y}) - _GEN_3) - _GEN_4);
+  wire       hBlank =
+    _GEN < _hBeginDisplay_T_8 | _GEN >= 10'(10'(_hEndDisplay_T - _GEN_1) - _GEN_2);
+  wire       vBlank =
+    _GEN_0 < _vBeginDisplay_T_8 | _GEN_0 >= 10'(10'(_vEndDisplay_T - _GEN_3) - _GEN_4);
+  wire       wrap_wrap = x == 9'h1BF;
+  always @(posedge clock) begin
+    if (reset) begin
+      clockDivWrap_value <= 2'h0;
+      x <= 9'h0;
+      y <= 9'h0;
+    end
+    else begin
+      clockDivWrap_value <= 2'(clockDivWrap_value + 2'h1);
+      if (&clockDivWrap_value)
+        x <= wrap_wrap ? 9'h0 : 9'(x + 9'h1);
+      if ((&clockDivWrap_value) & wrap_wrap)
+        y <= y == 9'h10F ? 9'h0 : 9'(y + 9'h1);
+    end
+  end // always @(posedge)
+  assign io_timing_clockEnable = &clockDivWrap_value;
+  assign io_timing_displayEnable = ~(hBlank | vBlank);
+  assign io_timing_pos_x = 9'(x - _hBeginDisplay_T_8[8:0]);
+  assign io_timing_pos_y = 9'(y - _vBeginDisplay_T_8[8:0]);
+  assign io_timing_hSync = x >= 9'(9'h1C0 - io_retrace_x) & x[8:6] != 3'h7;
+  assign io_timing_vSync = y >= 9'(9'h110 - io_retrace_y) & y < 9'h110;
+  assign io_timing_hBlank = hBlank;
+  assign io_timing_vBlank = vBlank;
+endmodule
+

@@ -32,15 +32,15 @@
 
 package arcadia.mem.arbiter
 
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class BurstMemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+class BurstMemArbiterTest extends AnyFlatSpec with ChiselSim with Matchers {
   private def mkMemArbiter = new BurstMemArbiter(2, 8, 8)
 
   it should "mux the request to the input port with the highest priority" in {
-    test(mkMemArbiter) { dut =>
+    simulate(mkMemArbiter) { dut =>
       // read 0
       dut.io.in(0).rd.poke(true)
       dut.io.in(0).addr.poke(1)
@@ -68,7 +68,7 @@ class BurstMemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Ma
   }
 
   it should "assert the wait signal when the output is busy" in {
-    test(mkMemArbiter) { dut =>
+    simulate(mkMemArbiter) { dut =>
       dut.io.out.wait_n.poke(false)
 
       // read 0+1
@@ -102,7 +102,7 @@ class BurstMemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Ma
   }
 
   it should "assert not the wait signal when there are no requests" in {
-    test(mkMemArbiter) { dut =>
+    simulate(mkMemArbiter) { dut =>
       dut.io.out.wait_n.poke(true)
       dut.io.in(0).wait_n.expect(true)
       dut.io.in(1).wait_n.expect(true)
@@ -113,7 +113,7 @@ class BurstMemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Ma
   }
 
   it should "assert the valid signal" in {
-    test(mkMemArbiter) { dut =>
+    simulate(mkMemArbiter) { dut =>
       // read 0+1
       dut.io.in(0).rd.poke(true)
       dut.io.in(1).rd.poke(true)
@@ -150,7 +150,7 @@ class BurstMemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Ma
   }
 
   it should "assert the burst done signal" in {
-    test(mkMemArbiter) { dut =>
+    simulate(mkMemArbiter) { dut =>
       // read 0+1
       dut.io.in(0).rd.poke(true)
       dut.io.in(1).rd.poke(true)
@@ -176,7 +176,7 @@ class BurstMemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Ma
   }
 
   it should "assert the busy signal for pending requests" in {
-    test(mkMemArbiter) { dut =>
+    simulate(mkMemArbiter) { dut =>
       dut.io.in(0).rd.poke(true)
       dut.io.out.wait_n.poke(true)
       dut.io.busy.expect(false)
@@ -190,7 +190,7 @@ class BurstMemArbiterTest extends AnyFlatSpec with ChiselScalatestTester with Ma
   }
 
   it should "not assert the busy signal for requests with unit burst length" in {
-    test(mkMemArbiter) { dut =>
+    simulate(mkMemArbiter) { dut =>
       dut.io.in(0).rd.poke(true)
       dut.io.out.burstDone.poke(true)
       dut.io.busy.expect(false)

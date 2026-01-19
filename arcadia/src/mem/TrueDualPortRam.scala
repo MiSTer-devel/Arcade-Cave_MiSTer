@@ -67,7 +67,7 @@ class TrueDualPortRam(addrWidthA: Int,
   private val depthA_ = depthA.getOrElse(0)
   private val depthB_ = depthB.getOrElse(0)
 
-  class WrappedTrueDualPortRam extends BlackBox(Map(
+  class WrappedTrueDualPortRam extends ExtModule(Map(
     "ADDR_WIDTH_A" -> addrWidthA,
     "DATA_WIDTH_A" -> dataWidthA,
     "DEPTH_A" -> depthA_,
@@ -76,7 +76,7 @@ class TrueDualPortRam(addrWidthA: Int,
     "DEPTH_B" -> depthB_,
     "MASK_ENABLE" -> (if (maskEnable) "TRUE" else "FALSE"),
   )) {
-    val io = IO(new Bundle {
+    val io = FlatIO(new Bundle {
       // port A
       val clk_a = Input(Clock())
       val rd_a = Input(Bool())

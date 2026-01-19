@@ -1,0 +1,241 @@
+module SpriteProcessor(
+  input          clock,
+  input          reset,
+  input          io_ctrl_enable,
+  input  [1:0]   io_ctrl_format,
+  input          io_ctrl_start,
+  input          io_ctrl_zoom,
+  input  [1:0]   io_ctrl_regs_bank,
+  input          io_ctrl_regs_fixed,
+  input          io_ctrl_regs_hFlip,
+  output         io_ctrl_vram_rd,
+  output [11:0]  io_ctrl_vram_addr,
+  input  [127:0] io_ctrl_vram_dout,
+  output         io_ctrl_tileRom_rd,
+  output [31:0]  io_ctrl_tileRom_addr,
+  input  [63:0]  io_ctrl_tileRom_dout,
+  input          io_ctrl_tileRom_wait_n,
+  input          io_ctrl_tileRom_valid,
+  output [7:0]   io_ctrl_tileRom_burstLength,
+  input          io_ctrl_tileRom_burstDone,
+  input  [8:0]   io_video_regs_size_x,
+  input  [8:0]   io_video_regs_size_y,
+  output         io_frameBuffer_wr,
+  output [16:0]  io_frameBuffer_addr,
+  output [15:0]  io_frameBuffer_din,
+  input          io_frameBuffer_wait_n
+);
+
+  wire        _blitter_io_config_valid;
+  wire        _blitter_io_pixelData_valid;
+  wire [7:0]  _blitter_io_pixelData_bits_0;
+  wire [7:0]  _blitter_io_pixelData_bits_1;
+  wire [7:0]  _blitter_io_pixelData_bits_2;
+  wire [7:0]  _blitter_io_pixelData_bits_3;
+  wire [7:0]  _blitter_io_pixelData_bits_4;
+  wire [7:0]  _blitter_io_pixelData_bits_5;
+  wire [7:0]  _blitter_io_pixelData_bits_6;
+  wire [7:0]  _blitter_io_pixelData_bits_7;
+  wire [7:0]  _blitter_io_pixelData_bits_8;
+  wire [7:0]  _blitter_io_pixelData_bits_9;
+  wire [7:0]  _blitter_io_pixelData_bits_10;
+  wire [7:0]  _blitter_io_pixelData_bits_11;
+  wire [7:0]  _blitter_io_pixelData_bits_12;
+  wire [7:0]  _blitter_io_pixelData_bits_13;
+  wire [7:0]  _blitter_io_pixelData_bits_14;
+  wire [7:0]  _blitter_io_pixelData_bits_15;
+  wire        _blitter_io_busy;
+  wire        _blitter_io_config_ready;
+  wire        _blitter_io_pixelData_ready;
+  wire        _fifo_io_deq_ready;
+  wire        _fifo_io_flush;
+  wire        _fifo_io_deq_valid;
+  wire [63:0] _fifo_io_deq_bits;
+  wire [6:0]  _fifo_io_count;
+  reg  [2:0]  stateReg;
+  reg  [1:0]  spriteReg_priority;
+  reg  [5:0]  spriteReg_colorCode;
+  reg  [17:0] spriteReg_code;
+  reg         spriteReg_hFlip;
+  reg         spriteReg_vFlip;
+  reg  [17:0] spriteReg_pos_x;
+  reg  [17:0] spriteReg_pos_y;
+  reg  [7:0]  spriteReg_cols;
+  reg  [7:0]  spriteReg_rows;
+  reg  [15:0] spriteReg_zoom_x;
+  reg  [15:0] spriteReg_zoom_y;
+  reg  [15:0] numTilesReg;
+  reg         readPendingReg;
+  wire        _io_debug_next_T = stateReg == 3'h6;
+  reg  [9:0]  spriteCounter;
+  reg  [15:0] tileCounter;
+  wire        wrap_wrap_1 =
+    tileCounter == 16'(numTilesReg - 16'h1) | numTilesReg == 16'h0;
+  wire        tileRomRead = stateReg == 3'h5 & ~readPendingReg & _fifo_io_count < 7'h21;
+  wire        effectiveRead = tileRomRead & io_ctrl_tileRom_wait_n;
+  wire [3:0]  _tileRomAddr_T_2 = (&io_ctrl_format) ? 4'h8 : 4'h7;
+  wire [32:0] tileRomAddr =
+    {15'h0, 18'(spriteReg_code + {2'h0, tileCounter})} << _tileRomAddr_T_2;
+  wire [5:0]  tileRomBurstLength = (&io_ctrl_format) ? 6'h20 : 6'h10;
+  reg  [2:0]  casez_tmp;
+  always @(*) begin
+    casez (stateReg)
+      3'b000:
+        casez_tmp = io_ctrl_start ? 3'h1 : stateReg;
+      3'b001:
+        casez_tmp = 3'h2;
+      3'b010:
+        casez_tmp = 3'h3;
+      3'b011:
+        casez_tmp = {1'h1, ~((|spriteReg_cols) & (|spriteReg_rows)), 1'h0};
+      3'b100:
+        casez_tmp = _blitter_io_config_ready ? 3'h5 : stateReg;
+      3'b101:
+        casez_tmp = effectiveRead & wrap_wrap_1 ? 3'h6 : stateReg;
+      3'b110:
+        casez_tmp = _io_debug_next_T & (&spriteCounter) ? 3'h7 : 3'h1;
+      default:
+        casez_tmp = (&stateReg) & ~_blitter_io_busy ? 3'h0 : stateReg;
+    endcase
+  end // always @(*)
+  wire [17:0] sprite_sprite_1_pos_x =
+    io_ctrl_regs_fixed
+      ? {io_ctrl_vram_dout[47:32], 2'h0}
+      : {io_ctrl_vram_dout[41:32], 8'h0};
+  wire [17:0] sprite_sprite_pos_x =
+    io_ctrl_regs_fixed ? {io_ctrl_vram_dout[15:0], 2'h0} : {io_ctrl_vram_dout[9:0], 8'h0};
+  wire [17:0] sprite_sprite_1_pos_y =
+    io_ctrl_regs_fixed
+      ? {io_ctrl_vram_dout[63:48], 2'h0}
+      : {io_ctrl_vram_dout[57:48], 8'h0};
+  wire [17:0] sprite_sprite_pos_y =
+    io_ctrl_regs_fixed
+      ? {io_ctrl_vram_dout[31:16], 2'h0}
+      : {io_ctrl_vram_dout[25:16], 8'h0};
+  always @(posedge clock) begin
+    if (reset) begin
+      stateReg <= 3'h0;
+      readPendingReg <= 1'h0;
+      spriteCounter <= 10'h0;
+      tileCounter <= 16'h0;
+    end
+    else begin
+      stateReg <= casez_tmp;
+      readPendingReg <= ~io_ctrl_tileRom_burstDone & (effectiveRead | readPendingReg);
+      if (_io_debug_next_T)
+        spriteCounter <= 10'(spriteCounter + 10'h1);
+      if (effectiveRead)
+        tileCounter <= wrap_wrap_1 ? 16'h0 : 16'(tileCounter + 16'h1);
+    end
+    if (stateReg == 3'h2) begin
+      spriteReg_priority <=
+        io_ctrl_zoom ? io_ctrl_vram_dout[37:36] : io_ctrl_vram_dout[5:4];
+      spriteReg_colorCode <=
+        io_ctrl_zoom ? io_ctrl_vram_dout[45:40] : io_ctrl_vram_dout[13:8];
+      spriteReg_code <=
+        io_ctrl_zoom
+          ? {io_ctrl_vram_dout[33:32], io_ctrl_vram_dout[63:48]}
+          : {io_ctrl_vram_dout[1:0], io_ctrl_vram_dout[31:16]};
+      spriteReg_hFlip <= io_ctrl_zoom ? io_ctrl_vram_dout[35] : io_ctrl_vram_dout[3];
+      spriteReg_vFlip <= io_ctrl_zoom ? io_ctrl_vram_dout[34] : io_ctrl_vram_dout[2];
+      spriteReg_pos_x <= io_ctrl_zoom ? sprite_sprite_pos_x : sprite_sprite_1_pos_x;
+      spriteReg_pos_y <= io_ctrl_zoom ? sprite_sprite_pos_y : sprite_sprite_1_pos_y;
+      spriteReg_cols <=
+        io_ctrl_zoom ? io_ctrl_vram_dout[111:104] : io_ctrl_vram_dout[79:72];
+      spriteReg_rows <=
+        io_ctrl_zoom ? io_ctrl_vram_dout[103:96] : io_ctrl_vram_dout[71:64];
+      spriteReg_zoom_x <= io_ctrl_zoom ? io_ctrl_vram_dout[79:64] : 16'h100;
+      spriteReg_zoom_y <= io_ctrl_zoom ? io_ctrl_vram_dout[95:80] : 16'h100;
+    end
+    if (stateReg == 3'h3)
+      numTilesReg <= 16'({8'h0, spriteReg_cols} * {8'h0, spriteReg_rows});
+  end // always @(posedge)
+  assign _fifo_io_flush = stateReg == 3'h0;
+  Queue64_UInt fifo (
+    .clock        (clock),
+    .reset        (reset),
+    .io_enq_valid (io_ctrl_tileRom_valid),
+    .io_enq_bits  (io_ctrl_tileRom_dout),
+    .io_deq_ready (_fifo_io_deq_ready),
+    .io_deq_valid (_fifo_io_deq_valid),
+    .io_deq_bits  (_fifo_io_deq_bits),
+    .io_count     (_fifo_io_count),
+    .io_flush     (_fifo_io_flush)
+  );
+  assign _blitter_io_config_valid = stateReg == 3'h4;
+  SpriteBlitter blitter (
+    .clock                           (clock),
+    .reset                           (reset),
+    .io_enable                       (io_ctrl_enable),
+    .io_busy                         (_blitter_io_busy),
+    .io_config_ready                 (_blitter_io_config_ready),
+    .io_config_valid                 (_blitter_io_config_valid),
+    .io_config_bits_sprite_priority  (spriteReg_priority),
+    .io_config_bits_sprite_colorCode (spriteReg_colorCode),
+    .io_config_bits_sprite_hFlip     (spriteReg_hFlip),
+    .io_config_bits_sprite_vFlip     (spriteReg_vFlip),
+    .io_config_bits_sprite_pos_x     (spriteReg_pos_x),
+    .io_config_bits_sprite_pos_y     (spriteReg_pos_y),
+    .io_config_bits_sprite_cols      (spriteReg_cols),
+    .io_config_bits_sprite_rows      (spriteReg_rows),
+    .io_config_bits_sprite_zoom_x    (spriteReg_zoom_x),
+    .io_config_bits_sprite_zoom_y    (spriteReg_zoom_y),
+    .io_config_bits_hFlip            (io_ctrl_regs_hFlip),
+    .io_video_regs_size_x            (io_video_regs_size_x),
+    .io_video_regs_size_y            (io_video_regs_size_y),
+    .io_pixelData_ready              (_blitter_io_pixelData_ready),
+    .io_pixelData_valid              (_blitter_io_pixelData_valid),
+    .io_pixelData_bits_0             (_blitter_io_pixelData_bits_0),
+    .io_pixelData_bits_1             (_blitter_io_pixelData_bits_1),
+    .io_pixelData_bits_2             (_blitter_io_pixelData_bits_2),
+    .io_pixelData_bits_3             (_blitter_io_pixelData_bits_3),
+    .io_pixelData_bits_4             (_blitter_io_pixelData_bits_4),
+    .io_pixelData_bits_5             (_blitter_io_pixelData_bits_5),
+    .io_pixelData_bits_6             (_blitter_io_pixelData_bits_6),
+    .io_pixelData_bits_7             (_blitter_io_pixelData_bits_7),
+    .io_pixelData_bits_8             (_blitter_io_pixelData_bits_8),
+    .io_pixelData_bits_9             (_blitter_io_pixelData_bits_9),
+    .io_pixelData_bits_10            (_blitter_io_pixelData_bits_10),
+    .io_pixelData_bits_11            (_blitter_io_pixelData_bits_11),
+    .io_pixelData_bits_12            (_blitter_io_pixelData_bits_12),
+    .io_pixelData_bits_13            (_blitter_io_pixelData_bits_13),
+    .io_pixelData_bits_14            (_blitter_io_pixelData_bits_14),
+    .io_pixelData_bits_15            (_blitter_io_pixelData_bits_15),
+    .io_frameBuffer_wr               (io_frameBuffer_wr),
+    .io_frameBuffer_addr             (io_frameBuffer_addr),
+    .io_frameBuffer_din              (io_frameBuffer_din),
+    .io_frameBuffer_wait_n           (io_frameBuffer_wait_n)
+  );
+  SpriteDecoder decoder (
+    .clock                (clock),
+    .reset                (reset),
+    .io_format            (io_ctrl_format),
+    .io_tileRom_ready     (_fifo_io_deq_ready),
+    .io_tileRom_valid     (_fifo_io_deq_valid),
+    .io_tileRom_bits      (_fifo_io_deq_bits),
+    .io_pixelData_ready   (_blitter_io_pixelData_ready),
+    .io_pixelData_valid   (_blitter_io_pixelData_valid),
+    .io_pixelData_bits_0  (_blitter_io_pixelData_bits_0),
+    .io_pixelData_bits_1  (_blitter_io_pixelData_bits_1),
+    .io_pixelData_bits_2  (_blitter_io_pixelData_bits_2),
+    .io_pixelData_bits_3  (_blitter_io_pixelData_bits_3),
+    .io_pixelData_bits_4  (_blitter_io_pixelData_bits_4),
+    .io_pixelData_bits_5  (_blitter_io_pixelData_bits_5),
+    .io_pixelData_bits_6  (_blitter_io_pixelData_bits_6),
+    .io_pixelData_bits_7  (_blitter_io_pixelData_bits_7),
+    .io_pixelData_bits_8  (_blitter_io_pixelData_bits_8),
+    .io_pixelData_bits_9  (_blitter_io_pixelData_bits_9),
+    .io_pixelData_bits_10 (_blitter_io_pixelData_bits_10),
+    .io_pixelData_bits_11 (_blitter_io_pixelData_bits_11),
+    .io_pixelData_bits_12 (_blitter_io_pixelData_bits_12),
+    .io_pixelData_bits_13 (_blitter_io_pixelData_bits_13),
+    .io_pixelData_bits_14 (_blitter_io_pixelData_bits_14),
+    .io_pixelData_bits_15 (_blitter_io_pixelData_bits_15)
+  );
+  assign io_ctrl_vram_rd = stateReg == 3'h1;
+  assign io_ctrl_vram_addr = {io_ctrl_regs_bank, spriteCounter};
+  assign io_ctrl_tileRom_rd = tileRomRead;
+  assign io_ctrl_tileRom_addr = tileRomAddr[31:0];
+  assign io_ctrl_tileRom_burstLength = {2'h0, tileRomBurstLength};
+endmodule
+

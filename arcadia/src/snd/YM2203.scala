@@ -26,8 +26,8 @@ class YM2203(clockFreq: Double, sampleFreq: Double) extends Module {
     })
   })
 
-  class JT03_ extends BlackBox {
-    val io = IO(new Bundle {
+  class JT03_ extends ExtModule {
+    val io = FlatIO(new Bundle {
       val rst = Input(Bool())
       val clk = Input(Bool())
       val cen = Input(Bool())

@@ -33,15 +33,14 @@
 package arcadia
 
 import chisel3._
-import chiseltest._
-import chiseltest.experimental.UncheckedClockPoke._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
-class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+class UtilTest extends AnyFlatSpec with ChiselSim with Matchers {
   "rotateLeft" should "rotate the bits to the left" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(UInt(8.W))
         val b = Output(UInt(8.W))
@@ -54,7 +53,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   "rotateRight" should "rotate the bits to the right" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(UInt(8.W))
         val b = Output(UInt(8.W))
@@ -67,7 +66,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   "decode" should "split a bitvector value into a sequence of bitvectors" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(UInt(16.W))
         val b = Output(Vec(4, UInt(4.W)))
@@ -83,7 +82,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   "swapEndianness" should "reverse the byte ordering" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(UInt(32.W))
         val b = Output(UInt(32.W))
@@ -96,7 +95,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   "padWords" should "pad words packed into a bitvector" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(UInt(12.W))
         val b = Output(UInt(16.W))
@@ -109,7 +108,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   "maskBits" should "mask the least significant bits" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(UInt(8.W))
         val b = Output(UInt(8.W))
@@ -122,7 +121,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   "edge" should "detect edges" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(Bool())
         val b = Output(Bool())
@@ -141,7 +140,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   "rising" should "detect rising edges" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(Bool())
         val b = Output(Bool())
@@ -160,7 +159,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   "falling" should "detect falling edges" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(Bool())
         val b = Output(Bool())
@@ -179,7 +178,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   "hold" should "hold a signal" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(UInt(8.W))
         val b = Input(Bool())
@@ -202,7 +201,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   "latch" should "latch and clear a signal" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(Bool())
         val b = Input(Bool())
@@ -225,7 +224,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   "latchSync" should "latch and clear a signal" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(Bool())
         val b = Input(Bool())
@@ -248,7 +247,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   "latchData" should "latch data when the trigger is asserted" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(UInt(8.W))
         val b = Input(Bool())
@@ -274,7 +273,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   "pulseSync" should "trigger a pulse" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(Bool())
         val b = Output(Bool())
@@ -295,7 +294,7 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
   "toggle" should "toggle a bit" in {
-    test(new Module {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(Bool())
         val b = Output(Bool())
@@ -313,21 +312,27 @@ class UtilTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
     }
   }
 
-  "sync" should "generate a sync pulse for rising edges of the target clock" ignore  {
-    test(new Module {
+  // Note: this test was ignored _before_ the migration to Chisel 7.3.0.
+  // However, it cannot work in Chisel 7.3.0 due to the commented out lines in
+  // the stimulus body.  These are ChiselTest APIs and they don't have
+  // equivalent Chiselsim APIs.
+  //
+  // TODO: Figure out what to do with this test.
+  "sync" should "generate a sync pulse for rising edges of the target clock" ignore {
+    simulate(new Module {
       val io = IO(new Bundle {
         val a = Input(Clock())
         val b = Output(Bool())
       })
       io.b := Util.sync(io.a)
     }) { dut =>
-      dut.io.a.low()
+      // dut.io.a.low()
       dut.io.b.expect(false)
       dut.clock.step()
-      dut.io.a.high()
+      // dut.io.a.high()
       dut.io.b.expect(true)
       dut.clock.step()
-      dut.io.a.low()
+      // dut.io.a.low()
       dut.io.b.expect(false)
     }
   }

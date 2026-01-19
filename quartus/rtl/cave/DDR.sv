@@ -1,0 +1,65 @@
+module DDR(
+  input         clock,
+  input         reset,
+  input         io_mem_rd,
+  input         io_mem_wr,
+  input  [31:0] io_mem_addr,
+  input  [7:0]  io_mem_mask,
+  input  [63:0] io_mem_din,
+  output [63:0] io_mem_dout,
+  output        io_mem_wait_n,
+  output        io_mem_valid,
+  input  [7:0]  io_mem_burstLength,
+  output        io_mem_burstDone,
+  output        io_ddr_rd,
+  output        io_ddr_wr,
+  output [31:0] io_ddr_addr,
+  output [7:0]  io_ddr_mask,
+  output [63:0] io_ddr_din,
+  input  [63:0] io_ddr_dout,
+  input         io_ddr_wait_n,
+  input         io_ddr_valid,
+  output [7:0]  io_ddr_burstLength
+);
+
+  reg  [1:0] stateReg;
+  wire       _write_T = stateReg == 2'h0;
+  reg  [7:0] burstLength_r;
+  wire [7:0] burstLength = _write_T ? io_mem_burstLength : burstLength_r;
+  wire       read = _write_T & io_mem_rd;
+  wire       write = (_write_T | stateReg == 2'h2) & io_mem_wr;
+  wire       effectiveWrite = write & io_ddr_wait_n;
+  wire       burstCounterEnable = stateReg == 2'h1 & io_ddr_valid | effectiveWrite;
+  reg  [7:0] burstCounter;
+  wire       wrap_wrap = burstCounter == 8'(burstLength - 8'h1) | burstLength == 8'h0;
+  wire       burstCounterWrap = burstCounterEnable & wrap_wrap;
+  always @(posedge clock) begin
+    if (reset) begin
+      stateReg <= 2'h0;
+      burstCounter <= 8'h0;
+    end
+    else begin
+      if (burstCounterWrap)
+        stateReg <= 2'h0;
+      else if (read & io_ddr_wait_n)
+        stateReg <= 2'h1;
+      else if (effectiveWrite)
+        stateReg <= 2'h2;
+      if (burstCounterEnable)
+        burstCounter <= wrap_wrap ? 8'h0 : 8'(burstCounter + 8'h1);
+    end
+    if (_write_T)
+      burstLength_r <= io_mem_burstLength;
+  end // always @(posedge)
+  assign io_mem_dout = io_ddr_dout;
+  assign io_mem_wait_n = io_ddr_wait_n;
+  assign io_mem_valid = io_ddr_valid;
+  assign io_mem_burstDone = burstCounterWrap;
+  assign io_ddr_rd = read;
+  assign io_ddr_wr = write;
+  assign io_ddr_addr = io_mem_addr;
+  assign io_ddr_mask = io_mem_mask;
+  assign io_ddr_din = io_mem_din;
+  assign io_ddr_burstLength = burstLength;
+endmodule
+

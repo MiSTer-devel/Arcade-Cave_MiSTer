@@ -1,0 +1,798 @@
+module YMZ280B(
+  input         clock,
+  input         reset,
+  input         io_cpu_rd,
+  input         io_cpu_wr,
+  input         io_cpu_addr,
+  input  [7:0]  io_cpu_din,
+  output [7:0]  io_cpu_dout,
+  output        io_rom_rd,
+  output [23:0] io_rom_addr,
+  input  [7:0]  io_rom_dout,
+  input         io_rom_wait_n,
+  input         io_rom_valid,
+  output        io_audio_valid,
+  output [15:0] io_audio_bits_left,
+  output        io_irq
+);
+
+  wire        _channelCtrl_io_regs_0_flags_keyOn;
+  wire        _channelCtrl_io_regs_0_flags_loop;
+  wire [3:0]  _channelCtrl_io_regs_0_pan;
+  wire [23:0] _channelCtrl_io_regs_0_startAddr;
+  wire [23:0] _channelCtrl_io_regs_0_loopStartAddr;
+  wire [23:0] _channelCtrl_io_regs_0_loopEndAddr;
+  wire [23:0] _channelCtrl_io_regs_0_endAddr;
+  wire        _channelCtrl_io_regs_1_flags_keyOn;
+  wire        _channelCtrl_io_regs_1_flags_loop;
+  wire [3:0]  _channelCtrl_io_regs_1_pan;
+  wire [23:0] _channelCtrl_io_regs_1_startAddr;
+  wire [23:0] _channelCtrl_io_regs_1_loopStartAddr;
+  wire [23:0] _channelCtrl_io_regs_1_loopEndAddr;
+  wire [23:0] _channelCtrl_io_regs_1_endAddr;
+  wire        _channelCtrl_io_regs_2_flags_keyOn;
+  wire        _channelCtrl_io_regs_2_flags_loop;
+  wire [3:0]  _channelCtrl_io_regs_2_pan;
+  wire [23:0] _channelCtrl_io_regs_2_startAddr;
+  wire [23:0] _channelCtrl_io_regs_2_loopStartAddr;
+  wire [23:0] _channelCtrl_io_regs_2_loopEndAddr;
+  wire [23:0] _channelCtrl_io_regs_2_endAddr;
+  wire        _channelCtrl_io_regs_3_flags_keyOn;
+  wire        _channelCtrl_io_regs_3_flags_loop;
+  wire [3:0]  _channelCtrl_io_regs_3_pan;
+  wire [23:0] _channelCtrl_io_regs_3_startAddr;
+  wire [23:0] _channelCtrl_io_regs_3_loopStartAddr;
+  wire [23:0] _channelCtrl_io_regs_3_loopEndAddr;
+  wire [23:0] _channelCtrl_io_regs_3_endAddr;
+  wire        _channelCtrl_io_regs_4_flags_keyOn;
+  wire        _channelCtrl_io_regs_4_flags_loop;
+  wire [3:0]  _channelCtrl_io_regs_4_pan;
+  wire [23:0] _channelCtrl_io_regs_4_startAddr;
+  wire [23:0] _channelCtrl_io_regs_4_loopStartAddr;
+  wire [23:0] _channelCtrl_io_regs_4_loopEndAddr;
+  wire [23:0] _channelCtrl_io_regs_4_endAddr;
+  wire        _channelCtrl_io_regs_5_flags_keyOn;
+  wire        _channelCtrl_io_regs_5_flags_loop;
+  wire [3:0]  _channelCtrl_io_regs_5_pan;
+  wire [23:0] _channelCtrl_io_regs_5_startAddr;
+  wire [23:0] _channelCtrl_io_regs_5_loopStartAddr;
+  wire [23:0] _channelCtrl_io_regs_5_loopEndAddr;
+  wire [23:0] _channelCtrl_io_regs_5_endAddr;
+  wire        _channelCtrl_io_regs_6_flags_keyOn;
+  wire        _channelCtrl_io_regs_6_flags_loop;
+  wire [3:0]  _channelCtrl_io_regs_6_pan;
+  wire [23:0] _channelCtrl_io_regs_6_startAddr;
+  wire [23:0] _channelCtrl_io_regs_6_loopStartAddr;
+  wire [23:0] _channelCtrl_io_regs_6_loopEndAddr;
+  wire [23:0] _channelCtrl_io_regs_6_endAddr;
+  wire        _channelCtrl_io_regs_7_flags_keyOn;
+  wire        _channelCtrl_io_regs_7_flags_loop;
+  wire [3:0]  _channelCtrl_io_regs_7_pan;
+  wire [23:0] _channelCtrl_io_regs_7_startAddr;
+  wire [23:0] _channelCtrl_io_regs_7_loopStartAddr;
+  wire [23:0] _channelCtrl_io_regs_7_loopEndAddr;
+  wire [23:0] _channelCtrl_io_regs_7_endAddr;
+  wire        _channelCtrl_io_enable;
+  wire        _channelCtrl_io_done;
+  wire [2:0]  _channelCtrl_io_index;
+  reg  [7:0]  addrReg;
+  reg  [7:0]  dataReg;
+  reg  [7:0]  statusReg;
+  reg  [7:0]  registerFile_0;
+  reg  [7:0]  registerFile_1;
+  reg  [7:0]  registerFile_2;
+  reg  [7:0]  registerFile_3;
+  reg  [7:0]  registerFile_4;
+  reg  [7:0]  registerFile_5;
+  reg  [7:0]  registerFile_6;
+  reg  [7:0]  registerFile_7;
+  reg  [7:0]  registerFile_8;
+  reg  [7:0]  registerFile_9;
+  reg  [7:0]  registerFile_10;
+  reg  [7:0]  registerFile_11;
+  reg  [7:0]  registerFile_12;
+  reg  [7:0]  registerFile_13;
+  reg  [7:0]  registerFile_14;
+  reg  [7:0]  registerFile_15;
+  reg  [7:0]  registerFile_16;
+  reg  [7:0]  registerFile_17;
+  reg  [7:0]  registerFile_18;
+  reg  [7:0]  registerFile_19;
+  reg  [7:0]  registerFile_20;
+  reg  [7:0]  registerFile_21;
+  reg  [7:0]  registerFile_22;
+  reg  [7:0]  registerFile_23;
+  reg  [7:0]  registerFile_24;
+  reg  [7:0]  registerFile_25;
+  reg  [7:0]  registerFile_26;
+  reg  [7:0]  registerFile_27;
+  reg  [7:0]  registerFile_28;
+  reg  [7:0]  registerFile_29;
+  reg  [7:0]  registerFile_30;
+  reg  [7:0]  registerFile_31;
+  reg  [7:0]  registerFile_32;
+  reg  [7:0]  registerFile_33;
+  reg  [7:0]  registerFile_34;
+  reg  [7:0]  registerFile_35;
+  reg  [7:0]  registerFile_36;
+  reg  [7:0]  registerFile_37;
+  reg  [7:0]  registerFile_38;
+  reg  [7:0]  registerFile_39;
+  reg  [7:0]  registerFile_40;
+  reg  [7:0]  registerFile_41;
+  reg  [7:0]  registerFile_42;
+  reg  [7:0]  registerFile_43;
+  reg  [7:0]  registerFile_44;
+  reg  [7:0]  registerFile_45;
+  reg  [7:0]  registerFile_46;
+  reg  [7:0]  registerFile_47;
+  reg  [7:0]  registerFile_48;
+  reg  [7:0]  registerFile_49;
+  reg  [7:0]  registerFile_50;
+  reg  [7:0]  registerFile_51;
+  reg  [7:0]  registerFile_52;
+  reg  [7:0]  registerFile_53;
+  reg  [7:0]  registerFile_54;
+  reg  [7:0]  registerFile_55;
+  reg  [7:0]  registerFile_56;
+  reg  [7:0]  registerFile_57;
+  reg  [7:0]  registerFile_58;
+  reg  [7:0]  registerFile_59;
+  reg  [7:0]  registerFile_60;
+  reg  [7:0]  registerFile_61;
+  reg  [7:0]  registerFile_62;
+  reg  [7:0]  registerFile_63;
+  reg  [7:0]  registerFile_64;
+  reg  [7:0]  registerFile_65;
+  reg  [7:0]  registerFile_66;
+  reg  [7:0]  registerFile_67;
+  reg  [7:0]  registerFile_68;
+  reg  [7:0]  registerFile_69;
+  reg  [7:0]  registerFile_70;
+  reg  [7:0]  registerFile_71;
+  reg  [7:0]  registerFile_72;
+  reg  [7:0]  registerFile_73;
+  reg  [7:0]  registerFile_74;
+  reg  [7:0]  registerFile_75;
+  reg  [7:0]  registerFile_76;
+  reg  [7:0]  registerFile_77;
+  reg  [7:0]  registerFile_78;
+  reg  [7:0]  registerFile_79;
+  reg  [7:0]  registerFile_80;
+  reg  [7:0]  registerFile_81;
+  reg  [7:0]  registerFile_82;
+  reg  [7:0]  registerFile_83;
+  reg  [7:0]  registerFile_84;
+  reg  [7:0]  registerFile_85;
+  reg  [7:0]  registerFile_86;
+  reg  [7:0]  registerFile_87;
+  reg  [7:0]  registerFile_88;
+  reg  [7:0]  registerFile_89;
+  reg  [7:0]  registerFile_90;
+  reg  [7:0]  registerFile_91;
+  reg  [7:0]  registerFile_92;
+  reg  [7:0]  registerFile_93;
+  reg  [7:0]  registerFile_94;
+  reg  [7:0]  registerFile_95;
+  reg  [7:0]  registerFile_96;
+  reg  [7:0]  registerFile_97;
+  reg  [7:0]  registerFile_98;
+  reg  [7:0]  registerFile_99;
+  reg  [7:0]  registerFile_100;
+  reg  [7:0]  registerFile_101;
+  reg  [7:0]  registerFile_102;
+  reg  [7:0]  registerFile_103;
+  reg  [7:0]  registerFile_104;
+  reg  [7:0]  registerFile_105;
+  reg  [7:0]  registerFile_106;
+  reg  [7:0]  registerFile_107;
+  reg  [7:0]  registerFile_108;
+  reg  [7:0]  registerFile_109;
+  reg  [7:0]  registerFile_110;
+  reg  [7:0]  registerFile_111;
+  reg  [7:0]  registerFile_112;
+  reg  [7:0]  registerFile_113;
+  reg  [7:0]  registerFile_114;
+  reg  [7:0]  registerFile_115;
+  reg  [7:0]  registerFile_116;
+  reg  [7:0]  registerFile_117;
+  reg  [7:0]  registerFile_118;
+  reg  [7:0]  registerFile_119;
+  reg  [7:0]  registerFile_120;
+  reg  [7:0]  registerFile_121;
+  reg  [7:0]  registerFile_122;
+  reg  [7:0]  registerFile_123;
+  reg  [7:0]  registerFile_124;
+  reg  [7:0]  registerFile_125;
+  reg  [7:0]  registerFile_126;
+  reg  [7:0]  registerFile_127;
+  reg  [7:0]  registerFile_254;
+  reg  [7:0]  registerFile_255;
+  wire        writeData = io_cpu_wr & io_cpu_addr;
+  wire        readStatus = io_cpu_rd & io_cpu_addr;
+  always @(posedge clock) begin
+    if (reset) begin
+      addrReg <= 8'h0;
+      dataReg <= 8'h0;
+      statusReg <= 8'h0;
+      registerFile_0 <= 8'h0;
+      registerFile_1 <= 8'h0;
+      registerFile_2 <= 8'h0;
+      registerFile_3 <= 8'h0;
+      registerFile_4 <= 8'h0;
+      registerFile_5 <= 8'h0;
+      registerFile_6 <= 8'h0;
+      registerFile_7 <= 8'h0;
+      registerFile_8 <= 8'h0;
+      registerFile_9 <= 8'h0;
+      registerFile_10 <= 8'h0;
+      registerFile_11 <= 8'h0;
+      registerFile_12 <= 8'h0;
+      registerFile_13 <= 8'h0;
+      registerFile_14 <= 8'h0;
+      registerFile_15 <= 8'h0;
+      registerFile_16 <= 8'h0;
+      registerFile_17 <= 8'h0;
+      registerFile_18 <= 8'h0;
+      registerFile_19 <= 8'h0;
+      registerFile_20 <= 8'h0;
+      registerFile_21 <= 8'h0;
+      registerFile_22 <= 8'h0;
+      registerFile_23 <= 8'h0;
+      registerFile_24 <= 8'h0;
+      registerFile_25 <= 8'h0;
+      registerFile_26 <= 8'h0;
+      registerFile_27 <= 8'h0;
+      registerFile_28 <= 8'h0;
+      registerFile_29 <= 8'h0;
+      registerFile_30 <= 8'h0;
+      registerFile_31 <= 8'h0;
+      registerFile_32 <= 8'h0;
+      registerFile_33 <= 8'h0;
+      registerFile_34 <= 8'h0;
+      registerFile_35 <= 8'h0;
+      registerFile_36 <= 8'h0;
+      registerFile_37 <= 8'h0;
+      registerFile_38 <= 8'h0;
+      registerFile_39 <= 8'h0;
+      registerFile_40 <= 8'h0;
+      registerFile_41 <= 8'h0;
+      registerFile_42 <= 8'h0;
+      registerFile_43 <= 8'h0;
+      registerFile_44 <= 8'h0;
+      registerFile_45 <= 8'h0;
+      registerFile_46 <= 8'h0;
+      registerFile_47 <= 8'h0;
+      registerFile_48 <= 8'h0;
+      registerFile_49 <= 8'h0;
+      registerFile_50 <= 8'h0;
+      registerFile_51 <= 8'h0;
+      registerFile_52 <= 8'h0;
+      registerFile_53 <= 8'h0;
+      registerFile_54 <= 8'h0;
+      registerFile_55 <= 8'h0;
+      registerFile_56 <= 8'h0;
+      registerFile_57 <= 8'h0;
+      registerFile_58 <= 8'h0;
+      registerFile_59 <= 8'h0;
+      registerFile_60 <= 8'h0;
+      registerFile_61 <= 8'h0;
+      registerFile_62 <= 8'h0;
+      registerFile_63 <= 8'h0;
+      registerFile_64 <= 8'h0;
+      registerFile_65 <= 8'h0;
+      registerFile_66 <= 8'h0;
+      registerFile_67 <= 8'h0;
+      registerFile_68 <= 8'h0;
+      registerFile_69 <= 8'h0;
+      registerFile_70 <= 8'h0;
+      registerFile_71 <= 8'h0;
+      registerFile_72 <= 8'h0;
+      registerFile_73 <= 8'h0;
+      registerFile_74 <= 8'h0;
+      registerFile_75 <= 8'h0;
+      registerFile_76 <= 8'h0;
+      registerFile_77 <= 8'h0;
+      registerFile_78 <= 8'h0;
+      registerFile_79 <= 8'h0;
+      registerFile_80 <= 8'h0;
+      registerFile_81 <= 8'h0;
+      registerFile_82 <= 8'h0;
+      registerFile_83 <= 8'h0;
+      registerFile_84 <= 8'h0;
+      registerFile_85 <= 8'h0;
+      registerFile_86 <= 8'h0;
+      registerFile_87 <= 8'h0;
+      registerFile_88 <= 8'h0;
+      registerFile_89 <= 8'h0;
+      registerFile_90 <= 8'h0;
+      registerFile_91 <= 8'h0;
+      registerFile_92 <= 8'h0;
+      registerFile_93 <= 8'h0;
+      registerFile_94 <= 8'h0;
+      registerFile_95 <= 8'h0;
+      registerFile_96 <= 8'h0;
+      registerFile_97 <= 8'h0;
+      registerFile_98 <= 8'h0;
+      registerFile_99 <= 8'h0;
+      registerFile_100 <= 8'h0;
+      registerFile_101 <= 8'h0;
+      registerFile_102 <= 8'h0;
+      registerFile_103 <= 8'h0;
+      registerFile_104 <= 8'h0;
+      registerFile_105 <= 8'h0;
+      registerFile_106 <= 8'h0;
+      registerFile_107 <= 8'h0;
+      registerFile_108 <= 8'h0;
+      registerFile_109 <= 8'h0;
+      registerFile_110 <= 8'h0;
+      registerFile_111 <= 8'h0;
+      registerFile_112 <= 8'h0;
+      registerFile_113 <= 8'h0;
+      registerFile_114 <= 8'h0;
+      registerFile_115 <= 8'h0;
+      registerFile_116 <= 8'h0;
+      registerFile_117 <= 8'h0;
+      registerFile_118 <= 8'h0;
+      registerFile_119 <= 8'h0;
+      registerFile_120 <= 8'h0;
+      registerFile_121 <= 8'h0;
+      registerFile_122 <= 8'h0;
+      registerFile_123 <= 8'h0;
+      registerFile_124 <= 8'h0;
+      registerFile_125 <= 8'h0;
+      registerFile_126 <= 8'h0;
+      registerFile_127 <= 8'h0;
+      registerFile_254 <= 8'h0;
+      registerFile_255 <= 8'h0;
+    end
+    else begin
+      if (io_cpu_wr & ~io_cpu_addr)
+        addrReg <= io_cpu_din;
+      if (readStatus)
+        dataReg <= statusReg;
+      statusReg <=
+        readStatus
+          ? 8'h0
+          : {8{_channelCtrl_io_done}} & 8'h1 << _channelCtrl_io_index | statusReg;
+      if (writeData & addrReg == 8'h0)
+        registerFile_0 <= io_cpu_din;
+      if (writeData & addrReg == 8'h1)
+        registerFile_1 <= io_cpu_din;
+      if (writeData & addrReg == 8'h2)
+        registerFile_2 <= io_cpu_din;
+      if (writeData & addrReg == 8'h3)
+        registerFile_3 <= io_cpu_din;
+      if (writeData & addrReg == 8'h4)
+        registerFile_4 <= io_cpu_din;
+      if (writeData & addrReg == 8'h5)
+        registerFile_5 <= io_cpu_din;
+      if (writeData & addrReg == 8'h6)
+        registerFile_6 <= io_cpu_din;
+      if (writeData & addrReg == 8'h7)
+        registerFile_7 <= io_cpu_din;
+      if (writeData & addrReg == 8'h8)
+        registerFile_8 <= io_cpu_din;
+      if (writeData & addrReg == 8'h9)
+        registerFile_9 <= io_cpu_din;
+      if (writeData & addrReg == 8'hA)
+        registerFile_10 <= io_cpu_din;
+      if (writeData & addrReg == 8'hB)
+        registerFile_11 <= io_cpu_din;
+      if (writeData & addrReg == 8'hC)
+        registerFile_12 <= io_cpu_din;
+      if (writeData & addrReg == 8'hD)
+        registerFile_13 <= io_cpu_din;
+      if (writeData & addrReg == 8'hE)
+        registerFile_14 <= io_cpu_din;
+      if (writeData & addrReg == 8'hF)
+        registerFile_15 <= io_cpu_din;
+      if (writeData & addrReg == 8'h10)
+        registerFile_16 <= io_cpu_din;
+      if (writeData & addrReg == 8'h11)
+        registerFile_17 <= io_cpu_din;
+      if (writeData & addrReg == 8'h12)
+        registerFile_18 <= io_cpu_din;
+      if (writeData & addrReg == 8'h13)
+        registerFile_19 <= io_cpu_din;
+      if (writeData & addrReg == 8'h14)
+        registerFile_20 <= io_cpu_din;
+      if (writeData & addrReg == 8'h15)
+        registerFile_21 <= io_cpu_din;
+      if (writeData & addrReg == 8'h16)
+        registerFile_22 <= io_cpu_din;
+      if (writeData & addrReg == 8'h17)
+        registerFile_23 <= io_cpu_din;
+      if (writeData & addrReg == 8'h18)
+        registerFile_24 <= io_cpu_din;
+      if (writeData & addrReg == 8'h19)
+        registerFile_25 <= io_cpu_din;
+      if (writeData & addrReg == 8'h1A)
+        registerFile_26 <= io_cpu_din;
+      if (writeData & addrReg == 8'h1B)
+        registerFile_27 <= io_cpu_din;
+      if (writeData & addrReg == 8'h1C)
+        registerFile_28 <= io_cpu_din;
+      if (writeData & addrReg == 8'h1D)
+        registerFile_29 <= io_cpu_din;
+      if (writeData & addrReg == 8'h1E)
+        registerFile_30 <= io_cpu_din;
+      if (writeData & addrReg == 8'h1F)
+        registerFile_31 <= io_cpu_din;
+      if (writeData & addrReg == 8'h20)
+        registerFile_32 <= io_cpu_din;
+      if (writeData & addrReg == 8'h21)
+        registerFile_33 <= io_cpu_din;
+      if (writeData & addrReg == 8'h22)
+        registerFile_34 <= io_cpu_din;
+      if (writeData & addrReg == 8'h23)
+        registerFile_35 <= io_cpu_din;
+      if (writeData & addrReg == 8'h24)
+        registerFile_36 <= io_cpu_din;
+      if (writeData & addrReg == 8'h25)
+        registerFile_37 <= io_cpu_din;
+      if (writeData & addrReg == 8'h26)
+        registerFile_38 <= io_cpu_din;
+      if (writeData & addrReg == 8'h27)
+        registerFile_39 <= io_cpu_din;
+      if (writeData & addrReg == 8'h28)
+        registerFile_40 <= io_cpu_din;
+      if (writeData & addrReg == 8'h29)
+        registerFile_41 <= io_cpu_din;
+      if (writeData & addrReg == 8'h2A)
+        registerFile_42 <= io_cpu_din;
+      if (writeData & addrReg == 8'h2B)
+        registerFile_43 <= io_cpu_din;
+      if (writeData & addrReg == 8'h2C)
+        registerFile_44 <= io_cpu_din;
+      if (writeData & addrReg == 8'h2D)
+        registerFile_45 <= io_cpu_din;
+      if (writeData & addrReg == 8'h2E)
+        registerFile_46 <= io_cpu_din;
+      if (writeData & addrReg == 8'h2F)
+        registerFile_47 <= io_cpu_din;
+      if (writeData & addrReg == 8'h30)
+        registerFile_48 <= io_cpu_din;
+      if (writeData & addrReg == 8'h31)
+        registerFile_49 <= io_cpu_din;
+      if (writeData & addrReg == 8'h32)
+        registerFile_50 <= io_cpu_din;
+      if (writeData & addrReg == 8'h33)
+        registerFile_51 <= io_cpu_din;
+      if (writeData & addrReg == 8'h34)
+        registerFile_52 <= io_cpu_din;
+      if (writeData & addrReg == 8'h35)
+        registerFile_53 <= io_cpu_din;
+      if (writeData & addrReg == 8'h36)
+        registerFile_54 <= io_cpu_din;
+      if (writeData & addrReg == 8'h37)
+        registerFile_55 <= io_cpu_din;
+      if (writeData & addrReg == 8'h38)
+        registerFile_56 <= io_cpu_din;
+      if (writeData & addrReg == 8'h39)
+        registerFile_57 <= io_cpu_din;
+      if (writeData & addrReg == 8'h3A)
+        registerFile_58 <= io_cpu_din;
+      if (writeData & addrReg == 8'h3B)
+        registerFile_59 <= io_cpu_din;
+      if (writeData & addrReg == 8'h3C)
+        registerFile_60 <= io_cpu_din;
+      if (writeData & addrReg == 8'h3D)
+        registerFile_61 <= io_cpu_din;
+      if (writeData & addrReg == 8'h3E)
+        registerFile_62 <= io_cpu_din;
+      if (writeData & addrReg == 8'h3F)
+        registerFile_63 <= io_cpu_din;
+      if (writeData & addrReg == 8'h40)
+        registerFile_64 <= io_cpu_din;
+      if (writeData & addrReg == 8'h41)
+        registerFile_65 <= io_cpu_din;
+      if (writeData & addrReg == 8'h42)
+        registerFile_66 <= io_cpu_din;
+      if (writeData & addrReg == 8'h43)
+        registerFile_67 <= io_cpu_din;
+      if (writeData & addrReg == 8'h44)
+        registerFile_68 <= io_cpu_din;
+      if (writeData & addrReg == 8'h45)
+        registerFile_69 <= io_cpu_din;
+      if (writeData & addrReg == 8'h46)
+        registerFile_70 <= io_cpu_din;
+      if (writeData & addrReg == 8'h47)
+        registerFile_71 <= io_cpu_din;
+      if (writeData & addrReg == 8'h48)
+        registerFile_72 <= io_cpu_din;
+      if (writeData & addrReg == 8'h49)
+        registerFile_73 <= io_cpu_din;
+      if (writeData & addrReg == 8'h4A)
+        registerFile_74 <= io_cpu_din;
+      if (writeData & addrReg == 8'h4B)
+        registerFile_75 <= io_cpu_din;
+      if (writeData & addrReg == 8'h4C)
+        registerFile_76 <= io_cpu_din;
+      if (writeData & addrReg == 8'h4D)
+        registerFile_77 <= io_cpu_din;
+      if (writeData & addrReg == 8'h4E)
+        registerFile_78 <= io_cpu_din;
+      if (writeData & addrReg == 8'h4F)
+        registerFile_79 <= io_cpu_din;
+      if (writeData & addrReg == 8'h50)
+        registerFile_80 <= io_cpu_din;
+      if (writeData & addrReg == 8'h51)
+        registerFile_81 <= io_cpu_din;
+      if (writeData & addrReg == 8'h52)
+        registerFile_82 <= io_cpu_din;
+      if (writeData & addrReg == 8'h53)
+        registerFile_83 <= io_cpu_din;
+      if (writeData & addrReg == 8'h54)
+        registerFile_84 <= io_cpu_din;
+      if (writeData & addrReg == 8'h55)
+        registerFile_85 <= io_cpu_din;
+      if (writeData & addrReg == 8'h56)
+        registerFile_86 <= io_cpu_din;
+      if (writeData & addrReg == 8'h57)
+        registerFile_87 <= io_cpu_din;
+      if (writeData & addrReg == 8'h58)
+        registerFile_88 <= io_cpu_din;
+      if (writeData & addrReg == 8'h59)
+        registerFile_89 <= io_cpu_din;
+      if (writeData & addrReg == 8'h5A)
+        registerFile_90 <= io_cpu_din;
+      if (writeData & addrReg == 8'h5B)
+        registerFile_91 <= io_cpu_din;
+      if (writeData & addrReg == 8'h5C)
+        registerFile_92 <= io_cpu_din;
+      if (writeData & addrReg == 8'h5D)
+        registerFile_93 <= io_cpu_din;
+      if (writeData & addrReg == 8'h5E)
+        registerFile_94 <= io_cpu_din;
+      if (writeData & addrReg == 8'h5F)
+        registerFile_95 <= io_cpu_din;
+      if (writeData & addrReg == 8'h60)
+        registerFile_96 <= io_cpu_din;
+      if (writeData & addrReg == 8'h61)
+        registerFile_97 <= io_cpu_din;
+      if (writeData & addrReg == 8'h62)
+        registerFile_98 <= io_cpu_din;
+      if (writeData & addrReg == 8'h63)
+        registerFile_99 <= io_cpu_din;
+      if (writeData & addrReg == 8'h64)
+        registerFile_100 <= io_cpu_din;
+      if (writeData & addrReg == 8'h65)
+        registerFile_101 <= io_cpu_din;
+      if (writeData & addrReg == 8'h66)
+        registerFile_102 <= io_cpu_din;
+      if (writeData & addrReg == 8'h67)
+        registerFile_103 <= io_cpu_din;
+      if (writeData & addrReg == 8'h68)
+        registerFile_104 <= io_cpu_din;
+      if (writeData & addrReg == 8'h69)
+        registerFile_105 <= io_cpu_din;
+      if (writeData & addrReg == 8'h6A)
+        registerFile_106 <= io_cpu_din;
+      if (writeData & addrReg == 8'h6B)
+        registerFile_107 <= io_cpu_din;
+      if (writeData & addrReg == 8'h6C)
+        registerFile_108 <= io_cpu_din;
+      if (writeData & addrReg == 8'h6D)
+        registerFile_109 <= io_cpu_din;
+      if (writeData & addrReg == 8'h6E)
+        registerFile_110 <= io_cpu_din;
+      if (writeData & addrReg == 8'h6F)
+        registerFile_111 <= io_cpu_din;
+      if (writeData & addrReg == 8'h70)
+        registerFile_112 <= io_cpu_din;
+      if (writeData & addrReg == 8'h71)
+        registerFile_113 <= io_cpu_din;
+      if (writeData & addrReg == 8'h72)
+        registerFile_114 <= io_cpu_din;
+      if (writeData & addrReg == 8'h73)
+        registerFile_115 <= io_cpu_din;
+      if (writeData & addrReg == 8'h74)
+        registerFile_116 <= io_cpu_din;
+      if (writeData & addrReg == 8'h75)
+        registerFile_117 <= io_cpu_din;
+      if (writeData & addrReg == 8'h76)
+        registerFile_118 <= io_cpu_din;
+      if (writeData & addrReg == 8'h77)
+        registerFile_119 <= io_cpu_din;
+      if (writeData & addrReg == 8'h78)
+        registerFile_120 <= io_cpu_din;
+      if (writeData & addrReg == 8'h79)
+        registerFile_121 <= io_cpu_din;
+      if (writeData & addrReg == 8'h7A)
+        registerFile_122 <= io_cpu_din;
+      if (writeData & addrReg == 8'h7B)
+        registerFile_123 <= io_cpu_din;
+      if (writeData & addrReg == 8'h7C)
+        registerFile_124 <= io_cpu_din;
+      if (writeData & addrReg == 8'h7D)
+        registerFile_125 <= io_cpu_din;
+      if (writeData & addrReg == 8'h7E)
+        registerFile_126 <= io_cpu_din;
+      if (writeData & addrReg == 8'h7F)
+        registerFile_127 <= io_cpu_din;
+      if (writeData & addrReg == 8'hFE)
+        registerFile_254 <= io_cpu_din;
+      if (writeData & (&addrReg))
+        registerFile_255 <= io_cpu_din;
+    end
+  end // always @(posedge)
+  assign _channelCtrl_io_regs_0_flags_keyOn = registerFile_1[7];
+  assign _channelCtrl_io_regs_0_flags_loop = registerFile_1[4];
+  assign _channelCtrl_io_regs_0_pan = registerFile_3[3:0];
+  assign _channelCtrl_io_regs_0_startAddr =
+    {registerFile_32, registerFile_64, registerFile_96};
+  assign _channelCtrl_io_regs_0_loopStartAddr =
+    {registerFile_33, registerFile_65, registerFile_97};
+  assign _channelCtrl_io_regs_0_loopEndAddr =
+    {registerFile_34, registerFile_66, registerFile_98};
+  assign _channelCtrl_io_regs_0_endAddr =
+    {registerFile_35, registerFile_67, registerFile_99};
+  assign _channelCtrl_io_regs_1_flags_keyOn = registerFile_5[7];
+  assign _channelCtrl_io_regs_1_flags_loop = registerFile_5[4];
+  assign _channelCtrl_io_regs_1_pan = registerFile_7[3:0];
+  assign _channelCtrl_io_regs_1_startAddr =
+    {registerFile_36, registerFile_68, registerFile_100};
+  assign _channelCtrl_io_regs_1_loopStartAddr =
+    {registerFile_37, registerFile_69, registerFile_101};
+  assign _channelCtrl_io_regs_1_loopEndAddr =
+    {registerFile_38, registerFile_70, registerFile_102};
+  assign _channelCtrl_io_regs_1_endAddr =
+    {registerFile_39, registerFile_71, registerFile_103};
+  assign _channelCtrl_io_regs_2_flags_keyOn = registerFile_9[7];
+  assign _channelCtrl_io_regs_2_flags_loop = registerFile_9[4];
+  assign _channelCtrl_io_regs_2_pan = registerFile_11[3:0];
+  assign _channelCtrl_io_regs_2_startAddr =
+    {registerFile_40, registerFile_72, registerFile_104};
+  assign _channelCtrl_io_regs_2_loopStartAddr =
+    {registerFile_41, registerFile_73, registerFile_105};
+  assign _channelCtrl_io_regs_2_loopEndAddr =
+    {registerFile_42, registerFile_74, registerFile_106};
+  assign _channelCtrl_io_regs_2_endAddr =
+    {registerFile_43, registerFile_75, registerFile_107};
+  assign _channelCtrl_io_regs_3_flags_keyOn = registerFile_13[7];
+  assign _channelCtrl_io_regs_3_flags_loop = registerFile_13[4];
+  assign _channelCtrl_io_regs_3_pan = registerFile_15[3:0];
+  assign _channelCtrl_io_regs_3_startAddr =
+    {registerFile_44, registerFile_76, registerFile_108};
+  assign _channelCtrl_io_regs_3_loopStartAddr =
+    {registerFile_45, registerFile_77, registerFile_109};
+  assign _channelCtrl_io_regs_3_loopEndAddr =
+    {registerFile_46, registerFile_78, registerFile_110};
+  assign _channelCtrl_io_regs_3_endAddr =
+    {registerFile_47, registerFile_79, registerFile_111};
+  assign _channelCtrl_io_regs_4_flags_keyOn = registerFile_17[7];
+  assign _channelCtrl_io_regs_4_flags_loop = registerFile_17[4];
+  assign _channelCtrl_io_regs_4_pan = registerFile_19[3:0];
+  assign _channelCtrl_io_regs_4_startAddr =
+    {registerFile_48, registerFile_80, registerFile_112};
+  assign _channelCtrl_io_regs_4_loopStartAddr =
+    {registerFile_49, registerFile_81, registerFile_113};
+  assign _channelCtrl_io_regs_4_loopEndAddr =
+    {registerFile_50, registerFile_82, registerFile_114};
+  assign _channelCtrl_io_regs_4_endAddr =
+    {registerFile_51, registerFile_83, registerFile_115};
+  assign _channelCtrl_io_regs_5_flags_keyOn = registerFile_21[7];
+  assign _channelCtrl_io_regs_5_flags_loop = registerFile_21[4];
+  assign _channelCtrl_io_regs_5_pan = registerFile_23[3:0];
+  assign _channelCtrl_io_regs_5_startAddr =
+    {registerFile_52, registerFile_84, registerFile_116};
+  assign _channelCtrl_io_regs_5_loopStartAddr =
+    {registerFile_53, registerFile_85, registerFile_117};
+  assign _channelCtrl_io_regs_5_loopEndAddr =
+    {registerFile_54, registerFile_86, registerFile_118};
+  assign _channelCtrl_io_regs_5_endAddr =
+    {registerFile_55, registerFile_87, registerFile_119};
+  assign _channelCtrl_io_regs_6_flags_keyOn = registerFile_25[7];
+  assign _channelCtrl_io_regs_6_flags_loop = registerFile_25[4];
+  assign _channelCtrl_io_regs_6_pan = registerFile_27[3:0];
+  assign _channelCtrl_io_regs_6_startAddr =
+    {registerFile_56, registerFile_88, registerFile_120};
+  assign _channelCtrl_io_regs_6_loopStartAddr =
+    {registerFile_57, registerFile_89, registerFile_121};
+  assign _channelCtrl_io_regs_6_loopEndAddr =
+    {registerFile_58, registerFile_90, registerFile_122};
+  assign _channelCtrl_io_regs_6_endAddr =
+    {registerFile_59, registerFile_91, registerFile_123};
+  assign _channelCtrl_io_regs_7_flags_keyOn = registerFile_29[7];
+  assign _channelCtrl_io_regs_7_flags_loop = registerFile_29[4];
+  assign _channelCtrl_io_regs_7_pan = registerFile_31[3:0];
+  assign _channelCtrl_io_regs_7_startAddr =
+    {registerFile_60, registerFile_92, registerFile_124};
+  assign _channelCtrl_io_regs_7_loopStartAddr =
+    {registerFile_61, registerFile_93, registerFile_125};
+  assign _channelCtrl_io_regs_7_loopEndAddr =
+    {registerFile_62, registerFile_94, registerFile_126};
+  assign _channelCtrl_io_regs_7_endAddr =
+    {registerFile_63, registerFile_95, registerFile_127};
+  assign _channelCtrl_io_enable = registerFile_255[7];
+  ChannelController channelCtrl (
+    .clock                   (clock),
+    .reset                   (reset),
+    .io_regs_0_pitch         (registerFile_0),
+    .io_regs_0_flags_keyOn   (_channelCtrl_io_regs_0_flags_keyOn),
+    .io_regs_0_flags_loop    (_channelCtrl_io_regs_0_flags_loop),
+    .io_regs_0_level         (registerFile_2),
+    .io_regs_0_pan           (_channelCtrl_io_regs_0_pan),
+    .io_regs_0_startAddr     (_channelCtrl_io_regs_0_startAddr),
+    .io_regs_0_loopStartAddr (_channelCtrl_io_regs_0_loopStartAddr),
+    .io_regs_0_loopEndAddr   (_channelCtrl_io_regs_0_loopEndAddr),
+    .io_regs_0_endAddr       (_channelCtrl_io_regs_0_endAddr),
+    .io_regs_1_pitch         (registerFile_4),
+    .io_regs_1_flags_keyOn   (_channelCtrl_io_regs_1_flags_keyOn),
+    .io_regs_1_flags_loop    (_channelCtrl_io_regs_1_flags_loop),
+    .io_regs_1_level         (registerFile_6),
+    .io_regs_1_pan           (_channelCtrl_io_regs_1_pan),
+    .io_regs_1_startAddr     (_channelCtrl_io_regs_1_startAddr),
+    .io_regs_1_loopStartAddr (_channelCtrl_io_regs_1_loopStartAddr),
+    .io_regs_1_loopEndAddr   (_channelCtrl_io_regs_1_loopEndAddr),
+    .io_regs_1_endAddr       (_channelCtrl_io_regs_1_endAddr),
+    .io_regs_2_pitch         (registerFile_8),
+    .io_regs_2_flags_keyOn   (_channelCtrl_io_regs_2_flags_keyOn),
+    .io_regs_2_flags_loop    (_channelCtrl_io_regs_2_flags_loop),
+    .io_regs_2_level         (registerFile_10),
+    .io_regs_2_pan           (_channelCtrl_io_regs_2_pan),
+    .io_regs_2_startAddr     (_channelCtrl_io_regs_2_startAddr),
+    .io_regs_2_loopStartAddr (_channelCtrl_io_regs_2_loopStartAddr),
+    .io_regs_2_loopEndAddr   (_channelCtrl_io_regs_2_loopEndAddr),
+    .io_regs_2_endAddr       (_channelCtrl_io_regs_2_endAddr),
+    .io_regs_3_pitch         (registerFile_12),
+    .io_regs_3_flags_keyOn   (_channelCtrl_io_regs_3_flags_keyOn),
+    .io_regs_3_flags_loop    (_channelCtrl_io_regs_3_flags_loop),
+    .io_regs_3_level         (registerFile_14),
+    .io_regs_3_pan           (_channelCtrl_io_regs_3_pan),
+    .io_regs_3_startAddr     (_channelCtrl_io_regs_3_startAddr),
+    .io_regs_3_loopStartAddr (_channelCtrl_io_regs_3_loopStartAddr),
+    .io_regs_3_loopEndAddr   (_channelCtrl_io_regs_3_loopEndAddr),
+    .io_regs_3_endAddr       (_channelCtrl_io_regs_3_endAddr),
+    .io_regs_4_pitch         (registerFile_16),
+    .io_regs_4_flags_keyOn   (_channelCtrl_io_regs_4_flags_keyOn),
+    .io_regs_4_flags_loop    (_channelCtrl_io_regs_4_flags_loop),
+    .io_regs_4_level         (registerFile_18),
+    .io_regs_4_pan           (_channelCtrl_io_regs_4_pan),
+    .io_regs_4_startAddr     (_channelCtrl_io_regs_4_startAddr),
+    .io_regs_4_loopStartAddr (_channelCtrl_io_regs_4_loopStartAddr),
+    .io_regs_4_loopEndAddr   (_channelCtrl_io_regs_4_loopEndAddr),
+    .io_regs_4_endAddr       (_channelCtrl_io_regs_4_endAddr),
+    .io_regs_5_pitch         (registerFile_20),
+    .io_regs_5_flags_keyOn   (_channelCtrl_io_regs_5_flags_keyOn),
+    .io_regs_5_flags_loop    (_channelCtrl_io_regs_5_flags_loop),
+    .io_regs_5_level         (registerFile_22),
+    .io_regs_5_pan           (_channelCtrl_io_regs_5_pan),
+    .io_regs_5_startAddr     (_channelCtrl_io_regs_5_startAddr),
+    .io_regs_5_loopStartAddr (_channelCtrl_io_regs_5_loopStartAddr),
+    .io_regs_5_loopEndAddr   (_channelCtrl_io_regs_5_loopEndAddr),
+    .io_regs_5_endAddr       (_channelCtrl_io_regs_5_endAddr),
+    .io_regs_6_pitch         (registerFile_24),
+    .io_regs_6_flags_keyOn   (_channelCtrl_io_regs_6_flags_keyOn),
+    .io_regs_6_flags_loop    (_channelCtrl_io_regs_6_flags_loop),
+    .io_regs_6_level         (registerFile_26),
+    .io_regs_6_pan           (_channelCtrl_io_regs_6_pan),
+    .io_regs_6_startAddr     (_channelCtrl_io_regs_6_startAddr),
+    .io_regs_6_loopStartAddr (_channelCtrl_io_regs_6_loopStartAddr),
+    .io_regs_6_loopEndAddr   (_channelCtrl_io_regs_6_loopEndAddr),
+    .io_regs_6_endAddr       (_channelCtrl_io_regs_6_endAddr),
+    .io_regs_7_pitch         (registerFile_28),
+    .io_regs_7_flags_keyOn   (_channelCtrl_io_regs_7_flags_keyOn),
+    .io_regs_7_flags_loop    (_channelCtrl_io_regs_7_flags_loop),
+    .io_regs_7_level         (registerFile_30),
+    .io_regs_7_pan           (_channelCtrl_io_regs_7_pan),
+    .io_regs_7_startAddr     (_channelCtrl_io_regs_7_startAddr),
+    .io_regs_7_loopStartAddr (_channelCtrl_io_regs_7_loopStartAddr),
+    .io_regs_7_loopEndAddr   (_channelCtrl_io_regs_7_loopEndAddr),
+    .io_regs_7_endAddr       (_channelCtrl_io_regs_7_endAddr),
+    .io_enable               (_channelCtrl_io_enable),
+    .io_done                 (_channelCtrl_io_done),
+    .io_index                (_channelCtrl_io_index),
+    .io_audio_valid          (io_audio_valid),
+    .io_audio_bits_left      (io_audio_bits_left),
+    .io_rom_rd               (io_rom_rd),
+    .io_rom_addr             (io_rom_addr),
+    .io_rom_dout             (io_rom_dout),
+    .io_rom_wait_n           (io_rom_wait_n),
+    .io_rom_valid            (io_rom_valid)
+  );
+  assign io_cpu_dout = dataReg;
+  assign io_irq = registerFile_255[4] & (|(statusReg & registerFile_254));
+endmodule
+

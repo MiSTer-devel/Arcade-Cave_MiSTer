@@ -55,8 +55,8 @@ class JTOPL(clockFreq: Double, sampleFreq: Double) extends Module {
     val audio = ValidIO(SInt(16.W))
   })
 
-  class JTOPL_ extends BlackBox {
-    val io = IO(new Bundle {
+  class JTOPL_ extends ExtModule {
+    val io = FlatIO(new Bundle {
       val rst = Input(Bool())
       val clk = Input(Bool())
       val cen = Input(Bool())

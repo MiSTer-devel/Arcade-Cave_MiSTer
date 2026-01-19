@@ -72,8 +72,8 @@ class CPU(clockDiv: Int = 1) extends Module {
   val io = IO(new CPUIO)
 
   /** Wraps the T80s implementation of the Z80 CPU. */
-  class T80s extends BlackBox {
-    val io = IO(new Bundle {
+  class T80s extends ExtModule {
+    val io = FlatIO(new Bundle {
       val RESET_n = Input(Reset())
       val CLK = Input(Clock())
       val CEN = Input(Bool())

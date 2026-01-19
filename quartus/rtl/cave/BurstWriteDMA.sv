@@ -1,0 +1,58 @@
+module BurstWriteDMA(
+  input         clock,
+  input         reset,
+  input         io_start,
+  output        io_out_wr,
+  output [31:0] io_out_addr,
+  output [63:0] io_out_din,
+  input         io_out_wait_n,
+  input         io_out_burstDone
+);
+
+  wire        _fifo_io_enq_ready;
+  wire [6:0]  _fifo_io_count;
+  reg         readEnableReg;
+  reg         writeEnableReg;
+  reg         readPendingReg;
+  reg         writePendingReg;
+  wire        start = io_start & ~(readEnableReg | writeEnableReg);
+  wire        write = writeEnableReg & (writePendingReg | _fifo_io_count == 7'h40);
+  wire        effectiveWrite = write & io_out_wait_n;
+  reg  [14:0] wordCounter;
+  reg  [8:0]  burstCounter;
+  wire        read =
+    readEnableReg & (~readPendingReg & _fifo_io_enq_ready | _fifo_io_count < 7'h3F);
+  always @(posedge clock) begin
+    if (reset) begin
+      readEnableReg <= 1'h0;
+      writeEnableReg <= 1'h0;
+      readPendingReg <= 1'h0;
+      writePendingReg <= 1'h0;
+      wordCounter <= 15'h0;
+      burstCounter <= 9'h0;
+    end
+    else begin
+      readEnableReg <= start | ~(read & (&wordCounter)) & readEnableReg;
+      writeEnableReg <= start | ~(io_out_burstDone & (&burstCounter)) & writeEnableReg;
+      readPendingReg <= read;
+      writePendingReg <= ~io_out_burstDone & (effectiveWrite | writePendingReg);
+      if (read)
+        wordCounter <= 15'(wordCounter + 15'h1);
+      if (io_out_burstDone)
+        burstCounter <= 9'(burstCounter + 9'h1);
+    end
+  end // always @(posedge)
+  Queue64_UInt64 fifo (
+    .clock        (clock),
+    .reset        (reset),
+    .io_enq_ready (_fifo_io_enq_ready),
+    .io_enq_valid (readPendingReg),
+    .io_deq_ready (effectiveWrite),
+    .io_deq_bits  (io_out_din),
+    .io_count     (_fifo_io_count),
+    .io_flush     (start)
+  );
+  assign io_out_wr = write;
+  assign io_out_addr = {14'h0, burstCounter, 9'h0};
+endmodule
+

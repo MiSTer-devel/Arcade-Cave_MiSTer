@@ -1,0 +1,43 @@
+module YM2203(
+  input         clock,
+  input         reset,
+  input         io_cpu_wr,
+  input         io_cpu_addr,
+  input  [7:0]  io_cpu_din,
+  output [7:0]  io_cpu_dout,
+  output        io_irq,
+  output        io_audio_valid,
+  output [15:0] io_audio_bits_psg,
+  output [15:0] io_audio_bits_fm
+);
+
+  wire        _m_cs_n = 1'h0;
+  wire        _m_wr_n;
+  wire        _m_irq_n;
+  wire [9:0]  _m_psg_snd;
+  reg  [15:0] m_cen_counter;
+  reg         m_cen_clockEnable;
+  wire [16:0] m_cen_next = 17'({1'h0, m_cen_counter} + 17'h2000);
+  always @(posedge clock) begin
+    m_cen_counter <= m_cen_next[15:0];
+    m_cen_clockEnable <= m_cen_next[16];
+  end // always @(posedge)
+  assign _m_wr_n = ~io_cpu_wr;
+  jt03 m (
+    .rst        (reset),
+    .clk        (clock),
+    .cen        (m_cen_clockEnable),
+    .din        (io_cpu_din),
+    .addr       (io_cpu_addr),
+    .cs_n       (_m_cs_n),
+    .wr_n       (_m_wr_n),
+    .dout       (io_cpu_dout),
+    .irq_n      (_m_irq_n),
+    .psg_snd    (_m_psg_snd),
+    .fm_snd     (io_audio_bits_fm),
+    .snd_sample (io_audio_valid)
+  );
+  assign io_irq = ~_m_irq_n;
+  assign io_audio_bits_psg = {1'h0, _m_psg_snd, 5'h0};
+endmodule
+

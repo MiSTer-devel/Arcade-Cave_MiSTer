@@ -1,0 +1,93 @@
+module PISO(
+  input        clock,
+  input        reset,
+  input        io_rd,
+  input        io_wr,
+  output       io_isEmpty,
+  output       io_isAlmostEmpty,
+  input  [7:0] io_din_0,
+  input  [7:0] io_din_1,
+  input  [7:0] io_din_2,
+  input  [7:0] io_din_3,
+  input  [7:0] io_din_4,
+  input  [7:0] io_din_5,
+  input  [7:0] io_din_6,
+  input  [7:0] io_din_7,
+  input  [7:0] io_din_8,
+  input  [7:0] io_din_9,
+  input  [7:0] io_din_10,
+  input  [7:0] io_din_11,
+  input  [7:0] io_din_12,
+  input  [7:0] io_din_13,
+  input  [7:0] io_din_14,
+  input  [7:0] io_din_15,
+  output [7:0] io_dout
+);
+
+  reg  [7:0] pisoReg_0;
+  reg  [7:0] pisoReg_1;
+  reg  [7:0] pisoReg_2;
+  reg  [7:0] pisoReg_3;
+  reg  [7:0] pisoReg_4;
+  reg  [7:0] pisoReg_5;
+  reg  [7:0] pisoReg_6;
+  reg  [7:0] pisoReg_7;
+  reg  [7:0] pisoReg_8;
+  reg  [7:0] pisoReg_9;
+  reg  [7:0] pisoReg_10;
+  reg  [7:0] pisoReg_11;
+  reg  [7:0] pisoReg_12;
+  reg  [7:0] pisoReg_13;
+  reg  [7:0] pisoReg_14;
+  reg  [7:0] pisoReg_15;
+  reg  [4:0] pisoCounterReg;
+  wire       _GEN = io_rd & (|pisoCounterReg);
+  always @(posedge clock) begin
+    if (io_wr) begin
+      pisoReg_0 <= io_din_0;
+      pisoReg_1 <= io_din_1;
+      pisoReg_2 <= io_din_2;
+      pisoReg_3 <= io_din_3;
+      pisoReg_4 <= io_din_4;
+      pisoReg_5 <= io_din_5;
+      pisoReg_6 <= io_din_6;
+      pisoReg_7 <= io_din_7;
+      pisoReg_8 <= io_din_8;
+      pisoReg_9 <= io_din_9;
+      pisoReg_10 <= io_din_10;
+      pisoReg_11 <= io_din_11;
+      pisoReg_12 <= io_din_12;
+      pisoReg_13 <= io_din_13;
+      pisoReg_14 <= io_din_14;
+      pisoReg_15 <= io_din_15;
+    end
+    else if (_GEN) begin
+      pisoReg_0 <= pisoReg_1;
+      pisoReg_1 <= pisoReg_2;
+      pisoReg_2 <= pisoReg_3;
+      pisoReg_3 <= pisoReg_4;
+      pisoReg_4 <= pisoReg_5;
+      pisoReg_5 <= pisoReg_6;
+      pisoReg_6 <= pisoReg_7;
+      pisoReg_7 <= pisoReg_8;
+      pisoReg_8 <= pisoReg_9;
+      pisoReg_9 <= pisoReg_10;
+      pisoReg_10 <= pisoReg_11;
+      pisoReg_11 <= pisoReg_12;
+      pisoReg_12 <= pisoReg_13;
+      pisoReg_13 <= pisoReg_14;
+      pisoReg_14 <= pisoReg_15;
+      pisoReg_15 <= pisoReg_0;
+    end
+    if (reset)
+      pisoCounterReg <= 5'h0;
+    else if (io_wr)
+      pisoCounterReg <= 5'h10;
+    else if (_GEN)
+      pisoCounterReg <= 5'(pisoCounterReg - 5'h1);
+  end // always @(posedge)
+  assign io_isEmpty = ~(|pisoCounterReg);
+  assign io_isAlmostEmpty = pisoCounterReg == 5'h1;
+  assign io_dout = pisoReg_0;
+endmodule
+

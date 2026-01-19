@@ -1,0 +1,211 @@
+module VideoSys(
+  input         clock,
+  input         reset,
+  input         io_videoClock,
+  input         io_videoReset,
+  input         io_prog_video_wr,
+  input  [26:0] io_prog_video_addr,
+  input  [15:0] io_prog_video_din,
+  input         io_prog_done,
+  input  [3:0]  io_options_offset_x,
+  input  [3:0]  io_options_offset_y,
+  input         io_options_compatibility,
+  output        io_video_clockEnable,
+  output        io_video_displayEnable,
+  output [8:0]  io_video_pos_x,
+  output [8:0]  io_video_pos_y,
+  output        io_video_hSync,
+  output        io_video_vSync,
+  output        io_video_hBlank,
+  output        io_video_vBlank,
+  output [8:0]  io_video_regs_size_x,
+  output [8:0]  io_video_regs_size_y,
+  output [8:0]  io_video_regs_frontPorch_x,
+  output [8:0]  io_video_regs_frontPorch_y,
+  output [8:0]  io_video_regs_retrace_x,
+  output [8:0]  io_video_regs_retrace_y,
+  output        io_video_changeMode
+);
+
+  wire        _timing_compatibilityVideoTiming_io_timing_clockEnable;
+  wire        _timing_compatibilityVideoTiming_io_timing_displayEnable;
+  wire [8:0]  _timing_compatibilityVideoTiming_io_timing_pos_x;
+  wire [8:0]  _timing_compatibilityVideoTiming_io_timing_pos_y;
+  wire        _timing_compatibilityVideoTiming_io_timing_hSync;
+  wire        _timing_compatibilityVideoTiming_io_timing_vSync;
+  wire        _timing_compatibilityVideoTiming_io_timing_hBlank;
+  wire        _timing_compatibilityVideoTiming_io_timing_vBlank;
+  wire        _timing_originalVideoTiming_io_timing_clockEnable;
+  wire        _timing_originalVideoTiming_io_timing_displayEnable;
+  wire [8:0]  _timing_originalVideoTiming_io_timing_pos_x;
+  wire [8:0]  _timing_originalVideoTiming_io_timing_pos_y;
+  wire        _timing_originalVideoTiming_io_timing_hSync;
+  wire        _timing_originalVideoTiming_io_timing_vSync;
+  wire        _timing_originalVideoTiming_io_timing_hBlank;
+  wire        _timing_originalVideoTiming_io_timing_vBlank;
+  wire [2:0]  _videoRegs_io_mem_addr;
+  wire [1:0]  _videoRegs_io_mem_mask = 2'h3;
+  wire [15:0] _videoRegs_io_mem_din;
+  wire [15:0] _videoRegs_io_regs_0;
+  wire [15:0] _videoRegs_io_regs_1;
+  wire [15:0] _videoRegs_io_regs_2;
+  wire [15:0] _videoRegs_io_regs_3;
+  wire [15:0] _videoRegs_io_regs_4;
+  wire [15:0] _videoRegs_io_regs_5;
+  reg  [3:0]  timing_originalVideoTiming_io_offset_r_x;
+  reg  [3:0]  timing_originalVideoTiming_io_offset_r_y;
+  reg  [3:0]  timing_compatibilityVideoTiming_io_offset_r_x;
+  reg  [3:0]  timing_compatibilityVideoTiming_io_offset_r_y;
+  reg         timing_latchReg;
+  reg         timing_clockEnable;
+  reg         timing_displayEnable;
+  reg  [8:0]  timing_pos_x;
+  reg  [8:0]  timing_pos_y;
+  reg         timing_hSync;
+  reg         timing_vSync;
+  reg         timing_hBlank;
+  reg         timing_vBlank;
+  reg  [8:0]  io_video_regs_r_size_x;
+  reg  [8:0]  io_video_regs_r_size_y;
+  reg  [8:0]  io_video_regs_r_frontPorch_x;
+  reg  [8:0]  io_video_regs_r_frontPorch_y;
+  reg  [8:0]  io_video_regs_r_retrace_x;
+  reg  [8:0]  io_video_regs_r_retrace_y;
+  reg         io_video_changeMode_REG;
+  always @(posedge io_videoClock) begin
+    if (_timing_originalVideoTiming_io_timing_vSync) begin
+      timing_originalVideoTiming_io_offset_r_x <= io_options_offset_x;
+      timing_originalVideoTiming_io_offset_r_y <= io_options_offset_y;
+    end
+    if (_timing_compatibilityVideoTiming_io_timing_vSync) begin
+      timing_compatibilityVideoTiming_io_offset_r_x <= io_options_offset_x;
+      timing_compatibilityVideoTiming_io_offset_r_y <= io_options_offset_y;
+    end
+    if (_timing_originalVideoTiming_io_timing_vBlank
+        & _timing_compatibilityVideoTiming_io_timing_vBlank)
+      timing_latchReg <= io_options_compatibility;
+    timing_clockEnable <=
+      timing_latchReg
+        ? _timing_compatibilityVideoTiming_io_timing_clockEnable
+        : _timing_originalVideoTiming_io_timing_clockEnable;
+    timing_displayEnable <=
+      timing_latchReg
+        ? _timing_compatibilityVideoTiming_io_timing_displayEnable
+        : _timing_originalVideoTiming_io_timing_displayEnable;
+    timing_pos_x <=
+      timing_latchReg
+        ? _timing_compatibilityVideoTiming_io_timing_pos_x
+        : _timing_originalVideoTiming_io_timing_pos_x;
+    timing_pos_y <=
+      timing_latchReg
+        ? _timing_compatibilityVideoTiming_io_timing_pos_y
+        : _timing_originalVideoTiming_io_timing_pos_y;
+    timing_hSync <=
+      timing_latchReg
+        ? _timing_compatibilityVideoTiming_io_timing_hSync
+        : _timing_originalVideoTiming_io_timing_hSync;
+    timing_vSync <=
+      timing_latchReg
+        ? _timing_compatibilityVideoTiming_io_timing_vSync
+        : _timing_originalVideoTiming_io_timing_vSync;
+    timing_hBlank <=
+      timing_latchReg
+        ? _timing_compatibilityVideoTiming_io_timing_hBlank
+        : _timing_originalVideoTiming_io_timing_hBlank;
+    timing_vBlank <=
+      timing_latchReg
+        ? _timing_compatibilityVideoTiming_io_timing_vBlank
+        : _timing_originalVideoTiming_io_timing_vBlank;
+  end // always @(posedge)
+  always @(posedge clock) begin
+    if (reset) begin
+      io_video_regs_r_size_x <= 9'h140;
+      io_video_regs_r_size_y <= 9'hF0;
+      io_video_regs_r_frontPorch_x <= 9'h24;
+      io_video_regs_r_frontPorch_y <= 9'hC;
+      io_video_regs_r_retrace_x <= 9'h1C;
+      io_video_regs_r_retrace_y <= 9'h3;
+    end
+    else if (io_prog_done) begin
+      io_video_regs_r_size_x <= _videoRegs_io_regs_0[8:0];
+      io_video_regs_r_size_y <= _videoRegs_io_regs_1[8:0];
+      io_video_regs_r_frontPorch_x <= _videoRegs_io_regs_2[8:0];
+      io_video_regs_r_frontPorch_y <= _videoRegs_io_regs_3[8:0];
+      io_video_regs_r_retrace_x <= 9'(_videoRegs_io_regs_4[8:0] + 9'h8);
+      io_video_regs_r_retrace_y <= 9'(_videoRegs_io_regs_5[8:0] + 9'h1);
+    end
+    io_video_changeMode_REG <= io_options_compatibility;
+  end // always @(posedge)
+  assign _videoRegs_io_mem_addr = io_prog_video_addr[3:1];
+  assign _videoRegs_io_mem_din = {io_prog_video_din[7:0], io_prog_video_din[15:8]};
+  RegisterFile_1 videoRegs (
+    .clock       (clock),
+    .io_mem_wr   (io_prog_video_wr),
+    .io_mem_addr (_videoRegs_io_mem_addr),
+    .io_mem_mask (_videoRegs_io_mem_mask),
+    .io_mem_din  (_videoRegs_io_mem_din),
+    .io_regs_0   (_videoRegs_io_regs_0),
+    .io_regs_1   (_videoRegs_io_regs_1),
+    .io_regs_2   (_videoRegs_io_regs_2),
+    .io_regs_3   (_videoRegs_io_regs_3),
+    .io_regs_4   (_videoRegs_io_regs_4),
+    .io_regs_5   (_videoRegs_io_regs_5)
+  );
+  VideoTiming timing_originalVideoTiming (
+    .clock                   (io_videoClock),
+    .reset                   (io_videoReset),
+    .io_display_x            (io_video_regs_r_size_x),
+    .io_display_y            (io_video_regs_r_size_y),
+    .io_frontPorch_x         (io_video_regs_r_frontPorch_x),
+    .io_frontPorch_y         (io_video_regs_r_frontPorch_y),
+    .io_retrace_x            (io_video_regs_r_retrace_x),
+    .io_retrace_y            (io_video_regs_r_retrace_y),
+    .io_offset_x             (timing_originalVideoTiming_io_offset_r_x),
+    .io_offset_y             (timing_originalVideoTiming_io_offset_r_y),
+    .io_timing_clockEnable   (_timing_originalVideoTiming_io_timing_clockEnable),
+    .io_timing_displayEnable (_timing_originalVideoTiming_io_timing_displayEnable),
+    .io_timing_pos_x         (_timing_originalVideoTiming_io_timing_pos_x),
+    .io_timing_pos_y         (_timing_originalVideoTiming_io_timing_pos_y),
+    .io_timing_hSync         (_timing_originalVideoTiming_io_timing_hSync),
+    .io_timing_vSync         (_timing_originalVideoTiming_io_timing_vSync),
+    .io_timing_hBlank        (_timing_originalVideoTiming_io_timing_hBlank),
+    .io_timing_vBlank        (_timing_originalVideoTiming_io_timing_vBlank)
+  );
+  VideoTiming_1 timing_compatibilityVideoTiming (
+    .clock                   (io_videoClock),
+    .reset                   (io_videoReset),
+    .io_display_x            (io_video_regs_r_size_x),
+    .io_display_y            (io_video_regs_r_size_y),
+    .io_frontPorch_x         (io_video_regs_r_frontPorch_x),
+    .io_frontPorch_y         (io_video_regs_r_frontPorch_y),
+    .io_retrace_x            (io_video_regs_r_retrace_x),
+    .io_retrace_y            (io_video_regs_r_retrace_y),
+    .io_offset_x             (timing_compatibilityVideoTiming_io_offset_r_x),
+    .io_offset_y             (timing_compatibilityVideoTiming_io_offset_r_y),
+    .io_timing_clockEnable   (_timing_compatibilityVideoTiming_io_timing_clockEnable),
+    .io_timing_displayEnable (_timing_compatibilityVideoTiming_io_timing_displayEnable),
+    .io_timing_pos_x         (_timing_compatibilityVideoTiming_io_timing_pos_x),
+    .io_timing_pos_y         (_timing_compatibilityVideoTiming_io_timing_pos_y),
+    .io_timing_hSync         (_timing_compatibilityVideoTiming_io_timing_hSync),
+    .io_timing_vSync         (_timing_compatibilityVideoTiming_io_timing_vSync),
+    .io_timing_hBlank        (_timing_compatibilityVideoTiming_io_timing_hBlank),
+    .io_timing_vBlank        (_timing_compatibilityVideoTiming_io_timing_vBlank)
+  );
+  assign io_video_clockEnable = timing_clockEnable;
+  assign io_video_displayEnable = timing_displayEnable;
+  assign io_video_pos_x = timing_pos_x;
+  assign io_video_pos_y = timing_pos_y;
+  assign io_video_hSync = timing_hSync;
+  assign io_video_vSync = timing_vSync;
+  assign io_video_hBlank = timing_hBlank;
+  assign io_video_vBlank = timing_vBlank;
+  assign io_video_regs_size_x = io_video_regs_r_size_x;
+  assign io_video_regs_size_y = io_video_regs_r_size_y;
+  assign io_video_regs_frontPorch_x = io_video_regs_r_frontPorch_x;
+  assign io_video_regs_frontPorch_y = io_video_regs_r_frontPorch_y;
+  assign io_video_regs_retrace_x = io_video_regs_r_retrace_x;
+  assign io_video_regs_retrace_y = io_video_regs_r_retrace_y;
+  assign io_video_changeMode =
+    io_prog_done | io_options_compatibility ^ io_video_changeMode_REG;
+endmodule
+

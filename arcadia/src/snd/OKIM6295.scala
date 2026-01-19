@@ -74,8 +74,8 @@ class OKIM6295(config: OKIM6295Config) extends Module {
     val audio = ValidIO(SInt(config.sampleWidth.W))
   })
 
-  class JT6295 extends BlackBox {
-    val io = IO(new Bundle {
+  class JT6295 extends ExtModule {
+    val io = FlatIO(new Bundle {
       val rst = Input(Bool())
       val clk = Input(Bool())
       val cen = Input(Bool())

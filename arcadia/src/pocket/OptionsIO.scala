@@ -46,7 +46,7 @@ class OptionsIO extends Bundle {
   /** Sprite enable */
   val sprite = Output(Bool())
   /** Flip video output */
-  val flip = Output(Bool())
+  val flipVideo = Output(Bool())
   /** FM enable */
   val fm = Output(Bool())
   /** PCM enable */

@@ -33,12 +33,12 @@
 package arcadia.mem
 
 import chisel3._
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
-trait EEPROMTestHelpers {
+trait EEPROMTestHelpers { this: ChiselSim =>
   /** Sends a start bit to the given EEPROM device. */
   protected def startBit(dut: EEPROM) = {
     dut.io.serial.cs.poke(true)
@@ -93,34 +93,34 @@ trait EEPROMTestHelpers {
   protected def disableWrite(dut: EEPROM) = command(dut, 0, 0)
 
   protected def waitForIdle(dut: EEPROM) =
-    while (!dut.io.debug.idle.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.idle, 1, 1024)
 
   protected def waitForCommand(dut: EEPROM) =
-    while (!dut.io.debug.command.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.command, 1, 1024)
 
   protected def waitForRead(dut: EEPROM) =
-    while (!dut.io.debug.read.peekBoolean()) { dut.clock.step() }
+    dut.clock.stepUntil(dut.io.debug.read, 1, 1024)
 }
 
-class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with EEPROMTestHelpers {
+class EEPROMTest extends AnyFlatSpec with ChiselSim with Matchers with EEPROMTestHelpers {
   behavior of "FSM"
 
   it should "move to the command state after receiving a start bit" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       startBit(dut)
       dut.io.debug.command.expect(true)
     }
   }
 
   it should "move to the read state after receiving a read command" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       read(dut, 0)
       dut.io.debug.read.expect(true)
     }
   }
 
   it should "move to the read wait state after starting a memory read request" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       read(dut, 0)
       dut.io.mem.wait_n.poke(false)
       dut.io.debug.readWait.expect(false)
@@ -133,7 +133,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   }
 
   it should "move to the dummy bit state after receiving valid data" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       read(dut, 0)
       dut.clock.step()
       dut.io.debug.shiftOut.expect(false)
@@ -146,7 +146,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   }
 
   it should "move to the idle state after shifting serial data" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       read(dut, 0)
       dut.clock.step()
       dut.io.mem.valid.poke(true)
@@ -157,7 +157,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   }
 
   it should "move to the shift in state after receiving a write command" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       write(dut, 0)
       dut.io.debug.shiftIn.expect(false)
       enableWrite(dut)
@@ -167,7 +167,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   }
 
   it should "move to the shift in state after receiving a write all command" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       writeAll(dut)
       dut.io.debug.shiftIn.expect(false)
       enableWrite(dut)
@@ -177,7 +177,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   }
 
   it should "move to the write state after shifting serial data" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       enableWrite(dut)
       write(dut, 0)
       dut.clock.step()
@@ -188,7 +188,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   }
 
   it should "move to the idle state after writing data to memory" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       enableWrite(dut)
       write(dut, 0)
       dut.clock.step()
@@ -204,7 +204,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   }
 
   it should "move to the write state after receiving an erase command" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       erase(dut, 0)
       dut.io.debug.write.expect(false)
       enableWrite(dut)
@@ -215,7 +215,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   }
 
   it should "move to the write state after receiving an erase all command" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       eraseAll(dut)
       dut.io.debug.write.expect(false)
       enableWrite(dut)
@@ -226,7 +226,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   }
 
   it should "move to the idle state when chip select is deasserted" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       read(dut, 0)
       dut.io.serial.cs.poke(false)
       dut.clock.step()
@@ -237,7 +237,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   behavior of "idle"
 
   it should "ignore a rising clock when chip select is also rising" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       dut.io.serial.cs.poke(true)
       dut.io.serial.sck.poke(true)
       dut.clock.step(2)
@@ -246,7 +246,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   }
 
   it should "assert the serial data output" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       dut.clock.step()
       dut.io.serial.sdo.expect(true)
     }
@@ -255,7 +255,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   behavior of "read"
 
   it should "read a word from memory" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       read(dut, 0x12)
       dut.io.mem.wait_n.poke(true)
       dut.io.mem.rd.expect(true)
@@ -286,7 +286,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   behavior of "write"
 
   it should "write a memory location" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       enableWrite(dut)
       write(dut, 0x12)
       writeBits(dut, 0x1234.U(16.W))
@@ -298,7 +298,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   }
 
   it should "write all memory locations" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       enableWrite(dut)
       writeAll(dut)
       writeBits(dut, 0x1234.U(16.W))
@@ -315,7 +315,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   behavior of "erase"
 
   it should "erase a memory location" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       enableWrite(dut)
       erase(dut, 0x12)
       dut.io.mem.wait_n.poke(true)
@@ -326,7 +326,7 @@ class EEPROMTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   }
 
   it should "erase all memory locations" in {
-    test(new EEPROM) { dut =>
+    simulate(new EEPROM) { dut =>
       enableWrite(dut)
       eraseAll(dut)
       dut.io.mem.wait_n.poke(true)

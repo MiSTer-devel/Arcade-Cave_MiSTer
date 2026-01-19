@@ -1,0 +1,62 @@
+module BurstReadDMA_1(
+  input         clock,
+  input         reset,
+  input         io_start,
+  output        io_in_rd,
+  output [31:0] io_in_addr,
+  input  [63:0] io_in_dout,
+  input         io_in_wait_n,
+  input         io_in_valid,
+  input         io_in_burstDone,
+  output        io_out_wr,
+  output [31:0] io_out_addr,
+  output [63:0] io_out_din
+);
+
+  wire       _fifo_io_enq_valid;
+  wire       _fifo_io_deq_valid;
+  wire [5:0] _fifo_io_count;
+  reg        readEnableReg;
+  reg        writeEnableReg;
+  reg        readPendingReg;
+  wire       start = io_start & ~(readEnableReg | writeEnableReg);
+  wire       read = readEnableReg & ~readPendingReg & _fifo_io_count < 6'h11;
+  wire       write = writeEnableReg & _fifo_io_deq_valid;
+  reg  [6:0] wordCounter;
+  reg  [2:0] burstCounter;
+  always @(posedge clock) begin
+    if (reset) begin
+      readEnableReg <= 1'h0;
+      writeEnableReg <= 1'h0;
+      readPendingReg <= 1'h0;
+      wordCounter <= 7'h0;
+      burstCounter <= 3'h0;
+    end
+    else begin
+      readEnableReg <= start | ~(io_in_burstDone & (&burstCounter)) & readEnableReg;
+      writeEnableReg <= start | ~(write & (&wordCounter)) & writeEnableReg;
+      readPendingReg <= ~io_in_burstDone & (read & io_in_wait_n | readPendingReg);
+      if (write)
+        wordCounter <= 7'(wordCounter + 7'h1);
+      if (io_in_burstDone)
+        burstCounter <= 3'(burstCounter + 3'h1);
+    end
+  end // always @(posedge)
+  assign _fifo_io_enq_valid = io_in_valid & readPendingReg;
+  Queue32_UInt64 fifo (
+    .clock        (clock),
+    .reset        (reset),
+    .io_enq_valid (_fifo_io_enq_valid),
+    .io_enq_bits  (io_in_dout),
+    .io_deq_ready (write),
+    .io_deq_valid (_fifo_io_deq_valid),
+    .io_deq_bits  (io_out_din),
+    .io_count     (_fifo_io_count),
+    .io_flush     (start)
+  );
+  assign io_in_rd = read;
+  assign io_in_addr = {22'h0, burstCounter, 7'h0};
+  assign io_out_wr = write;
+  assign io_out_addr = {22'h0, wordCounter, 3'h0};
+endmodule
+

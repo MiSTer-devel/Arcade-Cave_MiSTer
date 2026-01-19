@@ -1,0 +1,26 @@
+// VCS coverage exclude_file
+module cacheEntryMem_128x77(
+  input  [6:0]  R0_addr,
+  input         R0_en,
+  input         R0_clk,
+  output [76:0] R0_data,
+  input  [6:0]  W0_addr,
+  input         W0_en,
+  input         W0_clk,
+  input  [76:0] W0_data
+);
+
+  reg [76:0] Memory[0:127];
+  reg        _R0_en_d0;
+  reg [6:0]  _R0_addr_d0;
+  always @(posedge R0_clk) begin
+    _R0_en_d0 <= R0_en;
+    _R0_addr_d0 <= R0_addr;
+  end // always @(posedge)
+  always @(posedge W0_clk) begin
+    if (W0_en)
+      Memory[W0_addr] <= W0_data;
+  end // always @(posedge)
+  assign R0_data = _R0_en_d0 ? Memory[_R0_addr_d0] : 77'bx;
+endmodule
+

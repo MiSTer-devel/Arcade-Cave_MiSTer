@@ -1,0 +1,75 @@
+module BurstMemArbiter_2(
+  input         clock,
+  input         reset,
+  input         io_in_0_rd,
+  input  [31:0] io_in_0_addr,
+  output [63:0] io_in_0_dout,
+  output        io_in_0_wait_n,
+  output        io_in_0_valid,
+  output        io_in_0_burstDone,
+  input         io_in_1_wr,
+  input  [31:0] io_in_1_addr,
+  input  [63:0] io_in_1_din,
+  output        io_in_1_wait_n,
+  output        io_in_1_burstDone,
+  input         io_in_2_wr,
+  input  [31:0] io_in_2_addr,
+  input  [7:0]  io_in_2_mask,
+  input  [63:0] io_in_2_din,
+  output        io_in_2_wait_n,
+  output        io_out_rd,
+  output        io_out_wr,
+  output [31:0] io_out_addr,
+  output [7:0]  io_out_mask,
+  output [63:0] io_out_din,
+  input  [63:0] io_out_dout,
+  input         io_out_wait_n,
+  input         io_out_valid,
+  output [7:0]  io_out_burstLength,
+  input         io_out_burstDone
+);
+
+  reg         busyReg;
+  reg  [2:0]  indexReg;
+  wire [2:0]  _index_enc_T_1 = io_in_1_wr ? 3'h2 : {io_in_2_wr, 2'h0};
+  wire [2:0]  index_enc = io_in_0_rd ? 3'h1 : _index_enc_T_1;
+  wire [2:0]  chosen = busyReg ? indexReg : index_enc;
+  wire        io_out_rd_0 = chosen[0] & io_in_0_rd;
+  wire        io_out_wr_0 = chosen[1] & io_in_1_wr | chosen[2] & io_in_2_wr;
+  wire [31:0] _io_out_mem_addr_T = chosen[0] ? io_in_0_addr : 32'h0;
+  wire [31:0] _io_out_mem_addr_T_1 = chosen[1] ? io_in_1_addr : 32'h0;
+  wire [31:0] _io_out_mem_addr_T_2 = chosen[2] ? io_in_2_addr : 32'h0;
+  wire [7:0]  _io_out_mem_mask_T_2 = chosen[2] ? io_in_2_mask : 8'h0;
+  wire [63:0] _io_out_mem_din_T_1 = chosen[1] ? io_in_1_din : 64'h0;
+  wire [63:0] _io_out_mem_din_T_2 = chosen[2] ? io_in_2_din : 64'h0;
+  wire        _io_out_io_in_2_wait_n_T = chosen == 3'h0;
+  wire        effectiveRequest = ~busyReg & (io_out_rd_0 | io_out_wr_0) & io_out_wait_n;
+  always @(posedge clock) begin
+    if (reset) begin
+      busyReg <= 1'h0;
+      indexReg <= 3'h0;
+    end
+    else begin
+      busyReg <= ~io_out_burstDone & (effectiveRequest | busyReg);
+      if (io_out_burstDone | ~effectiveRequest) begin
+      end
+      else
+        indexReg <= index_enc;
+    end
+  end // always @(posedge)
+  assign io_in_0_dout = io_out_dout;
+  assign io_in_0_wait_n = (_io_out_io_in_2_wait_n_T | chosen[0]) & io_out_wait_n;
+  assign io_in_0_valid = chosen[0] & io_out_valid;
+  assign io_in_0_burstDone = chosen[0] & io_out_burstDone;
+  assign io_in_1_wait_n = (_io_out_io_in_2_wait_n_T | chosen[1]) & io_out_wait_n;
+  assign io_in_1_burstDone = chosen[1] & io_out_burstDone;
+  assign io_in_2_wait_n = (_io_out_io_in_2_wait_n_T | chosen[2]) & io_out_wait_n;
+  assign io_out_rd = io_out_rd_0;
+  assign io_out_wr = io_out_wr_0;
+  assign io_out_addr = _io_out_mem_addr_T | _io_out_mem_addr_T_1 | _io_out_mem_addr_T_2;
+  assign io_out_mask = {8{chosen[1]}} | _io_out_mem_mask_T_2;
+  assign io_out_din = _io_out_mem_din_T_1 | _io_out_mem_din_T_2;
+  assign io_out_burstLength =
+    {3'h0, chosen[0], 4'h0} | {1'h0, chosen[1], 6'h0} | {7'h0, chosen[2]};
+endmodule
+

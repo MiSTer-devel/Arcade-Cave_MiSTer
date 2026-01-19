@@ -1,0 +1,65 @@
+module AsyncReadMemArbiter(
+  input         clock,
+  input         reset,
+  input         io_in_0_rd,
+  input  [24:0] io_in_0_addr,
+  output [7:0]  io_in_0_dout,
+  output        io_in_0_valid,
+  input         io_in_1_rd,
+  input  [24:0] io_in_1_addr,
+  output [7:0]  io_in_1_dout,
+  output        io_in_1_wait_n,
+  output        io_in_1_valid,
+  input         io_in_2_rd,
+  input  [24:0] io_in_2_addr,
+  output [7:0]  io_in_2_dout,
+  input         io_in_3_rd,
+  input  [24:0] io_in_3_addr,
+  output [7:0]  io_in_3_dout,
+  output        io_out_rd,
+  output [24:0] io_out_addr,
+  input  [7:0]  io_out_dout,
+  input         io_out_wait_n,
+  input         io_out_valid
+);
+
+  reg         busyReg;
+  reg  [3:0]  indexReg;
+  wire [3:0]  _index_enc_T_1 = io_in_2_rd ? 4'h4 : {io_in_3_rd, 3'h0};
+  wire [3:0]  _index_enc_T_2 = io_in_1_rd ? 4'h2 : _index_enc_T_1;
+  wire [3:0]  index_enc = io_in_0_rd ? 4'h1 : _index_enc_T_2;
+  wire [3:0]  chosen = busyReg ? indexReg : index_enc;
+  wire        io_out_rd_0 =
+    chosen[0] & io_in_0_rd | chosen[1] & io_in_1_rd | chosen[2] & io_in_2_rd | chosen[3]
+    & io_in_3_rd;
+  wire [24:0] _io_out_mem_addr_T = chosen[0] ? io_in_0_addr : 25'h0;
+  wire [24:0] _io_out_mem_addr_T_1 = chosen[1] ? io_in_1_addr : 25'h0;
+  wire [24:0] _io_out_mem_addr_T_2 = chosen[2] ? io_in_2_addr : 25'h0;
+  wire [24:0] _io_out_mem_addr_T_3 = chosen[3] ? io_in_3_addr : 25'h0;
+  wire        effectiveRequest = ~busyReg & io_out_rd_0 & io_out_wait_n;
+  always @(posedge clock) begin
+    if (reset) begin
+      busyReg <= 1'h0;
+      indexReg <= 4'h0;
+    end
+    else begin
+      busyReg <= ~io_out_valid & (effectiveRequest | busyReg);
+      if (io_out_valid | ~effectiveRequest) begin
+      end
+      else
+        indexReg <= index_enc;
+    end
+  end // always @(posedge)
+  assign io_in_0_dout = io_out_dout;
+  assign io_in_0_valid = chosen[0] & io_out_valid;
+  assign io_in_1_dout = io_out_dout;
+  assign io_in_1_wait_n = (chosen == 4'h0 | chosen[1]) & io_out_wait_n;
+  assign io_in_1_valid = chosen[1] & io_out_valid;
+  assign io_in_2_dout = io_out_dout;
+  assign io_in_3_dout = io_out_dout;
+  assign io_out_rd = io_out_rd_0;
+  assign io_out_addr =
+    _io_out_mem_addr_T | _io_out_mem_addr_T_1 | _io_out_mem_addr_T_2
+    | _io_out_mem_addr_T_3;
+endmodule
+

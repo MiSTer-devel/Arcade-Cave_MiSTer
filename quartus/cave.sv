@@ -519,7 +519,7 @@ Cave cave (
   .options_layer_1(~status[12]),
   .options_layer_2(~status[13]),
   .options_sprite(~status[10]),
-  .options_flip(status[4]),
+  .options_flipVideo(status[4]),
   .options_gameIndex(status[21:18]),
   // Joystick signals
   .player_0_up(player_1_up),

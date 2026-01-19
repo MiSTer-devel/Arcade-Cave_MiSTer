@@ -33,7 +33,7 @@
 package arcadia.mem.buffer
 
 import chisel3._
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -48,9 +48,9 @@ trait BurstBufferTestHelpers {
   protected def mkBuffer(config: Config) = new BurstBuffer(config)
 }
 
-class BurstBufferTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with BurstBufferTestHelpers {
+class BurstBufferTest extends AnyFlatSpec with ChiselSim with Matchers with BurstBufferTestHelpers {
   it should "buffer data (16:16:1)" in {
-    test(mkBuffer(bufferConfig.copy(inDataWidth = 16, outDataWidth = 16))) { dut =>
+    simulate(mkBuffer(bufferConfig.copy(inDataWidth = 16, outDataWidth = 16))) { dut =>
       dut.io.in.wr.poke(true)
 
       // write 0
@@ -99,7 +99,7 @@ class BurstBufferTest extends AnyFlatSpec with ChiselScalatestTester with Matche
   }
 
   it should "buffer data (16:16:2)" in {
-    test(mkBuffer(bufferConfig.copy(inDataWidth = 16, outDataWidth = 16, burstLength = 2))) { dut =>
+    simulate(mkBuffer(bufferConfig.copy(inDataWidth = 16, outDataWidth = 16, burstLength = 2))) { dut =>
       dut.io.in.wr.poke(true)
 
       // write 0
@@ -176,7 +176,7 @@ class BurstBufferTest extends AnyFlatSpec with ChiselScalatestTester with Matche
   }
 
   it should "buffer data (16:32:1)" in {
-    test(mkBuffer(bufferConfig.copy(inDataWidth = 16, outDataWidth = 32))) { dut =>
+    simulate(mkBuffer(bufferConfig.copy(inDataWidth = 16, outDataWidth = 32))) { dut =>
       dut.io.in.wr.poke(true)
 
       // write 0
@@ -238,7 +238,7 @@ class BurstBufferTest extends AnyFlatSpec with ChiselScalatestTester with Matche
   }
 
   it should "buffer data (32:16:2)" in {
-    test(mkBuffer(bufferConfig.copy(inDataWidth = 32, outDataWidth = 16, burstLength = 2))) { dut =>
+    simulate(mkBuffer(bufferConfig.copy(inDataWidth = 32, outDataWidth = 16, burstLength = 2))) { dut =>
       dut.io.in.wr.poke(true)
 
       // write 0

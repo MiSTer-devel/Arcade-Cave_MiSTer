@@ -103,7 +103,7 @@ class GPU extends Module {
 
     // Decode color mixer data and write it to the system frame buffer
     io.systemFrameBuffer.wr := RegNext(io.video.clockEnable && io.video.displayEnable)
-    io.systemFrameBuffer.addr := RegNext(GPU.frameBufferAddr(io.video.size, io.video.pos, io.options.flip, io.options.rotate))
+    io.systemFrameBuffer.addr := RegNext(GPU.frameBufferAddr(io.video.size, io.video.pos, io.options.flipVideo, io.options.rotate))
     io.systemFrameBuffer.mask := 0xf.U // 4 bytes
     io.systemFrameBuffer.din := RegNext(GPU.decodeABGR(colorMixer.io.dout))
 

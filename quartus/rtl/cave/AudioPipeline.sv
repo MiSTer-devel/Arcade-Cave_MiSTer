@@ -1,0 +1,167 @@
+module AudioPipeline(
+  input         clock,
+  input         reset,
+  output        io_in_ready,
+  input         io_in_valid,
+  input  [15:0] io_in_bits_state_samples_0,
+  input  [15:0] io_in_bits_state_samples_1,
+  input         io_in_bits_state_underflow,
+  input  [15:0] io_in_bits_state_adpcmStep,
+  input  [9:0]  io_in_bits_state_lerpIndex,
+  input         io_in_bits_state_loopEnable,
+  input  [15:0] io_in_bits_state_loopStep,
+  input  [15:0] io_in_bits_state_loopSample,
+  input  [7:0]  io_in_bits_pitch,
+  input  [7:0]  io_in_bits_level,
+  input  [3:0]  io_in_bits_pan,
+  output        io_out_valid,
+  output [15:0] io_out_bits_state_samples_0,
+  output [15:0] io_out_bits_state_samples_1,
+  output        io_out_bits_state_underflow,
+  output [15:0] io_out_bits_state_adpcmStep,
+  output [9:0]  io_out_bits_state_lerpIndex,
+  output        io_out_bits_state_loopEnable,
+  output [15:0] io_out_bits_state_loopStep,
+  output [15:0] io_out_bits_state_loopSample,
+  output [16:0] io_out_bits_audio_left,
+  output        io_pcmData_ready,
+  input         io_pcmData_valid,
+  input  [3:0]  io_pcmData_bits,
+  input         io_loopStart
+);
+
+  wire [16:0] _lerp_io_samples_0;
+  wire [16:0] _lerp_io_out;
+  wire [16:0] _adpcm_io_in_step;
+  wire [16:0] _adpcm_io_out_step;
+  wire [16:0] _adpcm_io_out_sample;
+  reg  [2:0]  stateReg;
+  reg  [15:0] inputReg_state_samples_0;
+  reg  [15:0] inputReg_state_samples_1;
+  reg         inputReg_state_underflow;
+  reg  [15:0] inputReg_state_adpcmStep;
+  reg  [9:0]  inputReg_state_lerpIndex;
+  reg         inputReg_state_loopEnable;
+  reg  [15:0] inputReg_state_loopStep;
+  reg  [15:0] inputReg_state_loopSample;
+  reg  [7:0]  inputReg_pitch;
+  reg  [7:0]  inputReg_level;
+  reg  [3:0]  inputReg_pan;
+  reg  [16:0] sampleReg;
+  reg  [16:0] audioReg_left;
+  reg  [3:0]  pcmDataReg;
+  wire [16:0] lerp_io_samples_1 =
+    {inputReg_state_samples_1[15], inputReg_state_samples_1};
+  wire        io_in_ready_0 = stateReg == 3'h0;
+  reg  [2:0]  casez_tmp;
+  always @(*) begin
+    casez (stateReg)
+      3'b000:
+        casez_tmp = io_in_valid ? 3'h1 : stateReg;
+      3'b001:
+        casez_tmp = inputReg_state_underflow ? 3'h2 : 3'h4;
+      3'b010:
+        casez_tmp = io_pcmData_valid ? 3'h3 : stateReg;
+      3'b011:
+        casez_tmp = 3'h4;
+      3'b100:
+        casez_tmp = 3'h5;
+      3'b101:
+        casez_tmp = 3'h6;
+      3'b110:
+        casez_tmp = 3'h7;
+      default:
+        casez_tmp = 3'h0;
+    endcase
+  end // always @(*)
+  wire        io_pcmData_ready_0 = stateReg == 3'h2;
+  wire        _sample_T = io_loopStart & inputReg_state_loopEnable;
+  wire [9:0]  _index_T_2 =
+    10'(inputReg_state_lerpIndex + 10'({2'h0, inputReg_pitch} + 10'h1));
+  wire        _inputReg_T = io_in_ready_0 & io_in_valid;
+  wire        _io_debug_decode_T = stateReg == 3'h3;
+  wire        _GEN = _io_debug_decode_T & io_loopStart & ~inputReg_state_loopEnable;
+  wire        _io_debug_interpolate_T = stateReg == 3'h4;
+  wire        _GEN_0 =
+    _inputReg_T ? io_in_bits_state_loopEnable : inputReg_state_loopEnable;
+  wire [25:0] _sampleReg_T_2 =
+    26'({{9{sampleReg[16]}}, sampleReg} * {17'h0, 9'({1'h0, inputReg_level} + 9'h1)});
+  wire [19:0] _left_T_2 =
+    20'({{3{sampleReg[16]}}, sampleReg} * {17'h0, ~(inputReg_pan[2:0])});
+  always @(posedge clock) begin
+    if (reset)
+      stateReg <= 3'h0;
+    else
+      stateReg <= casez_tmp;
+    if (_io_debug_decode_T) begin
+      inputReg_state_samples_0 <= inputReg_state_samples_1;
+      inputReg_state_samples_1 <=
+        _sample_T ? inputReg_state_loopSample : _adpcm_io_out_sample[15:0];
+      inputReg_state_adpcmStep <=
+        _sample_T ? inputReg_state_loopStep : _adpcm_io_out_step[15:0];
+    end
+    else if (_inputReg_T) begin
+      inputReg_state_samples_0 <= io_in_bits_state_samples_0;
+      inputReg_state_samples_1 <= io_in_bits_state_samples_1;
+      inputReg_state_adpcmStep <= io_in_bits_state_adpcmStep;
+    end
+    if (_io_debug_interpolate_T) begin
+      inputReg_state_underflow <= _index_T_2[9];
+      inputReg_state_lerpIndex <= {1'h0, _index_T_2[8:0]};
+    end
+    else if (_inputReg_T) begin
+      inputReg_state_underflow <= io_in_bits_state_underflow;
+      inputReg_state_lerpIndex <= io_in_bits_state_lerpIndex;
+    end
+    inputReg_state_loopEnable <= _GEN | _GEN_0;
+    if (_GEN) begin
+      inputReg_state_loopStep <= _adpcm_io_out_step[15:0];
+      inputReg_state_loopSample <= _adpcm_io_out_sample[15:0];
+    end
+    else if (_inputReg_T) begin
+      inputReg_state_loopStep <= io_in_bits_state_loopStep;
+      inputReg_state_loopSample <= io_in_bits_state_loopSample;
+    end
+    if (_inputReg_T) begin
+      inputReg_pitch <= io_in_bits_pitch;
+      inputReg_level <= io_in_bits_level;
+      inputReg_pan <= io_in_bits_pan;
+    end
+    if (stateReg == 3'h5)
+      sampleReg <= _sampleReg_T_2[25:9];
+    else if (_io_debug_interpolate_T)
+      sampleReg <= _lerp_io_out;
+    if (stateReg == 3'h6)
+      audioReg_left <= inputReg_pan > 4'h8 ? _left_T_2[19:3] : sampleReg;
+    if (io_pcmData_ready_0 & io_pcmData_valid)
+      pcmDataReg <= io_pcmData_bits;
+  end // always @(posedge)
+  assign _adpcm_io_in_step = {inputReg_state_adpcmStep[15], inputReg_state_adpcmStep};
+  ADPCM adpcm (
+    .io_data       (pcmDataReg),
+    .io_in_step    (_adpcm_io_in_step),
+    .io_in_sample  (lerp_io_samples_1),
+    .io_out_step   (_adpcm_io_out_step),
+    .io_out_sample (_adpcm_io_out_sample)
+  );
+  assign _lerp_io_samples_0 = {inputReg_state_samples_0[15], inputReg_state_samples_0};
+  LERP lerp (
+    .io_samples_0 (_lerp_io_samples_0),
+    .io_samples_1 (lerp_io_samples_1),
+    .io_index     (inputReg_state_lerpIndex),
+    .io_out       (_lerp_io_out)
+  );
+  assign io_in_ready = io_in_ready_0;
+  assign io_out_valid = &stateReg;
+  assign io_out_bits_state_samples_0 = inputReg_state_samples_0;
+  assign io_out_bits_state_samples_1 = inputReg_state_samples_1;
+  assign io_out_bits_state_underflow = inputReg_state_underflow;
+  assign io_out_bits_state_adpcmStep = inputReg_state_adpcmStep;
+  assign io_out_bits_state_lerpIndex = inputReg_state_lerpIndex;
+  assign io_out_bits_state_loopEnable = inputReg_state_loopEnable;
+  assign io_out_bits_state_loopStep = inputReg_state_loopStep;
+  assign io_out_bits_state_loopSample = inputReg_state_loopSample;
+  assign io_out_bits_audio_left = audioReg_left;
+  assign io_pcmData_ready = io_pcmData_ready_0;
+endmodule
+

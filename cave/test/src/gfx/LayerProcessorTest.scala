@@ -32,14 +32,14 @@
 
 package cave.gfx
 
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
 
-class LayerProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
+class LayerProcessorTest extends AnyFlatSpec with ChiselSim with Matchers {
   it should "load small tiles from VRAM" in {
-    test(new LayerProcessor(0)) { dut =>
+    simulate(new LayerProcessor(0)) { dut =>
       dut.io.ctrl.regs.tileSize.poke(false)
       dut.io.video.pos.x.poke(0)
       dut.io.ctrl.vram16x16.rd.expect(true)
@@ -52,7 +52,7 @@ class LayerProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Mat
   }
 
   it should "load large tiles from VRAM" in {
-    test(new LayerProcessor(0)) { dut =>
+    simulate(new LayerProcessor(0)) { dut =>
       dut.io.ctrl.regs.tileSize.poke(true)
       dut.io.video.pos.x.poke(0)
       dut.io.ctrl.vram16x16.rd.expect(true)
@@ -65,7 +65,7 @@ class LayerProcessorTest extends AnyFlatSpec with ChiselScalatestTester with Mat
   }
 
   it should "load line effects from VRAM" in {
-    test(new LayerProcessor(0)) { dut =>
+    simulate(new LayerProcessor(0)) { dut =>
       dut.io.ctrl.lineRam.rd.expect(true)
       dut.io.ctrl.lineRam.addr.expect(0x11)
     }

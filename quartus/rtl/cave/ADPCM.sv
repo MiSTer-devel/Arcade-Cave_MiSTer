@@ -1,0 +1,82 @@
+module ADPCM(
+  input  [3:0]  io_data,
+  input  [16:0] io_in_step,
+  input  [16:0] io_in_sample,
+  output [16:0] io_out_step,
+  output [16:0] io_out_sample
+);
+
+  reg  [10:0] casez_tmp;
+  always @(*) begin
+    casez (io_data[2:0])
+      3'b000:
+        casez_tmp = 11'hE6;
+      3'b001:
+        casez_tmp = 11'hE6;
+      3'b010:
+        casez_tmp = 11'hE6;
+      3'b011:
+        casez_tmp = 11'hE6;
+      3'b100:
+        casez_tmp = 11'h133;
+      3'b101:
+        casez_tmp = 11'h199;
+      3'b110:
+        casez_tmp = 11'h200;
+      default:
+        casez_tmp = 11'h266;
+    endcase
+  end // always @(*)
+  wire [27:0] _step_T_1 =
+    28'({{11{io_in_step[16]}}, io_in_step} * {{17{casez_tmp[10]}}, casez_tmp});
+  wire [19:0] _io_out_step_T_1 =
+    $signed(_step_T_1[27:8]) < 20'sh7F ? 20'h7F : _step_T_1[27:8];
+  reg  [4:0]  casez_tmp_0;
+  always @(*) begin
+    casez (io_data)
+      4'b0000:
+        casez_tmp_0 = 5'h1;
+      4'b0001:
+        casez_tmp_0 = 5'h3;
+      4'b0010:
+        casez_tmp_0 = 5'h5;
+      4'b0011:
+        casez_tmp_0 = 5'h7;
+      4'b0100:
+        casez_tmp_0 = 5'h9;
+      4'b0101:
+        casez_tmp_0 = 5'hB;
+      4'b0110:
+        casez_tmp_0 = 5'hD;
+      4'b0111:
+        casez_tmp_0 = 5'hF;
+      4'b1000:
+        casez_tmp_0 = 5'h1F;
+      4'b1001:
+        casez_tmp_0 = 5'h1D;
+      4'b1010:
+        casez_tmp_0 = 5'h1B;
+      4'b1011:
+        casez_tmp_0 = 5'h19;
+      4'b1100:
+        casez_tmp_0 = 5'h17;
+      4'b1101:
+        casez_tmp_0 = 5'h15;
+      4'b1110:
+        casez_tmp_0 = 5'h13;
+      default:
+        casez_tmp_0 = 5'h11;
+    endcase
+  end // always @(*)
+  wire [21:0] _delta_T =
+    22'({{5{io_in_step[16]}}, io_in_step} * {{17{casez_tmp_0[4]}}, casez_tmp_0});
+  wire [19:0] _io_out_sample_T =
+    20'({{3{io_in_sample[16]}}, io_in_sample} + {_delta_T[21], _delta_T[21:3]});
+  wire [19:0] _io_out_sample_T_2 =
+    $signed(_io_out_sample_T) < -20'sh8000 ? 20'hF8000 : _io_out_sample_T;
+  assign io_out_step =
+    $signed(_io_out_step_T_1) < 20'sh6000 ? _io_out_step_T_1[16:0] : 17'h6000;
+  assign io_out_sample =
+    $signed(_io_out_sample_T_2) < 20'sh7FFF ? _io_out_sample_T_2[16:0] : 17'h7FFF;
+endmodule
+

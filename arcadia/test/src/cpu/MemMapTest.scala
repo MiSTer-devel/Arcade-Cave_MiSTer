@@ -35,7 +35,7 @@ package arcadia.cpu
 import arcadia.cpu.m68k._
 import arcadia.mem._
 import chisel3._
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest._
 import flatspec.AnyFlatSpec
 import matchers.should.Matchers
@@ -67,9 +67,9 @@ trait MemMapTestHelpers {
   }
 }
 
-class MemMapTest extends AnyFlatSpec with ChiselScalatestTester with Matchers with MemMapTestHelpers {
+class MemMapTest extends AnyFlatSpec with ChiselSim with Matchers with MemMapTestHelpers {
   it should "map an async memory device" in {
-    test(mkWrapper) { dut =>
+    simulate(mkWrapper) { dut =>
       // Start read request
       dut.io.cpu.as.poke(true)
       dut.io.cpu.rw.poke(true)
@@ -94,7 +94,7 @@ class MemMapTest extends AnyFlatSpec with ChiselScalatestTester with Matchers wi
   }
 
   it should "assert DTACK when valid data is available" in {
-    test(mkWrapper) { dut =>
+    simulate(mkWrapper) { dut =>
       // Start read request
       dut.io.cpu.as.poke(true)
       dut.io.cpu.rw.poke(true)

@@ -43,7 +43,7 @@ import chisel3._
 class SinglePortRom(addrWidth: Int, dataWidth: Int, depth: Int, initFile: String) extends Module {
   val io = IO(Flipped(ReadMemIO(addrWidth, dataWidth)))
 
-  class WrappedSinglePortRam extends BlackBox(
+  class WrappedSinglePortRam extends ExtModule(
     Map(
       "ADDR_WIDTH" -> addrWidth,
       "DATA_WIDTH" -> dataWidth,
@@ -51,7 +51,7 @@ class SinglePortRom(addrWidth: Int, dataWidth: Int, depth: Int, initFile: String
       "INIT_FILE" -> initFile
     )
   ) {
-    val io = IO(new Bundle {
+    val io = FlatIO(new Bundle {
       val clk = Input(Clock())
       val rd = Input(Bool())
       val addr = Input(UInt(addrWidth.W))

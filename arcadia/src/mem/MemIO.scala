@@ -145,8 +145,8 @@ object ReadMemIO {
     val mem = Wire(chiselTypeOf(mapping.head._2))
     val rdMap = mapping.map(a => a._1 -> a._2.rd)
     val addrMap = mapping.map(a => a._1 -> a._2.addr)
-    mem.rd := MuxLookup(key, default.rd, rdMap)
-    mem.addr := MuxLookup(key, default.addr, addrMap)
+    mem.rd := MuxLookup(key, default.rd)(rdMap)
+    mem.addr := MuxLookup(key, default.addr)(addrMap)
     default.dout := mem.dout
     mapping.foreach { case (_, out) =>
       out.dout := mem.dout
@@ -168,7 +168,7 @@ object ReadMemIO {
       out.addr := mem.addr
     }
     val doutMap = outs.map(a => a._1 -> a._2.dout)
-    mem.dout := MuxLookup(key, 0.U, doutMap)
+    mem.dout := MuxLookup(key, 0.U)(doutMap)
     mem
   }
 }
@@ -256,10 +256,10 @@ object WriteMemIO {
     val addrMap = outs.map(a => a._1 -> a._2.addr)
     val maskMap = outs.map(a => a._1 -> a._2.mask)
     val dataMap = outs.map(a => a._1 -> a._2.din)
-    mem.wr := MuxLookup(key, false.B, writeMap)
-    mem.addr := MuxLookup(key, DontCare, addrMap)
-    mem.mask := MuxLookup(key, DontCare, maskMap)
-    mem.din := MuxLookup(key, DontCare, dataMap)
+    mem.wr := MuxLookup(key, false.B)(writeMap)
+    mem.addr := MuxLookup(key, 0.U)(addrMap)
+    mem.mask := MuxLookup(key, 0.U)(maskMap)
+    mem.din := MuxLookup(key, 0.U)(dataMap)
     mem
   }
 }
