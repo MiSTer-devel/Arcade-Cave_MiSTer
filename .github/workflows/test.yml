@@ -29,5 +29,6 @@ jobs:
           ARTIFACT=oss-cad-suite-linux-x64-$(echo $VERSION | tr -d '-')
           wget -q -O - https://github.com/YosysHQ/oss-cad-suite-build/releases/download/${VERSION}/${ARTIFACT}.tgz | tar -zx
           echo "$(pwd)/oss-cad-suite/bin" >> $GITHUB_PATH
-      - name: Units tests
+     - name: Units tests
++       shell: bash
         run: ./bin/mill _.test
