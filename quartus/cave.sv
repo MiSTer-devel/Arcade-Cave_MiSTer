@@ -66,6 +66,8 @@ module emu (
   input  [11:0] HDMI_WIDTH,
   input  [11:0] HDMI_HEIGHT,
   output        HDMI_FREEZE,
+  output        HDMI_BLACKOUT,
+  output        HDMI_BOB_DEINT,
 
   // Use framebuffer in DDRAM (USE_FB=1 in qsf)
   // FB_FORMAT:
@@ -366,6 +368,8 @@ assign VGA_F1 = 0;
 assign VGA_SL = sl[1:0];
 assign VGA_SCALER = 0;
 assign HDMI_FREEZE = 0;
+assign HDMI_BLACKOUT = 0;
+assign HDMI_BOB_DEINT = 0;
 
 video_mixer #(.LINE_LENGTH(320), .HALF_DEPTH(0), .GAMMA(1)) video_mixer (
   .CLK_VIDEO(clk_video),
