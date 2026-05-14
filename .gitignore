@@ -16,3 +16,4 @@ quartus/jtag.cdf
 quartus/output_files
 quartus/rtl/cave/Cave.fir
 test_run_dir
+.DS_Store
