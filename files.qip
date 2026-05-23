@@ -1,0 +1,82 @@
+#------------------------------------------------------------------------------#
+# These files are static files that are _not_ generated.
+#------------------------------------------------------------------------------#
+set_global_assignment -name QIP_FILE rtl/pll.qip
+set_global_assignment -name QIP_FILE rtl/pll_video.qip
+set_global_assignment -name QIP_FILE rtl/arcadia/arcadia.qip
+set_global_assignment -name QIP_FILE rtl/fx68k/fx68k.qip
+set_global_assignment -name QIP_FILE rtl/jt03/jt03.qip
+set_global_assignment -name QIP_FILE rtl/jt6295/jt6295.qip
+set_global_assignment -name QIP_FILE rtl/t80/t80.qip
+set_global_assignment -name QIP_FILE sys/pll_audio.qip
+set_global_assignment -name QIP_FILE sys/pll_cfg.qip
+set_global_assignment -name QIP_FILE sys/pll_hdmi.qip
+set_global_assignment -name VERILOG_FILE rtl/reset_ctrl.v
+set_global_assignment -name SYSTEMVERILOG_FILE Arcade-Cave.sv
+set_global_assignment -name SDC_FILE Arcade-Cave.sdc
+
+#------------------------------------------------------------------------------#
+# Hand-maintained Cave HDL.
+#------------------------------------------------------------------------------#
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveAsyncMemArbiters.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/AudioMixer.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/AudioPipeline.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveBurstDMAs.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/MazingerSpriteDecryptDMA.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveBurstBuffers.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveBurstMemArbiters.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveBoardProfile.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveClockEnable.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveDebugOverlay.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/MazingerBootWatchdog.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/MazingerMainDecoder.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/MazingerMainReadMux.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/MazingerMainMap.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveDualClockFIFO.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveGameConfig.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveLayerProcessor.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveMainSupport.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveOKIM6295.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CavePageFlippers.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveReadCache.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveRequestQueues.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveSinglePortRam.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveSyncReadMem.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveSyncQueue.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveTrueDualPortRam.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveVideoTiming.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/Cave.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveNvramWriteBackCache.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/ChannelController.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/ColorMixer.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveTileRomClockCrossing.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveCpuWrappers.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveDataFreezers.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/DDR.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/EEPROM.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/GPU.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/Main.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/MemSys.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/NMK112.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveRegisterFiles.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/SDRAM.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/Sound.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/SpriteBlitter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/SpriteDecoder.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveSpriteHelpers.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/SpriteFrameBuffer.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/SpriteProcessor.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/SystemFrameBuffer.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/VideoSys.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/YM2203.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/YMZ280B.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveYMZ280BHelpers.sv
+
+# Optional debug overlay. Uncomment while debugging to make the Debug Video menu draw
+# the core-owned grid/text overlay. Normal builds leave it out of the active logic.
+# set_global_assignment -name VERILOG_MACRO "CAVE_ENABLE_DEBUG_OVERLAY=1"
+
+#------------------------------------------------------------------------------#
+# No active Cave HDL in this build is generated by the normal flow. The legacy
+# Chisel source lives under legacy/chisel as reference material only.
+#------------------------------------------------------------------------------#

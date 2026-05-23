@@ -21,7 +21,7 @@ This project contains the MiSTer core for Cave's first-generation 68000 arcade h
 | [**Air Gallet**](https://en.wikipedia.org/wiki/Air_Gallet)                                                            | Unimplemented |
 | [**Hotdog Storm**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=hotdogst&arcade_only=0&autosearch=1)      | WIP           |
 | [**Koro Koro Quest**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=korokoro&arcade_only=0&autosearch=1)   | Unimplemented |
-| [**Mazinger Z**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=mazinger&arcade_only=0&autosearch=1)        | Unimplemented |
+| [**Mazinger Z**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=mazinger&arcade_only=0&autosearch=1)        | Public        |
 | [**Gogetsuji Legends**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=plegends&arcade_only=0&autosearch=1) | Unimplemented |
 | [**Power Instinct 2**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=pwrinst2&arcade_only=0&autosearch=1)  | Unimplemented |
 | [**Saikyou Densetsu**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=plegendsj&arcade_only=0&autosearch=1) | Unimplemented |
@@ -50,13 +50,25 @@ The table template and attached image credit goes to [**atrac17**](https://githu
 
 ## Development
 
-This core is primarily written in [Chisel](https://www.chisel-lang.org/).
+This core now uses a standard MiSTer-style root layout:
 
-To compile this core you will need a working Scala environment and Intel Quartus 17 (or greater).
+- `rtl/` contains the active HDL. `rtl/cave/` is the hand-maintained Cave core.
+- `sys/` is the MiSTer framework drop-in. Do not hand-edit files inside it;
+  update it by replacing the folder from a known-good template.
+- `mra/` contains the active MRA files.
+- `legacy/chisel/` keeps the original Chisel source as reference material only.
+- `releases/` keeps historical RBF/MRA release artifacts.
+
+To compile this core you will need Intel Quartus 17 or greater. Regenerating
+the legacy Chisel reference also requires a working Scala/JDK environment.
 
 Compile the core:
 
     make build
+
+Regenerate the legacy Chisel reference HDL under `legacy/generated/cave/`:
+
+    make generate-rtl
 
 Program the DE10-Nano:
 
