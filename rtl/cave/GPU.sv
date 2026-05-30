@@ -105,8 +105,13 @@ module GPU(
   output [31:0]  io_systemFrameBuffer_din,
   output [14:0]  io_paletteRam_addr,
   input  [15:0]  io_paletteRam_dout,
-  output [23:0]  io_rgb,
-  output [63:0]  io_debug_video
+  output [23:0]  io_rgb
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+  ,
+  output [63:0]  io_debug_video,
+  output [63:0]  io_debug_readout,
+  output [23:0]  io_debug_source_rgb
+`endif
 );
   wire [1:0]  layer0PenPriority;
   wire [5:0]  layer0PenPalette;
@@ -166,11 +171,175 @@ module GPU(
 
   wire activeDisplayPixel = io_video_clockEnable & io_video_displayEnable;
   wire [63:0] spriteDebug;
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+  wire [3:0]  mixerDebugSelectedPen;
+  wire [3:0]  mixerDebugVisibleMask;
+
+  reg          debugSpriteVisibleReg;
+  reg  [5:0]  debugSpritePaletteReg;
+  reg  [7:0]  debugSpriteColorReg;
+  reg          debugVideoVBlankReg;
+  reg  [7:0]  debugCenterFlagsFrame;
+  reg  [7:0]  debugLeftFlagsFrame;
+  reg  [7:0]  debugMismatchRightFlagsFrame;
+  reg  [7:0]  debugMismatchRightMaskFrame;
+  reg  [7:0]  debugCenterRgbFrame;
+  reg  [7:0]  debugLeftRgbFrame;
+  reg  [7:0]  debugMismatchRightRgbFrame;
+  reg  [7:0]  debugCenterBrightCount;
+  reg  [7:0]  debugLeftBrightCount;
+  reg          debugCenterSampleValid;
+  reg          debugLeftSampleValid;
+  reg          debugFlashMismatchFrame;
+  reg  [7:0]  debugFlashEventFlagsLatched;
+  reg  [7:0]  debugCenterFlagsLatched;
+  reg  [7:0]  debugLeftFlagsLatched;
+  reg  [7:0]  debugMismatchRightFlagsLatched;
+  reg  [7:0]  debugMismatchRightMaskLatched;
+  reg  [7:0]  debugCenterRgbLatched;
+  reg  [7:0]  debugLeftRgbLatched;
+  reg  [7:0]  debugMismatchRightRgbLatched;
+  reg  [7:0]  debugFlashMismatchHistory;
+  wire [7:0]  debugSpriteShade = debugSpriteColorReg ^ {debugSpritePaletteReg, 2'b00};
+  wire        debugVideoVBlankRising = io_video_vBlank & ~debugVideoVBlankReg;
+  wire        debugOutputNonBlack = |videoRgb888;
+  wire        debugOutputBright =
+    (|videoRgb888[23:21]) |
+    (|videoRgb888[15:13]) |
+    (|videoRgb888[7:5]);
+  wire [7:0]  debugRgbCompact = {videoRgb888[23:21], videoRgb888[15:13], videoRgb888[7:6]};
+  wire [7:0]  debugMixerSourceFlags = {
+    1'b1,
+    debugOutputBright,
+    debugOutputNonBlack,
+    mixerDebugSelectedPen[3],
+    mixerDebugSelectedPen[2],
+    mixerDebugSelectedPen[1],
+    mixerDebugSelectedPen[0],
+    ~|mixerDebugSelectedPen
+  };
+  wire [8:0]  debugCenterX = {1'b0, io_video_regs_size_x[8:1]};
+  wire        debugCenterPixel =
+    activeDisplayPixel &
+    (io_video_pos_x >= (debugCenterX - 9'h008)) &
+    (io_video_pos_x <  (debugCenterX + 9'h008));
+  wire        debugLeftEdgePixel = activeDisplayPixel & (io_video_pos_x < 9'h010);
+  wire        debugRightEdgePixel =
+    activeDisplayPixel & (io_video_pos_x >= (io_video_regs_size_x - 9'h010));
+  wire        debugFlashMismatchPixel =
+    debugRightEdgePixel &
+    debugOutputBright &
+    debugCenterSampleValid &
+    debugLeftSampleValid &
+    (debugCenterRgbFrame == debugLeftRgbFrame) &
+    (debugRgbCompact != debugCenterRgbFrame);
+  wire        debugFlashMismatchFrameEvent =
+    debugFlashMismatchFrame &
+    (debugCenterBrightCount >= 8'h80) &
+    (debugLeftBrightCount >= 8'h80);
+  wire [23:0] debugFillRgb =
+    (io_video_pos_x[3] ^ io_video_pos_y[3]) ? 24'h181818 : 24'h080808;
+  wire [23:0] debugRawSpriteRgb =
+    debugSpriteVisibleReg
+      ? {8'h80 | debugSpriteShade[7:1], 8'h20 | debugSpriteShade[6:2], 8'h20}
+      : debugFillRgb;
+`endif
 
   always @(posedge io_videoClock) begin
     systemFramebufferWrReg <= activeDisplayPixel;
     systemFramebufferAddrReg <= nextSystemFramebufferAddr;
     systemFramebufferDinReg <= {8'h00, framebufferRgb888};
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+    if (io_video_clockEnable) begin
+      debugSpriteVisibleReg <= io_video_displayEnable & (|spritePenColor);
+      debugSpritePaletteReg <= spritePenPalette;
+      debugSpriteColorReg <= spritePenColor;
+      debugVideoVBlankReg <= io_video_vBlank;
+
+      if (reset) begin
+        debugCenterFlagsFrame <= 8'h00;
+        debugLeftFlagsFrame <= 8'h00;
+        debugMismatchRightFlagsFrame <= 8'h00;
+        debugMismatchRightMaskFrame <= 8'h00;
+        debugCenterRgbFrame <= 8'h00;
+        debugLeftRgbFrame <= 8'h00;
+        debugMismatchRightRgbFrame <= 8'h00;
+        debugCenterBrightCount <= 8'h00;
+        debugLeftBrightCount <= 8'h00;
+        debugCenterSampleValid <= 1'b0;
+        debugLeftSampleValid <= 1'b0;
+        debugFlashMismatchFrame <= 1'b0;
+        debugFlashEventFlagsLatched <= 8'h00;
+        debugCenterFlagsLatched <= 8'h00;
+        debugLeftFlagsLatched <= 8'h00;
+        debugMismatchRightFlagsLatched <= 8'h00;
+        debugMismatchRightMaskLatched <= 8'h00;
+        debugCenterRgbLatched <= 8'h00;
+        debugLeftRgbLatched <= 8'h00;
+        debugMismatchRightRgbLatched <= 8'h00;
+        debugFlashMismatchHistory <= 8'h00;
+      end
+      else if (debugVideoVBlankRising) begin
+        debugFlashMismatchHistory <= {
+          debugFlashMismatchHistory[6:0],
+          debugFlashMismatchFrameEvent
+        };
+        if (debugFlashMismatchFrameEvent) begin
+          debugFlashEventFlagsLatched <= {
+            debugMismatchRightFlagsFrame[6],
+            |debugMismatchRightFlagsFrame[4:1],
+            1'b1,
+            1'b1,
+            debugFlashMismatchFrame,
+            debugCenterRgbFrame == debugLeftRgbFrame,
+            1'b1,
+            1'b1
+          };
+          debugCenterFlagsLatched <= debugCenterFlagsFrame;
+          debugLeftFlagsLatched <= debugLeftFlagsFrame;
+          debugMismatchRightFlagsLatched <= debugMismatchRightFlagsFrame;
+          debugMismatchRightMaskLatched <= debugMismatchRightMaskFrame;
+          debugCenterRgbLatched <= debugCenterRgbFrame;
+          debugLeftRgbLatched <= debugLeftRgbFrame;
+          debugMismatchRightRgbLatched <= debugMismatchRightRgbFrame;
+        end
+        debugCenterFlagsFrame <= 8'h00;
+        debugLeftFlagsFrame <= 8'h00;
+        debugMismatchRightFlagsFrame <= 8'h00;
+        debugMismatchRightMaskFrame <= 8'h00;
+        debugCenterRgbFrame <= 8'h00;
+        debugLeftRgbFrame <= 8'h00;
+        debugMismatchRightRgbFrame <= 8'h00;
+        debugCenterBrightCount <= 8'h00;
+        debugLeftBrightCount <= 8'h00;
+        debugCenterSampleValid <= 1'b0;
+        debugLeftSampleValid <= 1'b0;
+        debugFlashMismatchFrame <= 1'b0;
+      end
+      else begin
+        if (debugCenterPixel & debugOutputBright) begin
+          debugCenterFlagsFrame <= debugMixerSourceFlags;
+          debugCenterRgbFrame <= debugRgbCompact;
+          debugCenterSampleValid <= 1'b1;
+          if (debugCenterBrightCount != 8'hff)
+            debugCenterBrightCount <= debugCenterBrightCount + 8'h01;
+        end
+        if (debugLeftEdgePixel & debugOutputBright) begin
+          debugLeftFlagsFrame <= debugMixerSourceFlags;
+          debugLeftRgbFrame <= debugRgbCompact;
+          debugLeftSampleValid <= 1'b1;
+          if (debugLeftBrightCount != 8'hff)
+            debugLeftBrightCount <= debugLeftBrightCount + 8'h01;
+        end
+        if (debugFlashMismatchPixel) begin
+          debugMismatchRightFlagsFrame <= debugMixerSourceFlags;
+          debugMismatchRightMaskFrame <= {mixerDebugSelectedPen, mixerDebugVisibleMask};
+          debugMismatchRightRgbFrame <= debugRgbCompact;
+          debugFlashMismatchFrame <= 1'b1;
+        end
+      end
+    end
+`endif
   end
 
   SpriteProcessor spriteProcessor (
@@ -338,6 +507,11 @@ module GPU(
     .io_paletteRam_addr                (io_paletteRam_addr),
     .io_paletteRam_dout                (io_paletteRam_dout),
     .io_dout                           (paletteColor)
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+    ,
+    .io_debug_selectedPen              (mixerDebugSelectedPen),
+    .io_debug_visibleMask              (mixerDebugVisibleMask)
+`endif
   );
 
   assign io_spriteLineBuffer_addr = io_video_pos_x;
@@ -346,8 +520,17 @@ module GPU(
   assign io_systemFrameBuffer_din = systemFramebufferDinReg;
   assign io_rgb = videoRgb888;
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
-  assign io_debug_video = spriteDebug;
-`else
-  assign io_debug_video = 64'd0;
+  assign io_debug_video = {
+    debugFlashMismatchHistory,
+    debugMismatchRightRgbLatched,
+    debugLeftRgbLatched,
+    debugCenterRgbLatched,
+    debugMismatchRightMaskLatched,
+    debugMismatchRightFlagsLatched,
+    debugLeftFlagsLatched,
+    debugFlashEventFlagsLatched
+  };
+  assign io_debug_readout = io_debug_video;
+  assign io_debug_source_rgb = io_video_displayEnable ? debugRawSpriteRgb : 24'h000000;
 `endif
 endmodule

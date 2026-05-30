@@ -22,6 +22,13 @@ module ColorMixer(
   output [14:0] io_paletteRam_addr,
   input  [15:0] io_paletteRam_dout,
   output [15:0] io_dout
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+  ,
+  output [3:0]  io_debug_selectedPen,
+  output [5:0]  io_debug_selectedPalette,
+  output [7:0]  io_debug_selectedColor,
+  output [3:0]  io_debug_visibleMask
+`endif
 );
   localparam [3:0] PEN_FILL   = 4'h0;
   localparam [3:0] PEN_SPRITE = 4'h1;
@@ -122,10 +129,44 @@ module ColorMixer(
   wire [14:0] addrLayer1 = selectedPen == PEN_LAYER1 ? layer1Addr : addrLayer0;
   wire [14:0] paletteRamAddr = selectedPen == PEN_LAYER2 ? layer2Addr : addrLayer1;
 
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+  wire [5:0] selectedPalette =
+    selectedPen == PEN_SPRITE ? io_spritePen_palette :
+    selectedPen == PEN_LAYER0 ? io_layer0Pen_palette :
+    selectedPen == PEN_LAYER1 ? io_layer1Pen_palette :
+    selectedPen == PEN_LAYER2 ? io_layer2Pen_palette :
+                                6'h00;
+  wire [7:0] selectedColor =
+    selectedPen == PEN_SPRITE ? io_spritePen_color :
+    selectedPen == PEN_LAYER0 ? io_layer0Pen_color :
+    selectedPen == PEN_LAYER1 ? io_layer1Pen_color :
+    selectedPen == PEN_LAYER2 ? io_layer2Pen_color :
+                                8'h00;
+  wire [3:0] visibleMask = {layer2Visible, layer1Visible, layer0Visible, spriteVisible};
+
+  reg [3:0] debugSelectedPenReg;
+  reg [5:0] debugSelectedPaletteReg;
+  reg [7:0] debugSelectedColorReg;
+  reg [3:0] debugVisibleMaskReg;
+`endif
+
   reg [15:0] pixelReg;
-  always @(posedge clock)
+  always @(posedge clock) begin
     pixelReg <= io_paletteRam_dout;
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+    debugSelectedPenReg <= selectedPen;
+    debugSelectedPaletteReg <= selectedPalette;
+    debugSelectedColorReg <= selectedColor;
+    debugVisibleMaskReg <= visibleMask;
+`endif
+  end
 
   assign io_paletteRam_addr = paletteRamAddr;
   assign io_dout = pixelReg;
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+  assign io_debug_selectedPen = debugSelectedPenReg;
+  assign io_debug_selectedPalette = debugSelectedPaletteReg;
+  assign io_debug_selectedColor = debugSelectedColorReg;
+  assign io_debug_visibleMask = debugVisibleMaskReg;
+`endif
 endmodule

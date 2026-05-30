@@ -148,6 +148,8 @@ module Cave(
   wire [63:0]  _main_io_debug_palette;
   wire [63:0]  _sound_io_debug;
   wire [63:0]  _gpu_io_debug_video;
+  wire [63:0]  _gpu_io_debug_readout;
+  wire [23:0]  _gpu_io_debug_source_rgb;
 `endif
   wire [23:0]  _gpu_rgb;
   wire [15:0]  _main_io_soundCtrl_oki_0_dout;
@@ -411,17 +413,22 @@ module Cave(
   wire         effectiveRotate = options_rotate;
   wire         videoVBlankFalling = ~videoVBlankPipe1 & videoVBlankPipe2;
   wire         spriteStartAllowed = ~gameIsMazinger | mazingerSpriteSwapPrimed;
+  wire         mazingerSpriteSwapReady =
+    ~mazingerSpriteSwapPrimed | _gpu_io_spriteCtrl_frameReady;
   wire         spriteFrameBufferSwap =
     _main_io_spriteFrameBufferSwap &
-    (~gameIsMazinger | ~mazingerSpriteSwapPrimed | _gpu_io_spriteCtrl_frameReady);
+    (~gameIsMazinger | mazingerSpriteSwapReady);
   always @(posedge clock) begin
     videoVBlankPipe0 <= _videoSys_io_video_vBlank;
     videoVBlankPipe1 <= videoVBlankPipe0;
     videoVBlankPipe2 <= videoVBlankPipe1;
-    if (reset | ~_memSys_io_ready | ~gameIsMazinger)
+    if (reset | ~_memSys_io_ready | ~gameIsMazinger) begin
       mazingerSpriteSwapPrimed <= 1'b0;
-    else if (spriteFrameBufferSwap)
-      mazingerSpriteSwapPrimed <= 1'b1;
+    end
+    else begin
+      if (spriteFrameBufferSwap)
+        mazingerSpriteSwapPrimed <= 1'b1;
+    end
     if (optionGameIndexFallback)
       gameIndexReg <= options_gameIndex;
     else if (ioctlGameIndexWrite)
@@ -613,6 +620,7 @@ module Cave(
     .io_options_offset_x        (options_offset_x),
     .io_options_offset_y        (options_offset_y),
     .io_options_compatibility   (options_compatibility),
+    .io_options_wideTiming      (gameIsMazinger),
     .io_video_clockEnable       (_videoSys_io_video_clockEnable),
     .io_video_displayEnable     (_videoSys_io_video_displayEnable),
     .io_video_pos_x             (_videoSys_io_video_pos_x),
@@ -965,15 +973,18 @@ module Cave(
     .io_rgb                              (_gpu_rgb)
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
     ,
-    .io_debug_video                      (_gpu_io_debug_video)
+    .io_debug_video                      (_gpu_io_debug_video),
+    .io_debug_readout                    (_gpu_io_debug_readout),
+    .io_debug_source_rgb                 (_gpu_io_debug_source_rgb)
 `endif
   );
 
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
+  wire [63:0] mazingerSpriteProbeDebugBits = _gpu_io_debug_video;
   wire [63:0] debugBits =
     options_debugView == 3'd1 ? _main_io_debug_cpu :
     options_debugView == 3'd2 ? _main_io_debug_writes :
-    options_debugView == 3'd3 ? _main_io_debug_live :
+    options_debugView == 3'd3 ? (gameIsMazinger ? mazingerSpriteProbeDebugBits : _main_io_debug_live) :
     options_debugView == 3'd4 ? _main_io_debug_palette :
     options_debugView == 3'd5 ? _main_io_debug_data :
     options_debugView == 3'd6 ? _gpu_io_debug_video :
@@ -989,7 +1000,8 @@ module Cave(
     .io_rgb         (debugRgb)
   );
 
-  assign rgb = options_debugVideo ? debugRgb : _gpu_rgb;
+  assign rgb = (options_debugVideo & (options_debugView == 3'd6)) ? _gpu_io_debug_source_rgb :
+               options_debugVideo ? debugRgb : _gpu_rgb;
 `else
   assign rgb = _gpu_rgb;
 `endif

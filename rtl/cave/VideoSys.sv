@@ -11,6 +11,7 @@ module VideoSys(
   input  [3:0]  io_options_offset_x,
   input  [3:0]  io_options_offset_y,
   input         io_options_compatibility,
+  input         io_options_wideTiming,
   output        io_video_clockEnable,
   output        io_video_displayEnable,
   output [8:0]  io_video_pos_x,
@@ -56,11 +57,23 @@ module VideoSys(
   wire        compatibilityHBlank;
   wire        compatibilityVBlank;
 
+  wire        wideClockEnable;
+  wire        wideDisplayEnable;
+  wire [8:0]  widePosX;
+  wire [8:0]  widePosY;
+  wire        wideHSync;
+  wire        wideVSync;
+  wire        wideHBlank;
+  wire        wideVBlank;
+
   reg [3:0] originalOffsetX;
   reg [3:0] originalOffsetY;
   reg [3:0] compatibilityOffsetX;
   reg [3:0] compatibilityOffsetY;
+  reg [3:0] wideOffsetX;
+  reg [3:0] wideOffsetY;
   reg       compatibilityTimingReg;
+  reg       wideTimingReg;
 
   reg        timingClockEnableReg;
   reg        timingDisplayEnableReg;
@@ -78,29 +91,65 @@ module VideoSys(
   reg [8:0] videoRegsRetraceX;
   reg [8:0] videoRegsRetraceY;
   reg       compatibilityChangeModeReg;
+  reg       wideChangeModeReg;
 
   always @(posedge io_videoClock) begin
-    if (originalVSync) begin
-      originalOffsetX <= io_options_offset_x;
-      originalOffsetY <= io_options_offset_y;
+    if (io_videoReset) begin
+      originalOffsetX <= 4'd0;
+      originalOffsetY <= 4'd0;
+      compatibilityOffsetX <= 4'd0;
+      compatibilityOffsetY <= 4'd0;
+      wideOffsetX <= 4'd0;
+      wideOffsetY <= 4'd0;
+      compatibilityTimingReg <= 1'b0;
+      wideTimingReg <= 1'b0;
+      timingClockEnableReg <= 1'b0;
+      timingDisplayEnableReg <= 1'b0;
+      timingPosXReg <= 9'd0;
+      timingPosYReg <= 9'd0;
+      timingHSyncReg <= 1'b0;
+      timingVSyncReg <= 1'b0;
+      timingHBlankReg <= 1'b1;
+      timingVBlankReg <= 1'b1;
     end
+    else begin
+      if (originalVSync) begin
+        originalOffsetX <= io_options_offset_x;
+        originalOffsetY <= io_options_offset_y;
+      end
 
-    if (compatibilityVSync) begin
-      compatibilityOffsetX <= io_options_offset_x;
-      compatibilityOffsetY <= io_options_offset_y;
+      if (compatibilityVSync) begin
+        compatibilityOffsetX <= io_options_offset_x;
+        compatibilityOffsetY <= io_options_offset_y;
+      end
+
+      if (wideVSync) begin
+        wideOffsetX <= io_options_offset_x;
+        wideOffsetY <= io_options_offset_y;
+      end
+
+      if (originalVBlank & compatibilityVBlank & wideVBlank) begin
+        compatibilityTimingReg <= io_options_compatibility;
+        wideTimingReg <= io_options_wideTiming;
+      end
+
+      timingClockEnableReg <= wideTimingReg ? wideClockEnable :
+        compatibilityTimingReg ? compatibilityClockEnable : originalClockEnable;
+      timingDisplayEnableReg <= wideTimingReg ? wideDisplayEnable :
+        compatibilityTimingReg ? compatibilityDisplayEnable : originalDisplayEnable;
+      timingPosXReg <= wideTimingReg ? widePosX :
+        compatibilityTimingReg ? compatibilityPosX : originalPosX;
+      timingPosYReg <= wideTimingReg ? widePosY :
+        compatibilityTimingReg ? compatibilityPosY : originalPosY;
+      timingHSyncReg <= wideTimingReg ? wideHSync :
+        compatibilityTimingReg ? compatibilityHSync : originalHSync;
+      timingVSyncReg <= wideTimingReg ? wideVSync :
+        compatibilityTimingReg ? compatibilityVSync : originalVSync;
+      timingHBlankReg <= wideTimingReg ? wideHBlank :
+        compatibilityTimingReg ? compatibilityHBlank : originalHBlank;
+      timingVBlankReg <= wideTimingReg ? wideVBlank :
+        compatibilityTimingReg ? compatibilityVBlank : originalVBlank;
     end
-
-    if (originalVBlank & compatibilityVBlank)
-      compatibilityTimingReg <= io_options_compatibility;
-
-    timingClockEnableReg <= compatibilityTimingReg ? compatibilityClockEnable : originalClockEnable;
-    timingDisplayEnableReg <= compatibilityTimingReg ? compatibilityDisplayEnable : originalDisplayEnable;
-    timingPosXReg <= compatibilityTimingReg ? compatibilityPosX : originalPosX;
-    timingPosYReg <= compatibilityTimingReg ? compatibilityPosY : originalPosY;
-    timingHSyncReg <= compatibilityTimingReg ? compatibilityHSync : originalHSync;
-    timingVSyncReg <= compatibilityTimingReg ? compatibilityVSync : originalVSync;
-    timingHBlankReg <= compatibilityTimingReg ? compatibilityHBlank : originalHBlank;
-    timingVBlankReg <= compatibilityTimingReg ? compatibilityVBlank : originalVBlank;
   end
 
   always @(posedge clock) begin
@@ -122,6 +171,7 @@ module VideoSys(
     end
 
     compatibilityChangeModeReg <= io_options_compatibility;
+    wideChangeModeReg <= io_options_wideTiming;
   end
 
   CaveControlRegisterFile videoRegs (
@@ -140,7 +190,8 @@ module VideoSys(
 
   CaveVideoTiming #(
     .H_TOTAL (10'h1C0),
-    .V_TOTAL (10'h110)
+    .V_TOTAL (10'h110),
+    .CE_DIV  (8)
   ) timing_originalVideoTiming (
     .clock                   (io_videoClock),
     .reset                   (io_videoReset),
@@ -164,7 +215,8 @@ module VideoSys(
 
   CaveVideoTiming #(
     .H_TOTAL (10'h1BD),
-    .V_TOTAL (10'h106)
+    .V_TOTAL (10'h106),
+    .CE_DIV  (8)
   ) timing_compatibilityVideoTiming (
     .clock                   (io_videoClock),
     .reset                   (io_videoReset),
@@ -186,6 +238,31 @@ module VideoSys(
     .io_timing_vBlank        (compatibilityVBlank)
   );
 
+  CaveVideoTiming #(
+    .H_TOTAL (10'h200),
+    .V_TOTAL (10'h110),
+    .CE_DIV  (7)
+  ) timing_wideVideoTiming (
+    .clock                   (io_videoClock),
+    .reset                   (io_videoReset),
+    .io_display_x            (videoRegsSizeX),
+    .io_display_y            (videoRegsSizeY),
+    .io_frontPorch_x         (videoRegsFrontPorchX),
+    .io_frontPorch_y         (videoRegsFrontPorchY),
+    .io_retrace_x            (videoRegsRetraceX),
+    .io_retrace_y            (videoRegsRetraceY),
+    .io_offset_x             (wideOffsetX),
+    .io_offset_y             (wideOffsetY),
+    .io_timing_clockEnable   (wideClockEnable),
+    .io_timing_displayEnable (wideDisplayEnable),
+    .io_timing_pos_x         (widePosX),
+    .io_timing_pos_y         (widePosY),
+    .io_timing_hSync         (wideHSync),
+    .io_timing_vSync         (wideVSync),
+    .io_timing_hBlank        (wideHBlank),
+    .io_timing_vBlank        (wideVBlank)
+  );
+
   assign io_video_clockEnable = timingClockEnableReg;
   assign io_video_displayEnable = timingDisplayEnableReg;
   assign io_video_pos_x = timingPosXReg;
@@ -202,5 +279,6 @@ module VideoSys(
   assign io_video_regs_retrace_x = videoRegsRetraceX;
   assign io_video_regs_retrace_y = videoRegsRetraceY;
   assign io_video_changeMode =
-    io_prog_done | (io_options_compatibility ^ compatibilityChangeModeReg);
+    io_prog_done | (io_options_compatibility ^ compatibilityChangeModeReg)
+      | (io_options_wideTiming ^ wideChangeModeReg);
 endmodule

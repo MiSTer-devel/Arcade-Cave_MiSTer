@@ -74,7 +74,7 @@ localparam CONF_STR = {
   "P1OC,Layer 1,On,Off;",
   "P1OD,Layer 2,On,Off;",
   "P1OE,Debug Video,Off,On;",
-  "P1OFH,Debug View,Pipeline,CPU Addr,Writes,Video,Palette,PostPC,Sprite,Sound;",
+  "P1OFH,Debug View,Pipeline,CPU Addr,Writes,Video,Palette,PostPC,RawSprite,Sound;",
   "P1-;",
 `else
   "P1,Hardware;",
