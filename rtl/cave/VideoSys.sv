@@ -191,7 +191,7 @@ module VideoSys(
   CaveVideoTiming #(
     .H_TOTAL (10'h1C0),
     .V_TOTAL (10'h110),
-    .CE_DIV  (8)
+    .CE_DIV  (4)
   ) timing_originalVideoTiming (
     .clock                   (io_videoClock),
     .reset                   (io_videoReset),
@@ -216,7 +216,7 @@ module VideoSys(
   CaveVideoTiming #(
     .H_TOTAL (10'h1BD),
     .V_TOTAL (10'h106),
-    .CE_DIV  (8)
+    .CE_DIV  (4)
   ) timing_compatibilityVideoTiming (
     .clock                   (io_videoClock),
     .reset                   (io_videoReset),
@@ -239,9 +239,9 @@ module VideoSys(
   );
 
   CaveVideoTiming #(
-    .H_TOTAL (10'h200),
+    .H_TOTAL (10'h1C0),
     .V_TOTAL (10'h110),
-    .CE_DIV  (7)
+    .CE_DIV  (4)
   ) timing_wideVideoTiming (
     .clock                   (io_videoClock),
     .reset                   (io_videoReset),

@@ -1840,7 +1840,7 @@ module Main(
       agalletIrq <= videoVBlankRising | (~videoVBlankFalling & agalletIrq);
       unknownIrq <=
         gameIsMazinger
-          ? (unknownIrq | videoVBlankFalling) & ~mazingerUnknownIrqClear
+          ? (unknownIrq | videoVBlankRising) & ~mazingerUnknownIrqClear
           : _GEN_421 ? ~(_offset_T_222 == 24'h6 | _GEN_413) & _GEN_386 : ~_GEN_413 & _GEN_386;
       if (gameIsMazinger) begin
         if (mazingerReadDataValid)
