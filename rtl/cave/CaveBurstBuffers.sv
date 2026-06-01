@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Download burst adapters between the MiSTer loader path and core memories.
 
 module CaveDdrDownloadBurstBuffer(

@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Signed audio mixer with fixed-point gain and 16-bit output clipping.
 module AudioMixer (
   input         clock,

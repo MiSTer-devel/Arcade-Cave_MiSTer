@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // YMZ280B channel scheduler and ADPCM stream state manager.
 module ChannelController(
   input         clock,

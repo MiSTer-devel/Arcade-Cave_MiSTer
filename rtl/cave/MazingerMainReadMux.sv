@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 module MazingerMainReadMux(
   input         input1_read,
   input         input0_read,

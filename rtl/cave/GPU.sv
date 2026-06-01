@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Video pixel pipeline: layers, sprites, palette lookup, and framebuffer writeout.
 module GPU(
   input          clock,

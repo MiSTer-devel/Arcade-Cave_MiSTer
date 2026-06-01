@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Shared dual-clock FIFO wrapper around the existing Arcadia VHDL FIFO block.
 module CaveDualClockFIFO #(
   parameter DATA_WIDTH = 8,

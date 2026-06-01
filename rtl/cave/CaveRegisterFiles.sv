@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // One 16-bit register exposed as a tiny memory-mapped register file.
 module CaveSingleRegisterFile (
   input         clock,

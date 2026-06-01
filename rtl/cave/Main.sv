@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Main owns the 68k-facing board logic: per-game CPU memory maps, input
 // packing, IRQs, EEPROM serial pins, pause, and video-domain register mirrors.
 // The chip-select lattice below is still kept close to the Chisel equations so

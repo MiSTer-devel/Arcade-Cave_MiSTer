@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Core top-level shell connecting MiSTer-facing services to the Cave game hardware.
 module Cave(
   input         clock,

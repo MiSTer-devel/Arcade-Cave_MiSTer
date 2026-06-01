@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Shared true-dual-port RAM wrapper around the existing Arcadia VHDL RAM block.
 module CaveTrueDualPortRam #(
   parameter ADDR_WIDTH_A = 8,

@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Video register front-end and original/compatibility timing selector.
 module VideoSys(
   input         clock,

@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Framebuffer write request queues.
 
 // Queues 16-bit framebuffer writes and coalesces adjacent pixels onto the 64-bit DDR write bus.

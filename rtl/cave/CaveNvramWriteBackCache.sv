@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Two-way write-back cache used by the EEPROM/NVRAM path.
 module CaveNvramWriteBackCache(
   input         clock,

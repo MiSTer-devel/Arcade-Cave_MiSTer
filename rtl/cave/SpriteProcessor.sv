@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Sprite list scheduler feeding the sprite decoder and blitter.
 module SpriteProcessor(
   input          clock,

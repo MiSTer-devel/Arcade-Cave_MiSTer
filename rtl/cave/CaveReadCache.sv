@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 module CaveReadCache #(
   parameter IN_ADDR_WIDTH = 20,
   parameter IN_DATA_WIDTH = 16,

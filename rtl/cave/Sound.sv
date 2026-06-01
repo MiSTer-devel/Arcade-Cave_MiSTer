@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Sound PCB integration: sound CPU, sample chips, banking, ROM arbitration, and mixing.
 module Sound(
   input         clock,

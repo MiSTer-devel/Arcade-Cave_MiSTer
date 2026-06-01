@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 module CaveCpuBusStrobes(
   input  wire clock,
   input  wire as,

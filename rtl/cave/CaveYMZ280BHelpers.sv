@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Yamaha YMZ280B ADPCM nibble decoder.
 module CaveYmzAdpcmDecoder(
   input  [3:0]  io_data,

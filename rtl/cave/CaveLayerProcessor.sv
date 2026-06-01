@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Shared tilemap layer renderer used by the three Cave background layers.
 module CaveLayerProcessor #(
   parameter [4:0] LAYER_OFFSET_LARGE = 5'h12,

@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Shared single-port RAM wrapper around the existing Arcadia VHDL RAM block.
 module CaveSinglePortRam #(
   parameter ADDR_WIDTH = 8,

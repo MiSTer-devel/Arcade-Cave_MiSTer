@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // 16-byte parallel-in, serial-out buffer used by the sprite blitter.
 module CaveSpritePixelShiftBuffer (
   input        clock,

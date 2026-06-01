@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Hand-maintained copy of the legacy Chisel GameConfig.scala values.
 // Keep this aligned while retiring the Chisel-generated Cave.sv internals.
 module CaveGameConfig (

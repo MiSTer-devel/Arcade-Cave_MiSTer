@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 module CaveVideoTiming #(
   parameter [9:0] H_TOTAL = 10'h1C0,
   parameter [9:0] V_TOTAL = 10'h110,

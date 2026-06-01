@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Yamaha YMZ280B register front-end and channel-controller wrapper.
 module YMZ280B(
   input         clock,

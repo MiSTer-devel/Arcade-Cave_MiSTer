@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Shared synchronous-read memory used by the retired Chisel memory wrappers.
 module CaveSyncReadMem #(
   parameter ADDR_WIDTH = 1,

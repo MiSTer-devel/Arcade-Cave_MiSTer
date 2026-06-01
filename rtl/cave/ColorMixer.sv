@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 module ColorMixer(
   input         clock,
   input  [8:0]  io_gameConfig_granularity,

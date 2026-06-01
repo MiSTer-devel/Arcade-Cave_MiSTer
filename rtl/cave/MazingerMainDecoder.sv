@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 module MazingerMainDecoder(
   input         game_active,
   input  [22:0] cpu_addr,

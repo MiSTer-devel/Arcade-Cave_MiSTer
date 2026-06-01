@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 module CaveDebugOverlay(
   input  [8:0]  io_video_pos_x,
   input  [8:0]  io_video_pos_y,

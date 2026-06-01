@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // YMZ280B per-channel sample processing pipeline.
 module AudioPipeline(
   input         clock,

@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Shared single-clock queue used by the retired Chisel Queue wrappers.
 module CaveSyncQueue #(
   parameter ADDR_WIDTH = 5,

@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 module CaveClockEnable #(
   parameter [16:0] STEP = 17'h2000
 ) (

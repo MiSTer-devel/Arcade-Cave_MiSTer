@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Page address generator for sprite and system frame buffers.
 module CavePageFlipper #(
   parameter [10:0] BASE_PAGE = 11'h120,

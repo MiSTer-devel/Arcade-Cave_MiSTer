@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 module CaveBoardProfile(
   input  [3:0] game_index,
   input  [1:0] sound_device,

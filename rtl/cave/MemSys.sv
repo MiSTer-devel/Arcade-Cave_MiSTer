@@ -1,3 +1,6 @@
+// This file is a Codex-assisted rewrite based on the original work of
+// Josh Bassett (nullobject).
+
 // Memory subsystem routing for ROM download, cached ROM reads, NVRAM, SDRAM, and DDR.
 module MemSys(
   input         clock,
