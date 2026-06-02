@@ -5,6 +5,15 @@
 .vscode
 *.bak
 out
+db
+greybox_tmp
+incremental_db
+output_files
+build_id.v
+c5_pin_model_dump.txt
+jtag.cdf
+*.qws
+*.qdf
 quartus/*.qws
 quartus/*.qdf
 quartus/build_id.v
@@ -16,3 +25,5 @@ quartus/jtag.cdf
 quartus/output_files
 quartus/rtl/cave/Cave.fir
 test_run_dir
+.DS_Store
+nvram/
