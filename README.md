@@ -2,11 +2,16 @@
 
 [![Test](https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/actions/workflows/test.yml/badge.svg)](https://github.com/MiSTer-devel/Arcade-Cave_MiSTer/actions/workflows/test.yml)
 
-This project contains the MiSTer core for Cave's first-generation 68000 arcade hardware.
+This project contains the MiSTer core for the Atlus-class side of Cave's
+first-generation 68000 arcade hardware.
 
 ![23](https://user-images.githubusercontent.com/32810066/126911397-e54b786a-39ff-4200-8fdb-8750d1b40976.png)
 
 ## Supported Games
+
+Banpresto/Gazelle-side titles live in the separate Cave68KBanpresto fork. This
+branch keeps the shared Z80/YM2203 sound primitives because the remaining Atlus
+fighters need them.
 
 | Title                                                                                                                 | Status        | Notes                                    |
 |-----------------------------------------------------------------------------------------------------------------------|---------------|------------------------------------------|
@@ -18,15 +23,9 @@ This project contains the MiSTer core for Cave's first-generation 68000 arcade h
 | [**Gaia Crusaders**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=gaia&arcade_only=0&autosearch=1)        | Public        |
 | [**Thunder Heroes**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=theroes&arcade_only=0&autosearch=1)     | Public        |
 | [**Donpachi**](https://en.wikipedia.org/wiki/DonPachi)                                                                | Public        |
-| [**Mazinger Z**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=mazinger&arcade_only=0&autosearch=1)        | Public        |
-| [**Air Gallet**](https://en.wikipedia.org/wiki/Air_Gallet)                                                            | Unimplemented |
-| [**Hotdog Storm**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=hotdogst&arcade_only=0&autosearch=1)      | WIP           | Screen tearing issues. No hardware comparison. |
-| [**Koro Koro Quest**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=korokoro&arcade_only=0&autosearch=1)   | Unimplemented |
 | [**Gogetsuji Legends**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=plegends&arcade_only=0&autosearch=1) | Unimplemented |
-| [**Power Instinct 2**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=pwrinst2&arcade_only=0&autosearch=1)  | Unimplemented |
+| [**Power Instinct 2**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=pwrinst2&arcade_only=0&autosearch=1)  | WIP first pass |
 | [**Saikyou Densetsu**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=plegendsj&arcade_only=0&autosearch=1) | Unimplemented |
-| [**Pretty Soldier Sailor Moon**](https://en.wikipedia.org/wiki/Pretty_Soldier_Sailor_Moon_(arcade_game))              | Unimplemented |
-| [**The Ninja Master**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=metmqstr&arcade_only=0&autosearch=1)  | Unimplemented |
 
 ## Credits
 
@@ -57,7 +56,6 @@ This core now uses a standard MiSTer-style root layout:
   update it by replacing the folder from a known-good template.
 - `mra/` contains the active MRA files.
 - `legacy/chisel/` keeps the original Chisel source as reference material only.
-- `releases/` keeps historical RBF/MRA release artifacts.
 
 To compile this core you will need Intel Quartus 17 or greater. Regenerating
 the legacy Chisel reference also requires a working Scala/JDK environment.

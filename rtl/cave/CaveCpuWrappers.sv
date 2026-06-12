@@ -86,10 +86,13 @@ module CaveSoundZ80Cpu(
   output        io_rfsh,
   output        io_mreq,
   output        io_iorq,
+  input         io_fast_clock,
+  input         io_wait_n,
   input         io_int,
   input         io_nmi
 );
   reg [2:0] clock_divider;
+  wire cpu_clock_enable = io_fast_clock ? &clock_divider[1:0] : &clock_divider;
 
   wire mreq_n;
   wire iorq_n;
@@ -107,8 +110,8 @@ module CaveSoundZ80Cpu(
   T80s cpu (
     .RESET_n (~reset),
     .CLK     (clock),
-    .CEN     (&clock_divider),
-    .WAIT_n  (1'b1),
+    .CEN     (cpu_clock_enable),
+    .WAIT_n  (io_wait_n),
     .INT_n   (~io_int),
     .NMI_n   (~io_nmi),
     .BUSRQ_n (1'b1),

@@ -1,7 +1,7 @@
 <misterromdescription>
-  <name>DonPachi (Japan)</name>
+  <name>DonPachi (US)</name>
   <mameversion>0226</mameversion>
-  <setname>donpachij</setname>
+  <setname>donpachi</setname>
   <year>1995</year>
   <manufacturer>CAVE</manufacturer>
   <category>Shooter</category>
@@ -9,10 +9,10 @@
   <rbf>Cave</rbf>
 
   <!-- ROM data -->
-  <rom index="0" zip="donpachi.zip|donpachij.zip" md5="none" address="0x30000000">
+  <rom index="0" zip="donpachi.zip" md5="none" address="0x30000000">
     <!-- prog ROM -->
     <interleave output="16">
-      <part name="prg.u29" crc="6be14af6" map="12" />
+      <part name="prgu.u29" crc="89c36802" map="12" />
     </interleave>
 
     <!-- EEPROM -->
@@ -31,7 +31,7 @@
     <part name="atdp.u57" crc="0a0e72b9" />
 
     <!-- layer 2 -->
-    <part name="u58.bin" crc="285379ff" />
+    <part name="text.u58" crc="5dba06e7" />
 
     <!-- sprites -->
     <part name="atdp.u44" crc="7189e953" />

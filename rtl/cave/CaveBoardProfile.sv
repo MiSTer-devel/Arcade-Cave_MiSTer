@@ -11,8 +11,7 @@ module CaveBoardProfile(
   output       game_is_uopoko,
   output       game_is_guwange,
   output       game_is_gaia,
-  output       game_is_hotdogstorm,
-  output       game_is_mazinger,
+  output       game_is_pwrinst2,
   output       board_uses_z80_sound,
   output       board_is_vertical_clockwise,
   output       sound_is_ymz280b,
@@ -26,8 +25,7 @@ module CaveBoardProfile(
   localparam [3:0] GAME_UOPOKO   = 4'h4;
   localparam [3:0] GAME_GUWANGE  = 4'h5;
   localparam [3:0] GAME_GAIA     = 4'h6;
-  localparam [3:0] GAME_HOTDOGST = 4'h7;
-  localparam [3:0] GAME_MAZINGER = 4'h8;
+  localparam [3:0] GAME_PWRINST2 = 4'h7;
 
   localparam [1:0] SOUND_DEVICE_YMZ280B  = 2'h1;
   localparam [1:0] SOUND_DEVICE_OKIM6259 = 2'h2;
@@ -40,13 +38,12 @@ module CaveBoardProfile(
   assign game_is_uopoko = game_index == GAME_UOPOKO;
   assign game_is_guwange = game_index == GAME_GUWANGE;
   assign game_is_gaia = game_index == GAME_GAIA;
-  assign game_is_hotdogstorm = game_index == GAME_HOTDOGST;
-  assign game_is_mazinger = game_index == GAME_MAZINGER;
+  assign game_is_pwrinst2 = game_index == GAME_PWRINST2;
 
-  assign board_uses_z80_sound = game_is_hotdogstorm | game_is_mazinger;
-  assign board_is_vertical_clockwise = game_is_hotdogstorm | game_is_mazinger;
+  assign board_is_vertical_clockwise = 1'b0;
 
   assign sound_is_ymz280b = sound_device == SOUND_DEVICE_YMZ280B;
   assign sound_is_oki = sound_device == SOUND_DEVICE_OKIM6259;
   assign sound_is_z80 = sound_device == SOUND_DEVICE_Z80;
+  assign board_uses_z80_sound = sound_is_z80;
 endmodule

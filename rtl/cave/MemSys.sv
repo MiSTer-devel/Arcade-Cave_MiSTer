@@ -9,6 +9,7 @@ module MemSys(
   input  [31:0] io_gameConfig_eepromOffset,
   input  [31:0] io_gameConfig_sound_0_romOffset,
   input  [31:0] io_gameConfig_sound_1_romOffset,
+  input  [31:0] io_gameConfig_sound_2_romOffset,
   input  [31:0] io_gameConfig_layer_0_romOffset,
   input  [31:0] io_gameConfig_layer_1_romOffset,
   input  [31:0] io_gameConfig_layer_2_romOffset,
@@ -26,7 +27,7 @@ module MemSys(
   output        io_prog_nvram_valid,
   input         io_prog_done,
   input         io_progRom_rd,
-  input  [19:0] io_progRom_addr,
+  input  [21:0] io_progRom_addr,
   output [15:0] io_progRom_dout,
   output        io_progRom_wait_n,
   output        io_progRom_valid,
@@ -47,6 +48,11 @@ module MemSys(
   output [7:0]  io_soundRom_1_dout,
   output        io_soundRom_1_wait_n,
   output        io_soundRom_1_valid,
+  input         io_soundRom_2_rd,
+  input  [24:0] io_soundRom_2_addr,
+  output [7:0]  io_soundRom_2_dout,
+  output        io_soundRom_2_wait_n,
+  output        io_soundRom_2_valid,
   input         io_layerTileRom_0_rd,
   input  [31:0] io_layerTileRom_0_addr,
   output [63:0] io_layerTileRom_0_dout,
@@ -105,15 +111,11 @@ module MemSys(
   output        io_ready
 );
   localparam [31:0] IOCTL_DOWNLOAD_BASE_ADDR = 32'h3000_0000;
-  localparam [31:0] MAZINGER_SPRITE_DECRYPT_OFFSET = 32'h0100_0000;
 
   reg readyEnableReg;
   reg copyDmaBusyReg;
   reg copyDmaStartedReg;
   reg copyDmaDoneReg;
-  reg decryptDmaBusyReg;
-  reg decryptDmaStartedReg;
-  reg decryptDmaDoneReg;
 
   wire        ddrDownloadBufferOutWr;
   wire [31:0] ddrDownloadBufferOutAddr;
@@ -138,19 +140,6 @@ module MemSys(
   wire        copyDmaInValid;
   wire        copyDmaInBurstDone;
   wire        copyDmaDone = ~copyDmaBusy & copyDmaBusyReg;
-
-  wire        decryptDmaBusy;
-  wire        decryptDmaRd;
-  wire        decryptDmaWr;
-  wire [31:0] decryptDmaAddr;
-  wire [7:0]  decryptDmaMask;
-  wire [63:0] decryptDmaDin;
-  wire [63:0] decryptDmaDout;
-  wire        decryptDmaWaitN;
-  wire        decryptDmaValid;
-  wire [7:0]  decryptDmaBurstLength;
-  wire        decryptDmaBurstDone;
-  wire        decryptDmaDone = ~decryptDmaBusy & decryptDmaBusyReg;
 
   wire        progRomCacheOutRd;
   wire [24:0] progRomCacheOutAddr;
@@ -183,6 +172,11 @@ module MemSys(
   wire [15:0] soundRomCache1OutDout;
   wire        soundRomCache1OutWaitN;
   wire        soundRomCache1OutValid;
+  wire        soundRomCache2OutRd;
+  wire [24:0] soundRomCache2OutAddr;
+  wire [15:0] soundRomCache2OutDout;
+  wire        soundRomCache2OutWaitN;
+  wire        soundRomCache2OutValid;
 
   wire        layerRomCache0OutRd;
   wire [24:0] layerRomCache0OutAddr;
@@ -200,15 +194,11 @@ module MemSys(
   wire        layerRomCache2OutWaitN;
   wire        layerRomCache2OutValid;
 
-  wire        gameIsMazinger;
   wire        copyDmaStart = io_prog_done & ~copyDmaStartedReg;
-  wire        decryptDmaStart = copyDmaDoneReg & gameIsMazinger & ~decryptDmaStartedReg;
   wire [31:0] ddrDownloadAddr = ddrDownloadBufferOutAddr + IOCTL_DOWNLOAD_BASE_ADDR;
   wire [31:0] ddrCopyDmaAddr = copyDmaInAddr + IOCTL_DOWNLOAD_BASE_ADDR;
-  wire [31:0] spriteRomReadOffset =
-    gameIsMazinger ? MAZINGER_SPRITE_DECRYPT_OFFSET : io_gameConfig_sprite_romOffset;
-  wire [31:0] spriteTileRomLocalAddr =
-    gameIsMazinger ? {10'h000, io_spriteTileRom_addr[21:0]} : io_spriteTileRom_addr;
+  wire [31:0] spriteRomReadOffset = io_gameConfig_sprite_romOffset;
+  wire [31:0] spriteTileRomLocalAddr = io_spriteTileRom_addr;
   wire [31:0] ddrSpriteTileRomAddr =
     spriteTileRomLocalAddr + (spriteRomReadOffset + IOCTL_DOWNLOAD_BASE_ADDR);
 
@@ -218,6 +208,8 @@ module MemSys(
     soundRomCache0OutAddr + io_gameConfig_sound_0_romOffset[24:0];
   wire [24:0] soundRom1SdramAddr =
     soundRomCache1OutAddr + io_gameConfig_sound_1_romOffset[24:0];
+  wire [24:0] soundRom2SdramAddr =
+    soundRomCache2OutAddr + io_gameConfig_sound_2_romOffset[24:0];
   wire [24:0] layerRom0SdramAddr =
     layerRomCache0OutAddr + io_gameConfig_layer_0_romOffset[24:0];
   wire [24:0] layerRom1SdramAddr =
@@ -225,49 +217,21 @@ module MemSys(
   wire [24:0] layerRom2SdramAddr =
     layerRomCache2OutAddr + io_gameConfig_layer_2_romOffset[24:0];
 
-  CaveBoardProfile boardProfile(
-    .game_index                  (io_gameIndex),
-    .sound_device                (2'd0),
-    .game_is_dfeveron            (),
-    .game_is_dodonpachi          (),
-    .game_is_donpachi            (),
-    .game_is_esprade             (),
-    .game_is_uopoko              (),
-    .game_is_guwange             (),
-    .game_is_gaia                (),
-    .game_is_hotdogstorm         (),
-    .game_is_mazinger            (gameIsMazinger),
-    .board_uses_z80_sound        (),
-    .board_is_vertical_clockwise (),
-    .sound_is_ymz280b            (),
-    .sound_is_oki                (),
-    .sound_is_z80                ()
-  );
-
   always @(posedge clock) begin
     copyDmaBusyReg <= copyDmaBusy;
-    decryptDmaBusyReg <= decryptDmaBusy;
     if (reset) begin
       readyEnableReg <= 1'b0;
       copyDmaBusyReg <= 1'b0;
       copyDmaStartedReg <= 1'b0;
       copyDmaDoneReg <= 1'b0;
-      decryptDmaBusyReg <= 1'b0;
-      decryptDmaStartedReg <= 1'b0;
-      decryptDmaDoneReg <= 1'b0;
     end
     else begin
       if (copyDmaStart)
         copyDmaStartedReg <= 1'b1;
       if (copyDmaDone)
         copyDmaDoneReg <= 1'b1;
-      if (decryptDmaStart)
-        decryptDmaStartedReg <= 1'b1;
-      if (decryptDmaDone)
-        decryptDmaDoneReg <= 1'b1;
 
-      readyEnableReg <=
-        readyEnableReg | (copyDmaDoneReg & (~gameIsMazinger | decryptDmaDoneReg));
+      readyEnableReg <= readyEnableReg | copyDmaDoneReg;
     end
   end
 
@@ -314,31 +278,12 @@ module MemSys(
     .io_out_wait_n   (sdramDownloadBufferInWaitN)
   );
 
-  MazingerSpriteDecryptDMA mazingerSpriteDecryptDma (
-    .clock                (clock),
-    .reset                (reset),
-    .io_start             (decryptDmaStart),
-    .io_busy              (decryptDmaBusy),
-    .io_src_base          (io_gameConfig_sprite_romOffset + IOCTL_DOWNLOAD_BASE_ADDR),
-    .io_dst_base          (MAZINGER_SPRITE_DECRYPT_OFFSET + IOCTL_DOWNLOAD_BASE_ADDR),
-    .io_mem_rd            (decryptDmaRd),
-    .io_mem_wr            (decryptDmaWr),
-    .io_mem_addr          (decryptDmaAddr),
-    .io_mem_mask          (decryptDmaMask),
-    .io_mem_din           (decryptDmaDin),
-    .io_mem_dout          (decryptDmaDout),
-    .io_mem_wait_n        (decryptDmaWaitN),
-    .io_mem_valid         (decryptDmaValid),
-    .io_mem_burstLength   (decryptDmaBurstLength),
-    .io_mem_burstDone     (decryptDmaBurstDone)
-  );
-
   CaveReadCache #(
-    .IN_ADDR_WIDTH  (20),
+    .IN_ADDR_WIDTH  (22),
     .IN_DATA_WIDTH  (16),
     .OUT_ADDR_WIDTH (25),
     .INDEX_WIDTH    (7),
-    .TAG_WIDTH      (11)
+    .TAG_WIDTH      (13)
   ) progRomCache (
     .clock         (clock),
     .reset         (reset),
@@ -417,6 +362,28 @@ module MemSys(
     .io_out_dout   (soundRomCache1OutDout),
     .io_out_wait_n (soundRomCache1OutWaitN),
     .io_out_valid  (soundRomCache1OutValid)
+  );
+
+  CaveReadCache #(
+    .IN_ADDR_WIDTH  (25),
+    .IN_DATA_WIDTH  (8),
+    .OUT_ADDR_WIDTH (25),
+    .INDEX_WIDTH    (2),
+    .TAG_WIDTH      (21)
+  ) soundRomCache_2 (
+    .clock         (clock),
+    .reset         (reset),
+    .io_enable     (readyEnableReg),
+    .io_in_rd      (io_soundRom_2_rd),
+    .io_in_addr    (io_soundRom_2_addr),
+    .io_in_dout    (io_soundRom_2_dout),
+    .io_in_wait_n  (io_soundRom_2_wait_n),
+    .io_in_valid   (io_soundRom_2_valid),
+    .io_out_rd     (soundRomCache2OutRd),
+    .io_out_addr   (soundRomCache2OutAddr),
+    .io_out_dout   (soundRomCache2OutDout),
+    .io_out_wait_n (soundRomCache2OutWaitN),
+    .io_out_valid  (soundRomCache2OutValid)
   );
 
   CaveReadCache #(
@@ -520,16 +487,16 @@ module MemSys(
     .io_in_4_valid       (io_spriteTileRom_valid),
     .io_in_4_burstLength (io_spriteTileRom_burstLength),
     .io_in_4_burstDone   (io_spriteTileRom_burstDone),
-    .io_in_5_rd          (decryptDmaRd),
-    .io_in_5_wr          (decryptDmaWr),
-    .io_in_5_addr        (decryptDmaAddr),
-    .io_in_5_mask        (decryptDmaMask),
-    .io_in_5_din         (decryptDmaDin),
-    .io_in_5_dout        (decryptDmaDout),
-    .io_in_5_wait_n      (decryptDmaWaitN),
-    .io_in_5_valid       (decryptDmaValid),
-    .io_in_5_burstLength (decryptDmaBurstLength),
-    .io_in_5_burstDone   (decryptDmaBurstDone),
+    .io_in_5_rd          (1'b0),
+    .io_in_5_wr          (1'b0),
+    .io_in_5_addr        (32'd0),
+    .io_in_5_mask        (8'd0),
+    .io_in_5_din         (64'd0),
+    .io_in_5_dout        (),
+    .io_in_5_wait_n      (),
+    .io_in_5_valid       (),
+    .io_in_5_burstLength (8'd0),
+    .io_in_5_burstDone   (),
     .io_out_rd           (io_ddr_rd),
     .io_out_wr           (io_ddr_wr),
     .io_out_addr         (io_ddr_addr),
@@ -572,6 +539,11 @@ module MemSys(
     .io_in_4_dout      (soundRomCache1OutDout),
     .io_in_4_wait_n    (soundRomCache1OutWaitN),
     .io_in_4_valid     (soundRomCache1OutValid),
+    .io_in_8_rd        (soundRomCache2OutRd),
+    .io_in_8_addr      (soundRom2SdramAddr),
+    .io_in_8_dout      (soundRomCache2OutDout),
+    .io_in_8_wait_n    (soundRomCache2OutWaitN),
+    .io_in_8_valid     (soundRomCache2OutValid),
     .io_in_5_rd        (layerRomCache0OutRd),
     .io_in_5_addr      (layerRom0SdramAddr),
     .io_in_5_dout      (layerRomCache0OutDout),

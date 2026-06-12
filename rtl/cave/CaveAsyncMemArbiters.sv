@@ -90,9 +90,11 @@ module CaveSoundRomReadArbiter(
   input         io_in_2_rd,
   input  [24:0] io_in_2_addr,
   output [7:0]  io_in_2_dout,
+  output        io_in_2_valid,
   input         io_in_3_rd,
   input  [24:0] io_in_3_addr,
   output [7:0]  io_in_3_dout,
+  output        io_in_3_valid,
   output        io_out_rd,
   output [24:0] io_out_addr,
   input  [7:0]  io_out_dout,
@@ -143,7 +145,9 @@ module CaveSoundRomReadArbiter(
   assign io_in_1_wait_n = (no_request_chosen | chosen[1]) & io_out_wait_n;
   assign io_in_1_valid = chosen[1] & io_out_valid;
   assign io_in_2_dout = io_out_dout;
+  assign io_in_2_valid = chosen[2] & io_out_valid;
   assign io_in_3_dout = io_out_dout;
+  assign io_in_3_valid = chosen[3] & io_out_valid;
   assign io_out_rd = selected_read;
   assign io_out_addr =
     (chosen[0] ? io_in_0_addr : 25'h0) |

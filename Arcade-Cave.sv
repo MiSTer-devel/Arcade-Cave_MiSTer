@@ -55,13 +55,15 @@ assign VIDEO_ARY = (!aspect_ratio) ? (orientation ? 12'd4 : 12'd3) : 12'd0;
 
 `include "build_id.v"
 localparam CONF_STR = {
-  "cave;;",
+  "Cave;;",
   "D0O12,Aspect ratio,Original,Fullscreen,[ARC1],[ARC2];",
   "D0O4,Flip screen,Off,On;",
   "D1O3,Rotate screen,Off,On;",
   "-;",
+`ifndef CAVE_ENABLE_DEBUG_OVERLAY
   "OOR,CRT H adjust,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;",
   "OSV,CRT V adjust,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;",
+`endif
   "O57,Scandoubler,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
   "O8,Refresh rate,57Hz,60Hz;",
   "-;",
@@ -75,11 +77,15 @@ localparam CONF_STR = {
   "P1OD,Layer 2,On,Off;",
   "P1OE,Debug Video,Off,On;",
   "P1OFH,Debug View,Pipeline,CPU Addr,Writes,Video,Palette,PostPC,RawSprite,Sound;",
+  "P1OM,YM PSG,On,Off;",
+  "P1ON,YM FM,On,Off;",
+  "P1OO,OKI0,On,Off;",
+  "P1OP,OKI1,On,Off;",
   "P1-;",
 `else
   "P1,Hardware;",
 `endif
-  "P1OIL,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.,Puzzle Uo Poko,Guwange,Gaia,Hotdog Storm,Mazinger Z;",
+  "P1OIL,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.,Puzzle Uo Poko,Guwange,Gaia,Power Instinct 2;",
   "-;",
   "R0,Reset;",
   "J,B0,B1,B2,B3,Start,Coin,Pause;",
@@ -241,6 +247,7 @@ wire [23:0] rgb;
 wire hsync, vsync;
 wire hblank, vblank;
 wire core_video_rotated;
+wire core_video_change_mode;
 wire [1:0] aspect_ratio = status[2:1];
 wire orientation = core_video_rotated;
 wire [2:0] fx = status[7:5];
@@ -251,6 +258,12 @@ wire option_sprite = ~status[10];
 wire option_layer_0 = ~status[11];
 wire option_layer_1 = ~status[12];
 wire option_layer_2 = ~status[13];
+wire option_ym_psg = ~status[22];
+wire option_ym_fm = ~status[23];
+wire option_oki_0 = ~status[24];
+wire option_oki_1 = ~status[25];
+wire [3:0] option_offset_x = 4'h0;
+wire [3:0] option_offset_y = 4'h0;
 `else
 wire debug_video = 1'b0;
 wire [2:0] debug_view = 3'd0;
@@ -258,6 +271,12 @@ wire option_sprite = 1'b1;
 wire option_layer_0 = 1'b1;
 wire option_layer_1 = 1'b1;
 wire option_layer_2 = 1'b1;
+wire option_ym_psg = 1'b1;
+wire option_ym_fm = 1'b1;
+wire option_oki_0 = 1'b1;
+wire option_oki_1 = 1'b1;
+wire [3:0] option_offset_x = status[27:24];
+wire [3:0] option_offset_y = status[31:28];
 `endif
 wire [2:0] sl = fx ? fx - 1'd1 : 3'd0;
 wire scandoubler = fx || forced_scandoubler;
@@ -295,13 +314,12 @@ video_mixer #(.LINE_LENGTH(388), .HALF_DEPTH(0), .GAMMA(1)) video_mixer (
   .VGA_DE(VGA_DE)
 );
 
-// Update HPS when video mode changes
-reg [1:0] video_status;
+// Update HPS when the core reloads or changes video timing.
+reg core_video_change_mode_d = 1'b0;
 always @(posedge clk_sys) begin
-    if (video_status != status[8]) begin
-        video_status <= status[8];
+    core_video_change_mode_d <= core_video_change_mode;
+    if (core_video_change_mode & ~core_video_change_mode_d)
         new_vmode <= ~new_vmode;
-    end
 end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -412,8 +430,8 @@ Cave cave (
   .videoClock(clk_video),
 
   // Options
-  .options_offset_x(status[27:24]),
-  .options_offset_y(status[31:28]),
+  .options_offset_x(option_offset_x),
+  .options_offset_y(option_offset_y),
   .options_rotate(status[3]),
   .options_compatibility(status[8]),
   .options_service(status[9]),
@@ -425,6 +443,10 @@ Cave cave (
   .options_gameIndex(status[21:18]),
   .options_debugVideo(debug_video),
   .options_debugView(debug_view),
+  .options_ym_psg(option_ym_psg),
+  .options_ym_fm(option_ym_fm),
+  .options_oki_0(option_oki_0),
+  .options_oki_1(option_oki_1),
   // Joystick signals
   .player_0_up(player_1_up),
   .player_0_down(player_1_down),
@@ -444,7 +466,7 @@ Cave cave (
   .player_1_pause(player_2_pause),
   // Video signals
   .video_clockEnable(ce_pix),
-  .video_changeMode(0),
+  .video_changeMode(core_video_change_mode),
   .video_rotated(core_video_rotated),
   .video_hSync(hsync),
   .video_vSync(vsync),

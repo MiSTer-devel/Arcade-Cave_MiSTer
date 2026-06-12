@@ -72,7 +72,14 @@ module SpriteBlitter(
   reg  [7:0]  penReg_color;
   reg         validReg;
 
-  wire blitAdvance = busyReg & ~pisoEmpty & io_frameBuffer_wait_n;
+  reg  [1:0]  frameBufferWriteCount;
+  reg  [16:0] frameBufferWriteAddr0;
+  reg  [16:0] frameBufferWriteAddr1;
+  reg  [15:0] frameBufferWriteDin0;
+  reg  [15:0] frameBufferWriteDin1;
+
+  wire frameBufferInputReady = frameBufferWriteCount != 2'd2;
+  wire blitAdvance = busyReg & ~pisoEmpty & frameBufferInputReady;
   wire xAtEnd =
     x == 12'({configReg_sprite_cols, 4'h0} - 12'h1) | configReg_sprite_cols == 8'h0;
   wire xWrap = blitAdvance & xAtEnd;
@@ -97,7 +104,7 @@ module SpriteBlitter(
   wire [27:0] adjustedY =
     28'({{10{configReg_sprite_pos_y[17]}}, configReg_sprite_pos_y} + flippedY);
 
-  wire pixelDataReady = io_frameBuffer_wait_n & (pisoEmpty | pisoAlmostEmpty);
+  wire pixelDataReady = frameBufferInputReady & (pisoEmpty | pisoAlmostEmpty);
   wire [19:0] maxVisibleX = {11'h0, 9'(io_video_regs_size_x - 9'h1)};
   wire [19:0] maxVisibleY = {11'h0, 9'(io_video_regs_size_y - 9'h1)};
   wire pixelVisible =
@@ -110,12 +117,20 @@ module SpriteBlitter(
   wire [16:0] flippedFrameBufferAddr =
     17'({8'(8'(io_video_regs_size_y[7:0] - posReg_y[7:0]) - 8'h1), 9'h0}
         + 17'(17'({8'h0, io_video_regs_size_x} - posReg_x[16:0]) - 17'h1));
+  wire [16:0] frameBufferInputAddr =
+    configReg_hFlip ? flippedFrameBufferAddr : normalFrameBufferAddr;
+  wire [15:0] frameBufferInputDin = {penReg_priority, penReg_palette, penReg_color};
+  wire        frameBufferInputValid = io_enable & pixelVisible;
+  wire        frameBufferInputFire = frameBufferInputValid & frameBufferInputReady;
+  wire        frameBufferOutputValid = frameBufferWriteCount != 2'd0;
+  wire        frameBufferOutputFire = frameBufferOutputValid & io_frameBuffer_wait_n;
 
   always @(posedge clock) begin
     if (reset) begin
       busyReg <= 1'b0;
       x <= 12'h0;
       y <= 12'h0;
+      validReg <= 1'b0;
     end
     else begin
       busyReg <= latchConfig | ~blitDone & busyReg;
@@ -139,7 +154,7 @@ module SpriteBlitter(
       configReg_hFlip <= io_config_bits_hFlip;
     end
 
-    if (io_frameBuffer_wait_n) begin
+    if (~reset & frameBufferInputReady) begin
       posReg_x <= adjustedX[27:8];
       posReg_y <= adjustedY[27:8];
       penReg_priority <= configReg_sprite_priority;
@@ -147,9 +162,45 @@ module SpriteBlitter(
       penReg_color <= pisoPixel;
       validReg <= ~pisoEmpty;
     end
+
+    if (reset | ~io_enable) begin
+      frameBufferWriteCount <= 2'd0;
+      frameBufferWriteAddr0 <= 17'd0;
+      frameBufferWriteAddr1 <= 17'd0;
+      frameBufferWriteDin0 <= 16'd0;
+      frameBufferWriteDin1 <= 16'd0;
+    end
+    else begin
+      case ({frameBufferInputFire, frameBufferOutputFire})
+        2'b01: begin
+          if (frameBufferWriteCount == 2'd2) begin
+            frameBufferWriteAddr0 <= frameBufferWriteAddr1;
+            frameBufferWriteDin0 <= frameBufferWriteDin1;
+          end
+          frameBufferWriteCount <= frameBufferWriteCount - 2'd1;
+        end
+        2'b10: begin
+          if (frameBufferWriteCount == 2'd0) begin
+            frameBufferWriteAddr0 <= frameBufferInputAddr;
+            frameBufferWriteDin0 <= frameBufferInputDin;
+          end
+          else begin
+            frameBufferWriteAddr1 <= frameBufferInputAddr;
+            frameBufferWriteDin1 <= frameBufferInputDin;
+          end
+          frameBufferWriteCount <= frameBufferWriteCount + 2'd1;
+        end
+        2'b11: begin
+          frameBufferWriteAddr0 <= frameBufferInputAddr;
+          frameBufferWriteDin0 <= frameBufferInputDin;
+        end
+        default: begin
+        end
+      endcase
+    end
   end
 
-  assign pisoRead = busyReg & io_frameBuffer_wait_n;
+  assign pisoRead = busyReg & frameBufferInputReady;
   assign pisoWrite = pixelDataReady & io_pixelData_valid;
 
   CaveSpritePixelShiftBuffer pixelShiftBuffer (
@@ -178,10 +229,10 @@ module SpriteBlitter(
     .io_dout          (pisoPixel)
   );
 
-  assign io_busy = busyReg;
+  assign io_busy = busyReg | (io_enable & frameBufferOutputValid);
   assign io_config_ready = configReady;
   assign io_pixelData_ready = pixelDataReady;
-  assign io_frameBuffer_wr = io_enable & pixelVisible;
-  assign io_frameBuffer_addr = configReg_hFlip ? flippedFrameBufferAddr : normalFrameBufferAddr;
-  assign io_frameBuffer_din = {penReg_priority, penReg_palette, penReg_color};
+  assign io_frameBuffer_wr = io_enable & ~reset & frameBufferOutputValid;
+  assign io_frameBuffer_addr = frameBufferWriteAddr0;
+  assign io_frameBuffer_din = frameBufferWriteDin0;
 endmodule

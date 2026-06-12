@@ -10,6 +10,7 @@ module ColorMixer(
   input  [1:0]  io_gameConfig_layer_1_paletteBank,
   input  [1:0]  io_gameConfig_layer_2_format,
   input  [1:0]  io_gameConfig_layer_2_paletteBank,
+  input         io_gameConfig_pwrinst2,
   input  [1:0]  io_spritePen_priority,
   input  [5:0]  io_spritePen_palette,
   input  [7:0]  io_spritePen_color,
@@ -44,25 +45,27 @@ module ColorMixer(
   wire layer0Format6bpp = io_gameConfig_layer_0_format == 2'h2;
   wire layer1Format6bpp = io_gameConfig_layer_1_format == 2'h2;
   wire layer2Format6bpp = io_gameConfig_layer_2_format == 2'h2;
+  wire [1:0] effectiveSpritePriority =
+    io_gameConfig_pwrinst2 ? {1'b1, io_spritePen_priority[0]} : io_spritePen_priority;
 
   wire spriteVisible = |io_spritePen_color;
   wire layer0Visible = |io_layer0Pen_color;
   wire layer1Visible = |io_layer1Pen_color;
   wire layer2Visible = |io_layer2Pen_color;
 
-  wire spritePriority0 = spriteVisible & (io_spritePen_priority == 2'h0);
+  wire spritePriority0 = spriteVisible & (effectiveSpritePriority == 2'h0);
   wire layer0Priority0 = layer0Visible & (io_layer0Pen_priority == 2'h0);
   wire layer1Priority0 = layer1Visible & (io_layer1Pen_priority == 2'h0);
   wire layer2Priority0 = layer2Visible & (io_layer2Pen_priority == 2'h0);
-  wire spritePriority1 = spriteVisible & (io_spritePen_priority == 2'h1);
+  wire spritePriority1 = spriteVisible & (effectiveSpritePriority == 2'h1);
   wire layer0Priority1 = layer0Visible & (io_layer0Pen_priority == 2'h1);
   wire layer1Priority1 = layer1Visible & (io_layer1Pen_priority == 2'h1);
   wire layer2Priority1 = layer2Visible & (io_layer2Pen_priority == 2'h1);
-  wire spritePriority2 = spriteVisible & (io_spritePen_priority == 2'h2);
+  wire spritePriority2 = spriteVisible & (effectiveSpritePriority == 2'h2);
   wire layer0Priority2 = layer0Visible & (io_layer0Pen_priority == 2'h2);
   wire layer1Priority2 = layer1Visible & (io_layer1Pen_priority == 2'h2);
   wire layer2Priority2 = layer2Visible & (io_layer2Pen_priority == 2'h2);
-  wire spritePriority3 = spriteVisible & (&io_spritePen_priority);
+  wire spritePriority3 = spriteVisible & (&effectiveSpritePriority);
   wire layer0Priority3 = layer0Visible & (&io_layer0Pen_priority);
   wire layer1Priority3 = layer1Visible & (&io_layer1Pen_priority);
   wire layer2Priority3 = layer2Visible & (&io_layer2Pen_priority);
@@ -83,18 +86,24 @@ module ColorMixer(
   wire [3:0] priority3Layer1 = layer1Priority3 ? PEN_LAYER1 : priority3Layer0;
   wire [3:0] selectedPen = layer2Priority3 ? PEN_LAYER2 : priority3Layer1;
 
-  wire [14:0] fillAddr16 = 15'h03F0;
+  wire [14:0] fillAddr16 = io_gameConfig_pwrinst2 ? 15'h07F0 : 15'h03F0;
   wire [14:0] fillAddr64 = 15'h0FC0;
   wire [14:0] fillAddr256 = 15'h3F00;
   wire [14:0] fillAddr = granularity64 ? fillAddr64 : (granularity16 ? fillAddr16 : fillAddr256);
 
   wire [14:0] spriteAddr16 = {5'h00, io_spritePen_palette, io_spritePen_color[3:0]};
+  wire [14:0] spriteAddr16PwrInst2 =
+    {4'h0, io_spritePen_priority[1], io_spritePen_palette, io_spritePen_color[3:0]};
   wire [14:0] spriteAddr64 = {3'h0, io_spritePen_palette, io_spritePen_color[5:0]};
   wire [14:0] spriteAddr256 = {1'b0, io_spritePen_palette, io_spritePen_color};
-  wire [14:0] spriteAddr = granularity64 ? spriteAddr64 : (granularity16 ? spriteAddr16 : spriteAddr256);
+  wire [14:0] spriteAddr =
+    io_gameConfig_pwrinst2 ? spriteAddr16PwrInst2 :
+    granularity64 ? spriteAddr64 : (granularity16 ? spriteAddr16 : spriteAddr256);
 
   wire [14:0] layer0Addr16 =
     {3'h0, io_gameConfig_layer_0_paletteBank, io_layer0Pen_palette, io_layer0Pen_color[3:0]};
+  wire [14:0] layer0Addr16PwrInst2 =
+    15'h0800 + {5'h00, io_layer0Pen_palette, io_layer0Pen_color[3:0]};
   wire [14:0] layer0Addr64 =
     {1'b0, io_gameConfig_layer_0_paletteBank, io_layer0Pen_palette, io_layer0Pen_color[5:0]};
   wire [14:0] layer0Addr6bpp =
@@ -102,10 +111,13 @@ module ColorMixer(
   wire [14:0] layer0Addr256 =
     {io_gameConfig_layer_0_paletteBank[0], io_layer0Pen_palette, io_layer0Pen_color};
   wire [14:0] layer0Addr =
+    io_gameConfig_pwrinst2 ? layer0Addr16PwrInst2 :
     layer0Format6bpp ? layer0Addr6bpp : (granularity64 ? layer0Addr64 : (granularity16 ? layer0Addr16 : layer0Addr256));
 
   wire [14:0] layer1Addr16 =
     {3'h0, io_gameConfig_layer_1_paletteBank, io_layer1Pen_palette, io_layer1Pen_color[3:0]};
+  wire [14:0] layer1Addr16PwrInst2 =
+    15'h1000 + {5'h00, io_layer1Pen_palette, io_layer1Pen_color[3:0]};
   wire [14:0] layer1Addr64 =
     {1'b0, io_gameConfig_layer_1_paletteBank, io_layer1Pen_palette, io_layer1Pen_color[5:0]};
   wire [14:0] layer1Addr6bpp =
@@ -113,10 +125,13 @@ module ColorMixer(
   wire [14:0] layer1Addr256 =
     {io_gameConfig_layer_1_paletteBank[0], io_layer1Pen_palette, io_layer1Pen_color};
   wire [14:0] layer1Addr =
+    io_gameConfig_pwrinst2 ? layer1Addr16PwrInst2 :
     layer1Format6bpp ? layer1Addr6bpp : (granularity64 ? layer1Addr64 : (granularity16 ? layer1Addr16 : layer1Addr256));
 
   wire [14:0] layer2Addr16 =
     {3'h0, io_gameConfig_layer_2_paletteBank, io_layer2Pen_palette, io_layer2Pen_color[3:0]};
+  wire [14:0] layer2Addr16PwrInst2 =
+    15'h2000 + {5'h00, io_layer2Pen_palette, io_layer2Pen_color[3:0]};
   wire [14:0] layer2Addr64 =
     {1'b0, io_gameConfig_layer_2_paletteBank, io_layer2Pen_palette, io_layer2Pen_color[5:0]};
   wire [14:0] layer2Addr6bpp =
@@ -124,6 +139,7 @@ module ColorMixer(
   wire [14:0] layer2Addr256 =
     {io_gameConfig_layer_2_paletteBank[0], io_layer2Pen_palette, io_layer2Pen_color};
   wire [14:0] layer2Addr =
+    io_gameConfig_pwrinst2 ? layer2Addr16PwrInst2 :
     layer2Format6bpp ? layer2Addr6bpp : (granularity64 ? layer2Addr64 : (granularity16 ? layer2Addr16 : layer2Addr256));
 
   wire [14:0] addrFill = selectedPen == PEN_FILL ? fillAddr : 15'h0000;
