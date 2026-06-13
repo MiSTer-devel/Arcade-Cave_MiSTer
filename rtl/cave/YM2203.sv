@@ -8,6 +8,8 @@ module YM2203(
   input         io_cpu_addr,
   input  [7:0]  io_cpu_din,
   output [7:0]  io_cpu_dout,
+  output        io_cpu_wait_n,
+  output        io_cpu_queue_full,
   output        io_irq,
   output        io_audio_valid,
   output [15:0] io_audio_bits_psg,
@@ -23,9 +25,10 @@ module YM2203(
   reg  [7:0] writeDataReg;
   reg  [7:0] writeQueuedDataReg;
   wire       writeComplete = writeActiveReg & ym_cen;
+  wire       writeCanAccept = ~writeActiveReg | ~writeQueuedReg | writeComplete;
 
   CaveClockEnable #(
-    .STEP (17'h0AAB)
+    .STEP (17'h2000)
   ) clock_enable (
     .clock  (clock),
     .enable (ym_cen)
@@ -81,7 +84,7 @@ module YM2203(
           writeAddrReg <= io_cpu_addr;
           writeDataReg <= io_cpu_din;
         end
-        else begin
+        else if (~writeQueuedReg | writeComplete) begin
           writeQueuedReg <= 1'b1;
           writeQueuedAddrReg <= io_cpu_addr;
           writeQueuedDataReg <= io_cpu_din;
@@ -90,6 +93,8 @@ module YM2203(
     end
   end
 
+  assign io_cpu_wait_n = writeCanAccept;
+  assign io_cpu_queue_full = writeActiveReg & writeQueuedReg & ~writeComplete;
   assign io_irq = ~ym_irq_n;
   assign io_audio_bits_psg = {1'b0, ym_psg_snd, 5'b0};
 endmodule

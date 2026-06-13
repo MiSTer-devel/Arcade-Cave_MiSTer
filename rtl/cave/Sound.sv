@@ -106,6 +106,7 @@ module Sound(
   reg  [7:0]  debugLastYmReg;
   reg  [7:0]  debugLastYmData;
   reg  [7:0]  debugYmFlags;
+  reg  [7:0]  debugYmWriteCount;
   reg  [7:0]  debugYmPsgPeak;
   reg  [7:0]  debugYmFmPeak;
   reg         debugOki0Pending;
@@ -120,21 +121,25 @@ module Sound(
   wire        cpuIorq;
   wire        cpuInt;
   wire [15:0] cpuIoAddr = {8'h00, cpuAddr[7:0]};
+  wire        ym2203CpuWaitN;
+  wire        ym2203QueueFull;
 
   wire        z80ProgRomSelect = cpuAddr < 16'h8000;
   wire        z80BankRomSelect = (cpuAddr >= 16'h8000) & (cpuAddr < 16'hC000);
   wire        z80RamSelect = cpuAddr >= 16'hE000;
   wire        z80IoWr = pwrinst2Z80Sound & cpuIorq & cpuWr;
+  wire        ym2203Access =
+    pwrinst2Z80Sound & (cpuIoAddr >= 16'h0040) & (cpuIoAddr < 16'h0042) & cpuIorq;
+  wire        ym2203WriteCycle = ym2203Access & cpuWr;
+  wire        z80IoWrReady = ~ym2203WriteCycle | ym2203CpuWaitN;
   wire        z80IoWrChanged =
     z80IoWr & ((cpuIoAddr[7:0] != z80IoWrAddrD) | (cpuDout != z80IoWrDataD));
-  wire        z80IoWrPulse = z80IoWr & (~z80IoWrD | z80IoWrChanged);
+  wire        z80IoWrPulse = z80IoWr & z80IoWrReady & (~z80IoWrD | z80IoWrChanged);
 
   wire        pwrinst2Oki0Access = pwrinst2Z80Sound & (cpuIoAddr == 16'h0000) & cpuIorq;
   wire        pwrinst2Oki1Access = pwrinst2Z80Sound & (cpuIoAddr == 16'h0008) & cpuIorq;
   wire        pwrinst2NmkWrite =
     pwrinst2Z80Sound & (cpuIoAddr >= 16'h0010) & (cpuIoAddr < 16'h0018) & z80IoWrPulse;
-  wire        ym2203Access =
-    pwrinst2Z80Sound & (cpuIoAddr >= 16'h0040) & (cpuIoAddr < 16'h0042) & cpuIorq;
   wire        ym2203Write = ym2203Access & z80IoWrPulse;
   wire        ym2203Read = ym2203Access & cpuRd;
   wire        soundReplyWrite = pwrinst2Z80Sound & (cpuIoAddr == 16'h0050) & z80IoWrPulse;
@@ -159,7 +164,7 @@ module Sound(
   wire        z80BankRomArbiterRead =
     pwrinst2Z80Sound & z80BankRomSelect & cpuMreq & cpuRd & ~cpuRfsh;
   wire        z80RomValid = z80BankRomSelect ? bankRomValid : progRomValid;
-  wire        z80WaitN = ~z80RomRead | z80RomValid;
+  wire        z80WaitN = (~z80RomRead | z80RomValid) & z80IoWrReady;
   wire [7:0]  romOrBankDout =
     z80BankRomSelect & cpuMreq & cpuRd ? bankRomDout : progRomDout;
 
@@ -263,14 +268,15 @@ module Sound(
       debugLastYmReg <= 8'h0;
       debugLastYmData <= 8'h0;
       debugYmFlags <= 8'h0;
+      debugYmWriteCount <= 8'h0;
       debugYmPsgPeak <= 8'h0;
       debugYmFmPeak <= 8'h0;
       debugOki0Pending <= 1'b0;
 `endif
     end
     else begin
-      z80IoWrD <= z80IoWr;
-      if (z80IoWr) begin
+      z80IoWrD <= z80IoWr & z80IoWrReady;
+      if (z80IoWr & z80IoWrReady) begin
         z80IoWrAddrD <= cpuIoAddr[7:0];
         z80IoWrDataD <= cpuDout;
       end
@@ -325,12 +331,14 @@ module Sound(
         debugOki1StatusRead <= oki1CpuDout;
 
       debugYmFlags[0] <= pwrinst2Z80Sound;
-      debugYmFlags[1] <= io_options_ym_psg;
-      debugYmFlags[2] <= io_options_ym_fm;
-      debugYmFlags[3] <= ym2203Irq;
+      debugYmFlags[1] <= reqReg;
+      debugYmFlags[2] <= z80WaitN;
+      if (ym2203QueueFull)
+        debugYmFlags[3] <= 1'b1;
 
       if (ym2203Write) begin
         debugYmFlags[4] <= 1'b1;
+        debugYmWriteCount <= debugYmWriteCount + 8'd1;
         if (cpuAddr[0])
           debugLastYmData <= cpuDout;
         else
@@ -502,6 +510,8 @@ module Sound(
     .io_cpu_addr       (cpuAddr[0]),
     .io_cpu_din        (cpuDout),
     .io_cpu_dout       (ym2203CpuDout),
+    .io_cpu_wait_n     (ym2203CpuWaitN),
+    .io_cpu_queue_full (ym2203QueueFull),
     .io_irq            (ym2203Irq),
     .io_audio_valid    (ym2203AudioValid),
     .io_audio_bits_psg (ym2203PsgAudio),
@@ -555,15 +565,17 @@ module Sound(
   assign io_ctrl_reply_empty = replyCount == 6'd0;
 
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
+  // Power Instinct 2 sound page: MK, YM reg/data/write count, flags,
+  // Z80 bank/reply depth, last command, and FM peak.
   assign io_debug = {
-    debugOki1StatusRead,
-    debugOki0StatusRead,
     debugYmFmPeak,
-    debugYmPsgPeak,
+    debugLastSoundCommand,
+    {z80BankReg, replyCount[4:0]},
     debugYmFlags,
+    debugYmWriteCount,
     debugLastYmData,
     debugLastYmReg,
-    8'hAC
+    8'hAD
   };
 `else
   assign io_debug = 64'd0;
