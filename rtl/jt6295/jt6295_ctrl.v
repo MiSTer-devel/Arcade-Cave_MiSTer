@@ -33,6 +33,11 @@ module jt6295_ctrl(
     output     [ 9:0]      rom_addr,
     input      [ 7:0]      rom_data,
     input                  rom_ok,
+    // Debug
+    input                  debug_capture_enable,
+    output reg [47:0]      debug_table_bytes,
+    output reg [47:0]      debug_decode_bytes,
+    output reg             debug_capture_done,
     // flow control
     output reg [ 3:0]      start,
     output reg [ 3:0]      stop,
@@ -112,6 +117,7 @@ reg [17:0] new_start;
 reg [17:8] new_stop;
 reg [ 2:0] st, addr_lsb;
 reg        wrom;
+reg        debug_capture_active;
 
 assign rom_addr = { phrase, addr_lsb };
 
@@ -125,7 +131,17 @@ always @(posedge clk) begin
         start  <= 4'd0;
         push      <= 1'b0;
         addr_lsb  <= 3'b0;
+        debug_table_bytes <= 48'h000000000000;
+        debug_decode_bytes <= 48'h000000000000;
+        debug_capture_active <= 1'b0;
+        debug_capture_done <= 1'b0;
     end else begin
+        if( negedge_wrn && cmd && debug_capture_enable && !debug_capture_active && !debug_capture_done ) begin
+            debug_capture_active <= 1'b1;
+            debug_table_bytes <= 48'h000000000000;
+            debug_decode_bytes <= 48'h000000000000;
+        end
+
         if(st!=3'd7) begin
             wrom <= 1'b0;
             if( !wrom && rom_ok ) begin
@@ -145,12 +161,40 @@ always @(posedge clk) begin
                 end
             end
             3'd0:;
-            3'd1: new_start[17:16] <= rom_data[1:0];
-            3'd2: new_start[15: 8] <= rom_data;
-            3'd3: new_start[ 7: 0] <= rom_data;
-            3'd4: new_stop [17:16] <= rom_data[1:0];
-            3'd5: new_stop [15: 8] <= rom_data;
+            3'd1: begin
+                new_start[17:16] <= rom_data[1:0];
+                if( debug_capture_active ) debug_table_bytes[7:0] <= rom_data;
+            end
+            3'd2: begin
+                new_start[15: 8] <= rom_data;
+                if( debug_capture_active ) debug_table_bytes[15:8] <= rom_data;
+            end
+            3'd3: begin
+                new_start[ 7: 0] <= rom_data;
+                if( debug_capture_active ) debug_table_bytes[23:16] <= rom_data;
+            end
+            3'd4: begin
+                new_stop [17:16] <= rom_data[1:0];
+                if( debug_capture_active ) debug_table_bytes[31:24] <= rom_data;
+            end
+            3'd5: begin
+                new_stop [15: 8] <= rom_data;
+                if( debug_capture_active ) debug_table_bytes[39:32] <= rom_data;
+            end
             3'd6: begin
+                if( debug_capture_active ) begin
+                    debug_table_bytes[47:40] <= rom_data;
+                    debug_decode_bytes <= {
+                        rom_data,
+                        new_stop[15:8],
+                        {6'b000000, new_stop[17:16]},
+                        new_start[7:0],
+                        new_start[15:8],
+                        {6'b000000, new_start[17:16]}
+                    };
+                    debug_capture_active <= 1'b0;
+                    debug_capture_done <= 1'b1;
+                end
                 start       <= ch;
                 start_addr  <= new_start;
                 stop_addr   <= {new_stop[17:8], rom_data} ;

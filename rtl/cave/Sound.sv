@@ -32,6 +32,11 @@ module Sound(
   input         io_options_ym_fm,
   input         io_options_oki_0,
   input         io_options_oki_1,
+  input  [2:0]  io_options_pwrinst2_oki0_level,
+  input  [2:0]  io_options_pwrinst2_oki1_level,
+  input         io_options_pwrinst2_headroom,
+  input  [2:0]  io_options_pwrinst2_psg_level,
+  input  [2:0]  io_options_pwrinst2_fm_level,
   output        io_rom_0_rd,
   output [24:0] io_rom_0_addr,
   input  [7:0]  io_rom_0_dout,
@@ -76,6 +81,8 @@ module Sound(
   assign pwrinst2Z80Sound = pwrinst2 & soundDeviceIsZ80;
 
   reg         reqReg;
+  reg         latchHighReadSeen;
+  reg         latchLowReadSeen;
   reg  [15:0] dataReg;
   reg  [2:0]  z80BankReg;
   reg         z80IoWrD;
@@ -102,6 +109,10 @@ module Sound(
   reg  [7:0]  debugOki0StartChannels;
   reg  [7:0]  debugOki0BusyOverlap;
   reg  [7:0]  debugOki1StatusRead;
+  reg  [7:0]  debugOki0RawPage;
+  reg  [7:0]  debugOki0MappedPage;
+  reg  [7:0]  debugOki0NmkPage;
+  reg  [7:0]  debugOki0ReadPhase;
   reg  [7:0]  debugLastNmkWrite;
   reg  [7:0]  debugLastYmReg;
   reg  [7:0]  debugLastYmData;
@@ -110,6 +121,39 @@ module Sound(
   reg  [7:0]  debugYmPsgPeak;
   reg  [7:0]  debugYmFmPeak;
   reg         debugOki0Pending;
+  reg         debugCfPending;
+  reg         debugCfCaptured;
+  reg  [1:0] debugCfPendingAge;
+  reg  [28:0] debugCfPageCounter;
+  reg  [7:0]  debugCfPhraseCommand;
+  reg  [7:0]  debugCfStartCommand;
+  reg  [7:0]  debugCfStatusAtStart;
+  reg  [7:0]  debugCfOverlap;
+  reg  [7:0]  debugCfRawPage;
+  reg  [7:0]  debugCfMappedPage;
+  reg  [7:0]  debugCfNmkPage;
+  reg  [7:0]  debugCfReadPhase;
+  reg  [7:0]  debugCfLastNmkWrite;
+  reg  [7:0]  debugCfLatchStatus;
+  reg  [47:0] debugCfCtrlBytes;
+  reg  [47:0] debugCfDecodeBytes;
+  reg  [47:0] debugCfTableBytes;
+  reg  [47:0] debugCfBodyBytes;
+  reg  [2:0]  debugCfPageSelect;
+  reg  [31:0] debugOki0Pair0;
+  reg  [31:0] debugOki0Pair1;
+  reg  [31:0] debugOki0Pair2;
+  reg  [31:0] debugOki0Pair3;
+  reg  [31:0] debugCfPair0;
+  reg  [31:0] debugCfPair1;
+  reg  [31:0] debugCfPair2;
+  reg  [31:0] debugCfPair3;
+  reg  [7:0]  debugCfZ80Flags;
+  reg  [7:0]  debugCfZ80IoAddr;
+  reg  [7:0]  debugCfZ80IoData;
+  reg  [7:0]  debugCfReqStatus;
+  reg  [7:0]  debugCfDataHigh;
+  reg  [7:0]  debugCfDataLow;
 `endif
 
   wire [15:0] cpuAddr;
@@ -148,6 +192,8 @@ module Sound(
   wire        z80BankWrite = pwrinst2Z80Sound & (cpuIoAddr == 16'h0080) & z80IoWrPulse;
   wire        replyPop = io_ctrl_reply_rd & (replyCount != 6'd0);
   wire        replyPush = soundReplyWrite & ((replyCount != 6'd32) | replyPop);
+  wire        latchHighReadSeenNext = io_ctrl_req ? 1'b0 : (latchHighReadSeen | latchHighRead);
+  wire        latchLowReadSeenNext = io_ctrl_req ? 1'b0 : (latchLowReadSeen | latchLowRead);
 
   wire [7:0]  soundRamDout;
   wire        soundRamRd = pwrinst2Z80Sound & z80RamSelect & cpuMreq & cpuRd & ~cpuRfsh;
@@ -176,7 +222,11 @@ module Sound(
   wire        oki0AudioValid;
   wire [13:0] oki0Audio;
   wire [47:0] oki0DebugCtrlBytes;
+  wire [47:0] oki0DebugDecodeBytes;
+  wire [47:0] oki0DebugTableBytes;
   wire [47:0] oki0DebugBodyBytes;
+  wire        oki0DebugBodyDone;
+  wire [7:0]  oki0DebugBusyState;
 
   wire [7:0]  oki1CpuDout;
   wire        oki1RomRead;
@@ -184,8 +234,11 @@ module Sound(
   wire        oki1AudioValid;
   wire [13:0] oki1Audio;
   wire [47:0] oki1DebugCtrlBytes;
+  wire [47:0] oki1DebugDecodeBytes;
+  wire [47:0] oki1DebugTableBytes;
   wire [47:0] oki1DebugBodyBytes;
-
+  wire        oki1DebugBodyDone;
+  wire [7:0]  oki1DebugBusyState;
   wire [7:0]  ymzCpuDout;
   wire        ymzRomRd;
   wire [23:0] ymzRomAddr;
@@ -204,6 +257,13 @@ module Sound(
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
   wire [7:0]  ym2203PsgMagnitude = ym2203PsgAudio[15:8];
   wire [7:0]  ym2203FmMagnitude = ym2203FmAudio[15] ? ~ym2203FmAudio[14:7] : ym2203FmAudio[14:7];
+  wire [7:0]  debugLatchStatus = {
+    4'hA,
+    reqReg,
+    latchHighReadSeen,
+    latchLowReadSeen,
+    replyCount != 6'd0
+  };
 `endif
 
   wire        nmkWr = pwrinst2NmkWrite | io_ctrl_nmk_wr;
@@ -215,8 +275,20 @@ module Sound(
   wire [3:0]  oki1Bank = oki1RomAddr[17] ? okiBankHiReg : okiBankLoReg;
   wire [24:0] bankedOki0MappedAddr = {4'h0, oki0Bank, oki0RomAddr[16:0]};
   wire [24:0] bankedOki1MappedAddr = {4'h0, oki1Bank, oki1RomAddr[16:0]};
-  wire [24:0] oki0MappedAddr = (donpachi | pwrinst2Z80Sound) ? nmkOki0AddrOut : bankedOki0MappedAddr;
+  wire [24:0] pwrinst2Oki0FixedAddr = {7'h00, oki0RomAddr};
+  wire        pwrinst2Oki0TableRegion = oki0RomAddr[17:10] == 8'h00;
+  wire        pwrinst2Oki0PagedTable = pwrinst2Z80Sound & pwrinst2Oki0TableRegion;
+  wire        pwrinst2Oki0PagedBody = pwrinst2Z80Sound & ~pwrinst2Oki0TableRegion;
+  wire [24:0] pwrinst2Oki0DcAddr =
+    (pwrinst2Oki0PagedTable | pwrinst2Oki0PagedBody) ? nmkOki0AddrOut :
+                                                        pwrinst2Oki0FixedAddr;
+  wire [24:0] oki0MappedAddr =
+    pwrinst2Z80Sound ? pwrinst2Oki0DcAddr :
+    donpachi ? nmkOki0AddrOut :
+    bankedOki0MappedAddr;
   wire [24:0] oki1MappedAddr = (donpachi | pwrinst2Z80Sound) ? nmkOki1AddrOut : bankedOki1MappedAddr;
+  wire        pwrinst2Oki0TableRead = pwrinst2Z80Sound & oki0RomRead & pwrinst2Oki0TableRegion;
+  wire        pwrinst2Oki0BodyRead = pwrinst2Z80Sound & oki0RomRead & (oki0RomAddr[17:10] != 8'h00);
   wire [7:0]  oki0RomData = pwrinst2Z80Sound ? io_rom_1_dout : oki0RomDout;
   wire        oki0RomDataValid = pwrinst2Z80Sound ? io_rom_1_valid : oki0RomValid;
   wire [7:0]  oki1RomData = pwrinst2Z80Sound ? io_rom_2_dout : io_rom_1_dout;
@@ -233,6 +305,113 @@ module Sound(
   wire [16:0] oki0CenStep = pwrinst2Z80Sound ? 17'h1800 : 17'h0873;
   wire [16:0] oki1CenStep = pwrinst2Z80Sound ? 17'h1800 : 17'h10E5;
   wire        okiPin7Ss = ~pwrinst2Z80Sound;
+  // E1: E0 plus PI2 PSG/FM mixer trims.
+  wire        pwrinst2Oki0IgnoreBusyStart = 1'b0;
+  wire        pwrinst2Oki0DuplicateBusyStartFilter = pwrinst2Z80Sound;
+
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+  wire [3:0]  debugOki0CurrentBusyOverlap = oki0CpuDout[3:0] & oki0CpuDin[7:4];
+  wire        debugOki0BusyStartCapture =
+    pwrinst2Z80Sound & oki0CpuWr & debugOki0Pending &
+    (debugOki0CurrentBusyOverlap != 4'h0) & ~debugCfPending & ~debugCfCaptured;
+  wire [31:0] debugOki0CurrentPair = {
+    debugOki0StatusRead,
+    {4'hA, debugOki0CurrentBusyOverlap},
+    oki0CpuDin,
+    debugOki0PhraseCommand
+  };
+  wire [7:0]  debugZ80Flags = {
+    pwrinst2Z80Sound,
+    cpuInt,
+    ym2203Irq,
+    ym2203QueueFull,
+    ym2203CpuWaitN,
+    latchHighReadSeen,
+    latchLowReadSeen,
+    (replyCount != 6'd0)
+  };
+  wire [7:0]  debugReqStatus = {
+    reqReg,
+    io_ctrl_req,
+    latchHighRead,
+    latchLowRead,
+    soundReplyWrite,
+    replyPush,
+    replyPop,
+    z80BankWrite
+  };
+  wire [7:0]  debugCfPage = {5'h00, debugCfCaptured ? debugCfPageSelect : 3'd0};
+  wire [63:0] debugCfPage0 = {
+    debugCfNmkPage,
+    debugCfMappedPage,
+    debugCfOverlap,
+    debugCfStatusAtStart,
+    debugCfStartCommand,
+    debugCfPhraseCommand,
+    8'h00,
+    8'hE1
+  };
+  wire [63:0] debugCfPage1 = {
+    debugCfCtrlBytes[47:40],
+    debugCfCtrlBytes[39:32],
+    debugCfCtrlBytes[31:24],
+    debugCfCtrlBytes[23:16],
+    debugCfCtrlBytes[15:8],
+    debugCfCtrlBytes[7:0],
+    8'h01,
+    8'hE1
+  };
+  wire [63:0] debugCfPage2 = {
+    debugCfTableBytes[47:40],
+    debugCfTableBytes[39:32],
+    debugCfTableBytes[31:24],
+    debugCfTableBytes[23:16],
+    debugCfTableBytes[15:8],
+    debugCfTableBytes[7:0],
+    8'h02,
+    8'hE1
+  };
+  wire [63:0] debugCfPage3 = {
+    debugCfBodyBytes[47:40],
+    debugCfBodyBytes[39:32],
+    debugCfBodyBytes[31:24],
+    debugCfBodyBytes[23:16],
+    debugCfBodyBytes[15:8],
+    debugCfBodyBytes[7:0],
+    8'h03,
+    8'hE1
+  };
+  wire [63:0] debugCfPage4 = {
+    debugCfDataLow,
+    debugCfDataHigh,
+    debugCfReqStatus,
+    debugCfZ80IoData,
+    debugCfZ80IoAddr,
+    debugCfZ80Flags,
+    8'h04,
+    8'hE1
+  };
+  wire [63:0] debugCfPage5 = {
+    debugCfLatchStatus,
+    debugCfLastNmkWrite,
+    debugCfReadPhase,
+    debugCfNmkPage,
+    debugCfMappedPage,
+    debugCfRawPage,
+    8'h05,
+    8'hE1
+  };
+  wire [63:0] debugCfWord =
+    debugCfPage[2:0] == 3'd1 ? debugCfPage1 :
+    debugCfPage[2:0] == 3'd2 ? debugCfPage2 :
+    debugCfPage[2:0] == 3'd3 ? debugCfPage3 :
+    debugCfPage[2:0] == 3'd4 ? debugCfPage4 :
+    debugCfPage[2:0] == 3'd5 ? debugCfPage5 :
+                                debugCfPage0;
+  wire        debugOki0CaptureEnable = debugOki0BusyStartCapture | debugCfPending;
+`else
+  wire        debugOki0CaptureEnable = 1'b0;
+`endif
 
   wire [7:0] cpuDin =
     pwrinst2Oki0Access & cpuRd ? oki0CpuDout :
@@ -246,6 +425,8 @@ module Sound(
   always @(posedge clock) begin
     if (reset) begin
       reqReg <= 1'b0;
+      latchHighReadSeen <= 1'b0;
+      latchLowReadSeen <= 1'b0;
       dataReg <= 16'h0000;
       z80BankReg <= 3'h0;
       okiBankHiReg <= 4'h0;
@@ -264,6 +445,10 @@ module Sound(
       debugOki0StartChannels <= 8'h0;
       debugOki0BusyOverlap <= 8'h0;
       debugOki1StatusRead <= 8'h0;
+      debugOki0RawPage <= 8'h0;
+      debugOki0MappedPage <= 8'h0;
+      debugOki0NmkPage <= 8'h0;
+      debugOki0ReadPhase <= 8'h0;
       debugLastNmkWrite <= 8'h0;
       debugLastYmReg <= 8'h0;
       debugLastYmData <= 8'h0;
@@ -272,6 +457,39 @@ module Sound(
       debugYmPsgPeak <= 8'h0;
       debugYmFmPeak <= 8'h0;
       debugOki0Pending <= 1'b0;
+      debugCfPending <= 1'b0;
+      debugCfCaptured <= 1'b0;
+      debugCfPendingAge <= 2'b00;
+      debugCfPageCounter <= 29'd0;
+      debugCfPhraseCommand <= 8'h00;
+      debugCfStartCommand <= 8'h00;
+      debugCfStatusAtStart <= 8'h00;
+      debugCfOverlap <= 8'h00;
+      debugCfRawPage <= 8'h00;
+      debugCfMappedPage <= 8'h00;
+      debugCfNmkPage <= 8'h00;
+      debugCfReadPhase <= 8'h00;
+      debugCfLastNmkWrite <= 8'h00;
+      debugCfLatchStatus <= 8'h00;
+      debugCfCtrlBytes <= 48'h000000000000;
+      debugCfDecodeBytes <= 48'h000000000000;
+      debugCfTableBytes <= 48'h000000000000;
+      debugCfBodyBytes <= 48'h000000000000;
+      debugCfPageSelect <= 3'd0;
+      debugOki0Pair0 <= 32'h00000000;
+      debugOki0Pair1 <= 32'h00000000;
+      debugOki0Pair2 <= 32'h00000000;
+      debugOki0Pair3 <= 32'h00000000;
+      debugCfPair0 <= 32'h00000000;
+      debugCfPair1 <= 32'h00000000;
+      debugCfPair2 <= 32'h00000000;
+      debugCfPair3 <= 32'h00000000;
+      debugCfZ80Flags <= 8'h00;
+      debugCfZ80IoAddr <= 8'h00;
+      debugCfZ80IoData <= 8'h00;
+      debugCfReqStatus <= 8'h00;
+      debugCfDataHigh <= 8'h00;
+      debugCfDataLow <= 8'h00;
 `endif
     end
     else begin
@@ -281,7 +499,9 @@ module Sound(
         z80IoWrDataD <= cpuDout;
       end
 
-      reqReg <= ~(pwrinst2Z80Sound & (latchHighRead | latchLowRead)) & (io_ctrl_req | reqReg);
+      reqReg <= io_ctrl_req | (reqReg & ~(latchHighRead | latchLowRead));
+      latchHighReadSeen <= latchHighReadSeenNext;
+      latchLowReadSeen <= latchLowReadSeenNext;
 
       if (io_ctrl_req)
         dataReg <= io_ctrl_data;
@@ -359,9 +579,13 @@ module Sound(
 
       if (oki0CpuWr) begin
         if (debugOki0Pending) begin
+          debugOki0Pair3 <= debugOki0Pair2;
+          debugOki0Pair2 <= debugOki0Pair1;
+          debugOki0Pair1 <= debugOki0Pair0;
+          debugOki0Pair0 <= debugOki0CurrentPair;
           debugOki0StartCommand <= oki0CpuDin;
           debugOki0StartChannels <= {4'h0, oki0CpuDin[7:4]};
-          debugOki0BusyOverlap <= {4'h0, oki0CpuDout[3:0] & oki0CpuDin[7:4]};
+          debugOki0BusyOverlap <= {4'h0, debugOki0CurrentBusyOverlap};
           debugOki0Pending <= 1'b0;
         end
         else if (oki0CpuDin[7]) begin
@@ -371,6 +595,69 @@ module Sound(
         else begin
           debugOki0Pending <= 1'b0;
         end
+      end
+
+      if (debugOki0BusyStartCapture) begin
+        debugCfPending <= 1'b1;
+        debugCfCaptured <= 1'b0;
+        debugCfPendingAge <= 2'b00;
+        debugCfPageCounter <= 29'd0;
+        debugCfPhraseCommand <= debugOki0PhraseCommand;
+        debugCfStartCommand <= oki0CpuDin;
+        debugCfStatusAtStart <= oki0CpuDout;
+        debugCfOverlap <= {4'hA, debugOki0CurrentBusyOverlap};
+        debugCfRawPage <= debugOki0RawPage;
+        debugCfMappedPage <= debugOki0MappedPage;
+        debugCfNmkPage <= debugOki0NmkPage;
+        debugCfReadPhase <= debugOki0ReadPhase;
+        debugCfLastNmkWrite <= debugLastNmkWrite;
+        debugCfLatchStatus <= debugLatchStatus;
+        debugCfCtrlBytes <= 48'h000000000000;
+        debugCfDecodeBytes <= 48'h000000000000;
+        debugCfTableBytes <= 48'h000000000000;
+        debugCfBodyBytes <= 48'h000000000000;
+        debugCfPageSelect <= 3'd0;
+        debugCfPair0 <= debugOki0CurrentPair;
+        debugCfPair1 <= debugOki0Pair0;
+        debugCfPair2 <= debugOki0Pair1;
+        debugCfPair3 <= debugOki0Pair2;
+        debugCfZ80Flags <= debugZ80Flags;
+        debugCfZ80IoAddr <= z80IoWrAddrD;
+        debugCfZ80IoData <= z80IoWrDataD;
+        debugCfReqStatus <= debugReqStatus;
+        debugCfDataHigh <= dataReg[15:8];
+        debugCfDataLow <= dataReg[7:0];
+      end
+      else if (debugCfPending) begin
+        if (debugCfPendingAge != 2'b11)
+          debugCfPendingAge <= debugCfPendingAge + 2'b01;
+
+        if ((debugCfPendingAge != 2'b00) & oki0DebugBodyDone) begin
+          debugCfPending <= 1'b0;
+          debugCfCaptured <= 1'b1;
+          debugCfRawPage <= debugOki0RawPage;
+          debugCfMappedPage <= debugOki0MappedPage;
+          debugCfNmkPage <= debugOki0NmkPage;
+          debugCfReadPhase <= debugOki0ReadPhase;
+          debugCfLastNmkWrite <= debugLastNmkWrite;
+          debugCfLatchStatus <= debugLatchStatus;
+          debugCfCtrlBytes <= oki0DebugCtrlBytes;
+          debugCfDecodeBytes <= oki0DebugDecodeBytes;
+          debugCfTableBytes <= oki0DebugTableBytes;
+          debugCfBodyBytes <= oki0DebugBodyBytes;
+        end
+      end
+      else if (debugCfCaptured) begin
+        debugCfPageCounter <= debugCfPageCounter + 29'd1;
+        if (debugCfPageCounter[26:0] == 27'h7ffffff)
+          debugCfPageSelect <= (debugCfPageSelect == 3'd5) ? 3'd0 : debugCfPageSelect + 3'd1;
+      end
+
+      if (oki0RomRead) begin
+        debugOki0RawPage <= {4'hA, oki0RomAddr[17:14]};
+        debugOki0MappedPage <= {4'hB, oki0MappedAddr[21:18]};
+        debugOki0NmkPage <= {4'hC, nmkOki0AddrOut[21:18]};
+        debugOki0ReadPhase <= {4'hD, pwrinst2Oki0TableRead, pwrinst2Oki0BodyRead, oki0RomAddr[17:16]};
       end
 
 `endif
@@ -448,7 +735,14 @@ module Sound(
     .io_cpu_din        (oki0CpuDin),
     .io_stretch_cpu_wr (1'b0),
     .io_wait_for_rom   (pwrinst2Z80Sound),
-    .io_ignore_busy_start (pwrinst2Z80Sound),
+    .io_ignore_busy_start (pwrinst2Oki0IgnoreBusyStart),
+    .io_duplicate_busy_start_filter (pwrinst2Oki0DuplicateBusyStartFilter),
+    .io_restart_busy_start (1'b0),
+    .io_restart_mute_busy_start (1'b0),
+    .io_reset_adpcm_on_start (1'b0),
+    .io_status_includes_start (1'b1),
+    .io_debug_capture_enable (debugOki0CaptureEnable),
+    .io_align_ctrl_ok  (pwrinst2Z80Sound),
     .io_cpu_dout       (oki0CpuDout),
     .io_rom_rd         (oki0RomRead),
     .io_rom_addr       (oki0RomAddr),
@@ -458,7 +752,11 @@ module Sound(
     .io_audio_valid    (oki0AudioValid),
     .io_audio_bits     (oki0Audio),
     .io_debug_ctrl_bytes (oki0DebugCtrlBytes),
-    .io_debug_body_bytes (oki0DebugBodyBytes)
+    .io_debug_decode_bytes (oki0DebugDecodeBytes),
+    .io_debug_table_bytes (oki0DebugTableBytes),
+    .io_debug_body_bytes (oki0DebugBodyBytes),
+    .io_debug_body_done (oki0DebugBodyDone),
+    .io_debug_busy_state (oki0DebugBusyState)
   );
 
   CaveOKIM6295 #(
@@ -473,6 +771,13 @@ module Sound(
     .io_stretch_cpu_wr (1'b0),
     .io_wait_for_rom   (pwrinst2Z80Sound),
     .io_ignore_busy_start (1'b0),
+    .io_duplicate_busy_start_filter (1'b0),
+    .io_restart_busy_start (1'b0),
+    .io_restart_mute_busy_start (1'b0),
+    .io_reset_adpcm_on_start (1'b0),
+    .io_status_includes_start (1'b1),
+    .io_debug_capture_enable (1'b0),
+    .io_align_ctrl_ok  (1'b0),
     .io_cpu_dout       (oki1CpuDout),
     .io_rom_rd         (oki1RomRead),
     .io_rom_addr       (oki1RomAddr),
@@ -482,7 +787,11 @@ module Sound(
     .io_audio_valid    (oki1AudioValid),
     .io_audio_bits     (oki1Audio),
     .io_debug_ctrl_bytes (oki1DebugCtrlBytes),
-    .io_debug_body_bytes (oki1DebugBodyBytes)
+    .io_debug_decode_bytes (oki1DebugDecodeBytes),
+    .io_debug_table_bytes (oki1DebugTableBytes),
+    .io_debug_body_bytes (oki1DebugBodyBytes),
+    .io_debug_body_done (oki1DebugBodyDone),
+    .io_debug_busy_state (oki1DebugBusyState)
   );
 
   YMZ280B ymz280b (
@@ -548,6 +857,11 @@ module Sound(
   AudioMixer io_audio_mixer (
     .clock       (clock),
     .io_pwrinst2 (pwrinst2Z80Sound),
+    .io_pwrinst2_oki0_level (io_options_pwrinst2_oki0_level),
+    .io_pwrinst2_oki1_level (io_options_pwrinst2_oki1_level),
+    .io_pwrinst2_headroom (io_options_pwrinst2_headroom),
+    .io_pwrinst2_psg_level (io_options_pwrinst2_psg_level),
+    .io_pwrinst2_fm_level  (io_options_pwrinst2_fm_level),
     .io_in_4     (oki1Mix),
     .io_in_3     (oki0Mix),
     .io_in_2     (pwrinst2Z80Sound ? ym2203FmMix : 16'h0000),
@@ -565,18 +879,12 @@ module Sound(
   assign io_ctrl_reply_empty = replyCount == 6'd0;
 
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
-  // Power Instinct 2 sound page: MK, YM reg/data/write count, flags,
-  // Z80 bank/reply depth, last command, and FM peak.
-  assign io_debug = {
-    debugYmFmPeak,
-    debugLastSoundCommand,
-    {z80BankReg, replyCount[4:0]},
-    debugYmFlags,
-    debugYmWriteCount,
-    debugLastYmData,
-    debugLastYmReg,
-    8'hAD
-  };
+  // Power Instinct 2 OKI0 one-shot capture:
+  // MK=E1. Once the first busy-overlap start is seen, PH cycles pages:
+  // 00 command/status, 01 decoded start/stop bytes,
+  // 02 consumed phrase-table bytes, 03 first body bytes,
+  // 04 Z80/latch/YM context, 05 raw/mapped/NMK/read-phase plus context.
+  assign io_debug = debugCfWord;
 `else
   assign io_debug = 64'd0;
 `endif

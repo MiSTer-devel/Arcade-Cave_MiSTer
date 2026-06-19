@@ -81,6 +81,11 @@ localparam CONF_STR = {
   "P1ON,YM FM,On,Off;",
   "P1OO,OKI0,On,Off;",
   "P1OP,OKI1,On,Off;",
+  "P1O[28:26],PI2 OKI0 Trim,100%,75%,50%,125%,150%,200%,250%,300%;",
+  "P1O[31:29],PI2 OKI1 Trim,100%,75%,50%,125%,150%,200%,250%,300%;",
+  "P1O[32],PI2 Headroom,On,Off;",
+  "P1O[35:33],PI2 PSG Trim,100%,75%,50%,125%,150%,200%,250%,300%;",
+  "P1O[38:36],PI2 FM Trim,100%,75%,50%,125%,150%,200%,250%,300%;",
   "P1-;",
 `else
   "P1,Hardware;",
@@ -262,6 +267,11 @@ wire option_ym_psg = ~status[22];
 wire option_ym_fm = ~status[23];
 wire option_oki_0 = ~status[24];
 wire option_oki_1 = ~status[25];
+wire [2:0] option_pwrinst2_oki0_level = status[28:26];
+wire [2:0] option_pwrinst2_oki1_level = status[31:29];
+wire option_pwrinst2_headroom = ~status[32];
+wire [2:0] option_pwrinst2_psg_level = status[35:33];
+wire [2:0] option_pwrinst2_fm_level = status[38:36];
 wire [3:0] option_offset_x = 4'h0;
 wire [3:0] option_offset_y = 4'h0;
 `else
@@ -275,6 +285,11 @@ wire option_ym_psg = 1'b1;
 wire option_ym_fm = 1'b1;
 wire option_oki_0 = 1'b1;
 wire option_oki_1 = 1'b1;
+wire [2:0] option_pwrinst2_oki0_level = 3'd0;
+wire [2:0] option_pwrinst2_oki1_level = 3'd0;
+wire option_pwrinst2_headroom = 1'b1;
+wire [2:0] option_pwrinst2_psg_level = 3'd0;
+wire [2:0] option_pwrinst2_fm_level = 3'd0;
 wire [3:0] option_offset_x = status[27:24];
 wire [3:0] option_offset_y = status[31:28];
 `endif
@@ -447,6 +462,11 @@ Cave cave (
   .options_ym_fm(option_ym_fm),
   .options_oki_0(option_oki_0),
   .options_oki_1(option_oki_1),
+  .options_pwrinst2_oki0_level(option_pwrinst2_oki0_level),
+  .options_pwrinst2_oki1_level(option_pwrinst2_oki1_level),
+  .options_pwrinst2_headroom(option_pwrinst2_headroom),
+  .options_pwrinst2_psg_level(option_pwrinst2_psg_level),
+  .options_pwrinst2_fm_level(option_pwrinst2_fm_level),
   // Joystick signals
   .player_0_up(player_1_up),
   .player_0_down(player_1_down),

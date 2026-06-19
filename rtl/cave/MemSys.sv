@@ -68,6 +68,11 @@ module MemSys(
   output [63:0] io_layerTileRom_2_dout,
   output        io_layerTileRom_2_wait_n,
   output        io_layerTileRom_2_valid,
+  input         io_pwrinst2Layer2TileRom_rd,
+  input  [31:0] io_pwrinst2Layer2TileRom_addr,
+  output [63:0] io_pwrinst2Layer2TileRom_dout,
+  output        io_pwrinst2Layer2TileRom_wait_n,
+  output        io_pwrinst2Layer2TileRom_valid,
   input         io_spriteTileRom_rd,
   input  [31:0] io_spriteTileRom_addr,
   output [63:0] io_spriteTileRom_dout,
@@ -193,6 +198,11 @@ module MemSys(
   wire [15:0] layerRomCache2OutDout;
   wire        layerRomCache2OutWaitN;
   wire        layerRomCache2OutValid;
+  wire        pwrinst2Layer2RomCacheOutRd;
+  wire [24:0] pwrinst2Layer2RomCacheOutAddr;
+  wire [15:0] pwrinst2Layer2RomCacheOutDout;
+  wire        pwrinst2Layer2RomCacheOutWaitN;
+  wire        pwrinst2Layer2RomCacheOutValid;
 
   wire        copyDmaStart = io_prog_done & ~copyDmaStartedReg;
   wire [31:0] ddrDownloadAddr = ddrDownloadBufferOutAddr + IOCTL_DOWNLOAD_BASE_ADDR;
@@ -216,6 +226,8 @@ module MemSys(
     layerRomCache1OutAddr + io_gameConfig_layer_1_romOffset[24:0];
   wire [24:0] layerRom2SdramAddr =
     layerRomCache2OutAddr + io_gameConfig_layer_2_romOffset[24:0];
+  wire [24:0] pwrinst2Layer2SdramAddr =
+    pwrinst2Layer2RomCacheOutAddr + 25'h0D20080;
 
   always @(posedge clock) begin
     copyDmaBusyReg <= copyDmaBusy;
@@ -434,8 +446,8 @@ module MemSys(
     .IN_ADDR_WIDTH  (32),
     .IN_DATA_WIDTH  (64),
     .OUT_ADDR_WIDTH (25),
-    .INDEX_WIDTH    (3),
-    .TAG_WIDTH      (27)
+    .INDEX_WIDTH    (4),
+    .TAG_WIDTH      (26)
   ) layerRomCache_2 (
     .clock         (clock),
     .reset         (reset),
@@ -450,6 +462,28 @@ module MemSys(
     .io_out_dout   (layerRomCache2OutDout),
     .io_out_wait_n (layerRomCache2OutWaitN),
     .io_out_valid  (layerRomCache2OutValid)
+  );
+
+  CaveReadCache #(
+    .IN_ADDR_WIDTH  (32),
+    .IN_DATA_WIDTH  (64),
+    .OUT_ADDR_WIDTH (25),
+    .INDEX_WIDTH    (3),
+    .TAG_WIDTH      (27)
+  ) pwrinst2Layer2RomCache (
+    .clock         (clock),
+    .reset         (reset),
+    .io_enable     (readyEnableReg),
+    .io_in_rd      (io_pwrinst2Layer2TileRom_rd),
+    .io_in_addr    (io_pwrinst2Layer2TileRom_addr),
+    .io_in_dout    (io_pwrinst2Layer2TileRom_dout),
+    .io_in_wait_n  (io_pwrinst2Layer2TileRom_wait_n),
+    .io_in_valid   (io_pwrinst2Layer2TileRom_valid),
+    .io_out_rd     (pwrinst2Layer2RomCacheOutRd),
+    .io_out_addr   (pwrinst2Layer2RomCacheOutAddr),
+    .io_out_dout   (pwrinst2Layer2RomCacheOutDout),
+    .io_out_wait_n (pwrinst2Layer2RomCacheOutWaitN),
+    .io_out_valid  (pwrinst2Layer2RomCacheOutValid)
   );
 
   CaveMainDdrArbiter ddrArbiter (
@@ -559,6 +593,11 @@ module MemSys(
     .io_in_7_dout      (layerRomCache2OutDout),
     .io_in_7_wait_n    (layerRomCache2OutWaitN),
     .io_in_7_valid     (layerRomCache2OutValid),
+    .io_in_9_rd        (pwrinst2Layer2RomCacheOutRd),
+    .io_in_9_addr      (pwrinst2Layer2SdramAddr),
+    .io_in_9_dout      (pwrinst2Layer2RomCacheOutDout),
+    .io_in_9_wait_n    (pwrinst2Layer2RomCacheOutWaitN),
+    .io_in_9_valid     (pwrinst2Layer2RomCacheOutValid),
     .io_out_rd         (io_sdram_rd),
     .io_out_wr         (io_sdram_wr),
     .io_out_addr       (io_sdram_addr),

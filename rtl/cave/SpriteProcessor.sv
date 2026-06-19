@@ -558,10 +558,10 @@ module PwrInst2SpriteRomDecryptor(
   wire [7:0]  byte0 = select_byte(io_rom_dout, rawAddr0[2:0]);
   wire [7:0]  byte1 = select_byte(io_rom_dout, rawAddr1[2:0]);
   wire [63:0] rowDataWithPiece =
-    pieceReg == 2'd0 ? {rowDataReg[63:16], byte1, byte0} :
-    pieceReg == 2'd1 ? {rowDataReg[63:32], byte1, byte0, rowDataReg[15:0]} :
-    pieceReg == 2'd2 ? {rowDataReg[63:48], byte1, byte0, rowDataReg[31:0]} :
-                       {byte1, byte0, rowDataReg[47:0]};
+    pieceReg == 2'd0 ? {rowDataReg[63:16], byte0, byte1} :
+    pieceReg == 2'd1 ? {rowDataReg[63:32], byte0, byte1, rowDataReg[15:0]} :
+    pieceReg == 2'd2 ? {rowDataReg[63:48], byte0, byte1, rowDataReg[31:0]} :
+                       {byte0, byte1, rowDataReg[47:0]};
   wire        rowDone = rawDataValid & (pieceReg == 2'd3);
   wire        finalRow = rowReg == (rowsTotalReg - 8'd1);
 

@@ -72,6 +72,20 @@ module Main(
   output [31:0]  io_gpuMem_layer_2_vram16x16_dout,
   input  [8:0]   io_gpuMem_layer_2_lineRam_addr,
   output [31:0]  io_gpuMem_layer_2_lineRam_dout,
+  output         io_gpuMem_pwrinst2_layer_2_regs_tileSize,
+  output         io_gpuMem_pwrinst2_layer_2_regs_enable,
+  output         io_gpuMem_pwrinst2_layer_2_regs_flipX,
+  output         io_gpuMem_pwrinst2_layer_2_regs_flipY,
+  output         io_gpuMem_pwrinst2_layer_2_regs_rowScrollEnable,
+  output         io_gpuMem_pwrinst2_layer_2_regs_rowSelectEnable,
+  output [8:0]   io_gpuMem_pwrinst2_layer_2_regs_scroll_x,
+  output [8:0]   io_gpuMem_pwrinst2_layer_2_regs_scroll_y,
+  input  [11:0]  io_gpuMem_pwrinst2_layer_2_vram8x8_addr,
+  output [31:0]  io_gpuMem_pwrinst2_layer_2_vram8x8_dout,
+  input  [9:0]   io_gpuMem_pwrinst2_layer_2_vram16x16_addr,
+  output [31:0]  io_gpuMem_pwrinst2_layer_2_vram16x16_dout,
+  input  [8:0]   io_gpuMem_pwrinst2_layer_2_lineRam_addr,
+  output [31:0]  io_gpuMem_pwrinst2_layer_2_lineRam_dout,
   output [8:0]   io_gpuMem_sprite_regs_offset_x,
   output [8:0]   io_gpuMem_sprite_regs_offset_y,
   output [1:0]   io_gpuMem_sprite_regs_bank,
@@ -181,17 +195,20 @@ module Main(
   wire [15:0] _paletteRam_io_portA_dout;
   wire [9:0]  _lineRam_2_io_portA_addr;
   wire [15:0] _lineRam_2_io_portA_dout;
+  wire [15:0] _pwrinst2Layer2LineRam_io_portA_dout;
   wire [9:0]  _lineRam_1_io_portA_addr;
   wire [15:0] _lineRam_1_io_portA_dout;
   wire [9:0]  _lineRam_0_io_portA_addr;
   wire [15:0] _lineRam_0_io_portA_dout;
   wire [10:0] _vram16x16_2_io_portA_addr;
   wire [15:0] _vram16x16_2_io_portA_dout;
+  wire [15:0] _pwrinst2Layer2Vram16_io_portA_dout;
   wire [10:0] _vram16x16_1_io_portA_addr;
   wire [15:0] _vram16x16_1_io_portA_dout;
   wire [10:0] _vram16x16_0_io_portA_addr;
   wire [15:0] _vram16x16_0_io_portA_dout;
   wire [15:0] _vram8x8_2_io_portA_dout;
+  wire [15:0] _pwrinst2Layer2Vram8_io_portA_dout;
   wire [12:0] _vram8x8_1_io_portA_addr;
   wire [15:0] _vram8x8_1_io_portA_dout;
   wire [12:0] _vram8x8_0_io_portA_addr;
@@ -274,6 +291,22 @@ module Main(
   reg         io_gpuMem_layer_2_regs_r_1_rowSelectEnable;
   reg  [8:0]  io_gpuMem_layer_2_regs_r_1_scroll_x;
   reg  [8:0]  io_gpuMem_layer_2_regs_r_1_scroll_y;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_tileSize;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_enable;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_flipX;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_flipY;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_rowScrollEnable;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_rowSelectEnable;
+  reg  [8:0]  io_gpuMem_pwrinst2_layer_2_regs_r_scroll_x;
+  reg  [8:0]  io_gpuMem_pwrinst2_layer_2_regs_r_scroll_y;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_1_tileSize;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_1_enable;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_1_flipX;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_1_flipY;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_1_rowScrollEnable;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_1_rowSelectEnable;
+  reg  [8:0]  io_gpuMem_pwrinst2_layer_2_regs_r_1_scroll_x;
+  reg  [8:0]  io_gpuMem_pwrinst2_layer_2_regs_r_1_scroll_y;
   wire        coin1PulseActive;
   wire        coin2PulseActive;
   wire        servicePulseActive;
@@ -583,10 +616,10 @@ module Main(
     pwrinst2Input0Read ? pwrinst2InputP1 :
     pwrinst2Input1Read ? pwrinst2InputP2 :
     pwrinst2ExtraRomRead ? 16'h0000 :
-    pwrinst2Layer2Vram16Select ? _vram16x16_2_io_portA_dout :
-    pwrinst2Layer2LineSelect ? _lineRam_2_io_portA_dout :
+    pwrinst2Layer2Vram16Select ? _pwrinst2Layer2Vram16_io_portA_dout :
+    pwrinst2Layer2LineSelect ? _pwrinst2Layer2LineRam_io_portA_dout :
     pwrinst2Layer2ScratchSelect ? pwrinst2Layer2ScratchData :
-    pwrinst2Layer2Vram8Select ? _vram8x8_2_io_portA_dout :
+    pwrinst2Layer2Vram8Select ? _pwrinst2Layer2Vram8_io_portA_dout :
     pwrinst2Layer0Vram16Select ? _vram16x16_0_io_portA_dout :
     pwrinst2Layer0LineSelect ? _lineRam_0_io_portA_dout :
     pwrinst2Layer0ScratchSelect ? pwrinst2Layer0ScratchData :
@@ -1222,25 +1255,25 @@ module Main(
   reg  [15:0] tmp_33;
   wire        cs_196 = cpuByteAddr > 24'h97FFFF & cpuByteAddr < 24'h981000;
   wire        vram16x16_2_io_portA_rd =
-    gameIsPwrInst2 ? pwrinst2Layer2Vram16Select & readStrobe :
+    gameIsPwrInst2 ? 1'b0 :
     gameIsHotdogStorm ? cs_196 & readStrobe : _GEN_175;
   wire        vram16x16_2_io_portA_wr =
-    gameIsPwrInst2 ? pwrinst2Layer2Vram16Select & writeStrobe :
+    gameIsPwrInst2 ? 1'b0 :
     gameIsHotdogStorm ? cs_196 & writeStrobe : _GEN_176;
   wire        cs_197 = cpuByteAddr > 24'h980FFF & cpuByteAddr < 24'h981800;
   wire        lineRam_2_io_portA_rd =
-    gameIsPwrInst2 ? pwrinst2Layer2LineSelect & readStrobe :
+    gameIsPwrInst2 ? 1'b0 :
     gameIsHotdogStorm ? cs_197 & readStrobe : _GEN_177;
   wire        lineRam_2_io_portA_wr =
-    gameIsPwrInst2 ? pwrinst2Layer2LineSelect & writeStrobe :
+    gameIsPwrInst2 ? 1'b0 :
     gameIsHotdogStorm ? cs_197 & writeStrobe : _GEN_178;
   reg  [15:0] tmp_34;
   wire        cs_199 = cpuByteAddr > 24'h983FFF & cpuByteAddr < 24'h988000;
   wire        vram8x8_2_io_portA_rd =
-    gameIsPwrInst2 ? (pwrinst2Layer2Vram8Select | pwrinst2Layer3Vram8Select) & readStrobe
+    gameIsPwrInst2 ? pwrinst2Layer3Vram8Select & readStrobe
       : gameIsHotdogStorm ? cs_199 & readStrobe : _GEN_179;
   wire        vram8x8_2_io_portA_wr =
-    gameIsPwrInst2 ? (pwrinst2Layer2Vram8Select | pwrinst2Layer3Vram8Select) & writeStrobe
+    gameIsPwrInst2 ? pwrinst2Layer3Vram8Select & writeStrobe
       : gameIsHotdogStorm ? cs_199 & writeStrobe : _GEN_180;
   wire [12:0] vram8x8_2_io_portA_addr =
     gameIsPwrInst2 ? _cpu_io_addr[12:0] :
@@ -4060,7 +4093,7 @@ module Main(
       io_gpuMem_layer_1_regs_r_rowSelectEnable;
     io_gpuMem_layer_1_regs_r_1_scroll_x <= io_gpuMem_layer_1_regs_r_scroll_x;
     io_gpuMem_layer_1_regs_r_1_scroll_y <= io_gpuMem_layer_1_regs_r_scroll_y;
-    io_gpuMem_layer_2_regs_r_tileSize <= _layerRegs_2_io_regs_1[13];
+    io_gpuMem_layer_2_regs_r_tileSize <= gameIsPwrInst2 ? 1'b0 : _layerRegs_2_io_regs_1[13];
     io_gpuMem_layer_2_regs_r_enable <= ~(_layerRegs_2_io_regs_2[4]);
     io_gpuMem_layer_2_regs_r_flipX <= ~(_layerRegs_2_io_regs_0[15]);
     io_gpuMem_layer_2_regs_r_flipY <= ~(_layerRegs_2_io_regs_1[15]);
@@ -4078,6 +4111,30 @@ module Main(
       io_gpuMem_layer_2_regs_r_rowSelectEnable;
     io_gpuMem_layer_2_regs_r_1_scroll_x <= io_gpuMem_layer_2_regs_r_scroll_x;
     io_gpuMem_layer_2_regs_r_1_scroll_y <= io_gpuMem_layer_2_regs_r_scroll_y;
+    io_gpuMem_pwrinst2_layer_2_regs_r_tileSize <= pwrinst2Layer2Regs1[13];
+    io_gpuMem_pwrinst2_layer_2_regs_r_enable <= gameIsPwrInst2 & ~pwrinst2Layer2Regs2[4];
+    io_gpuMem_pwrinst2_layer_2_regs_r_flipX <= ~pwrinst2Layer2Regs0[15];
+    io_gpuMem_pwrinst2_layer_2_regs_r_flipY <= ~pwrinst2Layer2Regs1[15];
+    io_gpuMem_pwrinst2_layer_2_regs_r_rowScrollEnable <= pwrinst2Layer2Regs0[14];
+    io_gpuMem_pwrinst2_layer_2_regs_r_rowSelectEnable <= pwrinst2Layer2Regs1[14];
+    io_gpuMem_pwrinst2_layer_2_regs_r_scroll_x <= pwrinst2Layer2Regs0[8:0];
+    io_gpuMem_pwrinst2_layer_2_regs_r_scroll_y <= pwrinst2Layer2Regs1[8:0];
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_tileSize <=
+      io_gpuMem_pwrinst2_layer_2_regs_r_tileSize;
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_enable <=
+      io_gpuMem_pwrinst2_layer_2_regs_r_enable;
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_flipX <=
+      io_gpuMem_pwrinst2_layer_2_regs_r_flipX;
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_flipY <=
+      io_gpuMem_pwrinst2_layer_2_regs_r_flipY;
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_rowScrollEnable <=
+      io_gpuMem_pwrinst2_layer_2_regs_r_rowScrollEnable;
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_rowSelectEnable <=
+      io_gpuMem_pwrinst2_layer_2_regs_r_rowSelectEnable;
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_scroll_x <=
+      io_gpuMem_pwrinst2_layer_2_regs_r_scroll_x;
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_scroll_y <=
+      io_gpuMem_pwrinst2_layer_2_regs_r_scroll_y;
   end // always @(posedge)
   assign _cpu_io_vpa = _cpu_io_as & (&_cpu_io_fc);
   assign _cpu_io_ipl = {2'h0, videoIrq | io_soundCtrl_irq | unknownIrq};
@@ -4362,6 +4419,69 @@ module Main(
     .dout_b  (io_gpuMem_layer_2_lineRam_dout)
   );
   CaveTrueDualPortRam #(
+    .ADDR_WIDTH_A (13),
+    .ADDR_WIDTH_B (12),
+    .DATA_WIDTH_A (16),
+    .DATA_WIDTH_B (32),
+    .DEPTH_A      (0),
+    .DEPTH_B      (0),
+    .MASK_ENABLE  (1)
+  ) pwrinst2Layer2Vram8 (
+    .clock_a (clock),
+    .rd_a    (pwrinst2Layer2Vram8Select & readStrobe),
+    .wr_a    (pwrinst2Layer2Vram8Select & writeStrobe),
+    .addr_a  (_cpu_io_addr[12:0]),
+    .mask_a  (mainRam_io_mask),
+    .din_a   (_cpu_io_dout),
+    .dout_a  (_pwrinst2Layer2Vram8_io_portA_dout),
+    .clock_b (io_videoClock),
+    .rd_b    (1'b1),
+    .addr_b  (io_gpuMem_pwrinst2_layer_2_vram8x8_addr),
+    .dout_b  (io_gpuMem_pwrinst2_layer_2_vram8x8_dout)
+  );
+  CaveTrueDualPortRam #(
+    .ADDR_WIDTH_A (11),
+    .ADDR_WIDTH_B (10),
+    .DATA_WIDTH_A (16),
+    .DATA_WIDTH_B (32),
+    .DEPTH_A      (0),
+    .DEPTH_B      (0),
+    .MASK_ENABLE  (1)
+  ) pwrinst2Layer2Vram16 (
+    .clock_a (clock),
+    .rd_a    (pwrinst2Layer2Vram16Select & readStrobe),
+    .wr_a    (pwrinst2Layer2Vram16Select & writeStrobe),
+    .addr_a  (_cpu_io_addr[10:0]),
+    .mask_a  (mainRam_io_mask),
+    .din_a   (_cpu_io_dout),
+    .dout_a  (_pwrinst2Layer2Vram16_io_portA_dout),
+    .clock_b (io_videoClock),
+    .rd_b    (1'b1),
+    .addr_b  (io_gpuMem_pwrinst2_layer_2_vram16x16_addr),
+    .dout_b  (io_gpuMem_pwrinst2_layer_2_vram16x16_dout)
+  );
+  CaveTrueDualPortRam #(
+    .ADDR_WIDTH_A (10),
+    .ADDR_WIDTH_B (9),
+    .DATA_WIDTH_A (16),
+    .DATA_WIDTH_B (32),
+    .DEPTH_A      (0),
+    .DEPTH_B      (0),
+    .MASK_ENABLE  (1)
+  ) pwrinst2Layer2LineRam (
+    .clock_a (clock),
+    .rd_a    (pwrinst2Layer2LineSelect & readStrobe),
+    .wr_a    (pwrinst2Layer2LineSelect & writeStrobe),
+    .addr_a  (_cpu_io_addr[9:0]),
+    .mask_a  (mainRam_io_mask),
+    .din_a   (_cpu_io_dout),
+    .dout_a  (_pwrinst2Layer2LineRam_io_portA_dout),
+    .clock_b (io_videoClock),
+    .rd_b    (1'b1),
+    .addr_b  (io_gpuMem_pwrinst2_layer_2_lineRam_addr),
+    .dout_b  (io_gpuMem_pwrinst2_layer_2_lineRam_dout)
+  );
+  CaveTrueDualPortRam #(
     .ADDR_WIDTH_A (15),
     .ADDR_WIDTH_B (15),
     .DATA_WIDTH_A (16),
@@ -4462,6 +4582,22 @@ module Main(
     io_gpuMem_layer_2_regs_r_1_rowSelectEnable;
   assign io_gpuMem_layer_2_regs_scroll_x = io_gpuMem_layer_2_regs_r_1_scroll_x;
   assign io_gpuMem_layer_2_regs_scroll_y = io_gpuMem_layer_2_regs_r_1_scroll_y;
+  assign io_gpuMem_pwrinst2_layer_2_regs_tileSize =
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_tileSize;
+  assign io_gpuMem_pwrinst2_layer_2_regs_enable =
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_enable;
+  assign io_gpuMem_pwrinst2_layer_2_regs_flipX =
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_flipX;
+  assign io_gpuMem_pwrinst2_layer_2_regs_flipY =
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_flipY;
+  assign io_gpuMem_pwrinst2_layer_2_regs_rowScrollEnable =
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_rowScrollEnable;
+  assign io_gpuMem_pwrinst2_layer_2_regs_rowSelectEnable =
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_rowSelectEnable;
+  assign io_gpuMem_pwrinst2_layer_2_regs_scroll_x =
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_scroll_x;
+  assign io_gpuMem_pwrinst2_layer_2_regs_scroll_y =
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_scroll_y;
   assign io_gpuMem_sprite_regs_offset_x = _spriteRegs_io_regs_0[8:0];
   assign io_gpuMem_sprite_regs_offset_y = _spriteRegs_io_regs_1[8:0];
   assign io_gpuMem_sprite_regs_bank = _spriteRegs_io_regs_4[1:0];

@@ -23,6 +23,9 @@ module ColorMixer(
   input  [1:0]  io_layer2Pen_priority,
   input  [5:0]  io_layer2Pen_palette,
   input  [7:0]  io_layer2Pen_color,
+  input  [1:0]  io_pwrinst2Layer2Pen_priority,
+  input  [5:0]  io_pwrinst2Layer2Pen_palette,
+  input  [7:0]  io_pwrinst2Layer2Pen_color,
   output [14:0] io_paletteRam_addr,
   input  [15:0] io_paletteRam_dout,
   output [15:0] io_dout
@@ -34,11 +37,12 @@ module ColorMixer(
   output [3:0]  io_debug_visibleMask
 `endif
 );
-  localparam [3:0] PEN_FILL   = 4'h0;
-  localparam [3:0] PEN_SPRITE = 4'h1;
-  localparam [3:0] PEN_LAYER0 = 4'h2;
-  localparam [3:0] PEN_LAYER1 = 4'h4;
-  localparam [3:0] PEN_LAYER2 = 4'h8;
+  localparam [4:0] PEN_FILL            = 5'h00;
+  localparam [4:0] PEN_SPRITE          = 5'h01;
+  localparam [4:0] PEN_LAYER0          = 5'h02;
+  localparam [4:0] PEN_LAYER1          = 5'h04;
+  localparam [4:0] PEN_LAYER2          = 5'h08;
+  localparam [4:0] PEN_PWRINST2_LAYER2 = 5'h10;
 
   wire granularity16 = io_gameConfig_granularity == 9'h010;
   wire granularity64 = io_gameConfig_granularity == 9'h040;
@@ -52,6 +56,7 @@ module ColorMixer(
   wire layer0Visible = |io_layer0Pen_color;
   wire layer1Visible = |io_layer1Pen_color;
   wire layer2Visible = |io_layer2Pen_color;
+  wire pwrinst2Layer2Visible = io_gameConfig_pwrinst2 & |io_pwrinst2Layer2Pen_color;
 
   wire spritePriority0 = spriteVisible & (effectiveSpritePriority == 2'h0);
   wire layer0Priority0 = layer0Visible & (io_layer0Pen_priority == 2'h0);
@@ -70,21 +75,25 @@ module ColorMixer(
   wire layer1Priority3 = layer1Visible & (&io_layer1Pen_priority);
   wire layer2Priority3 = layer2Visible & (&io_layer2Pen_priority);
 
-  wire [1:0] priority0Layer0 = layer0Priority0 ? 2'h2 : {1'b0, spritePriority0};
-  wire [2:0] priority0Layer1 = layer1Priority0 ? 3'h4 : {1'b0, priority0Layer0};
-  wire [3:0] priority0Layer2 = layer2Priority0 ? PEN_LAYER2 : {1'b0, priority0Layer1};
-  wire [3:0] priority1Sprite = spritePriority1 ? PEN_SPRITE : priority0Layer2;
-  wire [3:0] priority1Layer0 = layer0Priority1 ? PEN_LAYER0 : priority1Sprite;
-  wire [3:0] priority1Layer1 = layer1Priority1 ? PEN_LAYER1 : priority1Layer0;
-  wire [3:0] priority1Layer2 = layer2Priority1 ? PEN_LAYER2 : priority1Layer1;
-  wire [3:0] priority2Sprite = spritePriority2 ? PEN_SPRITE : priority1Layer2;
-  wire [3:0] priority2Layer0 = layer0Priority2 ? PEN_LAYER0 : priority2Sprite;
-  wire [3:0] priority2Layer1 = layer1Priority2 ? PEN_LAYER1 : priority2Layer0;
-  wire [3:0] priority2Layer2 = layer2Priority2 ? PEN_LAYER2 : priority2Layer1;
-  wire [3:0] priority3Sprite = spritePriority3 ? PEN_SPRITE : priority2Layer2;
-  wire [3:0] priority3Layer0 = layer0Priority3 ? PEN_LAYER0 : priority3Sprite;
-  wire [3:0] priority3Layer1 = layer1Priority3 ? PEN_LAYER1 : priority3Layer0;
-  wire [3:0] selectedPen = layer2Priority3 ? PEN_LAYER2 : priority3Layer1;
+  wire [4:0] priority0Base =
+    pwrinst2Layer2Visible ? PEN_PWRINST2_LAYER2 : PEN_FILL;
+  wire [4:0] priority0Sprite = spritePriority0 ? PEN_SPRITE : priority0Base;
+  wire [4:0] priority0Layer0 = layer0Priority0 ? PEN_LAYER0 : priority0Sprite;
+  wire [4:0] priority0Layer1 = layer1Priority0 ? PEN_LAYER1 : priority0Layer0;
+  wire [4:0] priority0Layer2 = layer2Priority0 ? PEN_LAYER2 : priority0Layer1;
+  wire [4:0] priority1Sprite = spritePriority1 ? PEN_SPRITE : priority0Layer2;
+  wire [4:0] priority1Layer0 = layer0Priority1 ? PEN_LAYER0 : priority1Sprite;
+  wire [4:0] priority1Layer1 = layer1Priority1 ? PEN_LAYER1 : priority1Layer0;
+  wire [4:0] priority1Layer2 = layer2Priority1 ? PEN_LAYER2 : priority1Layer1;
+  wire [4:0] priority2Sprite = spritePriority2 ? PEN_SPRITE : priority1Layer2;
+  wire [4:0] priority2Layer0 = layer0Priority2 ? PEN_LAYER0 : priority2Sprite;
+  wire [4:0] priority2Layer1 = layer1Priority2 ? PEN_LAYER1 : priority2Layer0;
+  wire [4:0] priority2Layer2 = layer2Priority2 ? PEN_LAYER2 : priority2Layer1;
+  wire [4:0] priority3Sprite = spritePriority3 ? PEN_SPRITE : priority2Layer2;
+  wire [4:0] priority3Layer0 = layer0Priority3 ? PEN_LAYER0 : priority3Sprite;
+  wire [4:0] priority3Layer1 = layer1Priority3 ? PEN_LAYER1 : priority3Layer0;
+  wire [4:0] selectedPen = layer2Priority3 ? PEN_LAYER2 : priority3Layer1;
+  wire [4:0] finalSelectedPen = selectedPen;
 
   wire [14:0] fillAddr16 = io_gameConfig_pwrinst2 ? 15'h07F0 : 15'h03F0;
   wire [14:0] fillAddr64 = 15'h0FC0;
@@ -141,27 +150,38 @@ module ColorMixer(
   wire [14:0] layer2Addr =
     io_gameConfig_pwrinst2 ? layer2Addr16PwrInst2 :
     layer2Format6bpp ? layer2Addr6bpp : (granularity64 ? layer2Addr64 : (granularity16 ? layer2Addr16 : layer2Addr256));
+  wire [14:0] pwrinst2Layer2Addr16 =
+    15'h1800 + {5'h00, io_pwrinst2Layer2Pen_palette, io_pwrinst2Layer2Pen_color[3:0]};
 
-  wire [14:0] addrFill = selectedPen == PEN_FILL ? fillAddr : 15'h0000;
-  wire [14:0] addrSprite = selectedPen == PEN_SPRITE ? spriteAddr : addrFill;
-  wire [14:0] addrLayer0 = selectedPen == PEN_LAYER0 ? layer0Addr : addrSprite;
-  wire [14:0] addrLayer1 = selectedPen == PEN_LAYER1 ? layer1Addr : addrLayer0;
-  wire [14:0] paletteRamAddr = selectedPen == PEN_LAYER2 ? layer2Addr : addrLayer1;
+  wire [14:0] addrFill = finalSelectedPen == PEN_FILL ? fillAddr : 15'h0000;
+  wire [14:0] addrSprite = finalSelectedPen == PEN_SPRITE ? spriteAddr : addrFill;
+  wire [14:0] addrLayer0 = finalSelectedPen == PEN_LAYER0 ? layer0Addr : addrSprite;
+  wire [14:0] addrLayer1 = finalSelectedPen == PEN_LAYER1 ? layer1Addr : addrLayer0;
+  wire [14:0] addrPwrInst2Layer2 =
+    finalSelectedPen == PEN_PWRINST2_LAYER2 ? pwrinst2Layer2Addr16 : addrLayer1;
+  wire [14:0] paletteRamAddr = finalSelectedPen == PEN_LAYER2 ? layer2Addr : addrPwrInst2Layer2;
 
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
   wire [5:0] selectedPalette =
-    selectedPen == PEN_SPRITE ? io_spritePen_palette :
-    selectedPen == PEN_LAYER0 ? io_layer0Pen_palette :
-    selectedPen == PEN_LAYER1 ? io_layer1Pen_palette :
-    selectedPen == PEN_LAYER2 ? io_layer2Pen_palette :
-                                6'h00;
+    finalSelectedPen == PEN_SPRITE ? io_spritePen_palette :
+    finalSelectedPen == PEN_LAYER0 ? io_layer0Pen_palette :
+    finalSelectedPen == PEN_LAYER1 ? io_layer1Pen_palette :
+    finalSelectedPen == PEN_PWRINST2_LAYER2 ? io_pwrinst2Layer2Pen_palette :
+    finalSelectedPen == PEN_LAYER2 ? io_layer2Pen_palette :
+                                     6'h00;
   wire [7:0] selectedColor =
-    selectedPen == PEN_SPRITE ? io_spritePen_color :
-    selectedPen == PEN_LAYER0 ? io_layer0Pen_color :
-    selectedPen == PEN_LAYER1 ? io_layer1Pen_color :
-    selectedPen == PEN_LAYER2 ? io_layer2Pen_color :
-                                8'h00;
-  wire [3:0] visibleMask = {layer2Visible, layer1Visible, layer0Visible, spriteVisible};
+    finalSelectedPen == PEN_SPRITE ? io_spritePen_color :
+    finalSelectedPen == PEN_LAYER0 ? io_layer0Pen_color :
+    finalSelectedPen == PEN_LAYER1 ? io_layer1Pen_color :
+    finalSelectedPen == PEN_PWRINST2_LAYER2 ? io_pwrinst2Layer2Pen_color :
+    finalSelectedPen == PEN_LAYER2 ? io_layer2Pen_color :
+                                     8'h00;
+  wire [3:0] visibleMask = {
+    layer2Visible,
+    layer1Visible | pwrinst2Layer2Visible,
+    layer0Visible,
+    spriteVisible
+  };
 
   reg [3:0] debugSelectedPenReg;
   reg [5:0] debugSelectedPaletteReg;
@@ -173,7 +193,7 @@ module ColorMixer(
   always @(posedge clock) begin
     pixelReg <= io_paletteRam_dout;
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
-    debugSelectedPenReg <= selectedPen;
+    debugSelectedPenReg <= finalSelectedPen[3:0];
     debugSelectedPaletteReg <= selectedPalette;
     debugSelectedColorReg <= selectedColor;
     debugVisibleMaskReg <= visibleMask;

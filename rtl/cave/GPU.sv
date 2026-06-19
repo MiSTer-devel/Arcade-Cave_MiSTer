@@ -63,6 +63,24 @@ module GPU(
   output         io_layerCtrl_2_tileRom_rd,
   output [31:0]  io_layerCtrl_2_tileRom_addr,
   input  [63:0]  io_layerCtrl_2_tileRom_dout,
+  input          io_pwrinst2Layer2_enable,
+  input          io_pwrinst2Layer2_regs_tileSize,
+  input          io_pwrinst2Layer2_regs_enable,
+  input          io_pwrinst2Layer2_regs_flipX,
+  input          io_pwrinst2Layer2_regs_flipY,
+  input          io_pwrinst2Layer2_regs_rowScrollEnable,
+  input          io_pwrinst2Layer2_regs_rowSelectEnable,
+  input  [8:0]   io_pwrinst2Layer2_regs_scroll_x,
+  input  [8:0]   io_pwrinst2Layer2_regs_scroll_y,
+  output [11:0]  io_pwrinst2Layer2_vram8x8_addr,
+  input  [31:0]  io_pwrinst2Layer2_vram8x8_dout,
+  output [9:0]   io_pwrinst2Layer2_vram16x16_addr,
+  input  [31:0]  io_pwrinst2Layer2_vram16x16_dout,
+  output [8:0]   io_pwrinst2Layer2_lineRam_addr,
+  input  [31:0]  io_pwrinst2Layer2_lineRam_dout,
+  output         io_pwrinst2Layer2_tileRom_rd,
+  output [31:0]  io_pwrinst2Layer2_tileRom_addr,
+  input  [63:0]  io_pwrinst2Layer2_tileRom_dout,
   input          io_spriteCtrl_enable,
   input  [1:0]   io_spriteCtrl_format,
   input          io_spriteCtrl_pwrinst2,
@@ -126,6 +144,9 @@ module GPU(
   wire [1:0]  layer2PenPriority;
   wire [5:0]  layer2PenPalette;
   wire [7:0]  layer2PenColor;
+  wire [1:0]  pwrinst2Layer2PenPriority;
+  wire [5:0]  pwrinst2Layer2PenPalette;
+  wire [7:0]  pwrinst2Layer2PenColor;
 
   wire [1:0]  spritePenPriority = io_spriteLineBuffer_dout[15:14];
   wire [5:0]  spritePenPalette = io_spriteLineBuffer_dout[13:8];
@@ -206,6 +227,8 @@ module GPU(
   reg  [7:0]  debugTopPaletteColorLatched;
   reg  [7:0]  debugTopPaletteAddrLatched;
   reg  [7:0]  debugFlashMismatchHistory;
+  wire [63:0] layer2DebugDesc;
+  wire [63:0] layer2DebugRom;
   wire [7:0]  debugSpriteShade = debugSpriteColorReg ^ {debugSpritePaletteReg, 2'b00};
   wire        debugVideoVBlankRising = io_video_vBlank & ~debugVideoVBlankReg;
   wire        debugOutputBright =
@@ -387,6 +410,7 @@ module GPU(
     .clock                        (io_videoClock),
     .io_ctrl_enable               (io_layerCtrl_0_enable),
     .io_ctrl_format               (io_layerCtrl_0_format),
+    .io_ctrl_zero4bppPenF         (1'b0),
     .io_ctrl_regs_tileSize        (io_layerCtrl_0_regs_tileSize),
     .io_ctrl_regs_enable          (io_layerCtrl_0_regs_enable),
     .io_ctrl_regs_flipX           (io_layerCtrl_0_regs_flipX),
@@ -415,6 +439,11 @@ module GPU(
     .io_pen_priority              (layer0PenPriority),
     .io_pen_palette               (layer0PenPalette),
     .io_pen_color                 (layer0PenColor)
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+    ,
+    .io_debug_desc                (),
+    .io_debug_rom                 ()
+`endif
   );
 
   CaveLayerProcessor #(
@@ -424,6 +453,7 @@ module GPU(
     .clock                        (io_videoClock),
     .io_ctrl_enable               (io_layerCtrl_1_enable),
     .io_ctrl_format               (io_layerCtrl_1_format),
+    .io_ctrl_zero4bppPenF         (1'b0),
     .io_ctrl_regs_tileSize        (io_layerCtrl_1_regs_tileSize),
     .io_ctrl_regs_enable          (io_layerCtrl_1_regs_enable),
     .io_ctrl_regs_flipX           (io_layerCtrl_1_regs_flipX),
@@ -452,6 +482,11 @@ module GPU(
     .io_pen_priority              (layer1PenPriority),
     .io_pen_palette               (layer1PenPalette),
     .io_pen_color                 (layer1PenColor)
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+    ,
+    .io_debug_desc                (),
+    .io_debug_rom                 ()
+`endif
   );
 
   CaveLayerProcessor #(
@@ -461,6 +496,7 @@ module GPU(
     .clock                        (io_videoClock),
     .io_ctrl_enable               (io_layerCtrl_2_enable),
     .io_ctrl_format               (io_layerCtrl_2_format),
+    .io_ctrl_zero4bppPenF         (io_spriteCtrl_pwrinst2),
     .io_ctrl_regs_tileSize        (io_layerCtrl_2_regs_tileSize),
     .io_ctrl_regs_enable          (io_layerCtrl_2_regs_enable),
     .io_ctrl_regs_flipX           (io_layerCtrl_2_regs_flipX),
@@ -489,6 +525,54 @@ module GPU(
     .io_pen_priority              (layer2PenPriority),
     .io_pen_palette               (layer2PenPalette),
     .io_pen_color                 (layer2PenColor)
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+    ,
+    .io_debug_desc                (layer2DebugDesc),
+    .io_debug_rom                 (layer2DebugRom)
+`endif
+  );
+
+  CaveLayerProcessor #(
+    .LAYER_OFFSET_LARGE (5'h10),
+    .LAYER_OFFSET_SMALL (5'h08)
+  ) pwrinst2Layer2Processor (
+    .clock                        (io_videoClock),
+    .io_ctrl_enable               (io_pwrinst2Layer2_enable),
+    .io_ctrl_format               (2'h1),
+    .io_ctrl_zero4bppPenF         (1'b0),
+    .io_ctrl_regs_tileSize        (io_pwrinst2Layer2_regs_tileSize),
+    .io_ctrl_regs_enable          (io_pwrinst2Layer2_regs_enable),
+    .io_ctrl_regs_flipX           (io_pwrinst2Layer2_regs_flipX),
+    .io_ctrl_regs_flipY           (io_pwrinst2Layer2_regs_flipY),
+    .io_ctrl_regs_rowScrollEnable (io_pwrinst2Layer2_regs_rowScrollEnable),
+    .io_ctrl_regs_rowSelectEnable (io_pwrinst2Layer2_regs_rowSelectEnable),
+    .io_ctrl_regs_scroll_x        (io_pwrinst2Layer2_regs_scroll_x),
+    .io_ctrl_regs_scroll_y        (io_pwrinst2Layer2_regs_scroll_y),
+    .io_ctrl_vram8x8_addr         (io_pwrinst2Layer2_vram8x8_addr),
+    .io_ctrl_vram8x8_dout         (io_pwrinst2Layer2_vram8x8_dout),
+    .io_ctrl_vram16x16_addr       (io_pwrinst2Layer2_vram16x16_addr),
+    .io_ctrl_vram16x16_dout       (io_pwrinst2Layer2_vram16x16_dout),
+    .io_ctrl_lineRam_addr         (io_pwrinst2Layer2_lineRam_addr),
+    .io_ctrl_lineRam_dout         (io_pwrinst2Layer2_lineRam_dout),
+    .io_ctrl_tileRom_rd           (io_pwrinst2Layer2_tileRom_rd),
+    .io_ctrl_tileRom_addr         (io_pwrinst2Layer2_tileRom_addr),
+    .io_ctrl_tileRom_dout         (io_pwrinst2Layer2_tileRom_dout),
+    .io_video_clockEnable         (io_video_clockEnable),
+    .io_video_pos_x               (layerVideoPosX),
+    .io_video_pos_y               (io_video_pos_y),
+    .io_video_vBlank              (io_video_vBlank),
+    .io_video_regs_size_x         (io_video_regs_size_x),
+    .io_video_regs_size_y         (io_video_regs_size_y),
+    .io_spriteOffset_x            (io_spriteCtrl_regs_offset_x),
+    .io_spriteOffset_y            (io_spriteCtrl_regs_offset_y),
+    .io_pen_priority              (pwrinst2Layer2PenPriority),
+    .io_pen_palette               (pwrinst2Layer2PenPalette),
+    .io_pen_color                 (pwrinst2Layer2PenColor)
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+    ,
+    .io_debug_desc                (),
+    .io_debug_rom                 ()
+`endif
   );
 
   ColorMixer colorMixer (
@@ -513,6 +597,9 @@ module GPU(
     .io_layer2Pen_priority             (layer2PenPriority),
     .io_layer2Pen_palette              (layer2PenPalette),
     .io_layer2Pen_color                (layer2PenColor),
+    .io_pwrinst2Layer2Pen_priority     (pwrinst2Layer2PenPriority),
+    .io_pwrinst2Layer2Pen_palette      (pwrinst2Layer2PenPalette),
+    .io_pwrinst2Layer2Pen_color        (pwrinst2Layer2PenColor),
     .io_paletteRam_addr                (io_paletteRam_addr),
     .io_paletteRam_dout                (io_paletteRam_dout),
     .io_dout                           (paletteColor)
@@ -531,7 +618,7 @@ module GPU(
   assign io_systemFrameBuffer_din = systemFramebufferDinReg;
   assign io_rgb = videoRgb888;
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
-  assign io_debug_video = {
+  wire [63:0] gpuFlashDebug = {
     debugFlashMismatchHistory,
     debugTopPaletteAddrLatched,
     debugTopPaletteColorLatched,
@@ -541,7 +628,8 @@ module GPU(
     debugTopRgbLatched,
     debugFlashFlagsLatched
   };
-  assign io_debug_readout = io_debug_video;
+  assign io_debug_readout = io_spriteCtrl_pwrinst2 ? layer2DebugRom : gpuFlashDebug;
+  assign io_debug_video = io_spriteCtrl_pwrinst2 ? layer2DebugDesc : gpuFlashDebug;
   assign io_debug_source_rgb = io_video_displayEnable ? debugRawSpriteRgb : 24'h000000;
 `endif
 endmodule
