@@ -305,7 +305,7 @@ module Sound(
   wire [16:0] oki0CenStep = pwrinst2Z80Sound ? 17'h1800 : 17'h0873;
   wire [16:0] oki1CenStep = pwrinst2Z80Sound ? 17'h1800 : 17'h10E5;
   wire        okiPin7Ss = ~pwrinst2Z80Sound;
-  // E1: E0 plus PI2 PSG/FM mixer trims.
+  // F0: E1 PI2 sound baseline reused for Gogetsuji Legends bring-up.
   wire        pwrinst2Oki0IgnoreBusyStart = 1'b0;
   wire        pwrinst2Oki0DuplicateBusyStartFilter = pwrinst2Z80Sound;
 
@@ -349,7 +349,7 @@ module Sound(
     debugCfStartCommand,
     debugCfPhraseCommand,
     8'h00,
-    8'hE1
+    8'hF0
   };
   wire [63:0] debugCfPage1 = {
     debugCfCtrlBytes[47:40],
@@ -359,7 +359,7 @@ module Sound(
     debugCfCtrlBytes[15:8],
     debugCfCtrlBytes[7:0],
     8'h01,
-    8'hE1
+    8'hF0
   };
   wire [63:0] debugCfPage2 = {
     debugCfTableBytes[47:40],
@@ -369,7 +369,7 @@ module Sound(
     debugCfTableBytes[15:8],
     debugCfTableBytes[7:0],
     8'h02,
-    8'hE1
+    8'hF0
   };
   wire [63:0] debugCfPage3 = {
     debugCfBodyBytes[47:40],
@@ -379,7 +379,7 @@ module Sound(
     debugCfBodyBytes[15:8],
     debugCfBodyBytes[7:0],
     8'h03,
-    8'hE1
+    8'hF0
   };
   wire [63:0] debugCfPage4 = {
     debugCfDataLow,
@@ -389,7 +389,7 @@ module Sound(
     debugCfZ80IoAddr,
     debugCfZ80Flags,
     8'h04,
-    8'hE1
+    8'hF0
   };
   wire [63:0] debugCfPage5 = {
     debugCfLatchStatus,
@@ -399,7 +399,7 @@ module Sound(
     debugCfMappedPage,
     debugCfRawPage,
     8'h05,
-    8'hE1
+    8'hF0
   };
   wire [63:0] debugCfWord =
     debugCfPage[2:0] == 3'd1 ? debugCfPage1 :
@@ -880,7 +880,7 @@ module Sound(
 
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
   // Power Instinct 2 OKI0 one-shot capture:
-  // MK=E1. Once the first busy-overlap start is seen, PH cycles pages:
+  // MK=F0. Once the first busy-overlap start is seen, PH cycles pages:
   // 00 command/status, 01 decoded start/stop bytes,
   // 02 consumed phrase-table bytes, 03 first body bytes,
   // 04 Z80/latch/YM context, 05 raw/mapped/NMK/read-phase plus context.

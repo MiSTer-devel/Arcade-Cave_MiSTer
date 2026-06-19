@@ -22,8 +22,8 @@ fighters need them.
 | [**Thunder Heroes**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=theroes&arcade_only=0&autosearch=1)     | Public        |
 | [**Donpachi**](https://en.wikipedia.org/wiki/DonPachi)                                                                | Public        |
 | [**Power Instinct 2**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=pwrinst2&arcade_only=0&autosearch=1)  | WIP | Based on Mame - No hardware-accurate comparison
-| [**Gogetsuji Legends**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=plegends&arcade_only=0&autosearch=1) | Unimplemented |
-| [**Saikyou Densetsu**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=plegendsj&arcade_only=0&autosearch=1) | Unimplemented |
+| [**Gogetsuji Legends**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=plegends&arcade_only=0&autosearch=1) | WIP |
+| [**Saikyou Densetsu**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=plegendsj&arcade_only=0&autosearch=1) | WIP |
 
 ## Credits
 

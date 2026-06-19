@@ -13,6 +13,7 @@ module MemSys(
   input  [31:0] io_gameConfig_layer_0_romOffset,
   input  [31:0] io_gameConfig_layer_1_romOffset,
   input  [31:0] io_gameConfig_layer_2_romOffset,
+  input  [31:0] io_gameConfig_pwrinst2_layer_2_romOffset,
   input  [31:0] io_gameConfig_sprite_romOffset,
   input         io_prog_rom_wr,
   input  [26:0] io_prog_rom_addr,
@@ -227,7 +228,7 @@ module MemSys(
   wire [24:0] layerRom2SdramAddr =
     layerRomCache2OutAddr + io_gameConfig_layer_2_romOffset[24:0];
   wire [24:0] pwrinst2Layer2SdramAddr =
-    pwrinst2Layer2RomCacheOutAddr + 25'h0D20080;
+    pwrinst2Layer2RomCacheOutAddr + io_gameConfig_pwrinst2_layer_2_romOffset[24:0];
 
   always @(posedge clock) begin
     copyDmaBusyReg <= copyDmaBusy;

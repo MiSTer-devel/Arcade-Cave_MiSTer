@@ -475,8 +475,6 @@ module Main(
   wire        pwrinst2WriteCycle = gameIsPwrInst2 & _cpu_io_as & ~_cpu_io_rw;
   wire        pwrinst2ProgRomSelect = gameIsPwrInst2 & (cpuByteAddr < 24'h200000) & _cpu_io_rw;
   wire        pwrinst2ProgRomCycle = pwrinst2ProgRomSelect & _cpu_io_as;
-  wire        pwrinst2ProgRomRead = pwrinst2ProgRomCycle;
-  wire        pwrinst2ProgRomValid = pwrinst2ProgRomCycle & io_progRom_valid;
   wire        pwrinst2ProgRomWrite = gameIsPwrInst2 & (cpuByteAddr < 24'h200000) & writeStrobe;
   wire        pwrinst2ProgRomWriteCycle = pwrinst2WriteCycle & (cpuByteAddr < 24'h200000);
   wire        pwrinst2MainRamSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'h400000) & (cpuByteAddr < 24'h410000);
@@ -488,6 +486,8 @@ module Main(
   wire        pwrinst2ExtraRomRead = pwrinst2ExtraRomSelect & pwrinst2ReadCycle;
   wire        pwrinst2ExtraRomWrite = gameIsPwrInst2 & (cpuByteAddr >= 24'h600000) & (cpuByteAddr < 24'h700000) & writeStrobe;
   wire        pwrinst2ExtraRomWriteCycle = pwrinst2ExtraRomSelect & pwrinst2WriteCycle;
+  wire        pwrinst2ProgRomRead = pwrinst2ProgRomCycle | pwrinst2ExtraRomRead;
+  wire        pwrinst2ProgRomValid = pwrinst2ProgRomRead & io_progRom_valid;
   wire        pwrinst2EepromWrite = gameIsPwrInst2 & (cpuByteAddr >= 24'h700000) & (cpuByteAddr < 24'h700002) & writeStrobe;
   wire        pwrinst2EepromWriteCycle = pwrinst2WriteCycle & (cpuByteAddr >= 24'h700000) & (cpuByteAddr < 24'h700002);
 
@@ -601,7 +601,7 @@ module Main(
     pwrinst2Layer3RegsSelect | pwrinst2SoundAckRead | pwrinst2SoundCmdRead | pwrinst2SoundWriteCycle |
     pwrinst2EepromRead | pwrinst2PaletteSelect;
   wire        pwrinst2Dtack =
-    pwrinst2ProgRomSelect ? pwrinst2ProgRomValid :
+    pwrinst2ProgRomRead ? pwrinst2ProgRomValid :
     pwrinst2SyncReadSelect ? pwrinst2SyncReadPending :
     (_cpu_io_as & pwrinst2Select);
   wire [15:0] pwrinst2EepromData = {12'hFFF, _eeprom_io_serial_sdo ? 4'hF : 4'h7};
@@ -4638,7 +4638,7 @@ module Main(
       : gameIsUopoko ? cs_214 & readStrobe : _GEN_189;
   assign io_progRom_addr =
     gameIsPwrInst2
-      ? {1'b0, _cpu_io_addr[19:0], 1'b0}
+      ? {pwrinst2ExtraRomRead, _cpu_io_addr[19:0], 1'b0}
       : (gameIsMazinger & mazingerExtraRomSelect)
         ? {2'b01, cpuByteAddr[18:0]}
         : {2'b00, _cpu_io_addr[18:0], 1'b0};

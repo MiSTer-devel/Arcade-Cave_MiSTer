@@ -90,7 +90,7 @@ localparam CONF_STR = {
 `else
   "P1,Hardware;",
 `endif
-  "P1OIL,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.,Puzzle Uo Poko,Guwange,Gaia,Power Instinct 2;",
+  "P1OIL,PCB,Dangun Feveron,DoDonPachi,DonPachi,ESP Ra.De.,Puzzle Uo Poko,Guwange,Gaia,Power Instinct 2,Gogetsuji Legends;",
   "-;",
   "R0,Reset;",
   "J,B0,B1,B2,B3,Start,Coin,Pause;",

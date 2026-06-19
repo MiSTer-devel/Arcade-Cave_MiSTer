@@ -395,6 +395,7 @@ module Cave(
   wire [1:0]   gameConfig_layer_1_paletteBank;
   wire [1:0]   gpu_io_layerCtrl_2_format;
   wire [31:0]  gameConfig_layer_2_romOffset;
+  wire [31:0]  gameConfig_pwrinst2_layer_2_romOffset;
   wire [1:0]   gameConfig_layer_2_paletteBank;
   wire [1:0]   gpu_io_spriteCtrl_format;
   wire [31:0]  gameConfig_sprite_romOffset;
@@ -418,6 +419,7 @@ module Cave(
     .layer_1_palette_bank (gameConfig_layer_1_paletteBank),
     .layer_2_format       (gpu_io_layerCtrl_2_format),
     .layer_2_rom_offset   (gameConfig_layer_2_romOffset),
+    .pwrinst2_layer_2_rom_offset (gameConfig_pwrinst2_layer_2_romOffset),
     .layer_2_palette_bank (gameConfig_layer_2_paletteBank),
     .sprite_format        (gpu_io_spriteCtrl_format),
     .sprite_rom_offset    (gameConfig_sprite_romOffset),
@@ -440,6 +442,7 @@ module Cave(
     .layer_1_palette_bank (),
     .layer_2_format       (),
     .layer_2_rom_offset   (),
+    .pwrinst2_layer_2_rom_offset (),
     .layer_2_palette_bank (),
     .sprite_format        (),
     .sprite_rom_offset    (),
@@ -590,6 +593,7 @@ module Cave(
     .io_gameConfig_layer_0_romOffset  (gameConfig_layer_0_romOffset),
     .io_gameConfig_layer_1_romOffset  (gameConfig_layer_1_romOffset),
     .io_gameConfig_layer_2_romOffset  (gameConfig_layer_2_romOffset),
+    .io_gameConfig_pwrinst2_layer_2_romOffset (gameConfig_pwrinst2_layer_2_romOffset),
     .io_gameConfig_sprite_romOffset   (gameConfig_sprite_romOffset),
     .io_prog_rom_wr                   (_memSys_io_prog_rom_wr),
     .io_prog_rom_addr                 (ioctl_addr),
