@@ -9,6 +9,7 @@ module CaveLayerProcessor #(
   input         clock,
   input         io_ctrl_enable,
   input  [1:0]  io_ctrl_format,
+  input         io_ctrl_zero4bppPenF,
   input         io_ctrl_regs_tileSize,
   input         io_ctrl_regs_enable,
   input         io_ctrl_regs_flipX,
@@ -37,6 +38,11 @@ module CaveLayerProcessor #(
   output [1:0]  io_pen_priority,
   output [5:0]  io_pen_palette,
   output [7:0]  io_pen_color
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+  ,
+  output [63:0] io_debug_desc,
+  output [63:0] io_debug_rom
+`endif
 );
   reg [8:0] lineEffectReg_rowSelect;
   reg [8:0] lineEffectReg_rowScroll;
@@ -54,6 +60,19 @@ module CaveLayerProcessor #(
   reg [7:0]  pixReg_5;
   reg [7:0]  pixReg_6;
   reg [7:0]  pixReg_7;
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+  reg [1:0]  debugPixPriorityReg;
+  reg [5:0]  debugPixPaletteReg;
+  reg [17:0] debugPixCodeReg;
+  reg [31:0] debugTileWordReg;
+  reg [31:0] debugPixTileWordReg;
+  reg [25:0] debugPixRomAddrReg;
+  reg [31:0] debugPixRawReg;
+  reg [5:0]  debugPixOffsetReg;
+  reg [63:0] debugDescCaptureReg;
+  reg [63:0] debugRomCaptureReg;
+  reg        debugCapturedReg;
+`endif
 
   wire layerEnable = io_ctrl_enable & (|io_ctrl_format) & io_ctrl_regs_enable;
 
@@ -98,8 +117,27 @@ module CaveLayerProcessor #(
   wire format6bpp = io_ctrl_format == 2'h2;
   wire format8bpp = &io_ctrl_format;
   wire formatLinearTile = format6bpp | format8bpp;
-  wire [31:0] pixels4bppBits =
+  wire [31:0] pixels4bppRaw =
     tileOffset_y[0] ? io_ctrl_tileRom_dout[31:0] : io_ctrl_tileRom_dout[63:32];
+
+  function [3:0] decode4bppPen;
+    input        zeroPenF;
+    input  [3:0] rawPen;
+    begin
+      decode4bppPen = (zeroPenF && (rawPen == 4'hF)) ? 4'h0 : rawPen;
+    end
+  endfunction
+
+  wire [31:0] pixels4bppDecoded = {
+    decode4bppPen(io_ctrl_zero4bppPenF, pixels4bppRaw[31:28]),
+    decode4bppPen(io_ctrl_zero4bppPenF, pixels4bppRaw[27:24]),
+    decode4bppPen(io_ctrl_zero4bppPenF, pixels4bppRaw[23:20]),
+    decode4bppPen(io_ctrl_zero4bppPenF, pixels4bppRaw[19:16]),
+    decode4bppPen(io_ctrl_zero4bppPenF, pixels4bppRaw[15:12]),
+    decode4bppPen(io_ctrl_zero4bppPenF, pixels4bppRaw[11:8]),
+    decode4bppPen(io_ctrl_zero4bppPenF, pixels4bppRaw[7:4]),
+    decode4bppPen(io_ctrl_zero4bppPenF, pixels4bppRaw[3:0])
+  };
   wire [7:0] pixel8bpp_0 = {io_ctrl_tileRom_dout[55:52], io_ctrl_tileRom_dout[63:60]};
   wire [7:0] pixel8bpp_1 = {io_ctrl_tileRom_dout[51:48], io_ctrl_tileRom_dout[59:56]};
   wire [7:0] pixel8bpp_2 = {io_ctrl_tileRom_dout[39:36], io_ctrl_tileRom_dout[47:44]};
@@ -175,6 +213,10 @@ module CaveLayerProcessor #(
         io_ctrl_regs_tileSize
           ? {2'b00, io_ctrl_vram16x16_dout[31:16]}
           : {io_ctrl_vram8x8_dout[1:0], io_ctrl_vram8x8_dout[31:16]};
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+      debugTileWordReg <=
+        io_ctrl_regs_tileSize ? io_ctrl_vram16x16_dout : io_ctrl_vram8x8_dout;
+`endif
     end
 
     if (latchColor) begin
@@ -186,36 +228,69 @@ module CaveLayerProcessor #(
       pixReg_0 <=
         format8bpp
           ? pixel8bpp_0
-          : format6bpp ? pixel6bpp_0 : {4'h0, pixels4bppBits[31:28]};
+          : format6bpp ? pixel6bpp_0 : {4'h0, pixels4bppDecoded[31:28]};
       pixReg_1 <=
         format8bpp
           ? pixel8bpp_1
-          : format6bpp ? pixel6bpp_1 : {4'h0, pixels4bppBits[27:24]};
+          : format6bpp ? pixel6bpp_1 : {4'h0, pixels4bppDecoded[27:24]};
       pixReg_2 <=
         format8bpp
           ? pixel8bpp_2
-          : format6bpp ? pixel6bpp_2 : {4'h0, pixels4bppBits[23:20]};
+          : format6bpp ? pixel6bpp_2 : {4'h0, pixels4bppDecoded[23:20]};
       pixReg_3 <=
         format8bpp
           ? pixel8bpp_3
-          : format6bpp ? pixel6bpp_3 : {4'h0, pixels4bppBits[19:16]};
+          : format6bpp ? pixel6bpp_3 : {4'h0, pixels4bppDecoded[19:16]};
       pixReg_4 <=
         format8bpp
           ? pixel8bpp_4
-          : format6bpp ? pixel6bpp_4 : {4'h0, pixels4bppBits[15:12]};
+          : format6bpp ? pixel6bpp_4 : {4'h0, pixels4bppDecoded[15:12]};
       pixReg_5 <=
         format8bpp
           ? pixel8bpp_5
-          : format6bpp ? pixel6bpp_5 : {4'h0, pixels4bppBits[11:8]};
+          : format6bpp ? pixel6bpp_5 : {4'h0, pixels4bppDecoded[11:8]};
       pixReg_6 <=
         format8bpp
           ? pixel8bpp_6
-          : format6bpp ? pixel6bpp_6 : {4'h0, pixels4bppBits[7:4]};
+          : format6bpp ? pixel6bpp_6 : {4'h0, pixels4bppDecoded[7:4]};
       pixReg_7 <=
         format8bpp
           ? pixel8bpp_7
-          : format6bpp ? pixel6bpp_7 : {4'h0, pixels4bppBits[3:0]};
+          : format6bpp ? pixel6bpp_7 : {4'h0, pixels4bppDecoded[3:0]};
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+      debugPixPriorityReg <= tileReg_priority;
+      debugPixPaletteReg <= tileReg_colorCode;
+      debugPixCodeReg <= tileReg_code;
+      debugPixTileWordReg <= debugTileWordReg;
+      debugPixRomAddrReg <= tileRomAddr;
+      debugPixRawReg <= pixels4bppRaw;
+      debugPixOffsetReg <= {tileOffset_y[2:0], tileOffset_x[2:0]};
+`endif
     end
+
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+    if (io_video_clockEnable) begin
+      if (io_video_vBlank) begin
+        debugCapturedReg <= 1'b0;
+      end
+      else if (~debugCapturedReg & layerEnable & (|penColor)) begin
+        debugDescCaptureReg <= {
+          8'hB9,
+          debugPixCodeReg,
+          debugPixTileWordReg,
+          debugPixPriorityReg,
+          debugPixPaletteReg[3:0]
+        };
+        debugRomCaptureReg <= {
+          8'hBA,
+          debugPixRomAddrReg[17:0],
+          debugPixRawReg,
+          debugPixOffsetReg
+        };
+        debugCapturedReg <= 1'b1;
+      end
+    end
+`endif
   end
 
   assign io_ctrl_vram8x8_addr = vramAddr;
@@ -228,4 +303,8 @@ module CaveLayerProcessor #(
   assign io_pen_priority = layerEnable ? priorityReg : 2'h0;
   assign io_pen_palette = layerEnable ? colorReg : 6'h00;
   assign io_pen_color = layerEnable ? penColor : 8'h00;
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+  assign io_debug_desc = debugDescCaptureReg;
+  assign io_debug_rom = debugRomCaptureReg;
+`endif
 endmodule

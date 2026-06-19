@@ -10,6 +10,7 @@ module CaveGameConfig (
   output reg [1:0]  sound_0_device,
   output reg [31:0] sound_0_rom_offset,
   output reg [31:0] sound_1_rom_offset,
+  output reg [31:0] sound_2_rom_offset,
   output reg [1:0]  layer_0_format,
   output reg [31:0] layer_0_rom_offset,
   output reg [1:0]  layer_0_palette_bank,
@@ -18,6 +19,7 @@ module CaveGameConfig (
   output reg [1:0]  layer_1_palette_bank,
   output reg [1:0]  layer_2_format,
   output reg [31:0] layer_2_rom_offset,
+  output reg [31:0] pwrinst2_layer_2_rom_offset,
   output reg [1:0]  layer_2_palette_bank,
   output reg [1:0]  sprite_format,
   output reg [31:0] sprite_rom_offset,
@@ -30,8 +32,8 @@ module CaveGameConfig (
   localparam [3:0] GAME_UOPOKO   = 4'h4;
   localparam [3:0] GAME_GUWANGE  = 4'h5;
   localparam [3:0] GAME_GAIA     = 4'h6;
-  localparam [3:0] GAME_HOTDOGST = 4'h7;
-  localparam [3:0] GAME_MAZINGER = 4'h8;
+  localparam [3:0] GAME_PWRINST2 = 4'h7;
+  localparam [3:0] GAME_PLEGENDS = 4'h8;
 
   localparam [1:0] GFX_FORMAT_UNKNOWN  = 2'h0;
   localparam [1:0] GFX_FORMAT_4BPP     = 2'h1;
@@ -50,6 +52,7 @@ module CaveGameConfig (
     sound_0_device      = SOUND_DEVICE_YMZ280B;
     sound_0_rom_offset  = 32'h0010_0080;
     sound_1_rom_offset  = 32'h0000_0000;
+    sound_2_rom_offset  = 32'h0000_0000;
     layer_0_format      = GFX_FORMAT_4BPP;
     layer_0_rom_offset  = 32'h0050_0080;
     layer_0_palette_bank = 2'h1;
@@ -58,6 +61,7 @@ module CaveGameConfig (
     layer_1_palette_bank = 2'h1;
     layer_2_format      = GFX_FORMAT_UNKNOWN;
     layer_2_rom_offset  = 32'h0000_0000;
+    pwrinst2_layer_2_rom_offset = 32'h0000_0000;
     layer_2_palette_bank = 2'h0;
     sprite_format       = GFX_FORMAT_4BPP;
     sprite_rom_offset   = 32'h0090_0080;
@@ -73,6 +77,7 @@ module CaveGameConfig (
         sound_0_device      = SOUND_DEVICE_YMZ280B;
         sound_0_rom_offset  = 32'h0010_0080;
         sound_1_rom_offset  = 32'h0000_0000;
+        sound_2_rom_offset  = 32'h0000_0000;
         layer_0_format      = GFX_FORMAT_4BPP;
         layer_0_rom_offset  = 32'h0050_0080;
         layer_0_palette_bank = 2'h1;
@@ -93,6 +98,7 @@ module CaveGameConfig (
         sound_0_device      = SOUND_DEVICE_OKIM6259;
         sound_0_rom_offset  = 32'h0008_0080;
         sound_1_rom_offset  = 32'h0028_0080;
+        sound_2_rom_offset  = 32'h0000_0000;
         layer_0_format      = GFX_FORMAT_4BPP;
         layer_0_rom_offset  = 32'h0038_0080;
         layer_0_palette_bank = 2'h1;
@@ -113,6 +119,7 @@ module CaveGameConfig (
         sound_0_device      = SOUND_DEVICE_YMZ280B;
         sound_0_rom_offset  = 32'h0010_0080;
         sound_1_rom_offset  = 32'h0000_0000;
+        sound_2_rom_offset  = 32'h0000_0000;
         layer_0_format      = GFX_FORMAT_8BPP;
         layer_0_rom_offset  = 32'h0050_0080;
         layer_0_palette_bank = 2'h1;
@@ -133,6 +140,7 @@ module CaveGameConfig (
         sound_0_device      = SOUND_DEVICE_YMZ280B;
         sound_0_rom_offset  = 32'h0010_0080;
         sound_1_rom_offset  = 32'h0000_0000;
+        sound_2_rom_offset  = 32'h0000_0000;
         layer_0_format      = GFX_FORMAT_8BPP;
         layer_0_rom_offset  = 32'h0030_0080;
         layer_0_palette_bank = 2'h1;
@@ -153,6 +161,7 @@ module CaveGameConfig (
         sound_0_device      = SOUND_DEVICE_YMZ280B;
         sound_0_rom_offset  = 32'h0010_0080;
         sound_1_rom_offset  = 32'h0000_0000;
+        sound_2_rom_offset  = 32'h0000_0000;
         layer_0_format      = GFX_FORMAT_8BPP;
         layer_0_rom_offset  = 32'h0050_0080;
         layer_0_palette_bank = 2'h1;
@@ -173,6 +182,7 @@ module CaveGameConfig (
         sound_0_device      = SOUND_DEVICE_YMZ280B;
         sound_0_rom_offset  = 32'h0010_0000;
         sound_1_rom_offset  = 32'h0000_0000;
+        sound_2_rom_offset  = 32'h0000_0000;
         layer_0_format      = GFX_FORMAT_8BPP;
         layer_0_rom_offset  = 32'h00d0_0000;
         layer_0_palette_bank = 2'h1;
@@ -187,44 +197,48 @@ module CaveGameConfig (
         sprite_zoom         = 1'b1;
       end
 
-      GAME_HOTDOGST: begin
+      GAME_PWRINST2: begin
         granularity          = 9'h010;
-        eeprom_offset       = 32'h0010_0000;
-        sound_0_device      = SOUND_DEVICE_Z80;
-        sound_0_rom_offset  = 32'h0010_0080;
-        sound_1_rom_offset  = 32'h0014_0080;
-        layer_0_format      = GFX_FORMAT_4BPP;
-        layer_0_rom_offset  = 32'h001c_0080;
-        layer_0_palette_bank = 2'h0;
-        layer_1_format      = GFX_FORMAT_4BPP;
-        layer_1_rom_offset  = 32'h0024_0080;
+        eeprom_offset        = 32'h0020_0000;
+        sound_0_device       = SOUND_DEVICE_Z80;
+        sound_0_rom_offset   = 32'h0020_0080;
+        sound_1_rom_offset   = 32'h0022_0080;
+        sound_2_rom_offset   = 32'h0062_0080;
+        layer_0_format       = GFX_FORMAT_4BPP;
+        layer_0_rom_offset   = 32'h00a2_0080;
+        layer_0_palette_bank = 2'h2;
+        layer_1_format       = GFX_FORMAT_4BPP;
+        layer_1_rom_offset   = 32'h00c2_0080;
         layer_1_palette_bank = 2'h0;
-        layer_2_format      = GFX_FORMAT_4BPP;
-        layer_2_rom_offset  = 32'h002c_0080;
-        layer_2_palette_bank = 2'h0;
-        sprite_format       = GFX_FORMAT_4BPP;
-        sprite_rom_offset   = 32'h0034_0080;
-        sprite_zoom         = 1'b1;
+        layer_2_format       = GFX_FORMAT_4BPP;
+        layer_2_rom_offset   = 32'h00e2_0080;
+        pwrinst2_layer_2_rom_offset = 32'h00d2_0080;
+        layer_2_palette_bank = 2'h1;
+        sprite_format        = GFX_FORMAT_4BPP_MSB;
+        sprite_rom_offset    = 32'h00ea_0080;
+        sprite_zoom          = 1'b0;
       end
 
-      GAME_MAZINGER: begin
+      GAME_PLEGENDS: begin
         granularity          = 9'h010;
-        eeprom_offset       = 32'h0010_0000;
-        sound_0_device      = SOUND_DEVICE_Z80;
-        sound_0_rom_offset  = 32'h0010_0080;
-        sound_1_rom_offset  = 32'h0012_0080;
-        layer_0_format      = GFX_FORMAT_4BPP;
-        layer_0_rom_offset  = 32'h001a_0080;
-        layer_0_palette_bank = 2'h0;
-        layer_1_format      = GFX_FORMAT_6BPP;
-        layer_1_rom_offset  = 32'h003a_0080;
-        layer_1_palette_bank = 2'h1;
-        layer_2_format      = GFX_FORMAT_UNKNOWN;
-        layer_2_rom_offset  = 32'h0000_0000;
-        layer_2_palette_bank = 2'h0;
-        sprite_format       = GFX_FORMAT_4BPP;
-        sprite_rom_offset   = 32'h005a_0080;
-        sprite_zoom         = 1'b1;
+        eeprom_offset        = 32'h0030_0000;
+        sound_0_device       = SOUND_DEVICE_Z80;
+        sound_0_rom_offset   = 32'h0030_0080;
+        sound_1_rom_offset   = 32'h0034_0080;
+        sound_2_rom_offset   = 32'h0074_0080;
+        layer_0_format       = GFX_FORMAT_4BPP;
+        layer_0_rom_offset   = 32'h00b4_0080;
+        layer_0_palette_bank = 2'h2;
+        layer_1_format       = GFX_FORMAT_4BPP;
+        layer_1_rom_offset   = 32'h00d4_0080;
+        layer_1_palette_bank = 2'h0;
+        layer_2_format       = GFX_FORMAT_4BPP;
+        layer_2_rom_offset   = 32'h0114_0080;
+        pwrinst2_layer_2_rom_offset = 32'h00f4_0080;
+        layer_2_palette_bank = 2'h1;
+        sprite_format        = GFX_FORMAT_4BPP_MSB;
+        sprite_rom_offset    = 32'h011c_0080;
+        sprite_zoom          = 1'b0;
       end
 
       default: begin

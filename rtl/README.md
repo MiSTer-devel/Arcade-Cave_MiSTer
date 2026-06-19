@@ -38,11 +38,8 @@ This directory is the active core implementation for Quartus.
   memory maps, inputs, IRQs, EEPROM serial pins, pause, and video register
   mirrors. Its decode lattice intentionally still follows the generated shape
   until each board map can be extracted separately.
-- `cave/MazingerMainMap.sv` groups the Mazinger Z 68k address decoder, IRQ
-  read data, boot watchdog shadow RAM, and read-data mux so that Mazinger board
-  behavior can move out of the shared `Main.sv` integration file.
-- `cave/CaveCpuWrappers.sv` contains the hand-maintained wrappers around the
-  existing `fx68k` main CPU and `T80s` sound CPU cores.
+- `cave/CaveCpuWrappers.sv` contains the hand-maintained wrapper around the
+  existing `fx68k` main CPU core.
 - `cave/DDR.sv` is the hand-maintained burst bridge between the core's shared
   burst-memory port and the MiSTer DDR service interface.
 - `cave/SDRAM.sv` is the hand-maintained SDRAM command sequencer for the
@@ -90,10 +87,10 @@ This directory is the active core implementation for Quartus.
 - `cave/YMZ280B.sv` is the hand-maintained YMZ280B register front-end and
   channel-controller wrapper.
 - `cave/Sound.sv` is the hand-maintained sound PCB integration wrapper for
-  the Z80 sound CPU, OKI/YM sound chips, banking, ROM arbitration, and mixer.
+  the YMZ280B and DonPachi OKI/NMK112 lanes, ROM arbitration, and mixer.
 - `cave/NMK112.sv` is the hand-maintained OKI sample ROM banking controller.
 - `arcadia/` contains VHDL memory helpers used by the Cave HDL.
-- `fx68k/`, `t80/`, `jt03/`, and `jt6295/` are third-party CPU and sound blocks.
+- `fx68k/` and `jt6295/` are third-party CPU and sound blocks.
 - The PLL and reset wrappers live at the `rtl/` root.
 
 The old Chisel source is kept under `../legacy/chisel/` as reference material

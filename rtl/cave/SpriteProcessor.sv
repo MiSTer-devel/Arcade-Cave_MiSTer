@@ -7,6 +7,7 @@ module SpriteProcessor(
   input          reset,
   input          io_ctrl_enable,
   input  [1:0]   io_ctrl_format,
+  input          io_ctrl_pwrinst2,
   input          io_ctrl_start,
   input          io_ctrl_zoom,
   input  [1:0]   io_ctrl_regs_bank,
@@ -39,10 +40,12 @@ module SpriteProcessor(
   localparam [2:0] STATE_PENDING = 3'd5;
   localparam [2:0] STATE_NEXT    = 3'd6;
   localparam [2:0] STATE_DONE    = 3'd7;
+  localparam [15:0] PWRINST2_SPRITE_CLK_MAX = 16'd7616;
 
   reg [2:0]  stateReg;
   reg [9:0]  spriteCounter;
   reg [15:0] tileCounter;
+  reg [15:0] pwrinst2SpriteClockReg;
   reg        readPendingReg;
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
   reg [2:0]  debugAbcExactFlags;
@@ -87,6 +90,13 @@ module SpriteProcessor(
   wire        blitterPixelDataReady;
   wire        blitterPixelDataValid;
   wire        blitterBusy;
+  wire        pwrinst2TileRomReqReady;
+  wire        pwrinst2TileRomRd;
+  wire [31:0] pwrinst2TileRomAddr;
+  wire [7:0]  pwrinst2TileRomBurstLength;
+  wire        pwrinst2TileRomValid;
+  wire [63:0] pwrinst2TileRomDout;
+  wire        pwrinst2TileRomBurstDone;
   wire [7:0]  blitterPixelData0;
   wire [7:0]  blitterPixelData1;
   wire [7:0]  blitterPixelData2;
@@ -110,12 +120,45 @@ module SpriteProcessor(
   wire [3:0] tileRomAddrShift = is8bpp ? 4'h8 : 4'h7;
   wire [17:0] tileRomTileIndex = spriteReg_code + {2'b00, tileCounter};
   wire [32:0] tileRomAddr = {15'h0000, tileRomTileIndex} << tileRomAddrShift;
+  wire        tileRomReqReady = io_ctrl_pwrinst2 ? pwrinst2TileRomReqReady : io_ctrl_tileRom_wait_n;
+  wire        tileRomBurstDone = io_ctrl_pwrinst2 ? pwrinst2TileRomBurstDone : io_ctrl_tileRom_burstDone;
+  wire        fifoEnqValid = io_ctrl_pwrinst2 ? pwrinst2TileRomValid : io_ctrl_tileRom_valid;
+  wire [63:0] fifoEnqBits = io_ctrl_pwrinst2 ? pwrinst2TileRomDout : io_ctrl_tileRom_dout;
 
   wire tileCounterWrap = (tileCounter == (numTilesReg - 16'h0001)) | (numTilesReg == 16'h0000);
   wire tileRomRead = (stateReg == STATE_PENDING) & ~readPendingReg & (fifoCount < 7'h21);
-  wire effectiveRead = tileRomRead & io_ctrl_tileRom_wait_n;
+  wire effectiveRead = tileRomRead & tileRomReqReady;
   wire acceptedFrameStart = io_ctrl_start & (stateReg == STATE_IDLE);
   wire frameDone = (stateReg == STATE_DONE) & ~blitterBusy;
+  wire [15:0] spriteTileCount = {8'h00, spriteReg_cols} * {8'h00, spriteReg_rows};
+  wire signed [12:0] pwrinst2SpriteBudgetX =
+    {{3{spriteReg_pos_x[17]}}, spriteReg_pos_x[17:8]};
+  wire signed [12:0] pwrinst2SpriteBudgetY =
+    {{3{spriteReg_pos_y[17]}}, spriteReg_pos_y[17:8]};
+  wire signed [12:0] pwrinst2SpriteBudgetWidth =
+    $signed({1'b0, spriteReg_cols, 4'h0});
+  wire signed [12:0] pwrinst2SpriteBudgetHeight =
+    $signed({1'b0, spriteReg_rows, 4'h0});
+  wire signed [12:0] pwrinst2SpriteBudgetMaxX =
+    $signed({4'h0, io_video_regs_size_x});
+  wire signed [12:0] pwrinst2SpriteBudgetMaxY =
+    $signed({4'h0, io_video_regs_size_y});
+  wire        pwrinst2SpriteVisibleForBudget =
+    spriteEnabled &
+    ((pwrinst2SpriteBudgetX + pwrinst2SpriteBudgetWidth) > 13'sd0) &
+    (pwrinst2SpriteBudgetX < pwrinst2SpriteBudgetMaxX) &
+    ((pwrinst2SpriteBudgetY + pwrinst2SpriteBudgetHeight) > 13'sd0) &
+    (pwrinst2SpriteBudgetY < pwrinst2SpriteBudgetMaxY);
+  wire        spriteDrawable = io_ctrl_pwrinst2 ? pwrinst2SpriteVisibleForBudget : spriteEnabled;
+  wire [15:0] pwrinst2ClockAfterEntry = pwrinst2SpriteClockReg + 16'd1;
+  wire [15:0] pwrinst2SpriteDrawCost = {spriteTileCount[12:0], 3'b000};
+  wire [15:0] pwrinst2ClockAfterSprite = pwrinst2ClockAfterEntry + pwrinst2SpriteDrawCost;
+  wire        pwrinst2ClockEntryExceeded =
+    io_ctrl_pwrinst2 & (pwrinst2ClockAfterEntry > PWRINST2_SPRITE_CLK_MAX);
+  wire        pwrinst2ClockSpriteExceeded =
+    io_ctrl_pwrinst2 & pwrinst2SpriteVisibleForBudget &
+    (pwrinst2ClockAfterSprite > PWRINST2_SPRITE_CLK_MAX);
+  wire        pwrinst2ClockStop = pwrinst2ClockEntryExceeded | pwrinst2ClockSpriteExceeded;
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
   wire acceptedBlitterConfig = blitterConfigValid & blitterConfigReady;
   wire debugAbcSlot160 = spriteCounter == 10'h160;
@@ -144,6 +187,8 @@ module SpriteProcessor(
   wire [17:0] normalIntegerPosY = {io_ctrl_vram_dout[57:48], 8'h00};
   wire [17:0] zoomFixedPosY = {io_ctrl_vram_dout[31:16], 2'b00};
   wire [17:0] zoomIntegerPosY = {io_ctrl_vram_dout[25:16], 8'h00};
+  wire [9:0]  pwrinst2PosX = io_ctrl_vram_dout[41:32] - 10'h070;
+  wire [9:0]  pwrinst2PosY = io_ctrl_vram_dout[57:48] + 10'h001;
 
   reg [2:0] nextState;
 
@@ -158,7 +203,7 @@ module SpriteProcessor(
       STATE_LATCH:
         nextState = STATE_CHECK;
       STATE_CHECK:
-        nextState = spriteEnabled ? STATE_READY : STATE_NEXT;
+        nextState = pwrinst2ClockStop ? STATE_DONE : (spriteDrawable ? STATE_READY : STATE_NEXT);
       STATE_READY:
         nextState = blitterConfigReady ? STATE_PENDING : STATE_READY;
       STATE_PENDING:
@@ -176,6 +221,7 @@ module SpriteProcessor(
       readPendingReg <= 1'b0;
       spriteCounter <= 10'h000;
       tileCounter <= 16'h0000;
+      pwrinst2SpriteClockReg <= 16'h0000;
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
       debugAbcExactFlags <= 3'b000;
       debugAbcExactFlagsLatched <= 3'b000;
@@ -197,7 +243,7 @@ module SpriteProcessor(
     end
     else begin
       stateReg <= nextState;
-      readPendingReg <= ~io_ctrl_tileRom_burstDone & (effectiveRead | readPendingReg);
+      readPendingReg <= ~tileRomBurstDone & (effectiveRead | readPendingReg);
 
       if (stateReg == STATE_NEXT)
         spriteCounter <= spriteCounter + 10'h001;
@@ -207,6 +253,7 @@ module SpriteProcessor(
 
       if (acceptedFrameStart) begin
         frameReadyReg <= 1'b0;
+        pwrinst2SpriteClockReg <= 16'h0000;
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
         debugAbcExactFlagsLatched <= debugAbcExactFlags;
         debugAbcWriteFlagsLatched <= debugAbcWriteFlags;
@@ -230,6 +277,10 @@ module SpriteProcessor(
         debugAbcSlot161Code <= 8'h00;
         debugAbcSlot162Code <= 8'h00;
 `endif
+      end
+      else if (stateReg == STATE_CHECK & io_ctrl_pwrinst2 & ~pwrinst2ClockStop) begin
+        pwrinst2SpriteClockReg <=
+          pwrinst2SpriteVisibleForBudget ? pwrinst2ClockAfterSprite : pwrinst2ClockAfterEntry;
       end
 
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
@@ -258,7 +309,10 @@ module SpriteProcessor(
     end
 
     if (stateReg == STATE_LATCH) begin
-      spriteReg_priority <= io_ctrl_zoom ? io_ctrl_vram_dout[37:36] : io_ctrl_vram_dout[5:4];
+      spriteReg_priority <=
+        io_ctrl_pwrinst2
+          ? {io_ctrl_vram_dout[5], io_ctrl_vram_dout[4]}
+          : (io_ctrl_zoom ? io_ctrl_vram_dout[37:36] : io_ctrl_vram_dout[5:4]);
       spriteReg_colorCode <= io_ctrl_zoom ? io_ctrl_vram_dout[45:40] : io_ctrl_vram_dout[13:8];
       spriteReg_code <=
         io_ctrl_zoom
@@ -267,11 +321,15 @@ module SpriteProcessor(
       spriteReg_hFlip <= io_ctrl_zoom ? io_ctrl_vram_dout[35] : io_ctrl_vram_dout[3];
       spriteReg_vFlip <= io_ctrl_zoom ? io_ctrl_vram_dout[34] : io_ctrl_vram_dout[2];
       spriteReg_pos_x <=
-        io_ctrl_zoom
+        io_ctrl_pwrinst2
+          ? {pwrinst2PosX, 8'h00}
+          : io_ctrl_zoom
           ? (io_ctrl_regs_fixed ? zoomFixedPosX : zoomIntegerPosX)
           : (io_ctrl_regs_fixed ? normalFixedPosX : normalIntegerPosX);
       spriteReg_pos_y <=
-        io_ctrl_zoom
+        io_ctrl_pwrinst2
+          ? {pwrinst2PosY, 8'h00}
+          : io_ctrl_zoom
           ? (io_ctrl_regs_fixed ? zoomFixedPosY : zoomIntegerPosY)
           : (io_ctrl_regs_fixed ? normalFixedPosY : normalIntegerPosY);
       spriteReg_cols <= io_ctrl_zoom ? {3'h0, io_ctrl_vram_dout[108:104]} : {3'h0, io_ctrl_vram_dout[76:72]};
@@ -281,7 +339,7 @@ module SpriteProcessor(
     end
 
     if (stateReg == STATE_CHECK)
-      numTilesReg <= {8'h00, spriteReg_cols} * {8'h00, spriteReg_rows};
+      numTilesReg <= spriteTileCount;
   end
 
   CaveSyncQueue #(
@@ -292,13 +350,32 @@ module SpriteProcessor(
     .clock        (clock),
     .reset        (reset),
     .io_enq_ready (),
-    .io_enq_valid (io_ctrl_tileRom_valid),
-    .io_enq_bits  (io_ctrl_tileRom_dout),
+    .io_enq_valid (fifoEnqValid),
+    .io_enq_bits  (fifoEnqBits),
     .io_deq_ready (fifoDeqReady),
     .io_deq_valid (fifoDeqValid),
     .io_deq_bits  (fifoDeqBits),
     .io_count     (fifoCount),
     .io_flush     (fifoFlush)
+  );
+
+  PwrInst2SpriteRomDecryptor pwrinst2SpriteRomDecryptor (
+    .clock              (clock),
+    .reset              (reset | ~io_ctrl_pwrinst2),
+    .io_req_valid       (tileRomRead & io_ctrl_pwrinst2),
+    .io_req_ready       (pwrinst2TileRomReqReady),
+    .io_req_addr        (tileRomAddr[31:0]),
+    .io_req_burstLength ({2'b00, tileRomBurstLength}),
+    .io_req_burstDone   (pwrinst2TileRomBurstDone),
+    .io_rom_rd          (pwrinst2TileRomRd),
+    .io_rom_addr        (pwrinst2TileRomAddr),
+    .io_rom_burstLength (pwrinst2TileRomBurstLength),
+    .io_rom_dout        (io_ctrl_tileRom_dout),
+    .io_rom_wait_n      (io_ctrl_tileRom_wait_n),
+    .io_rom_valid       (io_ctrl_tileRom_valid),
+    .io_rom_burstDone   (io_ctrl_tileRom_burstDone),
+    .io_out_valid       (pwrinst2TileRomValid),
+    .io_out_dout        (pwrinst2TileRomDout)
   );
 
   SpriteBlitter blitter (
@@ -374,9 +451,10 @@ module SpriteProcessor(
 
   assign io_ctrl_vram_rd = stateReg == STATE_LOAD;
   assign io_ctrl_vram_addr = {io_ctrl_regs_bank, spriteCounter};
-  assign io_ctrl_tileRom_rd = tileRomRead;
-  assign io_ctrl_tileRom_addr = tileRomAddr[31:0];
-  assign io_ctrl_tileRom_burstLength = {2'b00, tileRomBurstLength};
+  assign io_ctrl_tileRom_rd = io_ctrl_pwrinst2 ? pwrinst2TileRomRd : tileRomRead;
+  assign io_ctrl_tileRom_addr = io_ctrl_pwrinst2 ? pwrinst2TileRomAddr : tileRomAddr[31:0];
+  assign io_ctrl_tileRom_burstLength =
+    io_ctrl_pwrinst2 ? pwrinst2TileRomBurstLength : {2'b00, tileRomBurstLength};
   assign io_ctrl_frameReady = frameReadyReg;
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
   assign io_debug = {
@@ -392,4 +470,154 @@ module SpriteProcessor(
 `else
   assign io_debug = 64'd0;
 `endif
+endmodule
+
+module PwrInst2SpriteRomDecryptor(
+  input          clock,
+  input          reset,
+  input          io_req_valid,
+  output         io_req_ready,
+  input  [31:0]  io_req_addr,
+  input  [7:0]   io_req_burstLength,
+  output         io_req_burstDone,
+  output         io_rom_rd,
+  output [31:0]  io_rom_addr,
+  output [7:0]   io_rom_burstLength,
+  input  [63:0]  io_rom_dout,
+  input          io_rom_wait_n,
+  input          io_rom_valid,
+  input          io_rom_burstDone,
+  output         io_out_valid,
+  output [63:0]  io_out_dout
+);
+  reg        busyReg;
+  reg        rawReadPendingReg;
+  reg [31:0] baseAddrReg;
+  reg [7:0]  rowsTotalReg;
+  reg [7:0]  rowReg;
+  reg [1:0]  pieceReg;
+  reg [63:0] rowDataReg;
+  reg        outValidReg;
+  reg [63:0] outDoutReg;
+  reg        reqBurstDoneReg;
+
+  function automatic [23:0] pwrinst2_raw_addr_24;
+    input [23:0] addr;
+    reg [23:0] j_after_xor;
+    reg [23:0] j;
+    begin
+      j_after_xor = addr ^ 24'h000007;
+      j = (((j_after_xor[2:1] == 2'b00) | (j_after_xor[2:1] == 2'b11)))
+            ? (j_after_xor ^ 24'h000006)
+            : j_after_xor;
+      pwrinst2_raw_addr_24 = {
+        j[23:7],
+        j[4],
+        j[2],
+        j[5],
+        j[1],
+        j[6],
+        j[3],
+        j[0]
+      };
+    end
+  endfunction
+
+  function automatic [31:0] pwrinst2_raw_addr;
+    input [31:0] addr;
+    begin
+      pwrinst2_raw_addr = {addr[31:24], pwrinst2_raw_addr_24(addr[23:0])};
+    end
+  endfunction
+
+  function automatic [7:0] select_byte;
+    input [63:0] data;
+    input [2:0] index;
+    begin
+      case (index)
+        3'd0: select_byte = data[7:0];
+        3'd1: select_byte = data[15:8];
+        3'd2: select_byte = data[23:16];
+        3'd3: select_byte = data[31:24];
+        3'd4: select_byte = data[39:32];
+        3'd5: select_byte = data[47:40];
+        3'd6: select_byte = data[55:48];
+        default: select_byte = data[63:56];
+      endcase
+    end
+  endfunction
+
+  wire        start = io_req_valid & io_req_ready;
+  wire [31:0] decryptedPairAddr = baseAddrReg + {21'd0, rowReg, pieceReg, 1'b0};
+  wire [31:0] rawAddr0 = pwrinst2_raw_addr(decryptedPairAddr);
+  wire [31:0] rawAddr1 = pwrinst2_raw_addr(decryptedPairAddr + 32'h00000001);
+  wire [31:0] rawWordAddr = {rawAddr0[31:3], 3'b000};
+  wire        issueRawRead = busyReg & ~rawReadPendingReg & ~outValidReg;
+  wire        acceptRawRead = issueRawRead & io_rom_wait_n;
+  wire        rawDataValid = rawReadPendingReg & io_rom_valid;
+  wire [7:0]  byte0 = select_byte(io_rom_dout, rawAddr0[2:0]);
+  wire [7:0]  byte1 = select_byte(io_rom_dout, rawAddr1[2:0]);
+  wire [63:0] rowDataWithPiece =
+    pieceReg == 2'd0 ? {rowDataReg[63:16], byte0, byte1} :
+    pieceReg == 2'd1 ? {rowDataReg[63:32], byte0, byte1, rowDataReg[15:0]} :
+    pieceReg == 2'd2 ? {rowDataReg[63:48], byte0, byte1, rowDataReg[31:0]} :
+                       {byte0, byte1, rowDataReg[47:0]};
+  wire        rowDone = rawDataValid & (pieceReg == 2'd3);
+  wire        finalRow = rowReg == (rowsTotalReg - 8'd1);
+
+  always @(posedge clock) begin
+    if (reset) begin
+      busyReg <= 1'b0;
+      rawReadPendingReg <= 1'b0;
+      baseAddrReg <= 32'h00000000;
+      rowsTotalReg <= 8'h00;
+      rowReg <= 8'h00;
+      pieceReg <= 2'd0;
+      rowDataReg <= 64'h0000000000000000;
+      outValidReg <= 1'b0;
+      outDoutReg <= 64'h0000000000000000;
+      reqBurstDoneReg <= 1'b0;
+    end
+    else begin
+      outValidReg <= 1'b0;
+      reqBurstDoneReg <= 1'b0;
+      rawReadPendingReg <= ~io_rom_burstDone & (acceptRawRead | rawReadPendingReg);
+
+      if (start) begin
+        busyReg <= 1'b1;
+        baseAddrReg <= io_req_addr;
+        rowsTotalReg <= io_req_burstLength;
+        rowReg <= 8'h00;
+        pieceReg <= 2'd0;
+        rowDataReg <= 64'h0000000000000000;
+      end
+      else if (rawDataValid) begin
+        if (rowDone) begin
+          outValidReg <= 1'b1;
+          outDoutReg <= rowDataWithPiece;
+          rowDataReg <= 64'h0000000000000000;
+          pieceReg <= 2'd0;
+          if (finalRow) begin
+            busyReg <= 1'b0;
+            reqBurstDoneReg <= 1'b1;
+          end
+          else begin
+            rowReg <= rowReg + 8'd1;
+          end
+        end
+        else begin
+          rowDataReg <= rowDataWithPiece;
+          pieceReg <= pieceReg + 2'd1;
+        end
+      end
+    end
+  end
+
+  assign io_req_ready = ~busyReg;
+  assign io_req_burstDone = reqBurstDoneReg;
+  assign io_rom_rd = issueRawRead;
+  assign io_rom_addr = rawWordAddr;
+  assign io_rom_burstLength = 8'd1;
+  assign io_out_valid = outValidReg;
+  assign io_out_dout = outDoutReg;
 endmodule

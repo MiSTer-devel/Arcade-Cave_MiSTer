@@ -2,10 +2,6 @@ CaveGameConfig.sv
 CaveClockEnable.sv
 CaveBoardProfile.sv
 CaveDebugOverlay.sv
-MazingerBootWatchdog.sv
-MazingerMainDecoder.sv
-MazingerMainReadMux.sv
-MazingerMainMap.sv
 CaveBurstBuffers.sv
 CaveBurstMemArbiters.sv
 CaveDualClockFIFO.sv
@@ -23,7 +19,6 @@ CaveRequestQueues.sv
 DDR.sv
 SDRAM.sv
 CaveBurstDMAs.sv
-MazingerSpriteDecryptDMA.sv
 CaveReadCache.sv
 CaveNvramWriteBackCache.sv
 CaveAsyncMemArbiters.sv
@@ -37,8 +32,8 @@ NMK112.sv
 CaveYMZ280BHelpers.sv
 AudioPipeline.sv
 ChannelController.sv
-YMZ280B.sv
 YM2203.sv
+YMZ280B.sv
 AudioMixer.sv
 Sound.sv
 CaveSpriteHelpers.sv

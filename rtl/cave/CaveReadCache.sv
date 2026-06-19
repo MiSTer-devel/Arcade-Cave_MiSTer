@@ -69,9 +69,9 @@ module CaveReadCache #(
   wire                   state_write = state_reg == STATE_WRITE;
   wire                   start = io_enable & io_in_rd & state_idle;
   wire                   fill_word_valid = state_fill_wait & io_out_valid;
-  wire [1:0]             fill_word_index = request_offset + burst_counter;
+  wire [1:0]             fill_word_index = burst_counter;
   wire                   fill_word_done =
-    (IN_DATA_WIDTH == 64) ? (&burst_counter) : (burst_counter == 2'd0);
+    (IN_DATA_WIDTH == 64) ? (&burst_counter) : (burst_counter == request_offset);
 
   wire [ENTRY_WIDTH-1:0] way_a_data;
   wire [ENTRY_WIDTH-1:0] way_b_data;
@@ -298,5 +298,5 @@ module CaveReadCache #(
   assign io_in_wait_n = io_enable & state_idle;
   assign io_in_valid = valid_reg;
   assign io_out_rd = state_reg == STATE_FILL;
-  assign io_out_addr = {output_tag, request_index, request_offset, 1'b0};
+  assign io_out_addr = {output_tag, request_index, 2'b00, 1'b0};
 endmodule

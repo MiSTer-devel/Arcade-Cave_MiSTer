@@ -27,6 +27,8 @@ module jt6295_serial(
     input      [ 3:0]   att,
     input      [ 3:0]   start,
     input      [ 3:0]   stop,
+    input               restart_mute_busy_start,
+    input               reset_adpcm_on_start,
     output reg [ 3:0]   busy,
     output reg [ 3:0]   ack,
     output              zero,
@@ -35,6 +37,7 @@ module jt6295_serial(
     input      [ 7:0]   rom_data,
     // serialized data
     output reg          pipe_en,
+    output reg          pipe_clear,
     output reg [ 3:0]   pipe_att,
     output reg [ 3:0]   pipe_data
 );
@@ -48,6 +51,22 @@ wire [17:0] ch_end, stop_in, stop_out;
 wire        update;
 wire        over, busy_in, busy_out, cont;
 reg         up_start, up_stop;
+reg  [ 1:0] restart_mute_0, restart_mute_1, restart_mute_2, restart_mute_3;
+reg         start_clear_0, start_clear_1, start_clear_2, start_clear_3;
+wire [ 1:0] restart_mute_count =
+    ch[0] ? restart_mute_0 :
+    ch[1] ? restart_mute_1 :
+    ch[2] ? restart_mute_2 :
+            restart_mute_3;
+wire        busy_restart_start = restart_mute_busy_start & up_start & busy_out;
+wire        restart_mute_active = restart_mute_busy_start &
+                                  (busy_restart_start | (restart_mute_count != 2'd0));
+wire        start_clear_next =
+    ch[0] ? start_clear_0 :
+    ch[1] ? start_clear_1 :
+    ch[2] ? start_clear_2 :
+            start_clear_3;
+wire        start_clear_old_sample = reset_adpcm_on_start & up_start & busy_out;
 
 // current channel
 always @(posedge clk, posedge rst) begin
@@ -70,6 +89,43 @@ always @(*) begin
 end
 
 reg [17:0] cnt0, cnt1, cnt2, cnt3;
+
+always @(posedge clk, posedge rst) begin
+    if( rst ) begin
+        restart_mute_0 <= 2'd0;
+        restart_mute_1 <= 2'd0;
+        restart_mute_2 <= 2'd0;
+        restart_mute_3 <= 2'd0;
+        start_clear_0 <= 1'b0;
+        start_clear_1 <= 1'b0;
+        start_clear_2 <= 1'b0;
+        start_clear_3 <= 1'b0;
+    end else if( cen4 ) begin
+        case( ch )
+            4'b0001: begin
+                restart_mute_0 <= busy_restart_start ? 2'd2 :
+                                  (restart_mute_0 != 2'd0 ? restart_mute_0 - 2'd1 : 2'd0);
+                start_clear_0 <= up_start;
+            end
+            4'b0010: begin
+                restart_mute_1 <= busy_restart_start ? 2'd2 :
+                                  (restart_mute_1 != 2'd0 ? restart_mute_1 - 2'd1 : 2'd0);
+                start_clear_1 <= up_start;
+            end
+            4'b0100: begin
+                restart_mute_2 <= busy_restart_start ? 2'd2 :
+                                  (restart_mute_2 != 2'd0 ? restart_mute_2 - 2'd1 : 2'd0);
+                start_clear_2 <= up_start;
+            end
+            4'b1000: begin
+                restart_mute_3 <= busy_restart_start ? 2'd2 :
+                                  (restart_mute_3 != 2'd0 ? restart_mute_3 - 2'd1 : 2'd0);
+                start_clear_3 <= up_start;
+            end
+            default:;
+        endcase
+    end
+end
 
 always @(posedge clk, posedge rst ) begin
     if( rst ) begin
@@ -132,14 +188,17 @@ always @(posedge clk, posedge rst) begin
     if(rst) begin
         pipe_data<= 4'd0;
         pipe_en  <= 1'b0;
+        pipe_clear <= 1'b0;
         pipe_att <= 4'd0;
     end else if(cen4) begin
         // data
         pipe_data <= !cnt[0] ? rom_data[7:4] : rom_data[3:0];
+        // reset the ADPCM predictor on the first valid nibble of a new phrase
+        pipe_clear <= reset_adpcm_on_start & start_clear_next;
         // attenuation
         pipe_att  <= att_out;
         // busy / enable
-        pipe_en   <= busy_out;
+        pipe_en   <= busy_out & ~restart_mute_active & ~start_clear_old_sample;
     end
 end
 
