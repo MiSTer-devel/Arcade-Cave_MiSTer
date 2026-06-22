@@ -7,9 +7,7 @@ first-generation 68000 arcade hardware.
 
 ## Supported Games
 
-Banpresto/Gazelle-side titles live in the separate [Arcade-CaveBanpresto fork](https://github.com/MiSTer-devel/Arcade-CaveBanpresto_MiSTer). This
-branch keeps the shared Z80/YM2203 sound primitives because the remaining Atlus
-fighters need them.
+Banpresto/Gazelle-side titles live in the separate [Arcade-CaveBanpresto fork](https://github.com/MiSTer-devel/Arcade-CaveBanpresto_MiSTer).
 
 | Title                                                                                                                 | Status        | Notes                                    |
 |-----------------------------------------------------------------------------------------------------------------------|---------------|------------------------------------------|

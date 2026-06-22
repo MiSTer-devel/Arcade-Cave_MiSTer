@@ -1,5 +1,5 @@
 <misterromdescription>
-  <name>Saikyou Densetsu (Japan, Ver. 95.06.20)</name>
+  <name>Gouketsuji Gaiden - Saikyou Densetsu (Japan, Ver. 95.06.20)</name>
   <mameversion>0275</mameversion>
   <setname>plegendsj</setname>
   <year>1995</year>
@@ -41,9 +41,9 @@
       ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
     </part>
 
-    <!-- sound program ROM, mirrored to preserve the parent 0x40000 sound slot -->
+    <!-- sound program ROM; pad to preserve the parent 0x40000 sound slot -->
     <part name="sound.u3" crc="36f71520" />
-    <part name="sound.u3" crc="36f71520" />
+    <part repeat="0x20000">FF</part>
 
     <!-- OKI 0 samples -->
     <part name="g02.u53" crc="c4bdd9e0" />

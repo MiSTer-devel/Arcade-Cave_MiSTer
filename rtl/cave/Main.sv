@@ -505,7 +505,12 @@ module Main(
   wire        pwrinst2Layer1LineSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'h901000) & (cpuByteAddr < 24'h901800);
   wire        pwrinst2Layer1ScratchSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'h901800) & (cpuByteAddr < 24'h904000);
   wire        pwrinst2Layer1Vram8Select = gameIsPwrInst2 & (cpuByteAddr >= 24'h904000) & (cpuByteAddr < 24'h908000);
-  wire        pwrinst2Layer3Vram8Select = gameIsPwrInst2 & (cpuByteAddr >= 24'h980000) & (cpuByteAddr < 24'h988000);
+  wire        pwrinst2Layer3Vram8BaseSelect =
+    gameIsPwrInst2 & (cpuByteAddr >= 24'h980000) & (cpuByteAddr < 24'h988000);
+  wire        pwrinst2Layer3Vram8A16MirrorSelect =
+    gameIsPwrInst2 & (cpuByteAddr >= 24'h990000) & (cpuByteAddr < 24'h998000);
+  wire        pwrinst2Layer3Vram8Select =
+    pwrinst2Layer3Vram8BaseSelect | pwrinst2Layer3Vram8A16MirrorSelect;
   reg  [15:0] pwrinst2Layer2ScratchData;
   reg  [15:0] pwrinst2Layer0ScratchData;
   reg  [15:0] pwrinst2Layer1ScratchData;
