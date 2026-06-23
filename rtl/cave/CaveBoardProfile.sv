@@ -12,6 +12,7 @@ module CaveBoardProfile(
   output       game_is_guwange,
   output       game_is_gaia,
   output       game_is_pwrinst2,
+  output       game_is_plegends,
   output       board_uses_z80_sound,
   output       board_is_vertical_clockwise,
   output       sound_is_ymz280b,
@@ -40,6 +41,7 @@ module CaveBoardProfile(
   assign game_is_guwange = game_index == GAME_GUWANGE;
   assign game_is_gaia = game_index == GAME_GAIA;
   assign game_is_pwrinst2 = (game_index == GAME_PWRINST2) | (game_index == GAME_PLEGENDS);
+  assign game_is_plegends = game_index == GAME_PLEGENDS;
 
   assign board_is_vertical_clockwise = 1'b0;
 

@@ -84,6 +84,7 @@ module GPU(
   input          io_spriteCtrl_enable,
   input  [1:0]   io_spriteCtrl_format,
   input          io_spriteCtrl_pwrinst2,
+  input          io_gameConfig_plegends,
   input          io_spriteCtrl_start,
   input          io_spriteCtrl_zoom,
   input  [8:0]   io_spriteCtrl_regs_offset_x,
@@ -171,7 +172,13 @@ module GPU(
 
   wire [8:0] flippedVideoX = io_video_regs_size_x - io_video_pos_x - 9'h001;
   wire [8:0] flippedVideoY = io_video_regs_size_y - io_video_pos_y - 9'h001;
+  wire       plegendsLayer2PrimeCycle =
+    io_gameConfig_plegends &
+    ~io_video_displayEnable &
+    (io_video_pos_x == 9'h1ff) &
+    (io_video_pos_y < io_video_regs_size_y);
   wire [8:0] layerVideoPosX = io_spriteCtrl_pwrinst2 ? (io_video_pos_x + 9'h070) : io_video_pos_x;
+  wire [8:0] layer2VideoPosX = plegendsLayer2PrimeCycle ? 9'h070 : layerVideoPosX;
   wire [17:0] videoX = {9'h000, io_video_pos_x};
   wire [17:0] videoY = {9'h000, io_video_pos_y};
   wire [17:0] videoSizeX = {9'h000, io_video_regs_size_x};
@@ -515,7 +522,7 @@ module GPU(
     .io_ctrl_tileRom_addr         (io_layerCtrl_2_tileRom_addr),
     .io_ctrl_tileRom_dout         (io_layerCtrl_2_tileRom_dout),
     .io_video_clockEnable         (io_video_clockEnable),
-    .io_video_pos_x               (layerVideoPosX),
+    .io_video_pos_x               (layer2VideoPosX),
     .io_video_pos_y               (io_video_pos_y),
     .io_video_vBlank              (io_video_vBlank),
     .io_video_regs_size_x         (io_video_regs_size_x),

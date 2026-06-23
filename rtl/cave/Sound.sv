@@ -71,6 +71,7 @@ module Sound(
     .game_is_guwange             (),
     .game_is_gaia                (),
     .game_is_pwrinst2            (pwrinst2),
+    .game_is_plegends            (),
     .board_uses_z80_sound        (),
     .board_is_vertical_clockwise (),
     .sound_is_ymz280b            (soundDeviceIsYmz),

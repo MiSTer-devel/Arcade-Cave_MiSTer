@@ -158,6 +158,7 @@ module Main(
     .game_is_guwange             (gameIsGuwange),
     .game_is_gaia                (gameIsGaia),
     .game_is_pwrinst2            (gameIsPwrInst2),
+    .game_is_plegends            (),
     .board_uses_z80_sound        (),
     .board_is_vertical_clockwise (),
     .sound_is_ymz280b            (),

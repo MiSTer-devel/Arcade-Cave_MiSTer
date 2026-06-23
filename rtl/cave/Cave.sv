@@ -401,6 +401,7 @@ module Cave(
   wire [31:0]  gameConfig_sprite_romOffset;
   wire         gameConfig_sprite_zoom;
   wire         gameIsPwrInst2;
+  wire         gameIsPlegends;
   wire         rotateClockwise;
 
   CaveGameConfig gameConfig (
@@ -460,6 +461,7 @@ module Cave(
     .game_is_guwange             (),
     .game_is_gaia                (),
     .game_is_pwrinst2            (gameIsPwrInst2),
+    .game_is_plegends            (gameIsPlegends),
     .board_uses_z80_sound        (),
     .board_is_vertical_clockwise (rotateClockwise),
     .sound_is_ymz280b            (),
@@ -1098,6 +1100,7 @@ module Cave(
     .io_spriteCtrl_enable                (options_sprite),
     .io_spriteCtrl_format                (gpu_io_spriteCtrl_format),
     .io_spriteCtrl_pwrinst2              (gameIsPwrInst2),
+    .io_gameConfig_plegends              (gameIsPlegends),
     .io_spriteCtrl_start                 (_gpu_io_spriteCtrl_start),
     .io_spriteCtrl_zoom                  (_gpu_io_spriteCtrl_zoom),
     .io_spriteCtrl_regs_offset_x         (_main_io_gpuMem_sprite_regs_offset_x),
@@ -1180,7 +1183,7 @@ module Cave(
     .io_rgb         (debugRgb)
   );
 
-  assign rgb = (options_debugVideo & (options_debugView == 3'd6) & ~gameIsPwrInst2) ? _gpu_io_debug_source_rgb :
+  assign rgb = (options_debugVideo & (options_debugView == 3'd6)) ? _gpu_io_debug_source_rgb :
                options_debugVideo ? debugRgb : _gpu_rgb;
 `else
   assign rgb = _gpu_rgb;
