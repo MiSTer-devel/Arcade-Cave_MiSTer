@@ -1,12 +1,12 @@
 <misterromdescription>
-  <name>Guwange (Special)</name>
+  <name>Guwange (Japan, 2000 7/ 7 Special Ver 13:22)</name>
   <mameversion>0226</mameversion>
   <setname>guwanges</setname>
   <year>1999</year>
   <manufacturer>CAVE</manufacturer>
   <category>Shooter</category>
   <rotation>vertical (ccw)</rotation>
-  <rbf>cave</rbf>
+  <rbf>Cave</rbf>
 
   <!-- ROM data -->
   <rom index="0" zip="guwanges.zip|guwange.zip" md5="none" address="0x30000000">

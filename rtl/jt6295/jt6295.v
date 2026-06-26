@@ -52,6 +52,10 @@ wire [ 3:0] data0, data1, data2, data3, pipe_data;
 wire [ 3:0] att, pipe_att;
 wire        ctrl_ok, ctrl_cs, zero;
 wire        pipe_en;
+wire        pipe_clear;
+wire [47:0] debug_ctrl_table_bytes;
+wire [47:0] debug_ctrl_decode_bytes;
+wire        debug_ctrl_capture_done;
 wire signed [11:0] pipe_snd;
 
 assign      dout = { 4'hf, busy | start };
@@ -106,6 +110,10 @@ jt6295_ctrl u_ctrl(
     .rom_addr   ( ctrl_addr     ),
     .rom_data   ( ctrl_data     ),
     .rom_ok     ( ctrl_ok       ),
+    .debug_capture_enable ( 1'b0 ),
+    .debug_table_bytes ( debug_ctrl_table_bytes ),
+    .debug_decode_bytes ( debug_ctrl_decode_bytes ),
+    .debug_capture_done ( debug_ctrl_capture_done ),
 
     .start      ( start         ),
     .stop       ( stop          ),
@@ -125,6 +133,8 @@ jt6295_serial u_serial(
     .att        ( att           ),
     .start      ( start         ),
     .stop       ( stop          ),
+    .restart_mute_busy_start ( 1'b0 ),
+    .reset_adpcm_on_start ( 1'b0 ),
     .busy       ( busy          ),
     .ack        ( ack           ),
     .zero       ( zero          ),
@@ -133,6 +143,7 @@ jt6295_serial u_serial(
     .rom_data   ( ch_data       ),
     // serialized data
     .pipe_en    ( pipe_en       ),
+    .pipe_clear ( pipe_clear    ),
     .pipe_att   ( pipe_att      ),
     .pipe_data  ( pipe_data     )
 );
@@ -143,6 +154,7 @@ jt6295_adpcm u_adpcm(
     .cen        ( cen_sr4       ),
     // serialized data
     .en         ( pipe_en       ),
+    .clear      ( pipe_clear    ),
     .att        ( pipe_att      ),
     .data       ( pipe_data     ),
     .sound      ( pipe_snd      )

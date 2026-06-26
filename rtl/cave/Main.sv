@@ -72,6 +72,20 @@ module Main(
   output [31:0]  io_gpuMem_layer_2_vram16x16_dout,
   input  [8:0]   io_gpuMem_layer_2_lineRam_addr,
   output [31:0]  io_gpuMem_layer_2_lineRam_dout,
+  output         io_gpuMem_pwrinst2_layer_2_regs_tileSize,
+  output         io_gpuMem_pwrinst2_layer_2_regs_enable,
+  output         io_gpuMem_pwrinst2_layer_2_regs_flipX,
+  output         io_gpuMem_pwrinst2_layer_2_regs_flipY,
+  output         io_gpuMem_pwrinst2_layer_2_regs_rowScrollEnable,
+  output         io_gpuMem_pwrinst2_layer_2_regs_rowSelectEnable,
+  output [8:0]   io_gpuMem_pwrinst2_layer_2_regs_scroll_x,
+  output [8:0]   io_gpuMem_pwrinst2_layer_2_regs_scroll_y,
+  input  [11:0]  io_gpuMem_pwrinst2_layer_2_vram8x8_addr,
+  output [31:0]  io_gpuMem_pwrinst2_layer_2_vram8x8_dout,
+  input  [9:0]   io_gpuMem_pwrinst2_layer_2_vram16x16_addr,
+  output [31:0]  io_gpuMem_pwrinst2_layer_2_vram16x16_dout,
+  input  [8:0]   io_gpuMem_pwrinst2_layer_2_lineRam_addr,
+  output [31:0]  io_gpuMem_pwrinst2_layer_2_lineRam_dout,
   output [8:0]   io_gpuMem_sprite_regs_offset_x,
   output [8:0]   io_gpuMem_sprite_regs_offset_y,
   output [1:0]   io_gpuMem_sprite_regs_bank,
@@ -100,9 +114,10 @@ module Main(
   output [15:0]  io_soundCtrl_data,
   output         io_soundCtrl_reply_rd,
   input  [15:0]  io_soundCtrl_reply,
+  input          io_soundCtrl_reply_empty,
   input          io_soundCtrl_irq,
   output         io_progRom_rd,
-  output [19:0]  io_progRom_addr,
+  output [21:0]  io_progRom_addr,
   input  [15:0]  io_progRom_dout,
   input          io_progRom_valid,
   output         io_eeprom_rd,
@@ -128,8 +143,9 @@ module Main(
   wire        gameIsUopoko;
   wire        gameIsGuwange;
   wire        gameIsGaia;
-  wire        gameIsHotdogStorm;
-  wire        gameIsMazinger;
+  wire        gameIsPwrInst2;
+  wire        gameIsHotdogStorm = 1'b0;
+  wire        gameIsMazinger = 1'b0;
 
   CaveBoardProfile boardProfile(
     .game_index                  (io_gameIndex),
@@ -141,8 +157,8 @@ module Main(
     .game_is_uopoko              (gameIsUopoko),
     .game_is_guwange             (gameIsGuwange),
     .game_is_gaia                (gameIsGaia),
-    .game_is_hotdogstorm         (gameIsHotdogStorm),
-    .game_is_mazinger            (gameIsMazinger),
+    .game_is_pwrinst2            (gameIsPwrInst2),
+    .game_is_plegends            (),
     .board_uses_z80_sound        (),
     .board_is_vertical_clockwise (),
     .sound_is_ymz280b            (),
@@ -180,23 +196,28 @@ module Main(
   wire [15:0] _paletteRam_io_portA_dout;
   wire [9:0]  _lineRam_2_io_portA_addr;
   wire [15:0] _lineRam_2_io_portA_dout;
+  wire [15:0] _pwrinst2Layer2LineRam_io_portA_dout;
   wire [9:0]  _lineRam_1_io_portA_addr;
   wire [15:0] _lineRam_1_io_portA_dout;
   wire [9:0]  _lineRam_0_io_portA_addr;
   wire [15:0] _lineRam_0_io_portA_dout;
   wire [10:0] _vram16x16_2_io_portA_addr;
   wire [15:0] _vram16x16_2_io_portA_dout;
+  wire [15:0] _pwrinst2Layer2Vram16_io_portA_dout;
   wire [10:0] _vram16x16_1_io_portA_addr;
   wire [15:0] _vram16x16_1_io_portA_dout;
   wire [10:0] _vram16x16_0_io_portA_addr;
   wire [15:0] _vram16x16_0_io_portA_dout;
   wire [15:0] _vram8x8_2_io_portA_dout;
+  wire [15:0] _pwrinst2Layer2Vram8_io_portA_dout;
   wire [12:0] _vram8x8_1_io_portA_addr;
   wire [15:0] _vram8x8_1_io_portA_dout;
   wire [12:0] _vram8x8_0_io_portA_addr;
   wire [15:0] _vram8x8_0_io_portA_dout;
   wire [14:0] _spriteRam_io_portA_addr;
   wire [15:0] _spriteRam_io_portA_dout;
+  wire [14:0] _pwrinst2SpriteExtraRam_addr;
+  wire [15:0] _pwrinst2SpriteExtraRam_dout;
   wire [14:0] _mainRam_io_addr;
   wire [15:0] _mainRam_io_dout;
   wire        _eeprom_io_serial_sdo;
@@ -271,6 +292,22 @@ module Main(
   reg         io_gpuMem_layer_2_regs_r_1_rowSelectEnable;
   reg  [8:0]  io_gpuMem_layer_2_regs_r_1_scroll_x;
   reg  [8:0]  io_gpuMem_layer_2_regs_r_1_scroll_y;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_tileSize;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_enable;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_flipX;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_flipY;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_rowScrollEnable;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_rowSelectEnable;
+  reg  [8:0]  io_gpuMem_pwrinst2_layer_2_regs_r_scroll_x;
+  reg  [8:0]  io_gpuMem_pwrinst2_layer_2_regs_r_scroll_y;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_1_tileSize;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_1_enable;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_1_flipX;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_1_flipY;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_1_rowScrollEnable;
+  reg         io_gpuMem_pwrinst2_layer_2_regs_r_1_rowSelectEnable;
+  reg  [8:0]  io_gpuMem_pwrinst2_layer_2_regs_r_1_scroll_x;
+  reg  [8:0]  io_gpuMem_pwrinst2_layer_2_regs_r_1_scroll_y;
   wire        coin1PulseActive;
   wire        coin2PulseActive;
   wire        servicePulseActive;
@@ -288,7 +325,7 @@ module Main(
   wire [15:0] inputSharedSystem;
   wire        vblankForcedSpriteSwap =
     videoVBlankRising & (gameIsHotdogStorm | gameIsMazinger | pauseActive);
-  wire [23:0] cpuByteAddr;
+  wire [23:0] cpuByteAddr = {_cpu_io_addr, 1'b0};
   wire [1:0]  mainRam_io_mask = {_cpu_io_uds, _cpu_io_lds};
 
   CaveVBlankTracker vblankTracker(
@@ -388,422 +425,421 @@ module Main(
     .pause_pressed (pausePressed),
     .pause_active  (pauseActive)
   );
-`ifdef CAVE_ENABLE_DEBUG_OVERLAY
-  wire        mazingerProgRomSelect;
-  wire        mazingerVideoRegsSelect;
-  wire        mazingerIrqSelect;
-  wire        mazingerSpriteRegsSelect;
-`endif
-  wire        mazingerMainRamSelect;
-  wire        mazingerSpriteRamSelect;
-`ifdef CAVE_ENABLE_DEBUG_OVERLAY
-  wire        mazingerSpriteSwapWrite;
-`endif
-`ifdef CAVE_ENABLE_DEBUG_OVERLAY
-  wire        mazingerSoundSelect;
-  wire        mazingerInput0Cycle;
-  wire        mazingerInput1Cycle;
-  wire        mazingerEepromCycle;
-  wire        mazingerProgRomAccess;
-  wire        mazingerSyncDtack;
-  wire        mazingerUnmappedCycle;
-  wire        mazingerCpuSpace;
-`endif
-  wire        mazingerSoundRead;
-  wire        mazingerSoundWrite;
-  wire        mazingerLayer1Vram8Select;
-  wire        mazingerLayer0Vram8Select;
-  wire        mazingerLayer1RegsSelect;
-  wire        mazingerLayer0RegsSelect;
-  wire        mazingerInput0Read;
-  wire        mazingerInput1Read;
-  wire        mazingerEepromWrite;
-  wire        mazingerPaletteSelect;
-  wire [14:0] mazingerPaletteRamAddr;
-  wire        mazingerExtraRomSelect;
-  wire        mazingerNoOpSelect;
-  wire        mazingerProgRomReady;
-  wire        mazingerIrqRead;
-  wire        mazingerVideoIrqClear;
-  wire        mazingerUnknownIrqClear;
-`ifdef CAVE_ENABLE_DEBUG_OVERLAY
-  wire        mazingerCycle;
-`endif
-  wire        mazingerProgRomRead;
-  wire        mazingerMainRamRead;
-  wire        mazingerMainRamWrite;
-  wire        mazingerSpriteRamRead;
-  wire        mazingerSpriteRamWrite;
-  wire        mazingerLayer0Vram8Read;
-  wire        mazingerLayer1Vram8Read;
-  wire        mazingerLayer0Vram8Write;
-  wire        mazingerLayer1Vram8Write;
-`ifdef CAVE_ENABLE_DEBUG_OVERLAY
-  wire        mazingerVideoRegsRead;
-  wire        mazingerVideoRegsWrite;
-  wire        mazingerLayer0RegsRead;
-  wire        mazingerLayer1RegsRead;
-`endif
-  wire        mazingerLayer0RegsWrite;
-  wire        mazingerLayer1RegsWrite;
-  wire        mazingerPaletteRead;
-  wire        mazingerPaletteWrite;
-  wire        mazingerSpriteRegsWrite;
-  wire        mazingerOpenBusSelect;
-  wire        mazingerDtack;
-  wire        mazingerReadDataValid;
-  wire [15:0] mazingerReadData;
-  wire        mazingerCpuReset;
-  wire        mazingerBootRamSelect;
-  wire [15:0] mazingerBootRamDout;
-  wire        mazingerBootWatchdogArmed;
-  wire        mazingerBootWatchdogDelayActive;
-  wire        mazingerBootWatchdogResetActive;
-  wire        mazingerBootMarkerWrite;
-  wire        mazingerBootWatchdogTrip;
+  wire        mazingerVideoIrqClear = 1'b0;
+  wire        mazingerUnknownIrqClear = 1'b0;
+  wire        mazingerProgRomRead = 1'b0;
+  wire        mazingerMainRamRead = 1'b0;
+  wire        mazingerMainRamWrite = 1'b0;
+  wire        mazingerSpriteRamRead = 1'b0;
+  wire        mazingerSpriteRamWrite = 1'b0;
+  wire        mazingerLayer0Vram8Read = 1'b0;
+  wire        mazingerLayer1Vram8Read = 1'b0;
+  wire        mazingerLayer0Vram8Write = 1'b0;
+  wire        mazingerLayer1Vram8Write = 1'b0;
+  wire        mazingerLayer0RegsWrite = 1'b0;
+  wire        mazingerLayer1RegsWrite = 1'b0;
+  wire        mazingerPaletteRead = 1'b0;
+  wire        mazingerPaletteWrite = 1'b0;
+  wire        mazingerSpriteRegsWrite = 1'b0;
+  wire        mazingerEepromWrite = 1'b0;
+  wire [14:0] mazingerPaletteRamAddr = 15'd0;
+  wire        mazingerExtraRomSelect = 1'b0;
+  wire        mazingerDtack = 1'b0;
+  wire        mazingerReadDataValid = 1'b0;
+  wire [15:0] mazingerReadData = 16'd0;
 
-  MazingerMainMap mazingerMainMap(
-    .clock                (clock),
-    .reset                (reset),
-    .game_active          (gameIsMazinger),
-    .cpu_addr             (_cpu_io_addr),
-    .cpu_fc               (_cpu_io_fc),
-    .cpu_as               (_cpu_io_as),
-    .cpu_rw               (_cpu_io_rw),
-    .read_strobe          (readStrobe),
-    .write_strobe         (writeStrobe),
-    .prog_rom_valid       (io_progRom_valid),
-    .dtack_reg            (dtackReg),
-    .main_ram_addr        (_mainRam_io_addr),
-    .main_ram_mask        (mainRam_io_mask),
-    .cpu_dout             (_cpu_io_dout),
-    .agallet_irq          (agalletIrq),
-    .unknown_irq          (unknownIrq),
-    .video_irq            (videoIrq),
-    .input1_data          (inputPort1),
-    .input0_data          (inputPort0),
-    .palette_data         (_paletteRam_io_portA_dout),
-    .layer0_regs_data     (_layerRegs_0_io_mem_dout),
-    .layer1_regs_data     (_layerRegs_1_io_mem_dout),
-    .layer0_vram8_data    (_vram8x8_0_io_portA_dout),
-    .layer1_vram8_data    (_vram8x8_1_io_portA_dout),
-    .sound_data           (io_soundCtrl_reply),
-    .sprite_ram_data      (_spriteRam_io_portA_dout),
-    .main_ram_data        (_mainRam_io_dout),
-    .prog_rom_data        (io_progRom_dout),
-    .cpu_byte_addr        (cpuByteAddr),
+  function [3:0] pwrinst2LayerMode;
+    input [3:0] data;
+    begin
+      case (data)
+        4'h1: pwrinst2LayerMode = 4'h0;
+        4'h2: pwrinst2LayerMode = 4'h1;
+        4'h4: pwrinst2LayerMode = 4'h2;
+        default: pwrinst2LayerMode = 4'h3;
+      endcase
+    end
+  endfunction
+
+  function [15:0] pwrinst2ApplyMask;
+    input [15:0] oldValue;
+    input [15:0] newValue;
+    input [1:0]  mask;
+    begin
+      pwrinst2ApplyMask = {
+        mask[1] ? newValue[15:8] : oldValue[15:8],
+        mask[0] ? newValue[7:0]  : oldValue[7:0]
+      };
+    end
+  endfunction
+
+  wire        pwrinst2ReadCycle = gameIsPwrInst2 & _cpu_io_as & _cpu_io_rw;
+  wire        pwrinst2WriteCycle = gameIsPwrInst2 & _cpu_io_as & ~_cpu_io_rw;
+  wire        pwrinst2ProgRomSelect = gameIsPwrInst2 & (cpuByteAddr < 24'h200000) & _cpu_io_rw;
+  wire        pwrinst2ProgRomCycle = pwrinst2ProgRomSelect & _cpu_io_as;
+  wire        pwrinst2ProgRomWrite = gameIsPwrInst2 & (cpuByteAddr < 24'h200000) & writeStrobe;
+  wire        pwrinst2ProgRomWriteCycle = pwrinst2WriteCycle & (cpuByteAddr < 24'h200000);
+  wire        pwrinst2MainRamSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'h400000) & (cpuByteAddr < 24'h410000);
+  wire        pwrinst2Input0Select = gameIsPwrInst2 & (cpuByteAddr >= 24'h500000) & (cpuByteAddr < 24'h500002);
+  wire        pwrinst2Input1Select = gameIsPwrInst2 & (cpuByteAddr >= 24'h500002) & (cpuByteAddr < 24'h500004);
+  wire        pwrinst2Input0Read = pwrinst2Input0Select & pwrinst2ReadCycle;
+  wire        pwrinst2Input1Read = pwrinst2Input1Select & pwrinst2ReadCycle;
+  wire        pwrinst2ExtraRomSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'h600000) & (cpuByteAddr < 24'h700000);
+  wire        pwrinst2ExtraRomRead = pwrinst2ExtraRomSelect & pwrinst2ReadCycle;
+  wire        pwrinst2ExtraRomWrite = gameIsPwrInst2 & (cpuByteAddr >= 24'h600000) & (cpuByteAddr < 24'h700000) & writeStrobe;
+  wire        pwrinst2ExtraRomWriteCycle = pwrinst2ExtraRomSelect & pwrinst2WriteCycle;
+  wire        pwrinst2ProgRomRead = pwrinst2ProgRomCycle | pwrinst2ExtraRomRead;
+  wire        pwrinst2ProgRomValid = pwrinst2ProgRomRead & io_progRom_valid;
+  wire        pwrinst2EepromWrite = gameIsPwrInst2 & (cpuByteAddr >= 24'h700000) & (cpuByteAddr < 24'h700002) & writeStrobe;
+  wire        pwrinst2EepromWriteCycle = pwrinst2WriteCycle & (cpuByteAddr >= 24'h700000) & (cpuByteAddr < 24'h700002);
+
+  wire [23:0] pwrinst2Layer0Offset = cpuByteAddr - 24'h880000;
+  wire [23:0] pwrinst2Layer1Offset = cpuByteAddr - 24'h900000;
+  wire        pwrinst2Layer2Vram16Select = gameIsPwrInst2 & (cpuByteAddr >= 24'h800000) & (cpuByteAddr < 24'h801000);
+  wire        pwrinst2Layer2LineSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'h801000) & (cpuByteAddr < 24'h801800);
+  wire        pwrinst2Layer2ScratchSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'h801800) & (cpuByteAddr < 24'h804000);
+  wire        pwrinst2Layer2Vram8Select = gameIsPwrInst2 & (cpuByteAddr >= 24'h804000) & (cpuByteAddr < 24'h808000);
+  wire        pwrinst2Layer0Vram16Select = gameIsPwrInst2 & (cpuByteAddr >= 24'h880000) & (cpuByteAddr < 24'h881000);
+  wire        pwrinst2Layer0LineSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'h881000) & (cpuByteAddr < 24'h881800);
+  wire        pwrinst2Layer0ScratchSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'h881800) & (cpuByteAddr < 24'h884000);
+  wire        pwrinst2Layer0Vram8Select = gameIsPwrInst2 & (cpuByteAddr >= 24'h884000) & (cpuByteAddr < 24'h888000);
+  wire        pwrinst2Layer1Vram16Select = gameIsPwrInst2 & (cpuByteAddr >= 24'h900000) & (cpuByteAddr < 24'h901000);
+  wire        pwrinst2Layer1LineSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'h901000) & (cpuByteAddr < 24'h901800);
+  wire        pwrinst2Layer1ScratchSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'h901800) & (cpuByteAddr < 24'h904000);
+  wire        pwrinst2Layer1Vram8Select = gameIsPwrInst2 & (cpuByteAddr >= 24'h904000) & (cpuByteAddr < 24'h908000);
+  wire        pwrinst2Layer3Vram8BaseSelect =
+    gameIsPwrInst2 & (cpuByteAddr >= 24'h980000) & (cpuByteAddr < 24'h988000);
+  wire        pwrinst2Layer3Vram8A16MirrorSelect =
+    gameIsPwrInst2 & (cpuByteAddr >= 24'h990000) & (cpuByteAddr < 24'h998000);
+  wire        pwrinst2Layer3Vram8Select =
+    pwrinst2Layer3Vram8BaseSelect | pwrinst2Layer3Vram8A16MirrorSelect;
+  reg  [15:0] pwrinst2Layer2ScratchData;
+  reg  [15:0] pwrinst2Layer0ScratchData;
+  reg  [15:0] pwrinst2Layer1ScratchData;
+  reg  [15:0] pwrinst2Layer2Regs0;
+  reg  [15:0] pwrinst2Layer2Regs1;
+  reg  [15:0] pwrinst2Layer2Regs2;
+  reg         pwrinst2SyncReadPending;
+
+  wire        pwrinst2SpriteListRamSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'hA00000) & (cpuByteAddr < 24'hA10000);
+  wire        pwrinst2SpriteExtraRamSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'hA10000) & (cpuByteAddr < 24'hA20000);
+  wire        pwrinst2SpriteRamSelect = pwrinst2SpriteListRamSelect | pwrinst2SpriteExtraRamSelect;
+  wire        pwrinst2SpriteRegsSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'hA80000) & (cpuByteAddr < 24'hA80080);
+  wire        pwrinst2SpriteRegsRead = pwrinst2SpriteRegsSelect & pwrinst2ReadCycle;
+  wire        pwrinst2SpriteRegsReadStrobe = pwrinst2SpriteRegsSelect & readStrobe;
+  wire        pwrinst2SpriteRegsWrite = pwrinst2SpriteRegsSelect & writeStrobe;
+  wire        pwrinst2SpriteRegsWriteCycle = pwrinst2SpriteRegsSelect & pwrinst2WriteCycle;
+  wire [23:0] pwrinst2SpriteRegsOffset = cpuByteAddr - 24'hA80000;
+  wire        pwrinst2IrqCauseRead = pwrinst2SpriteRegsRead & (pwrinst2SpriteRegsOffset < 24'h8);
+  wire        pwrinst2IrqCauseReadStrobe = pwrinst2SpriteRegsReadStrobe & (pwrinst2SpriteRegsOffset < 24'h8);
+  wire        pwrinst2VideoIrqClear = pwrinst2IrqCauseReadStrobe & (pwrinst2SpriteRegsOffset == 24'h4);
+  wire        pwrinst2UnknownIrqClear = pwrinst2IrqCauseReadStrobe & (pwrinst2SpriteRegsOffset == 24'h6);
+  wire        pwrinst2Layer2RegsSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'hB00000) & (cpuByteAddr < 24'hB00006);
+  wire        pwrinst2Layer0RegsSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'hB80000) & (cpuByteAddr < 24'hB80006);
+  wire        pwrinst2Layer1RegsSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'hC00000) & (cpuByteAddr < 24'hC00006);
+  wire        pwrinst2Layer3RegsSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'hC80000) & (cpuByteAddr < 24'hC80006);
+  wire        pwrinst2SoundAckSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'hD80000) & (cpuByteAddr < 24'hD80002);
+  wire        pwrinst2SoundAckRead = pwrinst2SoundAckSelect & pwrinst2ReadCycle;
+  wire        pwrinst2SoundAckReadStrobe = pwrinst2SoundAckSelect & readStrobe;
+  wire        pwrinst2SoundCmdSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'hE00000) & (cpuByteAddr < 24'hE00002);
+  wire        pwrinst2SoundCmdRead = pwrinst2SoundCmdSelect & pwrinst2ReadCycle;
+  wire        pwrinst2SoundWrite = pwrinst2SoundCmdSelect & writeStrobe;
+  wire        pwrinst2SoundWriteCycle = pwrinst2SoundCmdSelect & pwrinst2WriteCycle;
+  wire        pwrinst2EepromRead = pwrinst2ReadCycle & (cpuByteAddr >= 24'hE80000) & (cpuByteAddr < 24'hE80002);
+  wire        pwrinst2PaletteSelect = gameIsPwrInst2 & (cpuByteAddr >= 24'hF00000) & (cpuByteAddr < 24'hF05000);
+  wire [15:0] pwrinst2InputP1 =
+    {5'h1F,
+     ~io_player_0_buttons[3],
+     ~servicePulseActive,
+     ~coin1PulseActive,
+     ~io_player_0_start,
+     ~(io_player_0_buttons[2:0]),
+     ~io_player_0_right,
+     ~io_player_0_left,
+     ~io_player_0_down,
+     ~io_player_0_up};
+  wire [15:0] pwrinst2InputP2 =
+    {4'hF,
+     _eeprom_io_serial_sdo,
+     ~io_player_1_buttons[3],
+     ~servicePulseActive,
+     ~coin2PulseActive,
+     ~io_player_1_start,
+     ~(io_player_1_buttons[2:0]),
+     ~io_player_1_right,
+     ~io_player_1_left,
+     ~io_player_1_down,
+     ~io_player_1_up};
+  wire [15:0] pwrinst2LayerRegDin =
+    _cpu_io_addr[1:0] == 2'h2 ? {_cpu_io_dout[15:4], pwrinst2LayerMode(_cpu_io_dout[3:0])} : _cpu_io_dout;
+  wire [15:0] layerRegsMemDin = gameIsPwrInst2 ? pwrinst2LayerRegDin : _cpu_io_dout;
+  wire [15:0] pwrinst2Layer2RegsData =
+    _cpu_io_addr[1:0] == 2'h0 ? pwrinst2Layer2Regs0 :
+    _cpu_io_addr[1:0] == 2'h1 ? pwrinst2Layer2Regs1 :
+    pwrinst2Layer2Regs2;
+  wire        pwrinst2SyncReadSelect =
+    pwrinst2ReadCycle &
+    (pwrinst2MainRamSelect |
+     pwrinst2Layer2Vram16Select | pwrinst2Layer2LineSelect | pwrinst2Layer2ScratchSelect |
+     pwrinst2Layer2Vram8Select |
+     pwrinst2Layer0Vram16Select | pwrinst2Layer0LineSelect | pwrinst2Layer0ScratchSelect |
+     pwrinst2Layer0Vram8Select |
+     pwrinst2Layer1Vram16Select | pwrinst2Layer1LineSelect | pwrinst2Layer1ScratchSelect |
+     pwrinst2Layer1Vram8Select |
+     pwrinst2Layer3Vram8Select |
+     pwrinst2SpriteRamSelect |
+     pwrinst2Layer2RegsSelect | pwrinst2Layer0RegsSelect | pwrinst2Layer1RegsSelect |
+     pwrinst2Layer3RegsSelect |
+     pwrinst2PaletteSelect);
+  wire        pwrinst2Select =
+    pwrinst2ProgRomSelect | pwrinst2ProgRomValid | pwrinst2ProgRomWriteCycle |
+    pwrinst2MainRamSelect |
+    pwrinst2Input0Read | pwrinst2Input1Read |
+    pwrinst2ExtraRomRead | pwrinst2ExtraRomWriteCycle | pwrinst2EepromWriteCycle |
+    pwrinst2Layer2Vram16Select | pwrinst2Layer2LineSelect | pwrinst2Layer2ScratchSelect |
+    pwrinst2Layer2Vram8Select |
+    pwrinst2Layer0Vram16Select | pwrinst2Layer0LineSelect | pwrinst2Layer0ScratchSelect |
+    pwrinst2Layer0Vram8Select |
+    pwrinst2Layer1Vram16Select | pwrinst2Layer1LineSelect | pwrinst2Layer1ScratchSelect |
+    pwrinst2Layer1Vram8Select |
+    pwrinst2Layer3Vram8Select |
+    pwrinst2SpriteRamSelect | pwrinst2SpriteRegsRead | pwrinst2SpriteRegsWriteCycle |
+    pwrinst2Layer2RegsSelect | pwrinst2Layer0RegsSelect | pwrinst2Layer1RegsSelect |
+    pwrinst2Layer3RegsSelect | pwrinst2SoundAckRead | pwrinst2SoundCmdRead | pwrinst2SoundWriteCycle |
+    pwrinst2EepromRead | pwrinst2PaletteSelect;
+  wire        pwrinst2Dtack =
+    pwrinst2ProgRomRead ? pwrinst2ProgRomValid :
+    pwrinst2SyncReadSelect ? pwrinst2SyncReadPending :
+    (_cpu_io_as & pwrinst2Select);
+  wire [15:0] pwrinst2EepromData = {12'hFFF, _eeprom_io_serial_sdo ? 4'hF : 4'h7};
+  wire [15:0] pwrinst2IrqCauseData =
+    {13'h0,
+     (pwrinst2SpriteRegsOffset == 24'h0) & ~agalletIrq,
+     ~unknownIrq,
+     ~videoIrq};
+  wire [15:0] pwrinst2ReadData =
+    pwrinst2ProgRomValid ? io_progRom_dout :
+    pwrinst2MainRamSelect ? _mainRam_io_dout :
+    pwrinst2Input0Read ? pwrinst2InputP1 :
+    pwrinst2Input1Read ? pwrinst2InputP2 :
+    pwrinst2ExtraRomRead ? 16'h0000 :
+    pwrinst2Layer2Vram16Select ? _pwrinst2Layer2Vram16_io_portA_dout :
+    pwrinst2Layer2LineSelect ? _pwrinst2Layer2LineRam_io_portA_dout :
+    pwrinst2Layer2ScratchSelect ? pwrinst2Layer2ScratchData :
+    pwrinst2Layer2Vram8Select ? _pwrinst2Layer2Vram8_io_portA_dout :
+    pwrinst2Layer0Vram16Select ? _vram16x16_0_io_portA_dout :
+    pwrinst2Layer0LineSelect ? _lineRam_0_io_portA_dout :
+    pwrinst2Layer0ScratchSelect ? pwrinst2Layer0ScratchData :
+    pwrinst2Layer0Vram8Select ? _vram8x8_0_io_portA_dout :
+    pwrinst2Layer1Vram16Select ? _vram16x16_1_io_portA_dout :
+    pwrinst2Layer1LineSelect ? _lineRam_1_io_portA_dout :
+    pwrinst2Layer1ScratchSelect ? pwrinst2Layer1ScratchData :
+    pwrinst2Layer1Vram8Select ? _vram8x8_1_io_portA_dout :
+    pwrinst2Layer3Vram8Select ? _vram8x8_2_io_portA_dout :
+    pwrinst2SpriteListRamSelect ? _spriteRam_io_portA_dout :
+    pwrinst2SpriteExtraRamSelect ? _pwrinst2SpriteExtraRam_dout :
+    pwrinst2SpriteRegsRead ? (pwrinst2IrqCauseRead ? pwrinst2IrqCauseData : 16'h0000) :
+    pwrinst2Layer2RegsSelect ? pwrinst2Layer2RegsData :
+    pwrinst2Layer0RegsSelect ? _layerRegs_0_io_mem_dout :
+    pwrinst2Layer1RegsSelect ? _layerRegs_1_io_mem_dout :
+    pwrinst2Layer3RegsSelect ? _layerRegs_2_io_mem_dout :
+    pwrinst2SoundAckRead ? io_soundCtrl_reply :
+    pwrinst2SoundCmdRead ? 16'h0000 :
+    pwrinst2EepromRead ? pwrinst2EepromData :
+    pwrinst2PaletteSelect ? _paletteRam_io_portA_dout :
+    16'h0000;
+
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
-    .prog_rom_select      (mazingerProgRomSelect),
-`else
-    .prog_rom_select      (),
-`endif
-    .main_ram_select      (mazingerMainRamSelect),
-    .sprite_ram_select    (mazingerSpriteRamSelect),
-`ifdef CAVE_ENABLE_DEBUG_OVERLAY
-    .video_regs_select    (mazingerVideoRegsSelect),
-    .irq_select           (mazingerIrqSelect),
-    .sprite_regs_select   (mazingerSpriteRegsSelect),
-    .sprite_swap_write    (mazingerSpriteSwapWrite),
-    .sound_select         (mazingerSoundSelect),
-`else
-    .video_regs_select    (),
-    .irq_select           (),
-    .sprite_regs_select   (),
-    .sprite_swap_write    (),
-    .sound_select         (),
-`endif
-    .sound_read           (mazingerSoundRead),
-    .sound_write          (mazingerSoundWrite),
-    .layer1_vram8_select  (mazingerLayer1Vram8Select),
-    .layer0_vram8_select  (mazingerLayer0Vram8Select),
-    .layer1_regs_select   (mazingerLayer1RegsSelect),
-    .layer0_regs_select   (mazingerLayer0RegsSelect),
-`ifdef CAVE_ENABLE_DEBUG_OVERLAY
-    .input0_cycle         (mazingerInput0Cycle),
-    .input1_cycle         (mazingerInput1Cycle),
-`else
-    .input0_cycle         (),
-    .input1_cycle         (),
-`endif
-    .input0_read          (mazingerInput0Read),
-    .input1_read          (mazingerInput1Read),
-`ifdef CAVE_ENABLE_DEBUG_OVERLAY
-    .eeprom_cycle         (mazingerEepromCycle),
-`else
-    .eeprom_cycle         (),
-`endif
-    .eeprom_write         (mazingerEepromWrite),
-    .palette_select       (mazingerPaletteSelect),
-    .palette_ram_addr     (mazingerPaletteRamAddr),
-    .extra_rom_select     (mazingerExtraRomSelect),
-    .no_op_select         (mazingerNoOpSelect),
-`ifdef CAVE_ENABLE_DEBUG_OVERLAY
-    .prog_rom_access      (mazingerProgRomAccess),
-`else
-    .prog_rom_access      (),
-`endif
-    .prog_rom_ready       (mazingerProgRomReady),
-    .irq_read             (mazingerIrqRead),
-    .irq_word_offset      (),
-    .video_irq_clear      (mazingerVideoIrqClear),
-    .unknown_irq_clear    (mazingerUnknownIrqClear),
-`ifdef CAVE_ENABLE_DEBUG_OVERLAY
-    .sync_dtack           (mazingerSyncDtack),
-    .cycle                (mazingerCycle),
-    .unmapped_cycle       (mazingerUnmappedCycle),
-`else
-    .sync_dtack           (),
-    .cycle                (),
-    .unmapped_cycle       (),
-`endif
-    .prog_rom_read        (mazingerProgRomRead),
-    .main_ram_read        (mazingerMainRamRead),
-    .main_ram_write       (mazingerMainRamWrite),
-    .sprite_ram_read      (mazingerSpriteRamRead),
-    .sprite_ram_write     (mazingerSpriteRamWrite),
-    .layer0_vram8_read    (mazingerLayer0Vram8Read),
-    .layer1_vram8_read    (mazingerLayer1Vram8Read),
-    .layer0_vram8_write   (mazingerLayer0Vram8Write),
-    .layer1_vram8_write   (mazingerLayer1Vram8Write),
-`ifdef CAVE_ENABLE_DEBUG_OVERLAY
-    .video_regs_read      (mazingerVideoRegsRead),
-    .video_regs_write     (mazingerVideoRegsWrite),
-    .layer0_regs_read     (mazingerLayer0RegsRead),
-    .layer1_regs_read     (mazingerLayer1RegsRead),
-`else
-    .video_regs_read      (),
-    .video_regs_write     (),
-    .layer0_regs_read     (),
-    .layer1_regs_read     (),
-`endif
-    .layer0_regs_write    (mazingerLayer0RegsWrite),
-    .layer1_regs_write    (mazingerLayer1RegsWrite),
-    .palette_read         (mazingerPaletteRead),
-    .palette_write        (mazingerPaletteWrite),
-    .sprite_regs_write    (mazingerSpriteRegsWrite),
-`ifdef CAVE_ENABLE_DEBUG_OVERLAY
-    .cpu_space            (mazingerCpuSpace),
-`else
-    .cpu_space            (),
-`endif
-    .open_bus_select      (mazingerOpenBusSelect),
-    .dtack                (mazingerDtack),
-    .cpu_reset            (mazingerCpuReset),
-    .boot_ram_select      (mazingerBootRamSelect),
-    .boot_ram_dout        (mazingerBootRamDout),
-    .boot_watchdog_armed        (mazingerBootWatchdogArmed),
-    .boot_watchdog_delay_active (mazingerBootWatchdogDelayActive),
-    .boot_watchdog_reset_active (mazingerBootWatchdogResetActive),
-    .boot_marker_write          (mazingerBootMarkerWrite),
-    .boot_watchdog_trip         (mazingerBootWatchdogTrip),
-    .read_data_valid      (mazingerReadDataValid),
-    .read_data            (mazingerReadData)
-  );
-`ifdef CAVE_ENABLE_DEBUG_OVERLAY
-  reg  [63:0] mazingerDebugSeen;
-  reg  [23:0] mazingerDebugLastAddr;
-  reg  [23:0] mazingerDebugPrevAddr;
-  reg  [23:0] mazingerDebugFirstUnmappedAddr;
-  reg  [23:0] mazingerDebugFirstUnmappedProgAddr;
-  reg  [23:0] mazingerDebugLastProgAddr;
-  reg  [15:0] mazingerDebugLastDout;
-  reg  [15:0] mazingerDebugLastDin;
-  reg  [15:0] mazingerDebugVector0;
-  reg  [15:0] mazingerDebugVector1;
-  reg  [15:0] mazingerDebugVector2;
-  reg  [15:0] mazingerDebugVector3;
-  reg  [7:0]  mazingerDebugLastCtrl;
-  reg  [7:0]  mazingerDebugLastUnmappedCtrl;
-  reg  [7:0]  mazingerDebugFirstUnmappedStatus;
-  reg  [7:0]  mazingerDebugLastSelect;
-  reg  [7:0]  mazingerDebugReadSeen;
-  reg  [7:0]  mazingerDebugWriteSeen;
-  reg  [7:0]  mazingerDebugIrqSeen;
-  reg  [7:0]  mazingerDebugMilestones;
-  reg  [15:0] mazingerDebugSelfTestStatus;
-  reg  [15:0] mazingerDebugFirstSpriteRamAddr;
-  reg  [14:0] mazingerDebugFirstPaletteAddr;
-  reg  [14:0] mazingerDebugLastPaletteAddr;
-  reg  [14:0] mazingerDebugFirstPaletteAnyAddr;
-  reg  [15:0] mazingerDebugFirstPaletteData;
-  reg  [15:0] mazingerDebugLastPaletteData;
-  reg  [15:0] mazingerDebugFirstPaletteAnyData;
-  reg  [15:0] mazingerDebugFirstLayer0Reg0Data;
-  reg  [15:0] mazingerDebugFirstLayer0Reg1Data;
-  reg  [15:0] mazingerDebugFirstLayer1Reg0Data;
-  reg  [15:0] mazingerDebugFirstLayer1Reg1Data;
-  reg  [15:0] mazingerDebugPaletteSlot0Data;
-  reg  [15:0] mazingerDebugPaletteSlot1Data;
-  reg  [15:0] mazingerDebugPaletteSlot2Data;
-  reg  [15:0] mazingerDebugPaletteSlot3Data;
-  reg         mazingerDebugFirstUnmappedValid;
-  reg         mazingerDebugSelfTestStatusValid;
-  reg         mazingerDebugProgChecksumValid;
-  reg         mazingerDebugExtraChecksumValid;
-  reg         mazingerDebugFirstSpriteRamValid;
-  reg         mazingerDebugFirstPaletteValid;
-  reg         mazingerDebugFirstPaletteAnyValid;
-  reg         mazingerDebugFirstLayer0Reg0Valid;
-  reg         mazingerDebugFirstLayer0Reg1Valid;
-  reg         mazingerDebugFirstLayer1Reg0Valid;
-  reg         mazingerDebugFirstLayer1Reg1Valid;
-  reg         mazingerDebugPaletteSlot0Valid;
-  reg         mazingerDebugPaletteSlot1Valid;
-  reg         mazingerDebugPaletteSlot2Valid;
-  reg         mazingerDebugPaletteSlot3Valid;
-  wire [7:0]  mazingerDebugSelectNow = {
-    mazingerUnmappedCycle,
-    mazingerPaletteSelect,
-    mazingerLayer0Vram8Select | mazingerLayer1Vram8Select,
-    mazingerLayer0RegsSelect | mazingerLayer1RegsSelect,
-    mazingerVideoRegsSelect,
-    mazingerSpriteRamSelect,
-    mazingerMainRamSelect,
-    mazingerProgRomAccess
-  };
-  wire [7:0]  mazingerDebugReadNow = {
-    mazingerPaletteRead,
-    mazingerLayer1RegsRead,
-    mazingerLayer0RegsRead,
-    mazingerLayer1Vram8Read,
-    mazingerLayer0Vram8Read,
-    mazingerSoundRead,
-    mazingerInput1Read | mazingerInput0Read,
-    mazingerIrqRead
-  };
-  wire [7:0]  mazingerDebugWriteNow = {
-    mazingerVideoRegsWrite,
-    mazingerSpriteRegsWrite,
-    mazingerPaletteWrite,
-    mazingerLayer1RegsWrite,
-    mazingerLayer0RegsWrite,
-    mazingerLayer1Vram8Write | mazingerLayer0Vram8Write,
-    mazingerSpriteRamWrite,
-    mazingerMainRamWrite
-  };
-  wire [7:0]  mazingerDebugIrqNow = {
-    pauseActive,
-    _cpu_io_vpa,
-    |(_cpu_io_ipl),
-    io_video_vBlank,
-    videoVBlankRising,
-    agalletIrq,
-    unknownIrq,
-    videoIrq
-  };
-  wire [7:0]  mazingerDebugPipelineRow0 = {
-    cpuByteAddr != mazingerDebugPrevAddr,
-    mazingerProgRomReady,
+  reg  [63:0] pwrinst2DebugMilestones;
+  reg  [23:0] pwrinst2DebugLastAddr;
+  reg  [23:0] pwrinst2DebugLastReadAddr;
+  reg  [23:0] pwrinst2DebugLastWriteAddr;
+  reg  [23:0] pwrinst2DebugFirstUnmappedAddr;
+  reg  [15:0] pwrinst2DebugLastDin;
+  reg  [15:0] pwrinst2DebugLastDout;
+  reg  [7:0]  pwrinst2DebugLastCtrl;
+  reg  [7:0]  pwrinst2DebugLastSelect;
+  reg  [7:0]  pwrinst2DebugFirstUnmappedCtrl;
+  reg  [7:0]  pwrinst2DebugFirstUnmappedSelect;
+  reg         pwrinst2DebugFirstUnmappedValid;
+
+  wire        pwrinst2DebugCpuCycle = gameIsPwrInst2 & (readStrobe | writeStrobe);
+  wire        pwrinst2DebugUnmappedCycle = pwrinst2DebugCpuCycle & ~pwrinst2Select;
+  wire [7:0]  pwrinst2DebugCtrlNow = {
     io_progRom_valid,
-    io_progRom_rd,
-    dtackReg,
-    writeStrobe,
+    pwrinst2Dtack,
+    _cpu_io_rw,
+    _cpu_io_as,
+    _cpu_io_uds,
+    _cpu_io_lds,
     readStrobe,
-    mazingerCycle
+    writeStrobe
   };
-  wire [7:0]  mazingerDebugPipelineRow5 = {
-    mazingerBootWatchdogArmed,
-    mazingerBootWatchdogResetActive,
-    mazingerBootWatchdogDelayActive,
-    mazingerBootMarkerWrite,
-    mazingerSoundRead,
-    mazingerVideoRegsRead,
-    mazingerVideoRegsWrite,
-    mazingerEepromWrite
+  wire [7:0]  pwrinst2DebugSelectNow = {
+    pwrinst2ProgRomSelect | pwrinst2ProgRomWrite | pwrinst2ProgRomValid,
+    pwrinst2MainRamSelect,
+    pwrinst2PaletteSelect,
+    pwrinst2Layer0Vram16Select | pwrinst2Layer0LineSelect | pwrinst2Layer0ScratchSelect | pwrinst2Layer0Vram8Select,
+    pwrinst2Layer1Vram16Select | pwrinst2Layer1LineSelect | pwrinst2Layer1ScratchSelect | pwrinst2Layer1Vram8Select,
+    pwrinst2Layer2Vram16Select | pwrinst2Layer2LineSelect | pwrinst2Layer2ScratchSelect | pwrinst2Layer2Vram8Select | pwrinst2Layer3Vram8Select,
+    pwrinst2SpriteRamSelect | pwrinst2SpriteRegsSelect,
+    pwrinst2Input0Read | pwrinst2Input1Read | pwrinst2SoundAckRead | pwrinst2SoundCmdRead | pwrinst2SoundWrite | pwrinst2EepromRead | pwrinst2EepromWrite
   };
-  wire [7:0]  mazingerDebugPipelineRow6 = {
-    io_soundCtrl_irq,
-    io_eeprom_wait_n,
-    io_eeprom_valid,
-    io_progRom_valid,
-    mazingerDtack,
-    mazingerSyncDtack,
-    mazingerProgRomReady,
-    mazingerUnmappedCycle
+  wire [63:0] pwrinst2DebugLiveBits = {
+    8'h00,
+    cpuByteAddr,
+    pwrinst2ReadData,
+    pwrinst2DebugCtrlNow,
+    pwrinst2DebugSelectNow
   };
-  wire [63:0] mazingerDebugEventBits = {
-    mazingerDebugMilestones,
-    mazingerDebugPipelineRow6,
-    mazingerDebugPipelineRow5,
-    mazingerDebugIrqNow,
-    mazingerDebugWriteNow,
-    mazingerDebugReadNow,
-    mazingerDebugSelectNow,
-    mazingerDebugPipelineRow0
+  wire [63:0] pwrinst2DebugCpuBits = {
+    pwrinst2DebugFirstUnmappedAddr,
+    pwrinst2DebugLastAddr,
+    pwrinst2DebugFirstUnmappedValid,
+    pwrinst2SyncReadPending,
+    pwrinst2Dtack,
+    pwrinst2DebugUnmappedCycle,
+    pwrinst2DebugFirstUnmappedCtrl[3:0],
+    pwrinst2DebugLastSelect
   };
-  wire [63:0] mazingerDebugCpuBits = {
-    mazingerDebugIrqSeen,
-    mazingerDebugWriteSeen,
-    mazingerDebugReadSeen,
-    mazingerDebugLastSelect,
-    mazingerDebugLastCtrl,
-    mazingerDebugLastAddr[7:0],
-    mazingerDebugLastAddr[15:8],
-    mazingerDebugLastAddr[23:16]
+  wire [63:0] pwrinst2DebugWriteBits = {
+    pwrinst2DebugLastWriteAddr,
+    pwrinst2DebugLastReadAddr,
+    pwrinst2DebugLastDout
   };
-  wire [63:0] mazingerDebugWriteBits = {
-    mazingerDebugFirstSpriteRamAddr[7:0],
-    mazingerDebugFirstSpriteRamAddr[15:8],
-    mazingerDebugSelfTestStatus[7:0],
-    mazingerDebugSelfTestStatus[15:8],
-    {1'b0, mazingerDebugExtraChecksumValid, mazingerDebugProgChecksumValid,
-     mazingerDebugSelfTestStatusValid, mazingerDebugFirstSpriteRamValid,
-     mazingerDebugIrqSeen[2:0]},
-    mazingerDebugWriteSeen,
-    mazingerDebugReadSeen,
-    mazingerDebugLastSelect
+  wire [63:0] pwrinst2DebugDataBits = {
+    pwrinst2DebugLastReadAddr,
+    pwrinst2DebugLastWriteAddr,
+    pwrinst2DebugLastDin
   };
-  wire [7:0]  mazingerDebugFaultStatusNow = {
-    mazingerDebugFirstUnmappedValid | mazingerOpenBusSelect,
-    mazingerOpenBusSelect,
-    mazingerUnmappedCycle,
-    mazingerCpuSpace,
-    mazingerNoOpSelect,
-    mazingerEepromCycle,
-    mazingerInput0Cycle | mazingerInput1Cycle,
-    mazingerMainRamSelect
-  };
-  wire [7:0]  mazingerDebugPostFlags = {
-    mazingerDebugFirstUnmappedValid,
-    mazingerOpenBusSelect,
-    mazingerSoundRead,
-    mazingerSpriteSwapWrite,
-    mazingerVideoRegsWrite,
-    mazingerPaletteWrite,
-    |(_cpu_io_ipl),
-    io_video_vBlank
-  };
-  wire [63:0] mazingerDebugDataBits = {
-    mazingerDebugMilestones,
-    mazingerDebugPostFlags,
-    mazingerDebugLastAddr[7:0],
-    mazingerDebugLastAddr[15:8],
-    mazingerDebugLastAddr[23:16],
-    mazingerDebugLastProgAddr[7:0],
-    mazingerDebugLastProgAddr[15:8],
-    mazingerDebugLastProgAddr[23:16]
-  };
-  wire [63:0] mazingerDebugPaletteBits = {
-    mazingerDebugPaletteSlot3Data[15:8],
-    mazingerDebugPaletteSlot3Data[7:0],
-    mazingerDebugPaletteSlot2Data[15:8],
-    mazingerDebugPaletteSlot2Data[7:0],
-    mazingerDebugPaletteSlot1Data[15:8],
-    mazingerDebugPaletteSlot1Data[7:0],
-    mazingerDebugPaletteSlot0Data[15:8],
-    mazingerDebugPaletteSlot0Data[7:0]
-  };
-  wire [63:0] mazingerDebugLiveBits = {
-    mazingerDebugFirstLayer1Reg1Data[15:8],
-    mazingerDebugFirstLayer1Reg1Data[7:0],
-    mazingerDebugFirstLayer1Reg0Data[15:8],
-    mazingerDebugFirstLayer1Reg0Data[7:0],
-    mazingerDebugFirstLayer0Reg1Data[15:8],
-    mazingerDebugFirstLayer0Reg1Data[7:0],
-    mazingerDebugFirstLayer0Reg0Data[15:8],
-    mazingerDebugFirstLayer0Reg0Data[7:0]
+  wire [63:0] pwrinst2DebugPaletteBits = {
+    8'h00,
+    pwrinst2DebugFirstUnmappedAddr,
+    pwrinst2DebugFirstUnmappedCtrl,
+    pwrinst2DebugFirstUnmappedSelect,
+    pwrinst2DebugLastCtrl,
+    pwrinst2DebugLastSelect
   };
 `endif
+
+  always @(posedge clock) begin
+    if (reset | ~gameIsPwrInst2) begin
+      pwrinst2Layer2ScratchData <= 16'h0000;
+      pwrinst2Layer0ScratchData <= 16'h0000;
+      pwrinst2Layer1ScratchData <= 16'h0000;
+      pwrinst2Layer2Regs0 <= 16'h0000;
+      pwrinst2Layer2Regs1 <= 16'h0000;
+      pwrinst2Layer2Regs2 <= 16'h0000;
+      pwrinst2SyncReadPending <= 1'b0;
+    end
+    else begin
+      if (~pwrinst2SyncReadSelect)
+        pwrinst2SyncReadPending <= 1'b0;
+      else if (readStrobe)
+        pwrinst2SyncReadPending <= 1'b1;
+      if (pwrinst2Layer2ScratchSelect & writeStrobe)
+        pwrinst2Layer2ScratchData <= pwrinst2ApplyMask(pwrinst2Layer2ScratchData, _cpu_io_dout, mainRam_io_mask);
+      if (pwrinst2Layer0ScratchSelect & writeStrobe)
+        pwrinst2Layer0ScratchData <= pwrinst2ApplyMask(pwrinst2Layer0ScratchData, _cpu_io_dout, mainRam_io_mask);
+      if (pwrinst2Layer1ScratchSelect & writeStrobe)
+        pwrinst2Layer1ScratchData <= pwrinst2ApplyMask(pwrinst2Layer1ScratchData, _cpu_io_dout, mainRam_io_mask);
+      if (pwrinst2Layer2RegsSelect & writeStrobe) begin
+        case (_cpu_io_addr[1:0])
+          2'h0: pwrinst2Layer2Regs0 <= pwrinst2ApplyMask(pwrinst2Layer2Regs0, pwrinst2LayerRegDin, mainRam_io_mask);
+          2'h1: pwrinst2Layer2Regs1 <= pwrinst2ApplyMask(pwrinst2Layer2Regs1, pwrinst2LayerRegDin, mainRam_io_mask);
+          2'h2: pwrinst2Layer2Regs2 <= pwrinst2ApplyMask(pwrinst2Layer2Regs2, pwrinst2LayerRegDin, mainRam_io_mask);
+          default: begin
+          end
+        endcase
+      end
+    end
+  end
+
+`ifdef CAVE_ENABLE_DEBUG_OVERLAY
+  always @(posedge clock) begin
+    if (reset | ~gameIsPwrInst2) begin
+      pwrinst2DebugMilestones <= 64'd0;
+      pwrinst2DebugLastAddr <= 24'd0;
+      pwrinst2DebugLastReadAddr <= 24'd0;
+      pwrinst2DebugLastWriteAddr <= 24'd0;
+      pwrinst2DebugFirstUnmappedAddr <= 24'd0;
+      pwrinst2DebugLastDin <= 16'd0;
+      pwrinst2DebugLastDout <= 16'd0;
+      pwrinst2DebugLastCtrl <= 8'd0;
+      pwrinst2DebugLastSelect <= 8'd0;
+      pwrinst2DebugFirstUnmappedCtrl <= 8'd0;
+      pwrinst2DebugFirstUnmappedSelect <= 8'd0;
+      pwrinst2DebugFirstUnmappedValid <= 1'b0;
+    end
+    else begin
+      if (pwrinst2DebugCpuCycle) begin
+        pwrinst2DebugLastAddr <= cpuByteAddr;
+        pwrinst2DebugLastCtrl <= pwrinst2DebugCtrlNow;
+        pwrinst2DebugLastSelect <= pwrinst2DebugSelectNow;
+      end
+      if (readStrobe) begin
+        pwrinst2DebugLastReadAddr <= cpuByteAddr;
+        pwrinst2DebugMilestones[5] <= pwrinst2DebugMilestones[5] | (cpuByteAddr == 24'h100000);
+      end
+      if (writeStrobe) begin
+        pwrinst2DebugLastWriteAddr <= cpuByteAddr;
+        pwrinst2DebugLastDout <= _cpu_io_dout;
+        pwrinst2DebugMilestones[6] <= pwrinst2DebugMilestones[6] | (cpuByteAddr == 24'h100000);
+      end
+      if (pwrinst2Dtack)
+        pwrinst2DebugLastDin <= pwrinst2ReadData;
+      if (pwrinst2DebugUnmappedCycle) begin
+        pwrinst2DebugMilestones[63] <= 1'b1;
+        if (~pwrinst2DebugFirstUnmappedValid) begin
+          pwrinst2DebugFirstUnmappedValid <= 1'b1;
+          pwrinst2DebugFirstUnmappedAddr <= cpuByteAddr;
+          pwrinst2DebugFirstUnmappedCtrl <= pwrinst2DebugCtrlNow;
+          pwrinst2DebugFirstUnmappedSelect <= pwrinst2DebugSelectNow;
+        end
+      end
+      pwrinst2DebugMilestones[0] <= pwrinst2DebugMilestones[0] | (pwrinst2ProgRomValid & (cpuByteAddr == 24'h000000));
+      pwrinst2DebugMilestones[1] <= pwrinst2DebugMilestones[1] | (pwrinst2ProgRomValid & (cpuByteAddr == 24'h000002));
+      pwrinst2DebugMilestones[2] <= pwrinst2DebugMilestones[2] | (pwrinst2ProgRomValid & (cpuByteAddr == 24'h000004));
+      pwrinst2DebugMilestones[3] <= pwrinst2DebugMilestones[3] | (pwrinst2ProgRomValid & (cpuByteAddr == 24'h000006));
+      pwrinst2DebugMilestones[4] <= pwrinst2DebugMilestones[4] | (pwrinst2ProgRomValid & (cpuByteAddr >= 24'h000200));
+      pwrinst2DebugMilestones[7] <= pwrinst2DebugMilestones[7] | (writeStrobe & (cpuByteAddr == 24'h40FFE8));
+      pwrinst2DebugMilestones[8] <= pwrinst2DebugMilestones[8] | (pwrinst2PaletteSelect & writeStrobe);
+      pwrinst2DebugMilestones[9] <= pwrinst2DebugMilestones[9] | (pwrinst2PaletteSelect & pwrinst2Dtack);
+      pwrinst2DebugMilestones[10] <= pwrinst2DebugMilestones[10] | (pwrinst2Layer0Vram16Select & writeStrobe);
+      pwrinst2DebugMilestones[11] <= pwrinst2DebugMilestones[11] | (pwrinst2Layer0Vram16Select & pwrinst2Dtack);
+      pwrinst2DebugMilestones[12] <= pwrinst2DebugMilestones[12] | (pwrinst2Layer1Vram16Select & writeStrobe);
+      pwrinst2DebugMilestones[13] <= pwrinst2DebugMilestones[13] | (pwrinst2Layer1Vram16Select & pwrinst2Dtack);
+      pwrinst2DebugMilestones[14] <= pwrinst2DebugMilestones[14] | (pwrinst2Layer2Vram16Select & writeStrobe);
+      pwrinst2DebugMilestones[15] <= pwrinst2DebugMilestones[15] | (pwrinst2Layer2Vram16Select & pwrinst2Dtack);
+      pwrinst2DebugMilestones[16] <= pwrinst2DebugMilestones[16] | (pwrinst2Layer3Vram8Select & writeStrobe);
+      pwrinst2DebugMilestones[17] <= pwrinst2DebugMilestones[17] | (pwrinst2Layer3Vram8Select & pwrinst2Dtack);
+      pwrinst2DebugMilestones[18] <= pwrinst2DebugMilestones[18] | (pwrinst2SpriteListRamSelect & writeStrobe);
+      pwrinst2DebugMilestones[19] <= pwrinst2DebugMilestones[19] | (pwrinst2SpriteListRamSelect & pwrinst2Dtack);
+      pwrinst2DebugMilestones[20] <= pwrinst2DebugMilestones[20] | (pwrinst2SpriteExtraRamSelect & writeStrobe);
+      pwrinst2DebugMilestones[21] <= pwrinst2DebugMilestones[21] | (pwrinst2SpriteExtraRamSelect & pwrinst2Dtack);
+      pwrinst2DebugMilestones[22] <= pwrinst2DebugMilestones[22] | (pwrinst2MainRamSelect & writeStrobe);
+      pwrinst2DebugMilestones[23] <= pwrinst2DebugMilestones[23] | (pwrinst2MainRamSelect & pwrinst2Dtack);
+      pwrinst2DebugMilestones[24] <= pwrinst2DebugMilestones[24] | pwrinst2IrqCauseRead;
+      pwrinst2DebugMilestones[25] <= pwrinst2DebugMilestones[25] | pwrinst2VideoIrqClear;
+      pwrinst2DebugMilestones[26] <= pwrinst2DebugMilestones[26] | pwrinst2UnknownIrqClear;
+      pwrinst2DebugMilestones[27] <= pwrinst2DebugMilestones[27] | pwrinst2SoundWrite;
+      pwrinst2DebugMilestones[28] <= pwrinst2DebugMilestones[28] | pwrinst2SoundAckRead;
+      pwrinst2DebugMilestones[29] <= pwrinst2DebugMilestones[29] | pwrinst2Input0Read;
+      pwrinst2DebugMilestones[30] <= pwrinst2DebugMilestones[30] | pwrinst2Input1Read;
+      pwrinst2DebugMilestones[31] <= pwrinst2DebugMilestones[31] | pwrinst2EepromRead;
+      pwrinst2DebugMilestones[32] <= pwrinst2DebugMilestones[32] | pwrinst2Layer0RegsSelect;
+      pwrinst2DebugMilestones[33] <= pwrinst2DebugMilestones[33] | pwrinst2Layer1RegsSelect;
+      pwrinst2DebugMilestones[34] <= pwrinst2DebugMilestones[34] | pwrinst2Layer2RegsSelect;
+      pwrinst2DebugMilestones[35] <= pwrinst2DebugMilestones[35] | pwrinst2Layer3RegsSelect;
+      pwrinst2DebugMilestones[36] <= pwrinst2DebugMilestones[36] | pwrinst2SyncReadPending;
+      pwrinst2DebugMilestones[37] <= pwrinst2DebugMilestones[37] | (pwrinst2SpriteRegsWrite & (pwrinst2SpriteRegsOffset == 24'h7A));
+      pwrinst2DebugMilestones[38] <= pwrinst2DebugMilestones[38] | (pwrinst2SpriteRegsWrite & (pwrinst2SpriteRegsOffset == 24'h04));
+      pwrinst2DebugMilestones[39] <= pwrinst2DebugMilestones[39] | (pwrinst2SpriteRegsWrite & (pwrinst2SpriteRegsOffset == 24'h06));
+      pwrinst2DebugMilestones[40] <= pwrinst2DebugMilestones[40] | pwrinst2SoundCmdRead;
+      pwrinst2DebugMilestones[41] <= pwrinst2DebugMilestones[41] | pwrinst2SoundWriteCycle;
+    end
+  end
+`endif
+
   wire        cs_1 = cpuByteAddr > 24'h10FFFF & cpuByteAddr < 24'h200000;
   wire        cs_2 = cpuByteAddr < 24'h100000;
   wire        _GEN_0 = cs_2 & _cpu_io_rw & io_progRom_valid;
@@ -1200,40 +1236,53 @@ module Main(
   reg  [15:0] tmp_31;
   wire        cs_191 = cpuByteAddr > 24'h8FFFFF & cpuByteAddr < 24'h901000;
   wire        vram16x16_1_io_portA_rd =
+    gameIsPwrInst2 ? pwrinst2Layer1Vram16Select & readStrobe :
     gameIsHotdogStorm ? cs_191 & readStrobe : _GEN_169;
   wire        vram16x16_1_io_portA_wr =
+    gameIsPwrInst2 ? pwrinst2Layer1Vram16Select & writeStrobe :
     gameIsHotdogStorm ? cs_191 & writeStrobe : _GEN_170;
   wire        cs_192 = cpuByteAddr > 24'h900FFF & cpuByteAddr < 24'h901800;
   wire        lineRam_1_io_portA_rd =
+    gameIsPwrInst2 ? pwrinst2Layer1LineSelect & readStrobe :
     gameIsHotdogStorm ? cs_192 & readStrobe : _GEN_171;
   wire        lineRam_1_io_portA_wr =
+    gameIsPwrInst2 ? pwrinst2Layer1LineSelect & writeStrobe :
     gameIsHotdogStorm ? cs_192 & writeStrobe : _GEN_172;
   reg  [15:0] tmp_32;
   wire        cs_194 = cpuByteAddr > 24'h903FFF & cpuByteAddr < 24'h908000;
   wire        vram8x8_1_io_portA_rd =
-    gameIsMazinger ? mazingerLayer1Vram8Read
+    gameIsPwrInst2 ? pwrinst2Layer1Vram8Select & readStrobe
+      : gameIsMazinger ? mazingerLayer1Vram8Read
       : gameIsHotdogStorm ? cs_194 & readStrobe : _GEN_173;
   wire        vram8x8_1_io_portA_wr =
-    gameIsMazinger ? mazingerLayer1Vram8Write
+    gameIsPwrInst2 ? pwrinst2Layer1Vram8Select & writeStrobe
+      : gameIsMazinger ? mazingerLayer1Vram8Write
       : gameIsHotdogStorm ? cs_194 & writeStrobe : _GEN_174;
   reg  [15:0] tmp_33;
   wire        cs_196 = cpuByteAddr > 24'h97FFFF & cpuByteAddr < 24'h981000;
   wire        vram16x16_2_io_portA_rd =
+    gameIsPwrInst2 ? 1'b0 :
     gameIsHotdogStorm ? cs_196 & readStrobe : _GEN_175;
   wire        vram16x16_2_io_portA_wr =
+    gameIsPwrInst2 ? 1'b0 :
     gameIsHotdogStorm ? cs_196 & writeStrobe : _GEN_176;
   wire        cs_197 = cpuByteAddr > 24'h980FFF & cpuByteAddr < 24'h981800;
   wire        lineRam_2_io_portA_rd =
+    gameIsPwrInst2 ? 1'b0 :
     gameIsHotdogStorm ? cs_197 & readStrobe : _GEN_177;
   wire        lineRam_2_io_portA_wr =
+    gameIsPwrInst2 ? 1'b0 :
     gameIsHotdogStorm ? cs_197 & writeStrobe : _GEN_178;
   reg  [15:0] tmp_34;
   wire        cs_199 = cpuByteAddr > 24'h983FFF & cpuByteAddr < 24'h988000;
   wire        vram8x8_2_io_portA_rd =
-    gameIsHotdogStorm ? cs_199 & readStrobe : _GEN_179;
+    gameIsPwrInst2 ? pwrinst2Layer3Vram8Select & readStrobe
+      : gameIsHotdogStorm ? cs_199 & readStrobe : _GEN_179;
   wire        vram8x8_2_io_portA_wr =
-    gameIsHotdogStorm ? cs_199 & writeStrobe : _GEN_180;
+    gameIsPwrInst2 ? pwrinst2Layer3Vram8Select & writeStrobe
+      : gameIsHotdogStorm ? cs_199 & writeStrobe : _GEN_180;
   wire [12:0] vram8x8_2_io_portA_addr =
+    gameIsPwrInst2 ? _cpu_io_addr[12:0] :
     gameIsHotdogStorm | gameIsGuwange | gameIsGaia | gameIsEsprade
       ? _cpu_io_addr[12:0]
       : _GEN_66;
@@ -1248,48 +1297,57 @@ module Main(
   wire        _GEN_205 = gameIsHotdogStorm ? cs_206 & writeStrobe : _GEN_183;
   wire        cs_207 = cpuByteAddr > 24'hB7FFFF & cpuByteAddr < 24'hB80006;
   wire        layerRegs_1_io_mem_wr =
-    gameIsMazinger ? mazingerLayer1RegsWrite
+    gameIsPwrInst2 ? pwrinst2Layer1RegsSelect & writeStrobe
+      : gameIsMazinger ? mazingerLayer1RegsWrite
       : gameIsHotdogStorm ? cs_207 & writeStrobe : _GEN_184;
   wire        cs_208 = cpuByteAddr > 24'hBFFFFF & cpuByteAddr < 24'hC00006;
   wire        layerRegs_2_io_mem_wr =
-    gameIsHotdogStorm ? cs_208 & writeStrobe : _GEN_185;
+    gameIsPwrInst2 ? pwrinst2Layer3RegsSelect & writeStrobe
+      : gameIsHotdogStorm ? cs_208 & writeStrobe : _GEN_185;
   wire        cs_213 = cpuByteAddr > 24'hEFFFFF & cpuByteAddr < 24'hF10000;
   wire        _GEN_206 = gameIsHotdogStorm ? cs_213 & readStrobe : _GEN_161;
   wire        _GEN_207 = gameIsHotdogStorm ? cs_213 & writeStrobe : _GEN_162;
   wire        cs_214 = cpuByteAddr < 24'h100000;
   wire        cs_215 = (|(_cpu_io_addr[22:19])) & cpuByteAddr < 24'h110000;
   wire        mainRam_io_rd =
-    gameIsMazinger ? mazingerMainRamRead
+    gameIsPwrInst2 ? pwrinst2MainRamSelect & readStrobe
+      : gameIsMazinger ? mazingerMainRamRead
       : gameIsUopoko ? cs_215 & readStrobe : _GEN_190;
   wire        mainRam_io_wr =
-    gameIsMazinger ? mazingerMainRamWrite
+    gameIsPwrInst2 ? pwrinst2MainRamSelect & writeStrobe
+      : gameIsMazinger ? mazingerMainRamWrite
       : gameIsUopoko ? cs_215 & writeStrobe : _GEN_191;
   wire        cs_216 = cpuByteAddr > 24'h2FFFFF & cpuByteAddr < 24'h300004;
   wire        cs_217 = (|(_cpu_io_addr[22:21])) & cpuByteAddr < 24'h410000;
   wire        spriteRam_io_portA_rd =
-    gameIsMazinger ? mazingerSpriteRamRead
+    gameIsPwrInst2 ? pwrinst2SpriteListRamSelect & readStrobe
+      : gameIsMazinger ? mazingerSpriteRamRead
       : gameIsUopoko ? cs_217 & readStrobe : _GEN_206;
   wire        spriteRam_io_portA_wr =
-    gameIsMazinger ? mazingerSpriteRamWrite
+    gameIsPwrInst2 ? pwrinst2SpriteListRamSelect & writeStrobe
+      : gameIsMazinger ? mazingerSpriteRamWrite
       : gameIsUopoko ? cs_217 & writeStrobe : _GEN_207;
   wire        cs_218 = cpuByteAddr > 24'h4FFFFF & cpuByteAddr < 24'h501000;
-  wire        vram16x16_0_io_portA_rd = gameIsUopoko ? cs_218 & readStrobe : _GEN_195;
-  wire        vram16x16_0_io_portA_wr = gameIsUopoko ? cs_218 & writeStrobe : _GEN_196;
+  wire        vram16x16_0_io_portA_rd = gameIsPwrInst2 ? pwrinst2Layer0Vram16Select & readStrobe : gameIsUopoko ? cs_218 & readStrobe : _GEN_195;
+  wire        vram16x16_0_io_portA_wr = gameIsPwrInst2 ? pwrinst2Layer0Vram16Select & writeStrobe : gameIsUopoko ? cs_218 & writeStrobe : _GEN_196;
   wire        cs_219 = cpuByteAddr > 24'h500FFF & cpuByteAddr < 24'h501800;
-  wire        lineRam_0_io_portA_rd = gameIsUopoko ? cs_219 & readStrobe : _GEN_197;
-  wire        lineRam_0_io_portA_wr = gameIsUopoko ? cs_219 & writeStrobe : _GEN_198;
+  wire        lineRam_0_io_portA_rd = gameIsPwrInst2 ? pwrinst2Layer0LineSelect & readStrobe : gameIsUopoko ? cs_219 & readStrobe : _GEN_197;
+  wire        lineRam_0_io_portA_wr = gameIsPwrInst2 ? pwrinst2Layer0LineSelect & writeStrobe : gameIsUopoko ? cs_219 & writeStrobe : _GEN_198;
   reg  [15:0] tmp_36;
   wire        cs_221 = cpuByteAddr > 24'h503FFF & cpuByteAddr < 24'h508000;
   wire        vram8x8_0_io_portA_rd =
-    gameIsMazinger ? mazingerLayer0Vram8Read
+    gameIsPwrInst2 ? pwrinst2Layer0Vram8Select & readStrobe
+      : gameIsMazinger ? mazingerLayer0Vram8Read
       : gameIsUopoko ? cs_221 & readStrobe : _GEN_199;
   wire        vram8x8_0_io_portA_wr =
-    gameIsMazinger ? mazingerLayer0Vram8Write
+    gameIsPwrInst2 ? pwrinst2Layer0Vram8Select & writeStrobe
+      : gameIsMazinger ? mazingerLayer0Vram8Write
       : gameIsUopoko ? cs_221 & writeStrobe : _GEN_200;
   reg  [15:0] tmp_37;
   wire        cs_224 = cpuByteAddr > 24'h5FFFFF & cpuByteAddr < 24'h600010;
   wire        spriteRegs_io_mem_wr =
-    gameIsMazinger ? mazingerSpriteRegsWrite
+    gameIsPwrInst2 ? pwrinst2SpriteRegsWrite
+      : gameIsMazinger ? mazingerSpriteRegsWrite
       : gameIsUopoko ? mem_7_wr : _GEN_201;
   wire [2:0]  spriteRegs_io_mem_addr =
     gameIsUopoko | gameIsHotdogStorm | gameIsGuwange | gameIsGaia | gameIsEsprade | gameIsDoDonPachi
@@ -1300,17 +1358,21 @@ module Main(
   wire        _GEN_209 = cpuByteAddr > 24'h600007 & cpuByteAddr < 24'h600009 & writeStrobe;
   wire        cs_227 = cpuByteAddr > 24'h6FFFFF & cpuByteAddr < 24'h700006;
   wire        layerRegs_0_io_mem_wr =
-    gameIsMazinger ? mazingerLayer0RegsWrite
+    gameIsPwrInst2 ? pwrinst2Layer0RegsSelect & writeStrobe
+      : gameIsMazinger ? mazingerLayer0RegsWrite
       : gameIsUopoko ? cs_227 & writeStrobe : _GEN_205;
   wire        cs_228 = _cpu_io_addr[22] & cpuByteAddr < 24'h810000;
   wire        paletteRam_io_portA_rd =
-    gameIsMazinger ? mazingerPaletteRead
+    gameIsPwrInst2 ? pwrinst2PaletteSelect & readStrobe
+      : gameIsMazinger ? mazingerPaletteRead
       : gameIsUopoko ? cs_228 & readStrobe : _GEN_192;
   wire        paletteRam_io_portA_wr =
-    gameIsMazinger ? mazingerPaletteWrite
+    gameIsPwrInst2 ? pwrinst2PaletteSelect & writeStrobe
+      : gameIsMazinger ? mazingerPaletteWrite
       : gameIsUopoko ? cs_228 & writeStrobe : _GEN_193;
   wire [14:0] paletteRam_io_portA_addr =
-    gameIsMazinger ? mazingerPaletteRamAddr
+    gameIsPwrInst2 ? _cpu_io_addr[14:0]
+      : gameIsMazinger ? mazingerPaletteRamAddr
       : gameIsUopoko ? _cpu_io_addr[14:0] : _GEN_194;
   wire        _GEN_210 = videoVBlankRising | videoIrq;
   wire        _GEN_218 = cs_1 & readStrobe;
@@ -1559,7 +1621,8 @@ module Main(
   wire        _GEN_429 = gameIsGuwange ? cs_179 & writeStrobe : _GEN_428;
   wire        _GEN_430 = gameIsHotdogStorm ? cs_211 & writeStrobe : _GEN_429;
   wire        eepromMem_wr =
-    gameIsMazinger ? mazingerEepromWrite
+    gameIsPwrInst2 ? pwrinst2EepromWrite
+      : gameIsMazinger ? mazingerEepromWrite
       : gameIsUopoko ? cs_231 & writeStrobe : _GEN_430;
   wire        cs_120 = cpuByteAddr > 24'h5017FF & cpuByteAddr < 24'h504000;
   wire        cs_122 = cpuByteAddr > 24'h507FFF & cpuByteAddr < 24'h510000;
@@ -1837,15 +1900,23 @@ module Main(
     end
     else begin
       videoIrq <=
-        gameIsMazinger
+        gameIsPwrInst2
+          ? (videoIrq | videoVBlankRising) & ~pwrinst2VideoIrqClear
+        : gameIsMazinger
           ? videoVBlankRising | (videoIrq & ~mazingerVideoIrqClear)
           : _GEN_421 ? ~(_offset_T_222 == 24'h4 | _GEN_412) & _GEN_385 : ~_GEN_412 & _GEN_385;
       agalletIrq <= videoVBlankRising | (~videoVBlankFalling & agalletIrq);
       unknownIrq <=
-        gameIsMazinger
+        gameIsPwrInst2
+          ? unknownIrq & ~pwrinst2UnknownIrqClear
+        : gameIsMazinger
           ? (unknownIrq | videoVBlankRising) & ~mazingerUnknownIrqClear
           : _GEN_421 ? ~(_offset_T_222 == 24'h6 | _GEN_413) & _GEN_386 : ~_GEN_413 & _GEN_386;
-      if (gameIsMazinger) begin
+      if (gameIsPwrInst2) begin
+        if (pwrinst2Dtack)
+          dinReg <= pwrinst2ReadData;
+      end
+      else if (gameIsMazinger) begin
         if (mazingerReadDataValid)
           dinReg <= mazingerReadData;
       end
@@ -3979,7 +4050,9 @@ module Main(
       else if (_GEN_218)
         dinReg <= 16'h0;
       dtackReg <=
-        gameIsMazinger
+        gameIsPwrInst2
+          ? pwrinst2Dtack
+        : gameIsMazinger
           ? mazingerDtack
           : gameIsUopoko
           ? cs_231 & ~_cpu_io_rw | _cpu_io_as
@@ -3989,207 +4062,6 @@ module Main(
           : _GEN_506;
     end
   end // always @(posedge)
-`ifdef CAVE_ENABLE_DEBUG_OVERLAY
-  always @(posedge clock) begin
-    if (reset | ~gameIsMazinger) begin
-      mazingerDebugSeen <= 64'd0;
-      mazingerDebugLastAddr <= 24'd0;
-      mazingerDebugPrevAddr <= 24'd0;
-      mazingerDebugFirstUnmappedAddr <= 24'd0;
-      mazingerDebugFirstUnmappedProgAddr <= 24'd0;
-      mazingerDebugLastProgAddr <= 24'd0;
-      mazingerDebugLastDout <= 16'd0;
-      mazingerDebugLastDin <= 16'd0;
-      mazingerDebugVector0 <= 16'hffff;
-      mazingerDebugVector1 <= 16'hffff;
-      mazingerDebugVector2 <= 16'hffff;
-      mazingerDebugVector3 <= 16'hffff;
-      mazingerDebugLastCtrl <= 8'd0;
-      mazingerDebugLastUnmappedCtrl <= 8'd0;
-      mazingerDebugFirstUnmappedStatus <= 8'd0;
-      mazingerDebugLastSelect <= 8'd0;
-      mazingerDebugReadSeen <= 8'd0;
-      mazingerDebugWriteSeen <= 8'd0;
-      mazingerDebugIrqSeen <= 8'd0;
-      mazingerDebugMilestones <= 8'd0;
-      mazingerDebugSelfTestStatus <= 16'd0;
-      mazingerDebugFirstSpriteRamAddr <= 16'd0;
-      mazingerDebugFirstPaletteAddr <= 15'd0;
-      mazingerDebugLastPaletteAddr <= 15'd0;
-      mazingerDebugFirstPaletteAnyAddr <= 15'd0;
-      mazingerDebugFirstPaletteData <= 16'd0;
-      mazingerDebugLastPaletteData <= 16'd0;
-      mazingerDebugFirstPaletteAnyData <= 16'd0;
-      mazingerDebugFirstLayer0Reg0Data <= 16'd0;
-      mazingerDebugFirstLayer0Reg1Data <= 16'd0;
-      mazingerDebugFirstLayer1Reg0Data <= 16'd0;
-      mazingerDebugFirstLayer1Reg1Data <= 16'd0;
-      mazingerDebugPaletteSlot0Data <= 16'hffff;
-      mazingerDebugPaletteSlot1Data <= 16'hffff;
-      mazingerDebugPaletteSlot2Data <= 16'hffff;
-      mazingerDebugPaletteSlot3Data <= 16'hffff;
-      mazingerDebugFirstUnmappedValid <= 1'b0;
-      mazingerDebugSelfTestStatusValid <= 1'b0;
-      mazingerDebugProgChecksumValid <= 1'b0;
-      mazingerDebugExtraChecksumValid <= 1'b0;
-      mazingerDebugFirstSpriteRamValid <= 1'b0;
-      mazingerDebugFirstPaletteValid <= 1'b0;
-      mazingerDebugFirstPaletteAnyValid <= 1'b0;
-      mazingerDebugFirstLayer0Reg0Valid <= 1'b0;
-      mazingerDebugFirstLayer0Reg1Valid <= 1'b0;
-      mazingerDebugFirstLayer1Reg0Valid <= 1'b0;
-      mazingerDebugFirstLayer1Reg1Valid <= 1'b0;
-      mazingerDebugPaletteSlot0Valid <= 1'b0;
-      mazingerDebugPaletteSlot1Valid <= 1'b0;
-      mazingerDebugPaletteSlot2Valid <= 1'b0;
-      mazingerDebugPaletteSlot3Valid <= 1'b0;
-    end
-    else begin
-      mazingerDebugSeen <= mazingerDebugSeen | mazingerDebugEventBits;
-      mazingerDebugReadSeen <= mazingerDebugReadSeen | mazingerDebugReadNow;
-      mazingerDebugWriteSeen <= mazingerDebugWriteSeen | mazingerDebugWriteNow;
-      mazingerDebugIrqSeen <= mazingerDebugIrqSeen | mazingerDebugIrqNow;
-
-      if (mazingerCycle) begin
-        mazingerDebugPrevAddr <= mazingerDebugLastAddr;
-        mazingerDebugLastAddr <= cpuByteAddr;
-        mazingerDebugLastCtrl <= {
-          _cpu_io_fc,
-          dtackReg,
-          _cpu_io_lds,
-          _cpu_io_uds,
-          _cpu_io_rw,
-          _cpu_io_as
-        };
-        mazingerDebugLastSelect <= mazingerDebugSelectNow;
-      end
-
-      if (mazingerOpenBusSelect) begin
-        mazingerDebugMilestones[7] <= 1'b1;
-        if (~mazingerDebugFirstUnmappedValid) begin
-          mazingerDebugFirstUnmappedValid <= 1'b1;
-          mazingerDebugFirstUnmappedAddr <= cpuByteAddr;
-          mazingerDebugFirstUnmappedProgAddr <= mazingerDebugLastProgAddr;
-          mazingerDebugFirstUnmappedStatus <= mazingerDebugFaultStatusNow;
-        end
-        mazingerDebugLastUnmappedCtrl <= {
-          _cpu_io_fc,
-          dtackReg,
-          _cpu_io_lds,
-          _cpu_io_uds,
-          _cpu_io_rw,
-          _cpu_io_as
-        };
-      end
-
-      if (mazingerBootWatchdogTrip)
-        mazingerDebugMilestones[1] <= 1'b1;
-
-      if (readStrobe | writeStrobe)
-        mazingerDebugLastDout <= _cpu_io_dout;
-      if (readStrobe)
-        mazingerDebugLastDin <= dinReg;
-      if (mazingerLayer0RegsWrite & (cpuByteAddr[3:1] == 3'h0) & ~mazingerDebugFirstLayer0Reg0Valid) begin
-        mazingerDebugFirstLayer0Reg0Valid <= 1'b1;
-        mazingerDebugFirstLayer0Reg0Data <= _cpu_io_dout;
-      end
-      if (mazingerLayer0RegsWrite & (cpuByteAddr[3:1] == 3'h1) & ~mazingerDebugFirstLayer0Reg1Valid) begin
-        mazingerDebugFirstLayer0Reg1Valid <= 1'b1;
-        mazingerDebugFirstLayer0Reg1Data <= _cpu_io_dout;
-      end
-      if (mazingerLayer1RegsWrite & (cpuByteAddr[3:1] == 3'h0) & ~mazingerDebugFirstLayer1Reg0Valid) begin
-        mazingerDebugFirstLayer1Reg0Valid <= 1'b1;
-        mazingerDebugFirstLayer1Reg0Data <= _cpu_io_dout;
-      end
-      if (mazingerLayer1RegsWrite & (cpuByteAddr[3:1] == 3'h1) & ~mazingerDebugFirstLayer1Reg1Valid) begin
-        mazingerDebugFirstLayer1Reg1Valid <= 1'b1;
-        mazingerDebugFirstLayer1Reg1Data <= _cpu_io_dout;
-      end
-      if (mazingerPaletteWrite) begin
-        mazingerDebugLastPaletteAddr <= mazingerPaletteRamAddr;
-        mazingerDebugLastPaletteData <= _cpu_io_dout;
-        if (~mazingerDebugFirstPaletteAnyValid) begin
-          mazingerDebugFirstPaletteAnyValid <= 1'b1;
-          mazingerDebugFirstPaletteAnyAddr <= mazingerPaletteRamAddr;
-          mazingerDebugFirstPaletteAnyData <= _cpu_io_dout;
-        end
-        if ((|_cpu_io_dout) & ~mazingerDebugFirstPaletteValid) begin
-          mazingerDebugFirstPaletteValid <= 1'b1;
-          mazingerDebugFirstPaletteAddr <= mazingerPaletteRamAddr;
-          mazingerDebugFirstPaletteData <= _cpu_io_dout;
-        end
-        case (mazingerPaletteRamAddr)
-          15'h0000:
-            if (~mazingerDebugPaletteSlot0Valid) begin
-              mazingerDebugPaletteSlot0Valid <= 1'b1;
-              mazingerDebugPaletteSlot0Data <= _cpu_io_dout;
-            end
-          15'h0001:
-            if (~mazingerDebugPaletteSlot1Valid) begin
-              mazingerDebugPaletteSlot1Valid <= 1'b1;
-              mazingerDebugPaletteSlot1Data <= _cpu_io_dout;
-            end
-          15'h0002:
-            if (~mazingerDebugPaletteSlot2Valid) begin
-              mazingerDebugPaletteSlot2Valid <= 1'b1;
-              mazingerDebugPaletteSlot2Data <= _cpu_io_dout;
-            end
-          15'h0003:
-            if (~mazingerDebugPaletteSlot3Valid) begin
-              mazingerDebugPaletteSlot3Valid <= 1'b1;
-              mazingerDebugPaletteSlot3Data <= _cpu_io_dout;
-            end
-          default: begin
-          end
-        endcase
-      end
-      if (mazingerSpriteRamWrite & ~mazingerDebugFirstSpriteRamValid) begin
-        mazingerDebugFirstSpriteRamValid <= 1'b1;
-        mazingerDebugFirstSpriteRamAddr <= cpuByteAddr[15:0];
-      end
-      if (mazingerMainRamWrite) begin
-        if (
-          (cpuByteAddr == 24'h1040c0) & mazingerDebugProgChecksumValid
-          & mazingerDebugExtraChecksumValid & ~mazingerDebugSelfTestStatusValid
-        ) begin
-          mazingerDebugSelfTestStatus <= _cpu_io_dout;
-          mazingerDebugSelfTestStatusValid <= 1'b1;
-        end
-        if ((cpuByteAddr == 24'h1040c2) & ~mazingerDebugProgChecksumValid)
-          mazingerDebugProgChecksumValid <= 1'b1;
-        if ((cpuByteAddr == 24'h1040c4) & ~mazingerDebugExtraChecksumValid)
-          mazingerDebugExtraChecksumValid <= 1'b1;
-      end
-      if (mazingerProgRomReady) begin
-        mazingerDebugLastProgAddr <= {4'h0, io_progRom_addr};
-        case (io_progRom_addr)
-          20'h001D94:
-            mazingerDebugMilestones[0] <= 1'b1;
-          20'h001E62:
-            mazingerDebugMilestones[2] <= 1'b1;
-          20'h001F5E:
-            mazingerDebugMilestones[3] <= 1'b1;
-          20'h002064:
-            mazingerDebugMilestones[4] <= 1'b1;
-          20'h0020A8:
-            mazingerDebugMilestones[5] <= 1'b1;
-          20'h006EA8, 20'h006EAA:
-            mazingerDebugMilestones[6] <= 1'b1;
-          default: begin
-          end
-        endcase
-        case (io_progRom_addr)
-          20'h00000: mazingerDebugVector0 <= io_progRom_dout;
-          20'h00002: mazingerDebugVector1 <= io_progRom_dout;
-          20'h00004: mazingerDebugVector2 <= io_progRom_dout;
-          20'h00006: mazingerDebugVector3 <= io_progRom_dout;
-          default: begin
-          end
-        endcase
-      end
-    end
-  end
-`endif
   always @(posedge io_videoClock) begin
     io_gpuMem_layer_0_regs_r_tileSize <= _layerRegs_0_io_regs_1[13];
     io_gpuMem_layer_0_regs_r_enable <= ~(_layerRegs_0_io_regs_2[4]);
@@ -4227,7 +4099,7 @@ module Main(
       io_gpuMem_layer_1_regs_r_rowSelectEnable;
     io_gpuMem_layer_1_regs_r_1_scroll_x <= io_gpuMem_layer_1_regs_r_scroll_x;
     io_gpuMem_layer_1_regs_r_1_scroll_y <= io_gpuMem_layer_1_regs_r_scroll_y;
-    io_gpuMem_layer_2_regs_r_tileSize <= _layerRegs_2_io_regs_1[13];
+    io_gpuMem_layer_2_regs_r_tileSize <= gameIsPwrInst2 ? 1'b0 : _layerRegs_2_io_regs_1[13];
     io_gpuMem_layer_2_regs_r_enable <= ~(_layerRegs_2_io_regs_2[4]);
     io_gpuMem_layer_2_regs_r_flipX <= ~(_layerRegs_2_io_regs_0[15]);
     io_gpuMem_layer_2_regs_r_flipY <= ~(_layerRegs_2_io_regs_1[15]);
@@ -4245,12 +4117,36 @@ module Main(
       io_gpuMem_layer_2_regs_r_rowSelectEnable;
     io_gpuMem_layer_2_regs_r_1_scroll_x <= io_gpuMem_layer_2_regs_r_scroll_x;
     io_gpuMem_layer_2_regs_r_1_scroll_y <= io_gpuMem_layer_2_regs_r_scroll_y;
+    io_gpuMem_pwrinst2_layer_2_regs_r_tileSize <= pwrinst2Layer2Regs1[13];
+    io_gpuMem_pwrinst2_layer_2_regs_r_enable <= gameIsPwrInst2 & ~pwrinst2Layer2Regs2[4];
+    io_gpuMem_pwrinst2_layer_2_regs_r_flipX <= ~pwrinst2Layer2Regs0[15];
+    io_gpuMem_pwrinst2_layer_2_regs_r_flipY <= ~pwrinst2Layer2Regs1[15];
+    io_gpuMem_pwrinst2_layer_2_regs_r_rowScrollEnable <= pwrinst2Layer2Regs0[14];
+    io_gpuMem_pwrinst2_layer_2_regs_r_rowSelectEnable <= pwrinst2Layer2Regs1[14];
+    io_gpuMem_pwrinst2_layer_2_regs_r_scroll_x <= pwrinst2Layer2Regs0[8:0];
+    io_gpuMem_pwrinst2_layer_2_regs_r_scroll_y <= pwrinst2Layer2Regs1[8:0];
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_tileSize <=
+      io_gpuMem_pwrinst2_layer_2_regs_r_tileSize;
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_enable <=
+      io_gpuMem_pwrinst2_layer_2_regs_r_enable;
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_flipX <=
+      io_gpuMem_pwrinst2_layer_2_regs_r_flipX;
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_flipY <=
+      io_gpuMem_pwrinst2_layer_2_regs_r_flipY;
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_rowScrollEnable <=
+      io_gpuMem_pwrinst2_layer_2_regs_r_rowScrollEnable;
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_rowSelectEnable <=
+      io_gpuMem_pwrinst2_layer_2_regs_r_rowSelectEnable;
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_scroll_x <=
+      io_gpuMem_pwrinst2_layer_2_regs_r_scroll_x;
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_scroll_y <=
+      io_gpuMem_pwrinst2_layer_2_regs_r_scroll_y;
   end // always @(posedge)
   assign _cpu_io_vpa = _cpu_io_as & (&_cpu_io_fc);
   assign _cpu_io_ipl = {2'h0, videoIrq | io_soundCtrl_irq | unknownIrq};
   CaveMain68kCpu cpu (
     .clock    (clock),
-    .reset    (mazingerCpuReset),
+    .reset    (reset),
     .io_halt  (pauseActive),
     .io_as    (_cpu_io_as),
     .io_rw    (_cpu_io_rw),
@@ -4293,6 +4189,21 @@ module Main(
     .mask  (mainRam_io_mask),
     .din   (_cpu_io_dout),
     .dout  (_mainRam_io_dout)
+  );
+  assign _pwrinst2SpriteExtraRam_addr = _cpu_io_addr[14:0];
+  CaveSinglePortRam #(
+    .ADDR_WIDTH  (15),
+    .DATA_WIDTH  (16),
+    .DEPTH       (0),
+    .MASK_ENABLE (1)
+  ) pwrinst2SpriteExtraRam (
+    .clock (clock),
+    .rd    (pwrinst2SpriteExtraRamSelect & readStrobe),
+    .wr    (pwrinst2SpriteExtraRamSelect & writeStrobe),
+    .addr  (_pwrinst2SpriteExtraRam_addr),
+    .mask  (mainRam_io_mask),
+    .din   (_cpu_io_dout),
+    .dout  (_pwrinst2SpriteExtraRam_dout)
   );
   assign _spriteRam_io_portA_addr = _cpu_io_addr[14:0];
   CaveTrueDualPortRam #(
@@ -4514,6 +4425,69 @@ module Main(
     .dout_b  (io_gpuMem_layer_2_lineRam_dout)
   );
   CaveTrueDualPortRam #(
+    .ADDR_WIDTH_A (13),
+    .ADDR_WIDTH_B (12),
+    .DATA_WIDTH_A (16),
+    .DATA_WIDTH_B (32),
+    .DEPTH_A      (0),
+    .DEPTH_B      (0),
+    .MASK_ENABLE  (1)
+  ) pwrinst2Layer2Vram8 (
+    .clock_a (clock),
+    .rd_a    (pwrinst2Layer2Vram8Select & readStrobe),
+    .wr_a    (pwrinst2Layer2Vram8Select & writeStrobe),
+    .addr_a  (_cpu_io_addr[12:0]),
+    .mask_a  (mainRam_io_mask),
+    .din_a   (_cpu_io_dout),
+    .dout_a  (_pwrinst2Layer2Vram8_io_portA_dout),
+    .clock_b (io_videoClock),
+    .rd_b    (1'b1),
+    .addr_b  (io_gpuMem_pwrinst2_layer_2_vram8x8_addr),
+    .dout_b  (io_gpuMem_pwrinst2_layer_2_vram8x8_dout)
+  );
+  CaveTrueDualPortRam #(
+    .ADDR_WIDTH_A (11),
+    .ADDR_WIDTH_B (10),
+    .DATA_WIDTH_A (16),
+    .DATA_WIDTH_B (32),
+    .DEPTH_A      (0),
+    .DEPTH_B      (0),
+    .MASK_ENABLE  (1)
+  ) pwrinst2Layer2Vram16 (
+    .clock_a (clock),
+    .rd_a    (pwrinst2Layer2Vram16Select & readStrobe),
+    .wr_a    (pwrinst2Layer2Vram16Select & writeStrobe),
+    .addr_a  (_cpu_io_addr[10:0]),
+    .mask_a  (mainRam_io_mask),
+    .din_a   (_cpu_io_dout),
+    .dout_a  (_pwrinst2Layer2Vram16_io_portA_dout),
+    .clock_b (io_videoClock),
+    .rd_b    (1'b1),
+    .addr_b  (io_gpuMem_pwrinst2_layer_2_vram16x16_addr),
+    .dout_b  (io_gpuMem_pwrinst2_layer_2_vram16x16_dout)
+  );
+  CaveTrueDualPortRam #(
+    .ADDR_WIDTH_A (10),
+    .ADDR_WIDTH_B (9),
+    .DATA_WIDTH_A (16),
+    .DATA_WIDTH_B (32),
+    .DEPTH_A      (0),
+    .DEPTH_B      (0),
+    .MASK_ENABLE  (1)
+  ) pwrinst2Layer2LineRam (
+    .clock_a (clock),
+    .rd_a    (pwrinst2Layer2LineSelect & readStrobe),
+    .wr_a    (pwrinst2Layer2LineSelect & writeStrobe),
+    .addr_a  (_cpu_io_addr[9:0]),
+    .mask_a  (mainRam_io_mask),
+    .din_a   (_cpu_io_dout),
+    .dout_a  (_pwrinst2Layer2LineRam_io_portA_dout),
+    .clock_b (io_videoClock),
+    .rd_b    (1'b1),
+    .addr_b  (io_gpuMem_pwrinst2_layer_2_lineRam_addr),
+    .dout_b  (io_gpuMem_pwrinst2_layer_2_lineRam_dout)
+  );
+  CaveTrueDualPortRam #(
     .ADDR_WIDTH_A (15),
     .ADDR_WIDTH_B (15),
     .DATA_WIDTH_A (16),
@@ -4540,7 +4514,7 @@ module Main(
     .io_mem_wr   (layerRegs_0_io_mem_wr),
     .io_mem_addr (_layerRegs_0_io_mem_addr),
     .io_mem_mask (mainRam_io_mask),
-    .io_mem_din  (_cpu_io_dout),
+    .io_mem_din  (layerRegsMemDin),
     .io_mem_dout (_layerRegs_0_io_mem_dout),
     .io_regs_0   (_layerRegs_0_io_regs_0),
     .io_regs_1   (_layerRegs_0_io_regs_1),
@@ -4552,7 +4526,7 @@ module Main(
     .io_mem_wr   (layerRegs_1_io_mem_wr),
     .io_mem_addr (_layerRegs_1_io_mem_addr),
     .io_mem_mask (mainRam_io_mask),
-    .io_mem_din  (_cpu_io_dout),
+    .io_mem_din  (layerRegsMemDin),
     .io_mem_dout (_layerRegs_1_io_mem_dout),
     .io_regs_0   (_layerRegs_1_io_regs_0),
     .io_regs_1   (_layerRegs_1_io_regs_1),
@@ -4564,7 +4538,7 @@ module Main(
     .io_mem_wr   (layerRegs_2_io_mem_wr),
     .io_mem_addr (_layerRegs_2_io_mem_addr),
     .io_mem_mask (mainRam_io_mask),
-    .io_mem_din  (_cpu_io_dout),
+    .io_mem_din  (layerRegsMemDin),
     .io_mem_dout (_layerRegs_2_io_mem_dout),
     .io_regs_0   (_layerRegs_2_io_regs_0),
     .io_regs_1   (_layerRegs_2_io_regs_1),
@@ -4614,18 +4588,34 @@ module Main(
     io_gpuMem_layer_2_regs_r_1_rowSelectEnable;
   assign io_gpuMem_layer_2_regs_scroll_x = io_gpuMem_layer_2_regs_r_1_scroll_x;
   assign io_gpuMem_layer_2_regs_scroll_y = io_gpuMem_layer_2_regs_r_1_scroll_y;
+  assign io_gpuMem_pwrinst2_layer_2_regs_tileSize =
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_tileSize;
+  assign io_gpuMem_pwrinst2_layer_2_regs_enable =
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_enable;
+  assign io_gpuMem_pwrinst2_layer_2_regs_flipX =
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_flipX;
+  assign io_gpuMem_pwrinst2_layer_2_regs_flipY =
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_flipY;
+  assign io_gpuMem_pwrinst2_layer_2_regs_rowScrollEnable =
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_rowScrollEnable;
+  assign io_gpuMem_pwrinst2_layer_2_regs_rowSelectEnable =
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_rowSelectEnable;
+  assign io_gpuMem_pwrinst2_layer_2_regs_scroll_x =
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_scroll_x;
+  assign io_gpuMem_pwrinst2_layer_2_regs_scroll_y =
+    io_gpuMem_pwrinst2_layer_2_regs_r_1_scroll_y;
   assign io_gpuMem_sprite_regs_offset_x = _spriteRegs_io_regs_0[8:0];
   assign io_gpuMem_sprite_regs_offset_y = _spriteRegs_io_regs_1[8:0];
   assign io_gpuMem_sprite_regs_bank = _spriteRegs_io_regs_4[1:0];
   assign io_gpuMem_sprite_regs_fixed = |(_spriteRegs_io_regs_5[13:12]);
   assign io_gpuMem_sprite_regs_hFlip = _spriteRegs_io_regs_0[15];
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
-  assign io_debug_pipeline = gameIsMazinger ? mazingerDebugSeen : 64'd0;
-  assign io_debug_cpu = gameIsMazinger ? mazingerDebugCpuBits : 64'd0;
-  assign io_debug_writes = gameIsMazinger ? mazingerDebugWriteBits : 64'd0;
-  assign io_debug_data = gameIsMazinger ? mazingerDebugDataBits : 64'd0;
-  assign io_debug_live = gameIsMazinger ? mazingerDebugLiveBits : 64'd0;
-  assign io_debug_palette = gameIsMazinger ? mazingerDebugPaletteBits : 64'd0;
+  assign io_debug_pipeline = gameIsPwrInst2 ? pwrinst2DebugMilestones : 64'd0;
+  assign io_debug_cpu = gameIsPwrInst2 ? pwrinst2DebugCpuBits : 64'd0;
+  assign io_debug_writes = gameIsPwrInst2 ? pwrinst2DebugWriteBits : 64'd0;
+  assign io_debug_data = gameIsPwrInst2 ? pwrinst2DebugDataBits : 64'd0;
+  assign io_debug_live = gameIsPwrInst2 ? pwrinst2DebugLiveBits : 64'd0;
+  assign io_debug_palette = gameIsPwrInst2 ? pwrinst2DebugPaletteBits : 64'd0;
 `else
   assign io_debug_pipeline = 64'd0;
   assign io_debug_cpu = 64'd0;
@@ -4645,17 +4635,21 @@ module Main(
   assign io_soundCtrl_ymz_wr = gameIsUopoko ? cs_216 & writeStrobe : _GEN_182;
   assign io_soundCtrl_ymz_addr = _cpu_io_addr;
   assign io_soundCtrl_ymz_din = _cpu_io_dout;
-  assign io_soundCtrl_req = gameIsMazinger ? mazingerSoundWrite : gameIsHotdogStorm & _GEN_204;
+  assign io_soundCtrl_req = pwrinst2SoundWrite;
   assign io_soundCtrl_data = _cpu_io_dout;
-  assign io_soundCtrl_reply_rd = gameIsMazinger & mazingerSoundRead;
+  assign io_soundCtrl_reply_rd = pwrinst2SoundAckReadStrobe & ~io_soundCtrl_reply_empty;
   assign io_progRom_rd =
-    gameIsMazinger ? mazingerProgRomRead
+    gameIsPwrInst2 ? pwrinst2ProgRomRead
+      : gameIsMazinger ? mazingerProgRomRead
       : gameIsUopoko ? cs_214 & readStrobe : _GEN_189;
   assign io_progRom_addr =
-    (gameIsMazinger & mazingerExtraRomSelect)
-      ? {1'b1, cpuByteAddr[18:0]}
-      : {_cpu_io_addr[18:0], 1'h0};
+    gameIsPwrInst2
+      ? {pwrinst2ExtraRomRead, _cpu_io_addr[19:0], 1'b0}
+      : (gameIsMazinger & mazingerExtraRomSelect)
+        ? {2'b01, cpuByteAddr[18:0]}
+        : {2'b00, _cpu_io_addr[18:0], 1'b0};
   assign io_spriteFrameBufferSwap =
-    gameIsMazinger ? videoVBlankRising
+    gameIsPwrInst2 ? videoVBlankRising
+      : gameIsMazinger ? videoVBlankRising
       : gameIsUopoko ? _GEN_209 | _GEN_203 | _GEN_160 : _GEN_203 | _GEN_160;
 endmodule

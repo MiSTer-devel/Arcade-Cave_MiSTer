@@ -198,6 +198,16 @@ module CaveMainSdramArbiter(
   output [15:0] io_in_7_dout,
   output        io_in_7_wait_n,
   output        io_in_7_valid,
+  input         io_in_8_rd,
+  input  [24:0] io_in_8_addr,
+  output [15:0] io_in_8_dout,
+  output        io_in_8_wait_n,
+  output        io_in_8_valid,
+  input         io_in_9_rd,
+  input  [24:0] io_in_9_addr,
+  output [15:0] io_in_9_dout,
+  output        io_in_9_wait_n,
+  output        io_in_9_valid,
   output        io_out_rd,
   output        io_out_wr,
   output [24:0] io_out_addr,
@@ -208,18 +218,20 @@ module CaveMainSdramArbiter(
   input         io_out_burstDone
 );
 
-  localparam [7:0] REQ_NONE = 8'b00000000;
-  localparam [7:0] REQ_0    = 8'b00000001;
-  localparam [7:0] REQ_1    = 8'b00000010;
-  localparam [7:0] REQ_2    = 8'b00000100;
-  localparam [7:0] REQ_3    = 8'b00001000;
-  localparam [7:0] REQ_4    = 8'b00010000;
-  localparam [7:0] REQ_5    = 8'b00100000;
-  localparam [7:0] REQ_6    = 8'b01000000;
-  localparam [7:0] REQ_7    = 8'b10000000;
+  localparam [9:0] REQ_NONE = 10'b0000000000;
+  localparam [9:0] REQ_0    = 10'b0000000001;
+  localparam [9:0] REQ_1    = 10'b0000000010;
+  localparam [9:0] REQ_2    = 10'b0000000100;
+  localparam [9:0] REQ_3    = 10'b0000001000;
+  localparam [9:0] REQ_4    = 10'b0000010000;
+  localparam [9:0] REQ_5    = 10'b0000100000;
+  localparam [9:0] REQ_6    = 10'b0001000000;
+  localparam [9:0] REQ_7    = 10'b0010000000;
+  localparam [9:0] REQ_8    = 10'b0100000000;
+  localparam [9:0] REQ_9    = 10'b1000000000;
 
   reg        busy_reg;
-  reg [7:0]  locked_request;
+  reg [9:0]  locked_request;
 
   wire request_0 = io_in_0_wr;
   wire request_1 = io_in_1_rd;
@@ -229,28 +241,34 @@ module CaveMainSdramArbiter(
   wire request_5 = io_in_5_rd;
   wire request_6 = io_in_6_rd;
   wire request_7 = io_in_7_rd;
+  wire request_8 = io_in_8_rd;
+  wire request_9 = io_in_9_rd;
 
-  wire [7:0] next_request =
+  wire [9:0] next_request =
     request_0 ? REQ_0 :
     request_1 ? REQ_1 :
     request_2 ? REQ_2 :
     request_3 ? REQ_3 :
     request_4 ? REQ_4 :
+    request_7 ? REQ_7 :
     request_5 ? REQ_5 :
     request_6 ? REQ_6 :
-    request_7 ? REQ_7 :
+    request_8 ? REQ_8 :
+    request_9 ? REQ_9 :
     REQ_NONE;
 
-  wire [7:0] chosen = busy_reg ? locked_request : next_request;
+  wire [9:0] chosen = busy_reg ? locked_request : next_request;
   wire       no_request_chosen = chosen == REQ_NONE;
   wire       selected_read =
     (chosen[1] & io_in_1_rd) |
     (chosen[2] & io_in_2_rd) |
     (chosen[3] & io_in_3_rd) |
     (chosen[4] & io_in_4_rd) |
+    (chosen[7] & io_in_7_rd) |
     (chosen[5] & io_in_5_rd) |
     (chosen[6] & io_in_6_rd) |
-    (chosen[7] & io_in_7_rd);
+    (chosen[8] & io_in_8_rd) |
+    (chosen[9] & io_in_9_rd);
   wire       selected_write = (chosen[0] & io_in_0_wr) | (chosen[2] & io_in_2_wr);
   wire       effective_request = ~busy_reg & (selected_read | selected_write) & io_out_wait_n;
 
@@ -289,6 +307,12 @@ module CaveMainSdramArbiter(
   assign io_in_7_dout = io_out_dout;
   assign io_in_7_wait_n = (no_request_chosen | chosen[7]) & io_out_wait_n;
   assign io_in_7_valid = chosen[7] & io_out_valid;
+  assign io_in_8_dout = io_out_dout;
+  assign io_in_8_wait_n = (no_request_chosen | chosen[8]) & io_out_wait_n;
+  assign io_in_8_valid = chosen[8] & io_out_valid;
+  assign io_in_9_dout = io_out_dout;
+  assign io_in_9_wait_n = (no_request_chosen | chosen[9]) & io_out_wait_n;
+  assign io_in_9_valid = chosen[9] & io_out_valid;
   assign io_out_rd = selected_read;
   assign io_out_wr = selected_write;
   assign io_out_addr =
@@ -297,9 +321,11 @@ module CaveMainSdramArbiter(
     (chosen[2] ? io_in_2_addr : 25'h0) |
     (chosen[3] ? io_in_3_addr : 25'h0) |
     (chosen[4] ? io_in_4_addr : 25'h0) |
+    (chosen[7] ? io_in_7_addr : 25'h0) |
     (chosen[5] ? io_in_5_addr : 25'h0) |
     (chosen[6] ? io_in_6_addr : 25'h0) |
-    (chosen[7] ? io_in_7_addr : 25'h0);
+    (chosen[8] ? io_in_8_addr : 25'h0) |
+    (chosen[9] ? io_in_9_addr : 25'h0);
   assign io_out_din =
     (chosen[0] ? io_in_0_din : 16'h0) |
     (chosen[2] ? io_in_2_din : 16'h0);

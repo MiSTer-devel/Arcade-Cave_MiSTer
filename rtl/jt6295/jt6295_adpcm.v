@@ -21,6 +21,7 @@ module jt6295_adpcm(
     input                    clk,
     input                    cen,
     input                    en,
+    input                    clear,
     input             [ 3:0] att,
     input             [ 3:0] data,
     output reg signed [11:0] sound
@@ -36,6 +37,8 @@ reg [ 2:0] factor_II, factor_III;
 reg        factor_IV;
 reg        sign_II, sign_III, sign_IV, sign_V;
 reg [11:0] dn_II, qn_II, dn_III, qn_III, dn_IV, qn_IV, qn_V;
+
+wire [5:0] delta_idx_base = clear ? 6'd0 : delta_idx_I;
 
 always @(posedge clk, posedge rst ) begin
     if(rst) begin
@@ -65,10 +68,10 @@ always @(posedge clk, posedge rst ) begin
             2'd3: idx_inc_II <= 6'd8;
         endcase
         sign_II      <= data[3];
-        delta_idx_II <= en ? delta_idx_I : 6'd0;
+        delta_idx_II <= en ? delta_idx_base : 6'd0;
         factor_II    <= en ? data[2:0] : 3'd0;
-        dn_II        <= { 1'b0, lut[delta_idx_I] };
-        qn_II        <= { 1'd0, lut[delta_idx_I]>>3};
+        dn_II        <= { 1'b0, lut[delta_idx_base] };
+        qn_II        <= { 1'd0, lut[delta_idx_base]>>3};
         // II
         sign_III      <= sign_II;
         delta_idx_III <= factor_II[2] ? (delta_idx_II+idx_inc_II) : (delta_idx_II-6'd1);
@@ -91,6 +94,7 @@ always @(posedge clk, posedge rst ) begin
 end
 
 wire en_V;
+wire clear_V;
 
 jt6295_sh_rst #(.WIDTH(1), .STAGES(4) ) u_enable
 (
@@ -99,6 +103,15 @@ jt6295_sh_rst #(.WIDTH(1), .STAGES(4) ) u_enable
     .clk_en ( cen       ),
     .din    ( en        ),
     .drop   ( en_V      )
+);
+
+jt6295_sh_rst #(.WIDTH(1), .STAGES(4) ) u_clear
+(
+    .rst    ( rst       ),
+    .clk    ( clk       ),
+    .clk_en ( cen       ),
+    .din    ( clear     ),
+    .drop   ( clear_V   )
 );
 
 wire [3:0] att_V;
@@ -130,8 +143,8 @@ function [12:0] extend;
 endfunction
 
 always @(*) begin
-    snd_V = !en_V ? 13'd0 : (sign_V ? extend(snd_out) - { 1'b0, qn_V }  :
-                                      extend(snd_out) + { 1'b0, qn_V } );
+    snd_V = !en_V ? 13'd0 : (sign_V ? extend(clear_V ? 12'sd0 : snd_out) - { 1'b0, qn_V }  :
+                                      extend(clear_V ? 12'sd0 : snd_out) + { 1'b0, qn_V } );
 end
 
 assign snd_in = snd_V > lim_pos ? lim_pos[11:0] :

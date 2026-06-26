@@ -6,7 +6,7 @@
   <manufacturer>CAVE</manufacturer>
   <category>Shooter</category>
   <rotation>vertical (ccw)</rotation>
-  <rbf>cave</rbf>
+  <rbf>Cave</rbf>
 
   <!-- ROM data -->
   <rom index="0" zip="donpachi.zip|donpachij.zip" md5="none" address="0x30000000">

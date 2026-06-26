@@ -1,11 +1,11 @@
 <misterromdescription>
-  <name>Puzzle Uo Poko</name>
+  <name>Puzzle Uo Poko (World)</name>
   <mameversion>0226</mameversion>
   <setname>uopoko</setname>
   <year>1998</year>
   <manufacturer>CAVE</manufacturer>
   <category>Puzzle</category>
-  <rbf>cave</rbf>
+  <rbf>Cave</rbf>
 
   <!-- ROM data -->
   <rom index="0" zip="uopoko.zip" md5="none" address="0x30000000">

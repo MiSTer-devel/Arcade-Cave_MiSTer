@@ -22,16 +22,11 @@ set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveAsyncMemArbiters.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/AudioMixer.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/AudioPipeline.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveBurstDMAs.sv
-set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/MazingerSpriteDecryptDMA.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveBurstBuffers.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveBurstMemArbiters.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveBoardProfile.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveClockEnable.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveDebugOverlay.sv
-set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/MazingerBootWatchdog.sv
-set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/MazingerMainDecoder.sv
-set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/MazingerMainReadMux.sv
-set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/MazingerMainMap.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveDualClockFIFO.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveGameConfig.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/cave/CaveLayerProcessor.sv

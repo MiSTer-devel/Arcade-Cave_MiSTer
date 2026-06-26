@@ -6,11 +6,11 @@ module CaveProgramRomReadFreezer(
   input         reset,
   input         io_targetClock,
   input         io_in_rd,
-  input  [19:0] io_in_addr,
+  input  [21:0] io_in_addr,
   output [15:0] io_in_dout,
   output        io_in_valid,
   output        io_out_rd,
-  output [19:0] io_out_addr,
+  output [21:0] io_out_addr,
   input  [15:0] io_out_dout,
   input         io_out_wait_n,
   input         io_out_valid
@@ -20,6 +20,8 @@ module CaveProgramRomReadFreezer(
   reg        target_clock_toggle_d;
   reg        valid_latched;
   reg [15:0] data_latched;
+  reg [21:0] request_addr_latched;
+  reg [21:0] data_addr_latched;
   reg        data_latched_valid;
   reg        pending_read;
   reg        clear_read_d;
@@ -27,6 +29,11 @@ module CaveProgramRomReadFreezer(
   wire       clear = target_clock_toggle ^ target_clock_toggle_d;
   wire       valid = io_out_valid | (valid_latched & ~clear);
   wire       clear_read = clear & clear_read_d;
+  wire       latched_data_selected = data_latched_valid & ~clear;
+  wire [21:0] valid_addr = latched_data_selected ? data_addr_latched : request_addr_latched;
+  wire       valid_for_current_addr = valid & (valid_addr == io_in_addr);
+  wire       output_read = io_in_rd & (~pending_read | clear_read) & ~valid_for_current_addr;
+  wire       accepted_read = output_read & io_out_wait_n;
 
   always @(posedge io_targetClock) begin
     if (reset)
@@ -37,24 +44,30 @@ module CaveProgramRomReadFreezer(
 
   always @(posedge clock) begin
     target_clock_toggle_d <= target_clock_toggle;
-    if (io_out_valid)
+    if (accepted_read)
+      request_addr_latched <= io_in_addr;
+    if (io_out_valid) begin
       data_latched <= io_out_dout;
+      data_addr_latched <= request_addr_latched;
+    end
     clear_read_d <= valid;
     if (reset) begin
       valid_latched <= 1'b0;
       data_latched_valid <= 1'b0;
       pending_read <= 1'b0;
+      request_addr_latched <= 22'h0;
+      data_addr_latched <= 22'h0;
     end
     else begin
       valid_latched <= io_out_valid | (~clear & valid_latched);
       data_latched_valid <= ~clear & (io_out_valid | data_latched_valid);
-      pending_read <= (io_in_rd & io_out_wait_n) | (~clear_read & pending_read);
+      pending_read <= accepted_read | (~clear_read & pending_read);
     end
   end // always @(posedge)
 
   assign io_in_dout = (data_latched_valid & ~clear) ? data_latched : io_out_dout;
-  assign io_in_valid = valid;
-  assign io_out_rd = io_in_rd & (~pending_read | clear_read);
+  assign io_in_valid = valid_for_current_addr;
+  assign io_out_rd = output_read;
   assign io_out_addr = io_in_addr;
 endmodule
 

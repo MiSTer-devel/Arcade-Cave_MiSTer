@@ -387,33 +387,27 @@ module CaveDebugOverlay(
     case (debugTextCol)
       3'd0: begin
         case (debugTextRow)
-          3'd0: debugSoundChar = 6'd12;         // C
-          3'd1: debugSoundChar = DEBUG_CH_R;
-          3'd2: debugSoundChar = 6'd11;         // B
-          3'd3: debugSoundChar = DEBUG_CH_P;
-          3'd4: debugSoundChar = DEBUG_CH_S;
-          default: debugSoundChar = DEBUG_CH_H;
+          3'd0: debugSoundChar = DEBUG_CH_M;
+          3'd1: debugSoundChar = DEBUG_CH_P;
+          default: debugSoundChar = 6'd11;       // B
         endcase
       end
       3'd1: begin
         case (debugTextRow)
-          3'd0: debugSoundChar = DEBUG_CH_M;
-          3'd1: debugSoundChar = DEBUG_CH_P;
-          3'd2: debugSoundChar = DEBUG_CH_N;
-          3'd3: debugSoundChar = DEBUG_CH_H;
-          3'd4: debugSoundChar = DEBUG_CH_T;
-          3'd5: debugSoundChar = 6'd0;
-          3'd6: debugSoundChar = 6'd1;
-          default: debugSoundChar = 6'd2;
+          3'd0: debugSoundChar = DEBUG_CH_K;
+          3'd1: debugSoundChar = DEBUG_CH_H;
+          3'd2: debugSoundChar = 6'd0;
+          3'd3: debugSoundChar = 6'd1;
+          3'd4: debugSoundChar = 6'd2;
+          3'd5: debugSoundChar = 6'd3;
+          3'd6: debugSoundChar = 6'd4;
+          default: debugSoundChar = 6'd5;
         endcase
       end
       3'd2: begin
         case (debugTextRow)
-          3'd0: debugSoundChar = 6'd13;         // D
-          3'd1: debugSoundChar = DEBUG_CH_L;
-          3'd2: debugSoundChar = DEBUG_CH_K;
-          3'd3: debugSoundChar = DEBUG_CH_R;
-          3'd4: debugSoundChar = 6'd10;         // A
+          3'd0: debugSoundChar = DEBUG_CH_SPACE;
+          3'd1: debugSoundChar = DEBUG_CH_SPACE;
           default: debugSoundChar = DEBUG_CH_SPACE;
         endcase
       end

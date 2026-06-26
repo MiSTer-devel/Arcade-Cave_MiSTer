@@ -22,6 +22,15 @@ module Cave(
   input  [3:0]  options_gameIndex,
   input         options_debugVideo,
   input  [2:0]  options_debugView,
+  input         options_ym_psg,
+  input         options_ym_fm,
+  input         options_oki_0,
+  input         options_oki_1,
+  input  [2:0]  options_pwrinst2_oki0_level,
+  input  [2:0]  options_pwrinst2_oki1_level,
+  input         options_pwrinst2_headroom,
+  input  [2:0]  options_pwrinst2_psg_level,
+  input  [2:0]  options_pwrinst2_fm_level,
   input         player_0_up,
   input         player_0_down,
   input         player_0_left,
@@ -103,6 +112,7 @@ module Cave(
   wire [63:0]  _gpu_io_layerCtrl_0_tileRom_dout;
   wire [63:0]  _gpu_io_layerCtrl_1_tileRom_dout;
   wire [63:0]  _gpu_io_layerCtrl_2_tileRom_dout;
+  wire [63:0]  _gpu_io_pwrinst2Layer2_tileRom_dout;
   wire         _gpu_io_spriteCtrl_start;
   wire         _gpu_io_spriteCtrl_zoom;
   wire [1:0]   _gpu_io_gameConfig_layer_1_paletteBank;
@@ -114,6 +124,8 @@ module Cave(
   wire [31:0]  _gpu_io_layerCtrl_1_tileRom_addr;
   wire         _gpu_io_layerCtrl_2_tileRom_rd;
   wire [31:0]  _gpu_io_layerCtrl_2_tileRom_addr;
+  wire         _gpu_io_pwrinst2Layer2_tileRom_rd;
+  wire [31:0]  _gpu_io_pwrinst2Layer2_tileRom_addr;
   wire [8:0]   _gpu_io_spriteLineBuffer_addr;
   wire         _gpu_io_spriteFrameBuffer_wr;
   wire [16:0]  _gpu_io_spriteFrameBuffer_addr;
@@ -121,15 +133,19 @@ module Cave(
   wire         _gpu_io_systemFrameBuffer_wr;
   wire [16:0]  _gpu_io_systemFrameBuffer_addr;
   wire [31:0]  _gpu_io_systemFrameBuffer_din;
-  wire         soundRom1AlwaysRead = 1'b1;
   wire [7:0]   _sound_io_rom_0_dout;
   wire         _sound_io_rom_0_wait_n;
   wire         _sound_io_rom_0_valid;
   wire [7:0]   _sound_io_rom_1_dout;
   wire         _sound_io_rom_1_valid;
+  wire [7:0]   _sound_io_rom_2_dout;
+  wire         _sound_io_rom_2_valid;
   wire         _sound_io_rom_0_rd;
+  wire         _sound_io_rom_1_rd;
+  wire         _sound_io_rom_2_rd;
   wire [24:0]  _sound_io_rom_0_addr;
   wire [24:0]  _sound_io_rom_1_addr;
+  wire [24:0]  _sound_io_rom_2_addr;
   wire [11:0]  _main_io_gpuMem_layer_0_vram8x8_addr;
   wire [9:0]   _main_io_gpuMem_layer_0_vram16x16_addr;
   wire [8:0]   _main_io_gpuMem_layer_0_lineRam_addr;
@@ -139,6 +155,9 @@ module Cave(
   wire [11:0]  _main_io_gpuMem_layer_2_vram8x8_addr;
   wire [9:0]   _main_io_gpuMem_layer_2_vram16x16_addr;
   wire [8:0]   _main_io_gpuMem_layer_2_lineRam_addr;
+  wire [11:0]  _main_io_gpuMem_pwrinst2_layer_2_vram8x8_addr;
+  wire [9:0]   _main_io_gpuMem_pwrinst2_layer_2_vram16x16_addr;
+  wire [8:0]   _main_io_gpuMem_pwrinst2_layer_2_lineRam_addr;
   wire         _main_io_gpuMem_sprite_vram_rd;
   wire [11:0]  _main_io_gpuMem_sprite_vram_addr;
   wire [14:0]  _main_io_gpuMem_paletteRam_addr;
@@ -198,6 +217,17 @@ module Cave(
   wire [31:0]  _main_io_gpuMem_layer_2_vram8x8_dout;
   wire [31:0]  _main_io_gpuMem_layer_2_vram16x16_dout;
   wire [31:0]  _main_io_gpuMem_layer_2_lineRam_dout;
+  wire         _main_io_gpuMem_pwrinst2_layer_2_regs_tileSize;
+  wire         _main_io_gpuMem_pwrinst2_layer_2_regs_enable;
+  wire         _main_io_gpuMem_pwrinst2_layer_2_regs_flipX;
+  wire         _main_io_gpuMem_pwrinst2_layer_2_regs_flipY;
+  wire         _main_io_gpuMem_pwrinst2_layer_2_regs_rowScrollEnable;
+  wire         _main_io_gpuMem_pwrinst2_layer_2_regs_rowSelectEnable;
+  wire [8:0]   _main_io_gpuMem_pwrinst2_layer_2_regs_scroll_x;
+  wire [8:0]   _main_io_gpuMem_pwrinst2_layer_2_regs_scroll_y;
+  wire [31:0]  _main_io_gpuMem_pwrinst2_layer_2_vram8x8_dout;
+  wire [31:0]  _main_io_gpuMem_pwrinst2_layer_2_vram16x16_dout;
+  wire [31:0]  _main_io_gpuMem_pwrinst2_layer_2_lineRam_dout;
   wire [8:0]   _main_io_gpuMem_sprite_regs_offset_x;
   wire [8:0]   _main_io_gpuMem_sprite_regs_offset_y;
   wire [1:0]   _main_io_gpuMem_sprite_regs_bank;
@@ -219,8 +249,9 @@ module Cave(
   wire         _main_io_soundCtrl_req;
   wire [15:0]  _main_io_soundCtrl_data;
   wire         _main_io_soundCtrl_reply_rd;
+  wire         _main_io_soundCtrl_reply_empty;
   wire         _main_io_progRom_rd;
-  wire [19:0]  _main_io_progRom_addr;
+  wire [21:0]  _main_io_progRom_addr;
   wire         _main_io_eeprom_rd;
   wire         _main_io_eeprom_wr;
   wire [6:0]   _main_io_eeprom_addr;
@@ -242,7 +273,7 @@ module Cave(
   wire         _memSys_io_prog_nvram_wr;
   wire         _memSys_io_prog_done;
   wire         _memSys_io_progRom_rd;
-  wire [19:0]  _memSys_io_progRom_addr;
+  wire [21:0]  _memSys_io_progRom_addr;
   wire         _memSys_io_eeprom_rd;
   wire         _memSys_io_eeprom_wr;
   wire [6:0]   _memSys_io_eeprom_addr;
@@ -251,12 +282,16 @@ module Cave(
   wire [24:0]  _memSys_io_soundRom_0_addr;
   wire         _memSys_io_soundRom_1_rd;
   wire [24:0]  _memSys_io_soundRom_1_addr;
+  wire         _memSys_io_soundRom_2_rd;
+  wire [24:0]  _memSys_io_soundRom_2_addr;
   wire         _memSys_io_layerTileRom_0_rd;
   wire [31:0]  _memSys_io_layerTileRom_0_addr;
   wire         _memSys_io_layerTileRom_1_rd;
   wire [31:0]  _memSys_io_layerTileRom_1_addr;
   wire         _memSys_io_layerTileRom_2_rd;
   wire [31:0]  _memSys_io_layerTileRom_2_addr;
+  wire         _memSys_io_pwrinst2Layer2TileRom_rd;
+  wire [31:0]  _memSys_io_pwrinst2Layer2TileRom_addr;
   wire         _memSys_io_spriteTileRom_rd;
   wire [31:0]  _memSys_io_spriteTileRom_addr;
   wire [7:0]   _memSys_io_spriteTileRom_burstLength;
@@ -286,6 +321,9 @@ module Cave(
   wire [7:0]   _memSys_io_soundRom_1_dout;
   wire         _memSys_io_soundRom_1_wait_n;
   wire         _memSys_io_soundRom_1_valid;
+  wire [7:0]   _memSys_io_soundRom_2_dout;
+  wire         _memSys_io_soundRom_2_wait_n;
+  wire         _memSys_io_soundRom_2_valid;
   wire [63:0]  _memSys_io_layerTileRom_0_dout;
   wire         _memSys_io_layerTileRom_0_wait_n;
   wire         _memSys_io_layerTileRom_0_valid;
@@ -295,6 +333,9 @@ module Cave(
   wire [63:0]  _memSys_io_layerTileRom_2_dout;
   wire         _memSys_io_layerTileRom_2_wait_n;
   wire         _memSys_io_layerTileRom_2_valid;
+  wire [63:0]  _memSys_io_pwrinst2Layer2TileRom_dout;
+  wire         _memSys_io_pwrinst2Layer2TileRom_wait_n;
+  wire         _memSys_io_pwrinst2Layer2TileRom_valid;
   wire [63:0]  _memSys_io_spriteTileRom_dout;
   wire         _memSys_io_spriteTileRom_wait_n;
   wire         _memSys_io_spriteTileRom_valid;
@@ -329,15 +370,23 @@ module Cave(
   reg          videoVBlankPipe0;
   reg          videoVBlankPipe1;
   reg          videoVBlankPipe2;
-  reg          mazingerSpriteSwapPrimed;
   reg  [3:0]   gameIndexReg;
   reg          gameIndexReg_latched;
+  reg          gameIndexCpuLoadToggle = 1'b0;
+  (* preserve, useioff = 0, altera_attribute = {"-name SYNCHRONIZER_IDENTIFICATION FORCED_IF_ASYNCHRONOUS"} *)
+  reg          gameIndexCpuToggleSync0 = 1'b0;
+  (* preserve, useioff = 0, altera_attribute = {"-name SYNCHRONIZER_IDENTIFICATION FORCED_IF_ASYNCHRONOUS"} *)
+  reg          gameIndexCpuToggleSync1 = 1'b0;
+  reg          gameIndexCpuToggleSeen = 1'b0;
+  reg  [3:0]   gameIndexCpuReg = 4'h0;
   reg          ioctlDownloadReg;
   wire [8:0]   gameConfig_granularity;
   wire [31:0]  gameConfig_eepromOffset;
   wire [1:0]   gameConfig_sound_0_device;
+  wire [1:0]   gameConfigCpu_sound_0_device;
   wire [31:0]  gameConfig_sound_0_romOffset;
   wire [31:0]  gameConfig_sound_1_romOffset;
+  wire [31:0]  gameConfig_sound_2_romOffset;
   wire [1:0]   gpu_io_layerCtrl_0_format;
   wire [31:0]  gameConfig_layer_0_romOffset;
   wire [1:0]   gameConfig_layer_0_paletteBank;
@@ -346,12 +395,14 @@ module Cave(
   wire [1:0]   gameConfig_layer_1_paletteBank;
   wire [1:0]   gpu_io_layerCtrl_2_format;
   wire [31:0]  gameConfig_layer_2_romOffset;
+  wire [31:0]  gameConfig_pwrinst2_layer_2_romOffset;
   wire [1:0]   gameConfig_layer_2_paletteBank;
   wire [1:0]   gpu_io_spriteCtrl_format;
   wire [31:0]  gameConfig_sprite_romOffset;
   wire         gameConfig_sprite_zoom;
+  wire         gameIsPwrInst2;
+  wire         gameIsPlegends;
   wire         rotateClockwise;
-  wire         gameIsMazinger;
 
   CaveGameConfig gameConfig (
     .game_index           (gameIndexReg),
@@ -360,6 +411,7 @@ module Cave(
     .sound_0_device       (gameConfig_sound_0_device),
     .sound_0_rom_offset   (gameConfig_sound_0_romOffset),
     .sound_1_rom_offset   (gameConfig_sound_1_romOffset),
+    .sound_2_rom_offset   (gameConfig_sound_2_romOffset),
     .layer_0_format       (gpu_io_layerCtrl_0_format),
     .layer_0_rom_offset   (gameConfig_layer_0_romOffset),
     .layer_0_palette_bank (gameConfig_layer_0_paletteBank),
@@ -368,10 +420,34 @@ module Cave(
     .layer_1_palette_bank (gameConfig_layer_1_paletteBank),
     .layer_2_format       (gpu_io_layerCtrl_2_format),
     .layer_2_rom_offset   (gameConfig_layer_2_romOffset),
+    .pwrinst2_layer_2_rom_offset (gameConfig_pwrinst2_layer_2_romOffset),
     .layer_2_palette_bank (gameConfig_layer_2_paletteBank),
     .sprite_format        (gpu_io_spriteCtrl_format),
     .sprite_rom_offset    (gameConfig_sprite_romOffset),
     .sprite_zoom          (gameConfig_sprite_zoom)
+  );
+
+  CaveGameConfig gameConfigCpu (
+    .game_index           (gameIndexCpuReg),
+    .granularity          (),
+    .eeprom_offset        (),
+    .sound_0_device       (gameConfigCpu_sound_0_device),
+    .sound_0_rom_offset   (),
+    .sound_1_rom_offset   (),
+    .sound_2_rom_offset   (),
+    .layer_0_format       (),
+    .layer_0_rom_offset   (),
+    .layer_0_palette_bank (),
+    .layer_1_format       (),
+    .layer_1_rom_offset   (),
+    .layer_1_palette_bank (),
+    .layer_2_format       (),
+    .layer_2_rom_offset   (),
+    .pwrinst2_layer_2_rom_offset (),
+    .layer_2_palette_bank (),
+    .sprite_format        (),
+    .sprite_rom_offset    (),
+    .sprite_zoom          ()
   );
 
   CaveBoardProfile boardProfile(
@@ -384,8 +460,8 @@ module Cave(
     .game_is_uopoko              (),
     .game_is_guwange             (),
     .game_is_gaia                (),
-    .game_is_hotdogstorm         (),
-    .game_is_mazinger            (gameIsMazinger),
+    .game_is_pwrinst2            (gameIsPwrInst2),
+    .game_is_plegends            (gameIsPlegends),
     .board_uses_z80_sound        (),
     .board_is_vertical_clockwise (rotateClockwise),
     .sound_is_ymz280b            (),
@@ -415,27 +491,29 @@ module Cave(
     ~ioctl_download & ioctlDownloadReg & ~gameIndexReg_latched;
   wire         effectiveRotate = options_rotate;
   wire         videoVBlankFalling = ~videoVBlankPipe1 & videoVBlankPipe2;
-  wire         spriteStartAllowed = ~gameIsMazinger | mazingerSpriteSwapPrimed;
-  wire         mazingerSpriteSwapReady =
-    ~mazingerSpriteSwapPrimed | _gpu_io_spriteCtrl_frameReady;
-  wire         spriteFrameBufferSwap =
-    _main_io_spriteFrameBufferSwap &
-    (~gameIsMazinger | mazingerSpriteSwapReady);
+  wire         spriteFrameBufferSwap = _main_io_spriteFrameBufferSwap;
+
+  always @(posedge cpuClock) begin
+    gameIndexCpuToggleSync0 <= gameIndexCpuLoadToggle;
+    gameIndexCpuToggleSync1 <= gameIndexCpuToggleSync0;
+    if (gameIndexCpuToggleSync1 != gameIndexCpuToggleSeen) begin
+      gameIndexCpuReg <= gameIndexReg;
+      gameIndexCpuToggleSeen <= gameIndexCpuToggleSync1;
+    end
+  end
+
   always @(posedge clock) begin
     videoVBlankPipe0 <= _videoSys_io_video_vBlank;
     videoVBlankPipe1 <= videoVBlankPipe0;
     videoVBlankPipe2 <= videoVBlankPipe1;
-    if (reset | ~_memSys_io_ready | ~gameIsMazinger) begin
-      mazingerSpriteSwapPrimed <= 1'b0;
-    end
-    else begin
-      if (spriteFrameBufferSwap)
-        mazingerSpriteSwapPrimed <= 1'b1;
-    end
     if (optionGameIndexFallback)
       gameIndexReg <= options_gameIndex;
     else if (ioctlGameIndexWrite)
       gameIndexReg <= ioctl_dout[3:0];
+    if (reset)
+      gameIndexCpuLoadToggle <= 1'b0;
+    else if (optionGameIndexFallback | ioctlGameIndexWrite)
+      gameIndexCpuLoadToggle <= ~gameIndexCpuLoadToggle;
     ioctlDownloadReg <= ioctl_download;
     if (_memSys_io_prog_nvram_valid)
       memSys_io_prog_nvram_ioctl_din_r <= _memSys_io_prog_nvram_dout;
@@ -513,9 +591,11 @@ module Cave(
     .io_gameConfig_eepromOffset       (gameConfig_eepromOffset),
     .io_gameConfig_sound_0_romOffset  (gameConfig_sound_0_romOffset),
     .io_gameConfig_sound_1_romOffset  (gameConfig_sound_1_romOffset),
+    .io_gameConfig_sound_2_romOffset  (gameConfig_sound_2_romOffset),
     .io_gameConfig_layer_0_romOffset  (gameConfig_layer_0_romOffset),
     .io_gameConfig_layer_1_romOffset  (gameConfig_layer_1_romOffset),
     .io_gameConfig_layer_2_romOffset  (gameConfig_layer_2_romOffset),
+    .io_gameConfig_pwrinst2_layer_2_romOffset (gameConfig_pwrinst2_layer_2_romOffset),
     .io_gameConfig_sprite_romOffset   (gameConfig_sprite_romOffset),
     .io_prog_rom_wr                   (_memSys_io_prog_rom_wr),
     .io_prog_rom_addr                 (ioctl_addr),
@@ -551,6 +631,11 @@ module Cave(
     .io_soundRom_1_dout               (_memSys_io_soundRom_1_dout),
     .io_soundRom_1_wait_n             (_memSys_io_soundRom_1_wait_n),
     .io_soundRom_1_valid              (_memSys_io_soundRom_1_valid),
+    .io_soundRom_2_rd                 (_memSys_io_soundRom_2_rd),
+    .io_soundRom_2_addr               (_memSys_io_soundRom_2_addr),
+    .io_soundRom_2_dout               (_memSys_io_soundRom_2_dout),
+    .io_soundRom_2_wait_n             (_memSys_io_soundRom_2_wait_n),
+    .io_soundRom_2_valid              (_memSys_io_soundRom_2_valid),
     .io_layerTileRom_0_rd             (_memSys_io_layerTileRom_0_rd),
     .io_layerTileRom_0_addr           (_memSys_io_layerTileRom_0_addr),
     .io_layerTileRom_0_dout           (_memSys_io_layerTileRom_0_dout),
@@ -566,6 +651,11 @@ module Cave(
     .io_layerTileRom_2_dout           (_memSys_io_layerTileRom_2_dout),
     .io_layerTileRom_2_wait_n         (_memSys_io_layerTileRom_2_wait_n),
     .io_layerTileRom_2_valid          (_memSys_io_layerTileRom_2_valid),
+    .io_pwrinst2Layer2TileRom_rd      (_memSys_io_pwrinst2Layer2TileRom_rd),
+    .io_pwrinst2Layer2TileRom_addr    (_memSys_io_pwrinst2Layer2TileRom_addr),
+    .io_pwrinst2Layer2TileRom_dout    (_memSys_io_pwrinst2Layer2TileRom_dout),
+    .io_pwrinst2Layer2TileRom_wait_n  (_memSys_io_pwrinst2Layer2TileRom_wait_n),
+    .io_pwrinst2Layer2TileRom_valid   (_memSys_io_pwrinst2Layer2TileRom_valid),
     .io_spriteTileRom_rd              (_memSys_io_spriteTileRom_rd),
     .io_spriteTileRom_addr            (_memSys_io_spriteTileRom_addr),
     .io_spriteTileRom_dout            (_memSys_io_spriteTileRom_dout),
@@ -623,7 +713,7 @@ module Cave(
     .io_options_offset_x        (options_offset_x),
     .io_options_offset_y        (options_offset_y),
     .io_options_compatibility   (options_compatibility),
-    .io_options_wideTiming      (gameIsMazinger),
+    .io_options_wideTiming      (1'b0),
     .io_video_clockEnable       (_videoSys_io_video_clockEnable),
     .io_video_displayEnable     (_videoSys_io_video_displayEnable),
     .io_video_pos_x             (_videoSys_io_video_pos_x),
@@ -645,7 +735,7 @@ module Cave(
     .reset                                  (cpuDomainReset),
     .io_videoClock                          (videoClock),
     .io_spriteClock                         (clock),
-    .io_gameIndex                           (gameIndexReg),
+    .io_gameIndex                           (gameIndexCpuReg),
     .io_options_service                     (options_service),
     .io_player_0_up                         (player_0_up),
     .io_player_0_down                       (player_0_down),
@@ -713,6 +803,34 @@ module Cave(
     .io_gpuMem_layer_2_vram16x16_dout       (_main_io_gpuMem_layer_2_vram16x16_dout),
     .io_gpuMem_layer_2_lineRam_addr         (_main_io_gpuMem_layer_2_lineRam_addr),
     .io_gpuMem_layer_2_lineRam_dout         (_main_io_gpuMem_layer_2_lineRam_dout),
+    .io_gpuMem_pwrinst2_layer_2_regs_tileSize
+      (_main_io_gpuMem_pwrinst2_layer_2_regs_tileSize),
+    .io_gpuMem_pwrinst2_layer_2_regs_enable
+      (_main_io_gpuMem_pwrinst2_layer_2_regs_enable),
+    .io_gpuMem_pwrinst2_layer_2_regs_flipX
+      (_main_io_gpuMem_pwrinst2_layer_2_regs_flipX),
+    .io_gpuMem_pwrinst2_layer_2_regs_flipY
+      (_main_io_gpuMem_pwrinst2_layer_2_regs_flipY),
+    .io_gpuMem_pwrinst2_layer_2_regs_rowScrollEnable
+      (_main_io_gpuMem_pwrinst2_layer_2_regs_rowScrollEnable),
+    .io_gpuMem_pwrinst2_layer_2_regs_rowSelectEnable
+      (_main_io_gpuMem_pwrinst2_layer_2_regs_rowSelectEnable),
+    .io_gpuMem_pwrinst2_layer_2_regs_scroll_x
+      (_main_io_gpuMem_pwrinst2_layer_2_regs_scroll_x),
+    .io_gpuMem_pwrinst2_layer_2_regs_scroll_y
+      (_main_io_gpuMem_pwrinst2_layer_2_regs_scroll_y),
+    .io_gpuMem_pwrinst2_layer_2_vram8x8_addr
+      (_main_io_gpuMem_pwrinst2_layer_2_vram8x8_addr),
+    .io_gpuMem_pwrinst2_layer_2_vram8x8_dout
+      (_main_io_gpuMem_pwrinst2_layer_2_vram8x8_dout),
+    .io_gpuMem_pwrinst2_layer_2_vram16x16_addr
+      (_main_io_gpuMem_pwrinst2_layer_2_vram16x16_addr),
+    .io_gpuMem_pwrinst2_layer_2_vram16x16_dout
+      (_main_io_gpuMem_pwrinst2_layer_2_vram16x16_dout),
+    .io_gpuMem_pwrinst2_layer_2_lineRam_addr
+      (_main_io_gpuMem_pwrinst2_layer_2_lineRam_addr),
+    .io_gpuMem_pwrinst2_layer_2_lineRam_dout
+      (_main_io_gpuMem_pwrinst2_layer_2_lineRam_dout),
     .io_gpuMem_sprite_regs_offset_x         (_main_io_gpuMem_sprite_regs_offset_x),
     .io_gpuMem_sprite_regs_offset_y         (_main_io_gpuMem_sprite_regs_offset_y),
     .io_gpuMem_sprite_regs_bank             (_main_io_gpuMem_sprite_regs_bank),
@@ -741,6 +859,7 @@ module Cave(
     .io_soundCtrl_data                      (_main_io_soundCtrl_data),
     .io_soundCtrl_reply_rd                  (_main_io_soundCtrl_reply_rd),
     .io_soundCtrl_reply                     (_main_io_soundCtrl_reply),
+    .io_soundCtrl_reply_empty               (_main_io_soundCtrl_reply_empty),
     .io_soundCtrl_irq                       (_main_io_soundCtrl_irq),
     .io_progRom_rd                          (_main_io_progRom_rd),
     .io_progRom_addr                        (_main_io_progRom_addr),
@@ -818,17 +937,32 @@ module Cave(
     .io_ctrl_data                 (_main_io_soundCtrl_data),
     .io_ctrl_reply_rd             (_main_io_soundCtrl_reply_rd),
     .io_ctrl_reply                (_main_io_soundCtrl_reply),
+    .io_ctrl_reply_empty          (_main_io_soundCtrl_reply_empty),
     .io_ctrl_irq                  (_main_io_soundCtrl_irq),
-    .io_gameIndex                 (gameIndexReg),
-    .io_gameConfig_sound_0_device (gameConfig_sound_0_device),
+    .io_gameIndex                 (gameIndexCpuReg),
+    .io_gameConfig_sound_0_device (gameConfigCpu_sound_0_device),
+    .io_options_ym_psg            (options_ym_psg),
+    .io_options_ym_fm             (options_ym_fm),
+    .io_options_oki_0             (options_oki_0),
+    .io_options_oki_1             (options_oki_1),
+    .io_options_pwrinst2_oki0_level (options_pwrinst2_oki0_level),
+    .io_options_pwrinst2_oki1_level (options_pwrinst2_oki1_level),
+    .io_options_pwrinst2_headroom (options_pwrinst2_headroom),
+    .io_options_pwrinst2_psg_level (options_pwrinst2_psg_level),
+    .io_options_pwrinst2_fm_level  (options_pwrinst2_fm_level),
     .io_rom_0_rd                  (_sound_io_rom_0_rd),
     .io_rom_0_addr                (_sound_io_rom_0_addr),
     .io_rom_0_dout                (_sound_io_rom_0_dout),
     .io_rom_0_wait_n              (_sound_io_rom_0_wait_n),
     .io_rom_0_valid               (_sound_io_rom_0_valid),
+    .io_rom_1_rd                  (_sound_io_rom_1_rd),
     .io_rom_1_addr                (_sound_io_rom_1_addr),
     .io_rom_1_dout                (_sound_io_rom_1_dout),
     .io_rom_1_valid               (_sound_io_rom_1_valid),
+    .io_rom_2_rd                  (_sound_io_rom_2_rd),
+    .io_rom_2_addr                (_sound_io_rom_2_addr),
+    .io_rom_2_dout                (_sound_io_rom_2_dout),
+    .io_rom_2_valid               (_sound_io_rom_2_valid),
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
     .io_debug                     (_sound_io_debug),
 `endif
@@ -853,7 +987,7 @@ module Cave(
     .clock          (clock),
     .reset          (reset),
     .io_targetClock (cpuClock),
-    .io_in_rd       (soundRom1AlwaysRead),
+    .io_in_rd       (_sound_io_rom_1_rd),
     .io_in_addr     (_sound_io_rom_1_addr),
     .io_in_dout     (_sound_io_rom_1_dout),
     .io_in_wait_n   (/* unused */),
@@ -864,7 +998,22 @@ module Cave(
     .io_out_wait_n  (_memSys_io_soundRom_1_wait_n),
     .io_out_valid   (_memSys_io_soundRom_1_valid)
   );
-  assign _gpu_io_spriteCtrl_start = videoVBlankFalling & spriteStartAllowed;
+  CaveSoundRomReadFreezer sound_io_rom_2_freezer (
+    .clock          (clock),
+    .reset          (reset),
+    .io_targetClock (cpuClock),
+    .io_in_rd       (_sound_io_rom_2_rd),
+    .io_in_addr     (_sound_io_rom_2_addr),
+    .io_in_dout     (_sound_io_rom_2_dout),
+    .io_in_wait_n   (/* unused */),
+    .io_in_valid    (_sound_io_rom_2_valid),
+    .io_out_rd      (_memSys_io_soundRom_2_rd),
+    .io_out_addr    (_memSys_io_soundRom_2_addr),
+    .io_out_dout    (_memSys_io_soundRom_2_dout),
+    .io_out_wait_n  (_memSys_io_soundRom_2_wait_n),
+    .io_out_valid   (_memSys_io_soundRom_2_valid)
+  );
+  assign _gpu_io_spriteCtrl_start = videoVBlankFalling;
   assign _gpu_io_spriteCtrl_zoom = gameConfig_sprite_zoom;
   assign _gpu_io_gameConfig_layer_1_paletteBank = gameConfig_layer_1_paletteBank;
   GPU gpu (
@@ -928,8 +1077,30 @@ module Cave(
     .io_layerCtrl_2_tileRom_rd           (_gpu_io_layerCtrl_2_tileRom_rd),
     .io_layerCtrl_2_tileRom_addr         (_gpu_io_layerCtrl_2_tileRom_addr),
     .io_layerCtrl_2_tileRom_dout         (_gpu_io_layerCtrl_2_tileRom_dout),
+    .io_pwrinst2Layer2_enable            (options_layer_2 & gameIsPwrInst2),
+    .io_pwrinst2Layer2_regs_tileSize     (_main_io_gpuMem_pwrinst2_layer_2_regs_tileSize),
+    .io_pwrinst2Layer2_regs_enable       (_main_io_gpuMem_pwrinst2_layer_2_regs_enable),
+    .io_pwrinst2Layer2_regs_flipX        (_main_io_gpuMem_pwrinst2_layer_2_regs_flipX),
+    .io_pwrinst2Layer2_regs_flipY        (_main_io_gpuMem_pwrinst2_layer_2_regs_flipY),
+    .io_pwrinst2Layer2_regs_rowScrollEnable
+      (_main_io_gpuMem_pwrinst2_layer_2_regs_rowScrollEnable),
+    .io_pwrinst2Layer2_regs_rowSelectEnable
+      (_main_io_gpuMem_pwrinst2_layer_2_regs_rowSelectEnable),
+    .io_pwrinst2Layer2_regs_scroll_x     (_main_io_gpuMem_pwrinst2_layer_2_regs_scroll_x),
+    .io_pwrinst2Layer2_regs_scroll_y     (_main_io_gpuMem_pwrinst2_layer_2_regs_scroll_y),
+    .io_pwrinst2Layer2_vram8x8_addr      (_main_io_gpuMem_pwrinst2_layer_2_vram8x8_addr),
+    .io_pwrinst2Layer2_vram8x8_dout      (_main_io_gpuMem_pwrinst2_layer_2_vram8x8_dout),
+    .io_pwrinst2Layer2_vram16x16_addr    (_main_io_gpuMem_pwrinst2_layer_2_vram16x16_addr),
+    .io_pwrinst2Layer2_vram16x16_dout    (_main_io_gpuMem_pwrinst2_layer_2_vram16x16_dout),
+    .io_pwrinst2Layer2_lineRam_addr      (_main_io_gpuMem_pwrinst2_layer_2_lineRam_addr),
+    .io_pwrinst2Layer2_lineRam_dout      (_main_io_gpuMem_pwrinst2_layer_2_lineRam_dout),
+    .io_pwrinst2Layer2_tileRom_rd        (_gpu_io_pwrinst2Layer2_tileRom_rd),
+    .io_pwrinst2Layer2_tileRom_addr      (_gpu_io_pwrinst2Layer2_tileRom_addr),
+    .io_pwrinst2Layer2_tileRom_dout      (_gpu_io_pwrinst2Layer2_tileRom_dout),
     .io_spriteCtrl_enable                (options_sprite),
     .io_spriteCtrl_format                (gpu_io_spriteCtrl_format),
+    .io_spriteCtrl_pwrinst2              (gameIsPwrInst2),
+    .io_gameConfig_plegends              (gameIsPlegends),
     .io_spriteCtrl_start                 (_gpu_io_spriteCtrl_start),
     .io_spriteCtrl_zoom                  (_gpu_io_spriteCtrl_zoom),
     .io_spriteCtrl_regs_offset_x         (_main_io_gpuMem_sprite_regs_offset_x),
@@ -983,23 +1154,32 @@ module Cave(
   );
 
 `ifdef CAVE_ENABLE_DEBUG_OVERLAY
-  wire [63:0] mazingerSpriteProbeDebugBits = _gpu_io_debug_video;
   wire [63:0] debugBits =
     options_debugView == 3'd1 ? _main_io_debug_cpu :
     options_debugView == 3'd2 ? _main_io_debug_writes :
-    options_debugView == 3'd3 ? (gameIsMazinger ? mazingerSpriteProbeDebugBits : _main_io_debug_live) :
+    options_debugView == 3'd3 ? _main_io_debug_live :
     options_debugView == 3'd4 ? _main_io_debug_palette :
-    options_debugView == 3'd5 ? _main_io_debug_data :
+    options_debugView == 3'd5 ? (gameIsPwrInst2 ? _gpu_io_debug_readout : _main_io_debug_data) :
     options_debugView == 3'd6 ? _gpu_io_debug_video :
     options_debugView == 3'd7 ? _sound_io_debug :
                                  _main_io_debug_pipeline;
+  reg [63:0] debugBitsFrameReg;
+  wire       debugFrameStart =
+    (_videoSys_io_video_pos_x == 9'd0) & (_videoSys_io_video_pos_y == 9'd0);
   wire [23:0] debugRgb;
+
+  always @(posedge videoClock) begin
+    if (videoReset)
+      debugBitsFrameReg <= 64'd0;
+    else if (debugFrameStart)
+      debugBitsFrameReg <= debugBits;
+  end
 
   CaveDebugOverlay debugOverlay (
     .io_video_pos_x (_videoSys_io_video_pos_x),
     .io_video_pos_y (_videoSys_io_video_pos_y),
     .io_debug_view  (options_debugView),
-    .io_debug_bits  (debugBits),
+    .io_debug_bits  (debugBitsFrameReg),
     .io_rgb         (debugRgb)
   );
 
@@ -1043,6 +1223,18 @@ module Cave(
     .io_out_dout    (_memSys_io_layerTileRom_2_dout),
     .io_out_wait_n  (_memSys_io_layerTileRom_2_wait_n),
     .io_out_valid   (_memSys_io_layerTileRom_2_valid)
+  );
+  CaveTileRomClockCrossing gpu_io_pwrinst2Layer2_tileRom_crossing (
+    .clock          (clock),
+    .io_targetClock (videoClock),
+    .io_in_rd       (_gpu_io_pwrinst2Layer2_tileRom_rd),
+    .io_in_addr     (_gpu_io_pwrinst2Layer2_tileRom_addr),
+    .io_in_dout     (_gpu_io_pwrinst2Layer2_tileRom_dout),
+    .io_out_rd      (_memSys_io_pwrinst2Layer2TileRom_rd),
+    .io_out_addr    (_memSys_io_pwrinst2Layer2TileRom_addr),
+    .io_out_dout    (_memSys_io_pwrinst2Layer2TileRom_dout),
+    .io_out_wait_n  (_memSys_io_pwrinst2Layer2TileRom_wait_n),
+    .io_out_valid   (_memSys_io_pwrinst2Layer2TileRom_valid)
   );
   SpriteFrameBuffer spriteFrameBuffer (
     .clock                 (clock),

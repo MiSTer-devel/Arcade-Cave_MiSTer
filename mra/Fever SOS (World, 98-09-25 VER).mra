@@ -1,23 +1,23 @@
 <misterromdescription>
-  <name>Dangun Feveron</name>
+  <name>Fever SOS (World, 98/09/25 VER)</name>
   <mameversion>0226</mameversion>
-  <setname>dfeveron</setname>
+  <setname>feversos</setname>
   <year>1998</year>
   <manufacturer>CAVE</manufacturer>
   <category>Shooter</category>
   <rotation>vertical (ccw)</rotation>
-  <rbf>cave</rbf>
+  <rbf>Cave</rbf>
 
   <!-- ROM data -->
-  <rom index="0" zip="dfeveron.zip|feversos.zip" md5="none" address="0x30000000">
+  <rom index="0" zip="feversos.zip" md5="none" address="0x30000000">
     <!-- prog ROM -->
     <interleave output="16">
-      <part name="cv01-u34.bin" crc="be87f19d" map="01" />
-      <part name="cv01-u33.bin" crc="e53a7db3" map="10" />
+      <part name="cv01-u34.sos" crc="24ef3ce6" map="01" />
+      <part name="cv01-u33.sos" crc="64ff73fd" map="10" />
     </interleave>
 
     <!-- EEPROM -->
-    <part name="eeprom-dfeveron.bin" crc="c3174959" />
+    <part name="eeprom-feversos.bin" crc="d80303aa" />
 
     <!-- sound ROM -->
     <part name="cv01-u19.bin" crc="5f5514da" />
@@ -31,14 +31,6 @@
     <!-- sprites -->
     <part name="cv01-u25.bin" crc="a6f6a95d" />
     <part name="cv01-u26.bin" crc="32edb62a" />
-
-    <!-- skip CRC -->
-    <patch offset="0x00008d94">60 00 00 ce</patch>
-    <!-- skip slow loops -->
-    <patch offset="0x00008cca">4e 71 4e 71</patch>
-    <patch offset="0x00008cd2">4e 71 4e 71</patch>
-    <patch offset="0x00008f10">4e 71 4e 71 </patch>
-    <patch offset="0x00008f14">4e 71 4e 71</patch>
 
     <!-- enable C button in EEPROM -->
     <patch offset="0x00100002">11 11</patch>

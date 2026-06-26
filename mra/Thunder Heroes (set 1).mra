@@ -1,11 +1,11 @@
 <misterromdescription>
-  <name>Thunder Heroes</name>
+  <name>Thunder Heroes (set 1)</name>
   <mameversion>0226</mameversion>
   <setname>theroes</setname>
   <year>2001</year>
   <manufacturer>CAVE</manufacturer>
   <category>Fighting</category>
-  <rbf>cave</rbf>
+  <rbf>Cave</rbf>
 
   <!-- ROM data -->
   <rom index="0" zip="theroes.zip" md5="none" address="0x30000000">

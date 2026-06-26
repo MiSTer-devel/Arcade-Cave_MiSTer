@@ -5,7 +5,7 @@
   <year>1999</year>
   <manufacturer>CAVE</manufacturer>
   <category>Fighting</category>
-  <rbf>cave</rbf>
+  <rbf>Cave</rbf>
 
   <!-- ROM data -->
   <rom index="0" zip="gaia.zip" md5="none" address="0x30000000">

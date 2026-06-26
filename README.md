@@ -7,9 +7,7 @@ first-generation 68000 arcade hardware.
 
 ## Supported Games
 
-Banpresto/Gazelle-side titles live in the separate [Arcade-CaveBanpresto fork](https://github.com/MiSTer-devel/Arcade-CaveBanpresto_MiSTer). This
-branch keeps the shared Z80/YM2203 sound primitives because the remaining Atlus
-fighters need them.
+Banpresto/Gazelle-side titles live in the separate [Arcade-CaveBanpresto fork](https://github.com/MiSTer-devel/Arcade-CaveBanpresto_MiSTer).
 
 | Title                                                                                                                 | Status        | Notes                                    |
 |-----------------------------------------------------------------------------------------------------------------------|---------------|------------------------------------------|
@@ -21,9 +19,8 @@ fighters need them.
 | [**Gaia Crusaders**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=gaia&arcade_only=0&autosearch=1)        | Public        |
 | [**Thunder Heroes**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=theroes&arcade_only=0&autosearch=1)     | Public        |
 | [**Donpachi**](https://en.wikipedia.org/wiki/DonPachi)                                                                | Public        |
-| [**Power Instinct 2**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=pwrinst2&arcade_only=0&autosearch=1)  | Unimplemented |
-| [**Gogetsuji Legends**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=plegends&arcade_only=0&autosearch=1) | Unimplemented |
-| [**Saikyou Densetsu**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=plegendsj&arcade_only=0&autosearch=1) | Unimplemented |
+| [**Power Instinct 2**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=pwrinst2&arcade_only=0&autosearch=1)  | WIP | Based on Mame - No hardware-accurate comparison
+| [**Gogetsuji Legends**](http://adb.arcadeitalia.net/dettaglio_mame.php?game_name=plegends&arcade_only=0&autosearch=1) | WIP | Based on Mame - No hardware-accurate comparison
 
 ## Credits
 
